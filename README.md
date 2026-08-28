@@ -1,75 +1,216 @@
 # Liquidity Chain (LQC)
 
-> Modular liquidity infrastructure connecting fragmented Web3 liquidity.
+> Cross-DEX routing and liquidity infrastructure for fragmented Web3 markets.
 
-Liquidity Chain is an MMX Labs project designed to connect liquidity across decentralized exchanges and blockchain networks. LQC is being developed as infrastructure for multi-DEX routing, liquidity management, collateralized lending, oracle-based risk control, treasury accounting, and controlled cross-chain expansion.
+Liquidity Chain (LQC) is an MMX Labs project focused on connecting fragmented liquidity across decentralized exchanges and blockchain ecosystems.
 
-## Design principle
+LQC is being developed as infrastructure for cross-DEX route discovery, liquidity aggregation, protocol-level transaction execution, liquidity deployment across many DEX markets, and future DeFi services.
+
+LQC is not itself a decentralized exchange, centralized exchange, broker, custodian, or investment product.
+
+## Design Principle
 
 **Liquidity First → Utility Second → Revenue Third → Scale Last**
 
-The project prioritizes measurable liquidity, security, transparent controls, and working products over token-price narratives.
+The project prioritizes measurable liquidity, secure protocol architecture, transparent controls, and working products over token-price narratives.
 
-## Core modules
+## Current Development Focus
 
-| Module | Responsibility |
-|---|---|
-| Router | Quotes, route optimization, split routing, swap execution |
-| Pool / Vault | Liquidity custody, pool registry, accounting |
-| Lending | Collateral deposit, borrow, repay |
-| Risk | LTV, health factor, liquidation, debt caps |
-| Oracle | External feeds, DEX TWAP, deviation and freshness checks |
-| Treasury | Fee accounting, reserves, liquidity and ecosystem budgets |
-| Bridge | Message verification, rate limits, cross-chain supply accounting |
-| Access | Role separation, multisig, timelock, emergency pause |
+Current development focuses on:
+
+- Cross-DEX routing architecture
+- Liquidity aggregation logic
+- Optimal trade-route discovery
+- Split routing across multiple liquidity pools
+- Price, fee, gas, slippage, and price-impact comparison
+- Liquidity pool and token registry design
+- Router, vault, treasury, and access-control contracts
+- Protocol fee and transaction-accounting architecture
+- Scalable integration architecture for many DEXs and liquidity pools
+
+LQC is not limited to three DEXs. The long-term objective is to connect and support liquidity across many approved DEXs and pools that satisfy protocol security, liquidity, and risk-control requirements.
+
+These components remain under development and testing. Production deployment, live liquidity, completed integrations, security audits, partnerships, listings, and mainnet operation should not be assumed unless separately announced with verifiable evidence.
 
 ## Smart Router
 
-The Router compares price, pool fees, protocol fees, gas cost, slippage, and price impact. It executes only when the route meets the user's minimum-output and deadline conditions. Registered DEXs, pools, and tokens must pass protocol controls.
+The planned LQC Router analyzes liquidity distributed across multiple DEX pools and identifies efficient execution routes.
 
-## Lending design (proposal)
+Route evaluation may include:
 
-- Initial LTV proposal: **50%**
-- Borrow assets: approved stable assets such as USDT/USDC
-- Additional borrowing: **OFF by default** and requires explicit user opt-in
-- Proposed additional-borrow limit: up to **10% of the eligible collateral-value increase**, subject to health-factor and risk checks
-- Liquidation: health-factor based, not based on price decline alone
-- Oracle: validated external feed plus sufficiently liquid DEX TWAP; a single shallow LQC pool must not be the sole lending oracle
+- Token price
+- Available liquidity
+- Pool fee
+- Protocol fee
+- Network gas cost
+- Expected slippage
+- Price impact
+- Minimum output
+- Transaction deadline
 
-All parameters are design proposals until security, liquidity, economic, and legal reviews are completed.
+Where appropriate, a transaction may be divided across multiple pools to improve execution quality. Only approved DEXs, pools, and tokens will be eligible for protocol routing.
 
-## Token utility
+## Multi-DEX Liquidity Provision
 
-Potential LQC utility includes liquidity provision, approved collateral, fee or gas benefits, staking, governance, and ecosystem access. Mainnet gas and validator staking apply only if a future mainnet is implemented.
+LQC aims to provide infrastructure for supplying, allocating, and managing liquidity across many approved DEXs and liquidity pools.
 
-## Tokenomics status
+Planned capabilities include:
 
-Token supply, TGE circulation, allocation, vesting, emissions, and privileged minting controls are **not treated as final in this repository**. Earlier drafts contain figures that conflict with later approval materials. Final numbers will be published only after formal approval and on-chain verification.
+- Liquidity provision across multiple DEX pools
+- Analysis of liquidity conditions and trading activity
+- Allocation adjustments based on market demand
+- Controlled reallocation toward markets with insufficient liquidity
+- Transparent accounting of liquidity-provider fees
+- Risk controls for approved DEXs, pools, and assets
 
-## Revenue and treasury
+Live liquidity deployment will proceed only after smart-contract security review, liquidity testing, price-risk assessment, legal review, and formal approval.
 
-Potential revenue sources include routing/swap fees, lending fees, cross-chain service fees, and Liquidity-as-a-Service agreements. Treasury use must follow disclosed policies and on-chain reporting. Buyback, burn, or distribution mechanisms are optional governance decisions based on realized net revenue, legal review, and published limits; they do not guarantee token-price appreciation.
+## Protocol Architecture
 
-## Development stages
+| Module | Function | Status |
+|---|---|---|
+| Router | Quotes, route optimization, and split execution | In development |
+| Pool Registry | Approved DEX, pool, and token management | In development |
+| Vault | Liquidity custody and accounting architecture | In development |
+| Treasury | Protocol fee and reserve accounting | In development |
+| Access Control | Role separation and emergency controls | In development |
+| Lending | Collateral deposit, borrowing, and repayment | Planned |
+| Risk Engine | LTV, health factor, liquidation, and debt caps | Planned |
+| Oracle | External price feeds and DEX TWAP validation | Planned |
+| Cross-chain | Message verification and supply accounting | Planned |
 
-1. Foundation — token policy, vault, basic router, treasury controls
-2. Router MVP — multi-DEX routing, split routing, SDK/API
-3. Lending — collateral, oracle, health factor, liquidation
-4. Cross-chain — bridge controls and supply accounting
-5. Alliance — wallet, DeFi, market-maker, and enterprise integrations
-6. Future research — AI optimization, RWA, and independent mainnet, subject to separate validation
+## Planned Lending and Repayment Module
 
-## Security and transparency
+The lending module is planned and is not presented as a completed production service.
 
-The target operating controls include independent audits, bug bounty, multisig, timelock, least privilege, function-level pause, controlled TVL/borrow caps, public contract and treasury addresses, vesting disclosures, and regular KPI reporting.
+Proposed risk parameters:
 
-## Status
+- Maximum LTV: **45%**
+- Liquidation threshold: **60%**
+- Base liquidation penalty: **5%**
+- Liquidation becomes permitted when an account reaches the liquidation threshold
+- Partial liquidation is preferred where technically and economically appropriate
+- Borrow assets may include approved stable assets such as USDT or USDC
+- Additional or automatic borrowing is **OFF by default**
+- Any automatic or additional borrowing requires explicit user opt-in
+- Future review may consider an LTV of up to 50% only after sufficient liquidity, volatility, and liquidation-performance data are available
 
-This repository describes a working design. Product launches, partnerships, listings, market share, revenue, AI/RWA functions, and mainnet plans are objectives or research directions unless supported by released code and verifiable evidence.
+Borrowing and liquidation remain subject to oracle, liquidity, health-factor, debt-cap, and security controls. Final deployment requires economic simulation, oracle validation, liquidity testing, legal review, independent security audits, and controlled risk limits.
+
+## Oracle and Liquidation Principles
+
+Risk must be determined by collateral value, outstanding debt, and account health—not by price decline alone.
+
+The planned oracle architecture may combine:
+
+- Validated external price feeds
+- Sufficiently liquid DEX TWAP data
+- Price-deviation checks
+- Data-freshness checks
+- Emergency pause controls
+
+A single shallow LQC liquidity pool must not be used as the sole lending oracle.
+
+## LQC Fees and Burn Mechanism
+
+Under the planned lending service, LQC will be used for protocol fees associated with loan execution and repayment.
+
+The intended flow is:
+
+1. A user deposits an approved collateral asset.
+2. The protocol calculates collateral value and borrowing capacity.
+3. A defined loan-origination fee is paid or settled in LQC when borrowing is executed.
+4. A defined repayment fee is paid or settled in LQC when the loan is repaid.
+5. LQC used for these loan and repayment fees is burned by the protocol.
+6. Burned LQC is permanently removed from circulation and cannot be reused.
+
+This model is intended to connect real protocol usage with LQC utility and transparent supply reduction.
+
+Fee rates, settlement mechanics, burn implementation, burn addresses, on-chain verification, and operational limits are not final. They will be published only after smart-contract review, economic analysis, legal review, and formal approval.
+
+## Planned LQC Utility
+
+Potential future LQC utility may include:
+
+- Liquidity provision across many DEXs
+- Approved lending collateral
+- Loan-origination fee settlement
+- Repayment fee settlement
+- Burning of LQC used for loan and repayment fees
+- Protocol fee benefits
+- Gas-fee support
+- Staking
+- Governance
+- Ecosystem access
+
+These functions are planned or under review. They do not guarantee deployment, revenue, yield, or token-price appreciation.
+
+Mainnet gas and validator staking would apply only if an independent LQC mainnet is separately developed, tested, audited, and launched.
+
+## Potential Protocol Revenue
+
+Potential future revenue sources may include:
+
+- Routing and swap fees
+- Lending and repayment fees
+- Liquidation fees
+- Cross-chain service fees
+- Liquidity-as-a-Service agreements
+
+Treasury allocation, staking rewards, revenue distribution, additional buyback, and burn mechanisms remain subject to governance, realized protocol revenue, legal review, and published limits.
+
+## Tokenomics Status
+
+Token supply, TGE circulation, allocation, vesting, emissions, privileged minting controls, staking rewards, buyback, and burn policies are not finalized in this repository.
+
+Earlier drafts may contain figures that conflict with later design materials. Final tokenomics will be published only after formal approval and, where applicable, on-chain verification.
+
+## Development Roadmap
+
+1. **Foundation** — Router architecture, pool registry, vault, treasury, and access controls
+2. **Router MVP** — Multi-DEX quotes, route optimization, split routing, and SDK/API
+3. **Controlled Integration** — Selected DEX and liquidity-pool integrations with testing and transaction limits
+4. **Liquidity Expansion** — Gradual liquidity deployment across additional approved DEXs and pools
+5. **Lending Module** — Collateral, borrowing, repayment, oracle, health factor, liquidation, LQC fees, and burn
+6. **Cross-chain Expansion** — Bridge controls, rate limits, and cross-chain supply accounting
+7. **Ecosystem Alliance** — Wallet, DeFi, market-maker, and enterprise integrations
+8. **Future Research** — AI-assisted routing, RWA liquidity, and an independent mainnet
+
+Each stage depends on development progress, testing, security review, liquidity conditions, regulatory considerations, and formal approval.
+
+## Security and Transparency
+
+The target security framework includes:
+
+- Independent smart-contract audits
+- Bug-bounty programs
+- Multisignature treasury controls
+- Timelocks for privileged operations
+- Separation of administrative roles
+- Function-level emergency pauses
+- Controlled TVL, borrowing, and transaction limits
+- Public contract, treasury, and burn addresses
+- On-chain burn verification
+- Token vesting disclosures
+- Regular protocol-performance reporting
+
+No single private key should control token supply, treasury, oracle, bridge, burn, and emergency privileges.
+
+## Project Status
+
+LQC is currently under development.
+
+The current focus is cross-DEX routing, liquidity aggregation, multi-DEX liquidity architecture, and related protocol and smart-contract development.
+
+Lending, LQC fee burning, staking, governance, expanded token utility, cross-chain expansion, front-end applications, live liquidity, completed integrations, production deployment, audits, listings, partnerships, and an independent mainnet remain planned, unfinished, or subject to verification.
 
 ## Disclaimer
 
-This material is for information only and is not investment, legal, or tax advice, an offer, or a guarantee. Digital assets and DeFi protocols involve smart-contract, oracle, bridge, liquidity, market, operational, and regulatory risks.
+This repository is provided for technical and informational purposes only.
+
+It does not constitute investment, legal, financial, or tax advice, an offer, a solicitation, or a guarantee of returns.
+
+Digital assets and DeFi protocols involve smart-contract, oracle, bridge, liquidity, market, operational, cybersecurity, and regulatory risks.
 
 ---
 
