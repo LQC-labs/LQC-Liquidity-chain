@@ -4,7 +4,7 @@
 
 Liquidity Chain (LQC) is an MMX Labs project focused on connecting fragmented liquidity across decentralized exchanges and blockchain ecosystems.
 
-LQC is being developed as infrastructure for cross-DEX route discovery, liquidity aggregation, protocol-level transaction execution, liquidity deployment across many DEX markets, and future DeFi services.
+LQC provides a technical framework for cross-DEX route discovery, liquidity aggregation, protocol-level transaction execution, liquidity deployment across many DEX markets, and future DeFi services.
 
 LQC is not itself a decentralized exchange, centralized exchange, broker, custodian, or investment product.
 
@@ -14,9 +14,9 @@ LQC is not itself a decentralized exchange, centralized exchange, broker, custod
 
 The project prioritizes measurable liquidity, secure protocol architecture, transparent controls, and working products over token-price narratives.
 
-## Current Development Focus
+## Core Infrastructure Scope
 
-Current development focuses on:
+The core infrastructure scope includes:
 
 - Cross-DEX routing architecture
 - Liquidity aggregation logic
@@ -30,7 +30,7 @@ Current development focuses on:
 
 LQC is not limited to three DEXs. The long-term objective is to connect and support liquidity across many approved DEXs and pools that satisfy protocol security, liquidity, and risk-control requirements.
 
-These components remain under development and testing. Production deployment, live liquidity, completed integrations, security audits, partnerships, listings, and mainnet operation should not be assumed unless separately announced with verifiable evidence.
+The repository defines the intended architecture and scope. Production deployment, live liquidity, completed integrations, security audits, partnerships, listings, and mainnet operation are recognized only when separately announced with verifiable evidence.
 
 ## Smart Router
 
@@ -69,15 +69,15 @@ Live liquidity deployment will proceed only after smart-contract security review
 
 | Module | Function | Status |
 |---|---|---|
-| Router | Quotes, route optimization, and split execution | In development |
-| Pool Registry | Approved DEX, pool, and token management | In development |
-| Vault | Liquidity custody and accounting architecture | In development |
-| Treasury | Protocol fee and reserve accounting | In development |
-| Access Control | Role separation and emergency controls | In development |
-| Lending | Collateral deposit, borrowing, and repayment | Planned |
-| Risk Engine | LTV, health factor, liquidation, and debt caps | Planned |
-| Oracle | External price feeds and DEX TWAP validation | Planned |
-| Cross-chain | Message verification and supply accounting | Planned |
+| Router | Quotes, route optimization, and split execution | Core scope |
+| Pool Registry | Approved DEX, pool, and token management | Core scope |
+| Vault | Liquidity custody and accounting architecture | Core scope |
+| Treasury | Protocol fee and reserve accounting | Core scope |
+| Access Control | Role separation and emergency controls | Core scope |
+| Lending | Collateral deposit, borrowing, and repayment | Future scope |
+| Risk Engine | LTV, health factor, liquidation, and debt caps | Future scope |
+| Oracle | External price feeds and DEX TWAP validation | Future scope |
+| Cross-chain | Message verification and supply accounting | Future scope |
 
 ## Planned Lending and Repayment Module
 
@@ -165,7 +165,7 @@ Token supply, TGE circulation, allocation, vesting, emissions, privileged mintin
 
 Earlier drafts may contain figures that conflict with later design materials. Final tokenomics will be published only after formal approval and, where applicable, on-chain verification.
 
-## Development Roadmap
+## Roadmap
 
 1. **Foundation** — Router architecture, pool registry, vault, treasury, and access controls
 2. **Router MVP** — Multi-DEX quotes, route optimization, split routing, and SDK/API
@@ -176,7 +176,7 @@ Earlier drafts may contain figures that conflict with later design materials. Fi
 7. **Ecosystem Alliance** — Wallet, DeFi, market-maker, and enterprise integrations
 8. **Future Research** — AI-assisted routing, RWA liquidity, and an independent mainnet
 
-Each stage depends on development progress, testing, security review, liquidity conditions, regulatory considerations, and formal approval.
+Each stage depends on implementation progress, testing, security review, liquidity conditions, regulatory considerations, and formal approval.
 
 ## Security and Transparency
 
@@ -196,13 +196,11 @@ The target security framework includes:
 
 No single private key should control token supply, treasury, oracle, bridge, burn, and emergency privileges.
 
-## Project Status
+## Project Scope
 
-LQC is currently under development.
+The primary scope covers cross-DEX routing, liquidity aggregation, multi-DEX liquidity architecture, and related protocol and smart-contract implementation.
 
-The current focus is cross-DEX routing, liquidity aggregation, multi-DEX liquidity architecture, and related protocol and smart-contract development.
-
-Lending, LQC fee burning, staking, governance, expanded token utility, cross-chain expansion, front-end applications, live liquidity, completed integrations, production deployment, audits, listings, partnerships, and an independent mainnet remain planned, unfinished, or subject to verification.
+Lending, LQC fee burning, staking, governance, expanded token utility, cross-chain expansion, front-end applications, live liquidity, completed integrations, production deployment, audits, listings, partnerships, and an independent mainnet are included in the roadmap or remain subject to verification.
 
 ## Disclaimer
 
