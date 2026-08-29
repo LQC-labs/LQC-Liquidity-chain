@@ -115,7 +115,7 @@ A single shallow LQC liquidity pool must not be used as the sole lending oracle.
 
 ## LQC Fees and Burn Mechanism
 
-Under the planned lending service, LQC will be used for protocol fees associated with loan execution and repayment.
+The approved LQC protocol design specifies that LQC is used for protocol fees associated with loan execution and repayment. This is a confirmed utility design decision, not an indication that the lending service is already live.
 
 The intended flow is:
 
@@ -126,26 +126,29 @@ The intended flow is:
 5. LQC used for these loan and repayment fees is burned by the protocol.
 6. Burned LQC is permanently removed from circulation and cannot be reused.
 
-This model is intended to connect real protocol usage with LQC utility and transparent supply reduction.
+This approved utility model connects real protocol usage with LQC utility and transparent supply reduction.
 
 Fee rates, settlement mechanics, burn implementation, burn addresses, on-chain verification, and operational limits are not final. They will be published only after smart-contract review, economic analysis, legal review, and formal approval.
 
-## Planned LQC Utility
+## LQC Utility Design
 
-Potential future LQC utility may include:
+The approved protocol design includes:
+
+- Loan-origination fee settlement in LQC
+- Repayment fee settlement in LQC
+- Permanent burning of LQC used for loan and repayment fees
+
+The following additional utility concepts remain under review:
 
 - Liquidity provision across many DEXs
 - Approved lending collateral
-- Loan-origination fee settlement
-- Repayment fee settlement
-- Burning of LQC used for loan and repayment fees
 - Protocol fee benefits
 - Gas-fee support
 - Staking
 - Governance
 - Ecosystem access
 
-These functions are planned or under review. They do not guarantee deployment, revenue, yield, or token-price appreciation.
+The approved fee-and-burn design does not mean that the lending module is already deployed. Fee rates, settlement mechanics, burn implementation, burn addresses, operational limits, and launch timing remain subject to smart-contract review, economic analysis, legal review, formal approval, and on-chain verification.
 
 Mainnet gas and validator staking would apply only if an independent LQC mainnet is separately developed, tested, audited, and launched.
 
