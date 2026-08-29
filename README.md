@@ -4,6 +4,8 @@
 
 Liquidity Chain (LQC) is an MMX Labs project focused on connecting fragmented liquidity across decentralized exchanges and blockchain ecosystems.
 
+The legal entity established for the LQC project is **MMXlabs&LQC**, a limited liability company organized in the State of Wyoming, United States.
+
 LQC provides a technical framework for cross-DEX route discovery, liquidity aggregation, protocol-level transaction execution, liquidity deployment across many DEX markets, and future DeFi services.
 
 LQC is not itself a decentralized exchange, centralized exchange, broker, custodian, or investment product.
