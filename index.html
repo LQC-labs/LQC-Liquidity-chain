@@ -3,264 +3,41 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="LQC — Liquidity Chain. A liquidity infrastructure vision for connecting fragmented DEX ecosystems, lending flows, and cross-chain liquidity." />
+  <meta name="description" content="LQC — Liquidity Chain. Multi-DEX liquidity routing, lending utility and cross-chain liquidity infrastructure." />
   <title>LQC — Liquidity Chain</title>
   <style>
-    :root {
-      --bg: #05070c;
-      --bg-soft: #0a0f19;
-      --panel: rgba(255,255,255,0.045);
-      --panel-2: rgba(255,255,255,0.025);
-      --text: #f6f7fb;
-      --muted: #9aa4b2;
-      --gold: #d7b66c;
-      --gold-2: #f1d58e;
-      --line: rgba(215,182,108,.22);
-      --shadow: 0 30px 80px rgba(0,0,0,.35);
+    :root{
+      --bg:#03070c;--bg2:#07101a;--panel:rgba(255,255,255,.045);--line:rgba(104,214,255,.18);
+      --text:#f7fbff;--muted:#8fa4b8;--cyan:#69dcff;--blue:#2f8fff;--ice:#d9f7ff;--green:#77f5c5;
+      --shadow:0 30px 90px rgba(0,0,0,.42)
     }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background:
-        radial-gradient(circle at 20% 0%, rgba(215,182,108,.09), transparent 28%),
-        radial-gradient(circle at 90% 15%, rgba(255,255,255,.05), transparent 22%),
-        var(--bg);
-      color: var(--text);
-      line-height: 1.6;
-    }
-    a { color: inherit; text-decoration: none; }
-    .wrap { width: min(1180px, calc(100% - 40px)); margin: 0 auto; }
-    nav {
-      position: sticky; top: 0; z-index: 50;
-      backdrop-filter: blur(18px);
-      background: rgba(5,7,12,.72);
-      border-bottom: 1px solid rgba(255,255,255,.06);
-    }
-    .nav-inner { height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-    .brand { display:flex; align-items:center; gap:12px; font-weight:800; letter-spacing:.06em; }
-    .mark {
-      width: 34px; height: 34px; border-radius: 10px;
-      border: 1px solid rgba(241,213,142,.45);
-      display:grid; place-items:center;
-      color: var(--gold-2); font-size: 13px;
-      background: linear-gradient(145deg, rgba(215,182,108,.12), rgba(255,255,255,.02));
-      box-shadow: inset 0 0 20px rgba(215,182,108,.08);
-    }
-    .nav-links { display:flex; gap:24px; color:var(--muted); font-size:14px; }
-    .nav-links a:hover { color:var(--text); }
-    .btn {
-      display:inline-flex; align-items:center; justify-content:center; gap:8px;
-      min-height:46px; padding:0 18px; border-radius:12px; font-weight:700; font-size:14px;
-      border:1px solid rgba(255,255,255,.1);
-      background: rgba(255,255,255,.04);
-    }
-    .btn.primary {
-      color:#090b0f; border-color:transparent;
-      background: linear-gradient(135deg, var(--gold-2), var(--gold));
-      box-shadow: 0 12px 40px rgba(215,182,108,.16);
-    }
-    .hero { padding: 112px 0 76px; position:relative; overflow:hidden; }
-    .hero-grid { display:grid; grid-template-columns: 1.08fr .92fr; gap:64px; align-items:center; }
-    .eyebrow { color:var(--gold-2); text-transform:uppercase; letter-spacing:.16em; font-size:12px; font-weight:800; }
-    h1 { font-size:clamp(54px, 8vw, 104px); line-height:.94; margin:18px 0 24px; letter-spacing:-.055em; max-width:820px; }
-    .lead { color:var(--muted); font-size:clamp(18px, 2.1vw, 22px); max-width:680px; }
-    .hero-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:34px; }
-    .network {
-      min-height:480px; position:relative; display:grid; place-items:center;
-      border-radius:32px; border:1px solid rgba(255,255,255,.07);
-      background: linear-gradient(160deg, rgba(255,255,255,.035), rgba(255,255,255,.012));
-      box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    .network::before, .network::after {
-      content:""; position:absolute; inset:12%; border:1px solid var(--line); border-radius:50%;
-    }
-    .network::after { inset:25%; opacity:.65; }
-    .core {
-      width:132px; height:132px; border-radius:50%; display:grid; place-items:center; text-align:center;
-      background:radial-gradient(circle at 35% 30%, #f1d58e, #aa8746 75%);
-      color:#080a0e; font-weight:900; letter-spacing:.08em; z-index:3;
-      box-shadow: 0 0 80px rgba(215,182,108,.22);
-    }
-    .node { position:absolute; padding:10px 14px; border:1px solid rgba(255,255,255,.09); border-radius:999px; background:#0b1019; color:#cdd4dd; font-size:12px; z-index:4; }
-    .n1{top:15%;left:9%}.n2{top:10%;right:10%}.n3{bottom:15%;left:10%}.n4{bottom:10%;right:9%}.n5{top:48%;left:4%}.n6{top:48%;right:4%}
-    .stats { padding: 18px 0 90px; }
-    .stat-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; }
-    .stat { padding:24px; border:1px solid rgba(255,255,255,.07); border-radius:18px; background:var(--panel-2); }
-    .stat strong { display:block; font-size:30px; color:var(--gold-2); letter-spacing:-.03em; }
-    .stat span { color:var(--muted); font-size:13px; }
-    section { padding: 92px 0; }
-    .section-head { max-width:780px; margin-bottom:40px; }
-    .section-head h2 { font-size:clamp(36px,5vw,62px); letter-spacing:-.045em; line-height:1.02; margin:12px 0 18px; }
-    .section-head p { color:var(--muted); font-size:18px; }
-    .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-    .card { padding:30px; border-radius:22px; border:1px solid rgba(255,255,255,.07); background:var(--panel); min-height:220px; }
-    .card .num { color:var(--gold-2); font-size:12px; letter-spacing:.16em; font-weight:800; }
-    .card h3 { font-size:22px; margin:20px 0 10px; }
-    .card p { color:var(--muted); margin:0; }
-    .flow { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; counter-reset:flow; }
-    .flow-item { padding:28px; border:1px solid rgba(215,182,108,.16); border-radius:20px; background:linear-gradient(180deg, rgba(215,182,108,.04), rgba(255,255,255,.015)); }
-    .flow-item b { display:block; color:var(--gold-2); margin-bottom:12px; }
-    .token { display:grid; grid-template-columns:.9fr 1.1fr; gap:18px; }
-    .token-main, .token-side { border-radius:26px; border:1px solid rgba(255,255,255,.07); background:var(--panel); padding:36px; }
-    .supply { font-size:clamp(48px,7vw,84px); line-height:1; letter-spacing:-.05em; color:var(--gold-2); margin:14px 0 10px; }
-    .token-side { display:grid; gap:14px; }
-    .token-row { padding:18px; border-radius:16px; background:rgba(255,255,255,.025); border:1px solid rgba(255,255,255,.05); }
-    .token-row strong { display:block; margin-bottom:5px; }
-    .token-row span { color:var(--muted); font-size:14px; }
-    .team-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; }
-    .team-card { padding:30px; border-radius:22px; border:1px solid rgba(255,255,255,.07); background:var(--panel); }
-    .team-card strong { font-size:34px; color:var(--gold-2); display:block; }
-    .team-card span { color:var(--muted); }
-    footer { padding: 56px 0 70px; border-top:1px solid rgba(255,255,255,.07); color:var(--muted); }
-    .footer-grid { display:flex; justify-content:space-between; gap:20px; flex-wrap:wrap; }
-    .legal { max-width:760px; font-size:12px; color:#6f7885; margin-top:20px; }
-    @media (max-width: 900px) {
-      .nav-links { display:none; }
-      .hero { padding-top:78px; }
-      .hero-grid, .token { grid-template-columns:1fr; }
-      .network { min-height:380px; }
-      .stat-grid { grid-template-columns:repeat(2,1fr); }
-      .cards, .team-grid { grid-template-columns:1fr; }
-      .flow { grid-template-columns:repeat(2,1fr); }
-    }
-    @media (max-width: 560px) {
-      .wrap { width:min(100% - 26px, 1180px); }
-      .nav-inner { height:66px; }
-      .nav-inner > .btn { display:none; }
-      h1 { font-size:56px; }
-      .hero-grid { gap:36px; }
-      .network { min-height:330px; border-radius:24px; }
-      .core { width:108px; height:108px; }
-      .node { font-size:10px; padding:8px 10px; }
-      .stat-grid, .flow { grid-template-columns:1fr; }
-      section { padding:70px 0; }
-    }
+    *{box-sizing:border-box} html{scroll-behavior:smooth} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:radial-gradient(circle at 50% -10%,rgba(70,180,255,.12),transparent 34%),radial-gradient(circle at 90% 30%,rgba(56,120,255,.08),transparent 28%),var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden} a{color:inherit;text-decoration:none}.wrap{width:min(1180px,calc(100% - 40px));margin:auto}
+    nav{position:sticky;top:0;z-index:60;backdrop-filter:blur(18px);background:rgba(3,7,12,.72);border-bottom:1px solid rgba(255,255,255,.06)}.nav-inner{height:74px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:12px;font-weight:850;letter-spacing:.07em}.mark{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-size:12px;color:#031019;background:radial-gradient(circle at 35% 30%,#dffaff,#61d9ff 48%,#318aff 100%);box-shadow:0 0 36px rgba(89,210,255,.35)}.nav-links{display:flex;gap:24px;color:var(--muted);font-size:14px}.nav-links a:hover{color:var(--text)}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:999px;font-weight:750;font-size:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04)}.btn.primary{border-color:rgba(105,220,255,.3);background:linear-gradient(135deg,#b9f4ff,#5bd9ff 54%,#328cff);color:#04111b;box-shadow:0 12px 40px rgba(61,176,255,.2)}
+    .hero{padding:104px 0 74px;position:relative}.hero-grid{display:grid;grid-template-columns:.95fr 1.05fr;gap:54px;align-items:center}.eyebrow{color:var(--cyan);text-transform:uppercase;letter-spacing:.16em;font-size:12px;font-weight:850}.hero h1{font-size:clamp(54px,7.4vw,96px);line-height:.93;letter-spacing:-.055em;margin:18px 0 24px}.lead{font-size:clamp(18px,2vw,22px);color:var(--muted);max-width:650px}.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+    .route-stage{position:relative;min-height:520px;border-radius:34px;border:1px solid rgba(255,255,255,.08);background:radial-gradient(circle at 50% 50%,rgba(59,161,255,.12),transparent 34%),linear-gradient(160deg,rgba(255,255,255,.038),rgba(255,255,255,.012));box-shadow:var(--shadow);overflow:hidden;perspective:900px}.route-stage:before{content:"";position:absolute;inset:-25%;background:repeating-radial-gradient(ellipse at center,transparent 0 66px,rgba(102,213,255,.045) 67px 68px);transform:rotateX(58deg) rotateZ(-8deg);opacity:.75}.route-stage:after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 49%,rgba(116,224,255,.055) 50%,transparent 51%),linear-gradient(90deg,transparent 49%,rgba(116,224,255,.04) 50%,transparent 51%);background-size:100% 72px,72px 100%;mask-image:linear-gradient(to bottom,transparent,black 24%,black 76%,transparent)}
+    .route-svg{position:absolute;inset:0;width:100%;height:100%;z-index:2}.path{fill:none;stroke:rgba(116,203,236,.19);stroke-width:1.4;vector-effect:non-scaling-stroke}.path.best{stroke:url(#bestGradient);stroke-width:3.1;filter:url(#glow);stroke-dasharray:10 8;animation:flow 4.5s linear infinite}.path.alt{stroke-dasharray:3 9;animation:softflow 8s linear infinite}.orb{position:absolute;z-index:4;width:70px;height:70px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:850;letter-spacing:.04em;color:#dff8ff;background:radial-gradient(circle at 34% 28%,rgba(255,255,255,.18),rgba(24,54,79,.95) 58%,rgba(5,15,25,.98));border:1px solid rgba(124,224,255,.28);box-shadow:0 0 28px rgba(64,178,255,.13)}.orb.core{left:calc(50% - 43px);top:calc(50% - 43px);width:86px;height:86px;color:#04121b;background:radial-gradient(circle at 35% 30%,#ecfbff,#7be3ff 48%,#2d8fff 100%);box-shadow:0 0 58px rgba(74,194,255,.44);border:none}.o1{left:7%;top:13%}.o2{right:8%;top:11%}.o3{left:5%;bottom:12%}.o4{right:6%;bottom:13%}.o5{left:1%;top:43%}.o6{right:1%;top:45%}
+    .comet{position:absolute;z-index:5;width:14px;height:14px;border-radius:50%;background:#eaffff;box-shadow:0 0 14px #b9f5ff,0 0 30px #56d7ff}.comet:after{content:"";position:absolute;right:7px;top:4px;width:46px;height:6px;border-radius:99px;background:linear-gradient(90deg,transparent,rgba(86,215,255,.7),#eaffff);filter:blur(1px);transform-origin:right center}.c1{animation:comet1 4.8s ease-in-out infinite}.route-label{position:absolute;right:22px;bottom:20px;z-index:6;padding:9px 13px;border-radius:999px;border:1px solid rgba(109,224,255,.2);background:rgba(2,10,17,.7);font-size:11px;color:#a6dff0;letter-spacing:.08em;text-transform:uppercase}
+    @keyframes flow{to{stroke-dashoffset:-72}}@keyframes softflow{to{stroke-dashoffset:-96}}@keyframes comet1{0%{left:13%;top:23%;opacity:0}10%{opacity:1}47%{left:49%;top:48%}72%{left:67%;top:31%}100%{left:84%;top:19%;opacity:.1}}
+    .stats{padding:12px 0 82px}.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.stat{padding:23px;border:1px solid rgba(255,255,255,.07);border-radius:19px;background:rgba(255,255,255,.025)}.stat strong{display:block;font-size:28px;color:#b9efff;letter-spacing:-.03em}.stat span{font-size:13px;color:var(--muted)}
+    section{padding:92px 0}.section-head{max-width:790px;margin-bottom:40px}.section-head h2{font-size:clamp(36px,5vw,61px);line-height:1.02;letter-spacing:-.045em;margin:12px 0 18px}.section-head p{color:var(--muted);font-size:18px}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{min-height:240px;padding:30px;border-radius:24px;border:1px solid rgba(255,255,255,.07);background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.016))}.card .num{font-size:11px;letter-spacing:.15em;color:var(--cyan);font-weight:850}.card h3{font-size:22px;margin:19px 0 10px}.card p{margin:0;color:var(--muted)}
+    .visual-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.visual-card{position:relative;min-height:370px;padding:32px;border-radius:28px;border:1px solid rgba(255,255,255,.07);background:radial-gradient(circle at 50% 30%,rgba(70,179,255,.1),transparent 34%),rgba(255,255,255,.025);overflow:hidden}.visual-card h3{font-size:26px;margin:6px 0 8px}.visual-card p{color:var(--muted);max-width:530px;margin:0}.mini-network{position:absolute;left:9%;right:9%;bottom:24px;height:190px}.mini-core,.mini-node{position:absolute;border-radius:50%;display:grid;place-items:center}.mini-core{width:78px;height:78px;left:calc(50% - 39px);top:56px;background:radial-gradient(circle at 35% 30%,#f4feff,#6adfff 55%,#257dff);color:#04111b;font-weight:900;box-shadow:0 0 42px rgba(70,196,255,.38)}.mini-node{width:52px;height:52px;background:#091726;border:1px solid rgba(117,220,255,.25);font-size:9px;color:#b6d9e8}.mn1{left:4%;top:8px}.mn2{right:4%;top:8px}.mn3{left:12%;bottom:4px}.mn4{right:12%;bottom:4px}.loan-ring{position:absolute;width:250px;height:250px;border-radius:50%;left:calc(50% - 125px);bottom:-22px;border:1px solid rgba(104,221,255,.22);box-shadow:inset 0 0 60px rgba(50,162,255,.07)}.loan-token{position:absolute;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:10px;font-weight:900;color:#041119;background:radial-gradient(circle at 35% 30%,#efffff,#76e5ff 55%,#2f8fff);box-shadow:0 0 28px rgba(89,211,255,.45);animation:burn 3.4s ease-in-out infinite}.lt1{left:26%;bottom:98px}.lt2{right:25%;bottom:86px;animation-delay:1.2s}.burn-center{position:absolute;left:calc(50% - 54px);bottom:62px;width:108px;height:108px;border-radius:50%;display:grid;place-items:center;text-align:center;font-size:11px;font-weight:900;letter-spacing:.04em;background:radial-gradient(circle,#86f5d1 0,#35b6c7 30%,rgba(35,104,156,.36) 60%,transparent 72%);filter:drop-shadow(0 0 20px rgba(85,224,208,.35))}@keyframes burn{0%,100%{transform:translate(0,0) scale(1);opacity:.95}52%{transform:translate(52px,32px) scale(.68);opacity:.8}76%{transform:translate(75px,48px) scale(.08);opacity:0}}
+    .token{display:grid;grid-template-columns:.9fr 1.1fr;gap:18px}.token-main,.token-side{padding:36px;border-radius:27px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.027)}.supply{font-size:clamp(50px,7vw,84px);line-height:1;color:#b7efff;letter-spacing:-.05em;margin:14px 0 8px}.token-side{display:grid;gap:13px}.token-row{padding:18px;border-radius:17px;border:1px solid rgba(255,255,255,.055);background:rgba(255,255,255,.018)}.token-row strong{display:block;margin-bottom:5px}.token-row span{font-size:14px;color:var(--muted)}
+    .team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.team-card{padding:30px;border-radius:22px;border:1px solid rgba(255,255,255,.07);background:var(--panel)}.team-card strong{font-size:34px;color:#b9efff;display:block}.team-card span{color:var(--muted)}
+    .partners{padding-top:56px}.partner-box{padding:24px;border-radius:22px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.022)}.partner-title{font-size:11px;color:var(--muted);letter-spacing:.15em;text-transform:uppercase;margin-bottom:18px}.partner-row{display:flex;gap:10px;flex-wrap:wrap}.partner{padding:10px 15px;border-radius:999px;border:1px solid rgba(255,255,255,.08);font-size:13px;color:#b8c8d6;background:rgba(255,255,255,.018)}
+    footer{padding:50px 0 68px;border-top:1px solid rgba(255,255,255,.07);color:var(--muted)}.footer-grid{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}.legal{font-size:12px;color:#687a8c;max-width:820px;margin-top:20px}
+    @media(max-width:900px){.nav-links{display:none}.hero-grid,.visual-grid,.token{grid-template-columns:1fr}.route-stage{min-height:450px}.stat-grid{grid-template-columns:repeat(2,1fr)}.cards,.team-grid{grid-template-columns:1fr}}@media(max-width:560px){.wrap{width:min(100% - 26px,1180px)}.nav-inner>.btn{display:none}.hero{padding-top:76px}.hero h1{font-size:56px}.route-stage{min-height:370px}.orb{width:54px;height:54px;font-size:9px}.orb.core{width:72px;height:72px;left:calc(50% - 36px);top:calc(50% - 36px)}.stat-grid{grid-template-columns:1fr}section{padding:70px 0}}
   </style>
 </head>
 <body>
-  <nav>
-    <div class="wrap nav-inner">
-      <a class="brand" href="#top"><span class="mark">LQC</span><span>LIQUIDITY CHAIN</span></a>
-      <div class="nav-links">
-        <a href="#network">Network</a>
-        <a href="#protocol">Protocol</a>
-        <a href="#token">LQC Token</a>
-        <a href="#team">Team</a>
-      </div>
-      <a class="btn" href="https://github.com/LQC-labs/LQC-Liquidity-chain" target="_blank" rel="noreferrer">GitHub ↗</a>
-    </div>
-  </nav>
-
-  <main id="top">
-    <header class="hero">
-      <div class="wrap hero-grid">
-        <div>
-          <div class="eyebrow">Liquidity infrastructure for an open market</div>
-          <h1>Liquidity,<br/>connected.</h1>
-          <p class="lead">LQC is a liquidity infrastructure vision designed to connect fragmented DEX ecosystems, optimize routing across liquidity venues, and support lending and cross-chain capital flows.</p>
-          <div class="hero-actions">
-            <a class="btn primary" href="#network">Explore LQC</a>
-            <a class="btn" href="https://github.com/LQC-labs/LQC-Liquidity-chain" target="_blank" rel="noreferrer">View Documentation</a>
-          </div>
-        </div>
-        <div class="network" aria-label="Illustration of connected liquidity venues">
-          <div class="core">LQC<br/>CORE</div>
-          <div class="node n1">DEX A</div><div class="node n2">DEX B</div>
-          <div class="node n3">DEX C</div><div class="node n4">DEX D</div>
-          <div class="node n5">LENDING</div><div class="node n6">CROSS-CHAIN</div>
-        </div>
-      </div>
-    </header>
-
-    <div class="stats">
-      <div class="wrap stat-grid">
-        <div class="stat"><strong>2.1B</strong><span>Total LQC token supply</span></div>
-        <div class="stat"><strong>Multi-DEX</strong><span>Liquidity connectivity model</span></div>
-        <div class="stat"><strong>Routing</strong><span>Designed for efficient execution paths</span></div>
-        <div class="stat"><strong>Burn</strong><span>LQC fee-burn utility model</span></div>
-      </div>
-    </div>
-
-    <section id="network">
-      <div class="wrap">
-        <div class="section-head">
-          <div class="eyebrow">One liquidity layer</div>
-          <h2>Built around fragmented liquidity.</h2>
-          <p>Liquidity is distributed across exchanges, chains and pools. LQC is designed around a unified infrastructure model that can route, allocate and reuse liquidity across multiple decentralized markets.</p>
-        </div>
-        <div class="cards">
-          <article class="card"><div class="num">01 / MULTI-DEX</div><h3>Liquidity connectivity</h3><p>A framework for connecting multiple DEX liquidity venues instead of depending on a single exchange or pool.</p></article>
-          <article class="card"><div class="num">02 / ROUTING</div><h3>Optimal execution paths</h3><p>Routing logic is intended to evaluate available liquidity paths and improve capital and execution efficiency across venues.</p></article>
-          <article class="card"><div class="num">03 / CROSS-CHAIN</div><h3>Capital across networks</h3><p>The protocol scope includes cross-chain liquidity movement so liquidity can become more useful beyond isolated ecosystems.</p></article>
-        </div>
-      </div>
-    </section>
-
-    <section id="protocol">
-      <div class="wrap">
-        <div class="section-head">
-          <div class="eyebrow">Protocol model</div>
-          <h2>Liquidity can do more than sit in a pool.</h2>
-          <p>The LQC architecture combines liquidity provision, route selection, lending utility and cross-chain movement within one broader liquidity framework.</p>
-        </div>
-        <div class="flow">
-          <div class="flow-item"><b>01 — Connect</b>Aggregate access to liquidity across multiple DEX ecosystems.</div>
-          <div class="flow-item"><b>02 — Route</b>Identify efficient routes based on available liquidity conditions.</div>
-          <div class="flow-item"><b>03 — Utilize</b>Extend liquidity utility into lending, staking and related capital functions.</div>
-          <div class="flow-item"><b>04 — Recycle</b>Use LQC in designated lending and repayment fee flows with a burn mechanism.</div>
-        </div>
-      </div>
-    </section>
-
-    <section id="token">
-      <div class="wrap">
-        <div class="section-head">
-          <div class="eyebrow">LQC token</div>
-          <h2>A utility layer for liquidity activity.</h2>
-          <p>LQC is designed as the utility token for the Liquidity Chain ecosystem, including fee utility and token-burning mechanisms linked to protocol activity.</p>
-        </div>
-        <div class="token">
-          <div class="token-main">
-            <div class="eyebrow">Total supply</div>
-            <div class="supply">2.1B</div>
-            <p style="color:var(--muted);margin:0;">LQC tokens</p>
-          </div>
-          <div class="token-side">
-            <div class="token-row"><strong>Lending fee utility</strong><span>LQC is intended for designated lending-related fee flows.</span></div>
-            <div class="token-row"><strong>Repayment fee utility</strong><span>Repayment-related fee flows can also use LQC within the protocol model.</span></div>
-            <div class="token-row"><strong>Burn mechanism</strong><span>LQC used in specified fee flows is designed to be removed from circulation through burning.</span></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="team">
-      <div class="wrap">
-        <div class="section-head">
-          <div class="eyebrow">Organization</div>
-          <h2>Focused on liquidity infrastructure.</h2>
-          <p>LQC is organized through MMXlabs&LQC, a Wyoming LLC, with a compact technical and advisory structure.</p>
-        </div>
-        <div class="team-grid">
-          <div class="team-card"><strong>4</strong><span>Engineers</span></div>
-          <div class="team-card"><strong>2</strong><span>Advisors</span></div>
-          <div class="team-card"><strong>WY</strong><span>MMXlabs&LQC · Wyoming LLC</span></div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer>
-    <div class="wrap">
-      <div class="footer-grid">
-        <div class="brand"><span class="mark">LQC</span><span>LIQUIDITY CHAIN</span></div>
-        <div>© 2026 MMXlabs&LQC</div>
-      </div>
-      <p class="legal">This website describes the LQC project vision and protocol scope. Features, parameters and availability may change as specifications are finalized. Nothing on this page constitutes financial, investment, legal or trading advice.</p>
-    </div>
-  </footer>
+<nav><div class="wrap nav-inner"><a class="brand" href="#top"><span class="mark">LQC</span><span>LIQUIDITY CHAIN</span></a><div class="nav-links"><a href="#network">Network</a><a href="#routing">Optimal Path</a><a href="#protocol">Protocol</a><a href="#token">LQC Token</a><a href="#team">Team</a></div><a class="btn" href="https://github.com/LQC-labs/LQC-Liquidity-chain" target="_blank" rel="noreferrer">GitHub ↗</a></div></nav>
+<main id="top">
+<header class="hero"><div class="wrap hero-grid"><div><div class="eyebrow">Global liquidity infrastructure</div><h1>Liquidity,<br>connected.</h1><p class="lead">LQC connects fragmented DEX liquidity, evaluates multiple execution paths, and extends capital utility across lending and cross-chain markets.</p><div class="hero-actions"><a class="btn primary" href="#routing">Explore Optimal Path</a><a class="btn" href="#protocol">View Protocol</a></div></div><div class="route-stage" aria-label="Geometric optimal routing visualization"><svg class="route-svg" viewBox="0 0 600 520" preserveAspectRatio="none"><defs><linearGradient id="bestGradient" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#57d9ff"/><stop offset=".52" stop-color="#e7fdff"/><stop offset="1" stop-color="#4c8dff"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><path class="path alt" d="M75 105 C160 60 220 210 300 260 S430 420 530 440"/><path class="path alt" d="M78 400 C155 300 210 340 300 260 S430 110 530 95"/><path class="path alt" d="M35 250 C140 120 205 155 300 260 S435 330 565 260"/><path class="path alt" d="M75 105 C175 185 220 115 300 260 S450 220 530 95"/><path class="path alt" d="M78 400 C190 450 230 300 300 260 S420 315 530 440"/><path class="path best" d="M75 105 C170 135 208 220 300 260 S430 140 530 95"/></svg><div class="orb core">LQC<br>CORE</div><div class="orb o1">DEX A</div><div class="orb o2">DEX B</div><div class="orb o3">DEX C</div><div class="orb o4">DEX D</div><div class="orb o5">BRIDGE</div><div class="orb o6">LENDING</div><div class="comet c1"></div><div class="route-label">Optimal route selected</div></div></div></header>
+<div class="stats"><div class="wrap stat-grid"><div class="stat"><strong>2.1B</strong><span>Total LQC token supply</span></div><div class="stat"><strong>Multi-DEX</strong><span>Liquidity across many DEX venues</span></div><div class="stat"><strong>Optimal Path</strong><span>Route evaluation across multiple paths</span></div><div class="stat"><strong>Burn</strong><span>Lending & repayment fee burn utility</span></div></div></div>
+<section id="network"><div class="wrap"><div class="section-head"><div class="eyebrow">One liquidity layer</div><h2>Designed for fragmented markets.</h2><p>Liquidity is distributed across exchanges, chains and pools. LQC is structured to connect these isolated sources so capital can be routed, allocated and reused more efficiently.</p></div><div class="cards"><article class="card"><div class="num">01 / MULTI-DEX</div><h3>Liquidity connectivity</h3><p>Connect liquidity across many decentralized exchanges rather than depending on a single venue or pool.</p></article><article class="card"><div class="num">02 / ROUTING</div><h3>Optimal execution paths</h3><p>Evaluate multiple geometric routes and select the most efficient execution path from available liquidity conditions.</p></article><article class="card"><div class="num">03 / CROSS-CHAIN</div><h3>Capital across networks</h3><p>Extend liquidity movement across networks through bridge-aware route composition and cross-chain market access.</p></article></div></div></section>
+<section id="routing"><div class="wrap"><div class="section-head"><div class="eyebrow">Optimal Path</div><h2>Not one route. The best route.</h2><p>The routing visual now emphasizes several candidate paths at the same time. LQC highlights the selected path with a brighter geometric trajectory while a comet-like data particle moves along the optimized route.</p></div><div class="visual-grid"><div class="visual-card"><div class="eyebrow">Cross-chain routing</div><h3>DEX + bridge aware paths</h3><p>Multiple DEX and bridge nodes are arranged around LQC so route selection feels spatial rather than linear.</p><div class="mini-network"><div class="mini-core">LQC</div><div class="mini-node mn1">DEX</div><div class="mini-node mn2">DEX</div><div class="mini-node mn3">BRIDGE</div><div class="mini-node mn4">DEX</div></div></div><div class="visual-card" id="protocol"><div class="eyebrow">Smart-contract lending</div><h3>Fee use → LQC burn</h3><p>Lending and repayment fee flows use LQC within the protocol model, with designated LQC fees removed from circulation through burning.</p><div class="loan-ring"></div><div class="loan-token lt1">LQC</div><div class="loan-token lt2">LQC</div><div class="burn-center">FEE<br>BURN</div></div></div></div></section>
+<section id="token"><div class="wrap"><div class="section-head"><div class="eyebrow">LQC token</div><h2>A utility layer for liquidity activity.</h2><p>LQC is designed as the utility token for Liquidity Chain, including designated lending and repayment fee flows linked to a burn mechanism.</p></div><div class="token"><div class="token-main"><div class="eyebrow">Total supply</div><div class="supply">2.1B</div><p style="color:var(--muted);margin:0">LQC tokens</p></div><div class="token-side"><div class="token-row"><strong>Lending fee utility</strong><span>LQC is intended for designated lending-related fee flows.</span></div><div class="token-row"><strong>Repayment fee utility</strong><span>Repayment-related fee flows can also use LQC within the protocol model.</span></div><div class="token-row"><strong>Deflationary burn</strong><span>LQC used in specified fee flows is designed to be permanently removed from circulation.</span></div></div></div></div></section>
+<section id="team"><div class="wrap"><div class="section-head"><div class="eyebrow">Organization</div><h2>Focused on liquidity infrastructure.</h2><p>LQC is organized through MMXlabs&LQC, a Wyoming LLC, with a compact technical and advisory structure.</p></div><div class="team-grid"><div class="team-card"><strong>4</strong><span>Engineers</span></div><div class="team-card"><strong>2</strong><span>Advisors</span></div><div class="team-card"><strong>WY</strong><span>MMXlabs&LQC · Wyoming LLC</span></div></div><div class="partners"><div class="partner-box"><div class="partner-title">Ecosystem connections / collaborators</div><div class="partner-row"><span class="partner">UXUY</span><span class="partner">MEXC</span><span class="partner">Handy Foundation</span><span class="partner">Bucket Studio</span><span class="partner">Binance Labs</span></div></div></div></div></section>
+</main>
+<footer><div class="wrap"><div class="footer-grid"><div class="brand"><span class="mark">LQC</span><span>LIQUIDITY CHAIN</span></div><div>© 2026 MMXlabs&LQC</div></div><p class="legal">This website describes the LQC project vision and protocol scope. Named ecosystem organizations are shown as project connections or collaborators and should not be interpreted as formal partnership, endorsement, listing or investment claims unless separately announced by the relevant parties. Features, parameters and availability may change as specifications are finalized. Nothing on this page constitutes financial, investment, legal or trading advice.</p></div></footer>
 </body>
 </html>
