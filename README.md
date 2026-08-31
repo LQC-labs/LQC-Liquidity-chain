@@ -164,11 +164,22 @@ Potential future revenue sources may include:
 
 Treasury allocation, staking rewards, revenue distribution, additional buyback, and burn mechanisms remain subject to governance, realized protocol revenue, legal review, and published limits.
 
-## Tokenomics Status
+## Approved Tokenomics Design
 
-Token supply, TGE circulation, allocation, vesting, emissions, privileged minting controls, staking rewards, buyback, and burn policies are not finalized in this repository.
+The current approved design uses a fixed total supply of **1,000,000,000 LQC** and planned TGE circulation of **150,000,000 LQC (15%)**.
 
-Earlier drafts may contain figures that conflict with later design materials. Final tokenomics will be published only after formal approval and, where applicable, on-chain verification.
+| Allocation | Share | LQC | TGE / Release Framework |
+|---|---:|---:|---|
+| Future Ecosystem Rewards | 35% | 350,000,000 | 0 at TGE; 7+ years, up to 50M annually |
+| Community Initial | 20% | 200,000,000 | 80M at TGE; remaining 120M activity-based over 24 months |
+| Team & Core Contributors | 20% | 200,000,000 | 0 at TGE; 12-month cliff, then 36-month monthly vesting |
+| Protocol Treasury | 10% | 100,000,000 | 10M at TGE; remaining 90M through a 5-year budget framework |
+| Liquidity & Market Making | 10% | 100,000,000 | 50M at TGE; remaining 50M linked to exchange and pool growth |
+| Grants & Strategic Ecosystem | 5% | 50,000,000 | 10M at TGE; remaining 40M milestone-based |
+
+The planned TGE circulation consists of Community Initial 80M, Liquidity & Market Making 50M, Protocol Treasury 10M, and Grants & Strategic Ecosystem 10M.
+
+This is the current approved project design. Contract addresses, on-chain supply controls, final vesting contracts, and verification materials will be published when implementation and review are complete. Earlier drafts using a different total supply are superseded.
 
 ## Roadmap
 
