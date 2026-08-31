@@ -179,7 +179,7 @@ The current approved design uses a fixed total supply of **1,000,000,000 LQC** a
 
 The planned TGE circulation consists of Community Initial 80M, Liquidity & Market Making 50M, Protocol Treasury 10M, and Grants & Strategic Ecosystem 10M.
 
-This is the current approved project design. Contract addresses, on-chain supply controls, final vesting contracts, and verification materials will be published when implementation and review are complete. Earlier 2.1B drafts are superseded.
+This is the current approved project design. Contract addresses, on-chain supply controls, final vesting contracts, and verification materials will be published when implementation and review are complete. Earlier drafts using a different total supply are superseded.
 
 ## Roadmap
 
