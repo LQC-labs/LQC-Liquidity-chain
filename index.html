@@ -51,13 +51,18 @@
     @keyframes liqSpin{to{transform:rotate(360deg)}}@keyframes liqOrbit{to{transform:rotate(360deg)}}@keyframes liqCounter{to{transform:translate(-50%,-50%) rotate(-360deg)}}@keyframes liqBeam{0%,100%{opacity:.25}50%{opacity:1}}@keyframes liqParticle{0%{transform:translate(0,0) scale(.4);opacity:0}18%{opacity:1}78%{opacity:1}100%{transform:translate(var(--lx),var(--ly)) scale(1.35);opacity:0}}@keyframes liqCorePulse{0%{transform:scale(.92);opacity:.7}100%{transform:scale(1.48);opacity:0}}@keyframes liqCoreOrbit{to{transform:rotate(360deg)}}
     @media(max-width:560px){.liquidity-hero{min-height:390px}.liq-core{width:105px;height:105px}.liq-core strong{font-size:24px}.liq-ring-a{width:92%}.liq-ring-b{height:82%}.liq-orbit{inset:11%}.liq-particle-a{--lx:125px;--ly:-75px}.liq-particle-b{--lx:-120px;--ly:85px}.liq-particle-c{--lx:65px;--ly:125px}}
     @media(prefers-reduced-motion:reduce){.liq-ring-c,.liq-beam,.liq-orbit,.liq-orbit span,.liq-particle,.liq-core:before,.liq-core-pulse{animation:none!important}}
+  
+    /* Planned perpetual trading module */
+    .perp-layout{display:grid;grid-template-columns:.82fr 1.18fr;gap:18px;align-items:stretch}.perp-copy,.perp-stage{border:1px solid var(--line2);border-radius:28px;background:linear-gradient(155deg,rgba(255,255,255,.044),rgba(255,255,255,.012));overflow:hidden}.perp-copy{padding:34px}.module-tag{display:inline-flex;align-items:center;gap:8px;margin:16px 0 22px;padding:8px 12px;border-radius:999px;border:1px solid rgba(121,242,202,.24);background:rgba(121,242,202,.055);color:#a9f8df;font-size:10px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.module-tag:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 12px var(--mint);animation:perpPulse 2.4s ease-in-out infinite}.perp-copy h3{font-size:30px;line-height:1.08;margin:0 0 14px}.perp-copy p{color:var(--muted);margin:0}.perp-steps{display:grid;gap:10px;margin-top:24px}.perp-step{display:flex;gap:13px;align-items:flex-start;padding:13px 14px;border:1px solid rgba(255,255,255,.055);border-radius:15px;background:rgba(255,255,255,.018)}.perp-step b{flex:none;color:#a9efff;font-size:11px;letter-spacing:.1em}.perp-step span{color:var(--muted);font-size:13px}.perp-stage{position:relative;min-height:455px;background:radial-gradient(circle at 50% 47%,rgba(47,143,255,.16),transparent 27%),linear-gradient(160deg,#07131f,#03090f)}.perp-grid{position:absolute;inset:0;background:linear-gradient(rgba(105,220,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(105,220,255,.04) 1px,transparent 1px);background-size:100% 52px,64px 100%;mask-image:linear-gradient(to bottom,transparent,black 12%,black 88%,transparent)}.perp-chart{position:absolute;inset:50px 22px 90px;width:calc(100% - 44px);height:calc(100% - 140px);overflow:visible}.price-line{fill:none;stroke:url(#perpPriceGradient);stroke-width:3;filter:url(#perpGlow);stroke-dasharray:9 7;animation:perpFlow 4s linear infinite}.price-area{fill:url(#perpArea)}.candle-up{fill:#79f2ca;filter:url(#perpSoftGlow)}.candle-down{fill:#ff718b;filter:url(#perpRedGlow)}.wick-up{stroke:#79f2ca}.wick-down{stroke:#ff718b}.perp-price{position:absolute;z-index:5;left:50%;top:47%;transform:translate(-50%,-50%);width:118px;height:118px;border-radius:50%;display:grid;place-items:center;text-align:center;background:radial-gradient(circle at 35% 30%,#efffff,#69dcff 48%,#2f8fff);color:#031019;font-weight:950;box-shadow:0 0 38px rgba(105,220,255,.46),0 0 90px rgba(47,143,255,.22)}.perp-price small{display:block;font-size:8px;letter-spacing:.12em}.perp-price strong{display:block;font-size:21px;line-height:1.1}.perp-price:before,.perp-price:after{content:"";position:absolute;inset:-13px;border:1px solid rgba(121,242,202,.33);border-radius:50%;animation:perpRing 3s ease-out infinite}.perp-price:after{animation-delay:1.5s}.position{position:absolute;z-index:6;top:38%;width:100px;padding:11px 12px;border-radius:14px;text-align:center;font-size:9px;font-weight:900;letter-spacing:.08em;background:rgba(4,14,23,.9)}.position strong{display:block;font-size:16px}.position.long{left:5%;color:#79f2ca;border:1px solid rgba(121,242,202,.3);box-shadow:0 0 24px rgba(121,242,202,.08);animation:perpLong 6s ease-in-out infinite}.position.short{right:5%;color:#ff8da1;border:1px solid rgba(255,113,139,.3);box-shadow:0 0 24px rgba(255,113,139,.08);animation:perpShort 6s ease-in-out infinite}.funding-orbit{position:absolute;z-index:4;left:50%;top:47%;width:58%;height:62%;transform:translate(-50%,-50%) rotate(-12deg);border:1px dashed rgba(105,220,255,.24);border-radius:50%;animation:fundingSpin 12s linear infinite}.funding-dot{position:absolute;left:50%;top:-5px;width:10px;height:10px;border-radius:50%;background:#dff9ff;box-shadow:0 0 16px #69dcff}.funding-label{position:absolute;z-index:7;left:50%;top:12px;transform:translateX(-50%);padding:7px 10px;border-radius:999px;background:rgba(3,10,17,.82);border:1px solid rgba(105,220,255,.16);color:#8fb7c8;font-size:9px;letter-spacing:.12em;text-transform:uppercase}.risk-bar{position:absolute;z-index:7;left:7%;right:7%;bottom:28px;height:38px;border-radius:12px;border:1px solid rgba(255,255,255,.07);background:rgba(2,8,13,.78);overflow:hidden}.risk-fill{height:100%;width:36%;background:linear-gradient(90deg,rgba(121,242,202,.2),rgba(255,197,91,.28),rgba(255,113,139,.34));border-right:1px solid #ff718b;box-shadow:8px 0 22px rgba(255,113,139,.24);animation:riskMove 6s ease-in-out infinite}.risk-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 13px;font-size:9px;font-weight:850;letter-spacing:.08em;color:#b6cad7}.risk-text span:last-child{color:#ff9aad}.perp-note{margin-top:16px;color:#657b8c;font-size:11px}.perp-flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:18px}.perp-chip{padding:13px 10px;border-radius:14px;border:1px solid rgba(105,220,255,.1);background:rgba(105,220,255,.02);text-align:center;color:#91a7b9;font-size:11px}.perp-chip b{display:block;color:#b9efff;margin-bottom:3px}
+    @keyframes perpFlow{to{stroke-dashoffset:-64}}@keyframes perpPulse{50%{opacity:.35;transform:scale(.75)}}@keyframes perpRing{0%{transform:scale(.86);opacity:.8}100%{transform:scale(1.42);opacity:0}}@keyframes fundingSpin{to{transform:translate(-50%,-50%) rotate(348deg)}}@keyframes perpLong{0%,100%{transform:translateY(4px);opacity:.68}50%{transform:translateY(-5px);opacity:1}}@keyframes perpShort{0%,100%{transform:translateY(-5px);opacity:1}50%{transform:translateY(4px);opacity:.68}}@keyframes riskMove{0%,100%{width:34%}50%{width:78%}}@media(max-width:920px){.perp-layout{grid-template-columns:1fr}.perp-flow{grid-template-columns:repeat(3,1fr)}}@media(max-width:560px){.perp-copy{padding:26px}.perp-stage{min-height:390px}.perp-price{width:96px;height:96px}.perp-price strong{font-size:17px}.position{width:78px;padding:9px 7px}.position.long{left:3%}.position.short{right:3%}.funding-orbit{width:70%;height:56%}.perp-flow{grid-template-columns:1fr 1fr}}@media(prefers-reduced-motion:reduce){.module-tag:before,.price-line,.perp-price:before,.perp-price:after,.position,.funding-orbit,.risk-fill{animation:none!important}}
+
   </style>
 </head>
 <body>
 <nav>
   <div class="wrap nav-inner">
     <a class="brand" href="#top"><span class="mark"><img src="lqc-token-symbol.png" alt="LQC symbol"></span><span>LIQUIDITY CHAIN</span></a>
-    <div class="nav-links"><a href="#network">Network</a><a href="#routing">Optimal Path</a><a href="#protocol">Protocol</a><a href="#token">LQC Token</a><a href="#team">Team</a></div>
+    <div class="nav-links"><a href="#network">Network</a><a href="#routing">Optimal Path</a><a href="#protocol">Protocol</a><a href="#perpetual">Perpetual</a><a href="#token">LQC Token</a><a href="#team">Team</a></div>
     <a class="btn" href="https://github.com/LQC-labs/LQC-Liquidity-chain" target="_blank" rel="noreferrer">GitHub ↗</a>
   </div>
 </nav>
@@ -165,6 +170,48 @@
     <div class="flow-item"><b>04 — Burn</b><span>Remove LQC used in specified lending and repayment fee flows.</span></div>
   </div>
 </div></section>
+
+
+<section id="perpetual"><div class="wrap">
+  <div class="section-head"><div class="eyebrow">Perpetual trading · Planned module</div><h2>Continuous markets, controlled risk.</h2><p>The planned LQC perpetual module is designed to connect long and short positions with oracle pricing, recurring funding, margin controls and layered liquidation protection.</p></div>
+  <div class="perp-layout">
+    <div class="perp-copy">
+      <div class="module-tag">Phase 4 · Planned module</div>
+      <h3>A market loop that never expires.</h3>
+      <p>Positions remain open while margin requirements are met. Funding helps align the perpetual market with its reference price, while insurance and ADL are designed as layered safeguards.</p>
+      <div class="perp-steps">
+        <div class="perp-step"><b>01</b><span>Open a long or short position against available market liquidity.</span></div>
+        <div class="perp-step"><b>02</b><span>Oracle and mark-price controls continuously update position risk.</span></div>
+        <div class="perp-step"><b>03</b><span>Funding transfers balance market bias between long and short positions.</span></div>
+        <div class="perp-step"><b>04</b><span>Margin, liquidation, insurance and ADL form a layered risk system.</span></div>
+      </div>
+      <div class="perp-note">Activation remains subject to testnet validation, independent security audit, sufficient market depth and applicable legal review.</div>
+    </div>
+    <div class="perp-stage" aria-label="Animated planned LQC perpetual trading market with long, short, oracle price, funding and margin risk">
+      <div class="perp-grid"></div>
+      <div class="funding-label">Funding cycle · Long ↔ Short</div>
+      <svg class="perp-chart" viewBox="0 0 620 300" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="perpPriceGradient" x1="0" x2="1"><stop stop-color="#79f2ca"/><stop offset=".5" stop-color="#69dcff"/><stop offset="1" stop-color="#2f8fff"/></linearGradient>
+          <linearGradient id="perpArea" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#69dcff" stop-opacity=".17"/><stop offset="1" stop-color="#69dcff" stop-opacity="0"/></linearGradient>
+          <filter id="perpGlow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="perpSoftGlow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="perpRedGlow"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <path class="price-area" d="M0 240 C55 225 78 168 126 184 S205 128 254 150 S329 84 386 111 S466 58 512 82 S574 42 620 55 L620 300 L0 300Z"/>
+        <path class="price-line" d="M0 240 C55 225 78 168 126 184 S205 128 254 150 S329 84 386 111 S466 58 512 82 S574 42 620 55"/>
+        <g stroke-width="2"><line class="wick-up" x1="56" y1="177" x2="56" y2="244"/><rect class="candle-up" x="48" y="194" width="16" height="31" rx="2"/><line class="wick-down" x1="116" y1="152" x2="116" y2="214"/><rect class="candle-down" x="108" y="168" width="16" height="27" rx="2"/><line class="wick-up" x1="184" y1="126" x2="184" y2="190"/><rect class="candle-up" x="176" y="143" width="16" height="29" rx="2"/><line class="wick-down" x1="252" y1="114" x2="252" y2="176"/><rect class="candle-down" x="244" y="132" width="16" height="27" rx="2"/><line class="wick-up" x1="332" y1="78" x2="332" y2="139"/><rect class="candle-up" x="324" y="94" width="16" height="30" rx="2"/><line class="wick-down" x1="408" y1="61" x2="408" y2="125"/><rect class="candle-down" x="400" y="78" width="16" height="28" rx="2"/><line class="wick-up" x1="490" y1="42" x2="490" y2="101"/><rect class="candle-up" x="482" y="57" width="16" height="29" rx="2"/><line class="wick-up" x1="566" y1="25" x2="566" y2="78"/><rect class="candle-up" x="558" y="39" width="16" height="25" rx="2"/></g>
+      </svg>
+      <div class="funding-orbit"><span class="funding-dot"></span></div>
+      <div class="position long"><strong>LONG</strong>Position</div>
+      <div class="position short"><strong>SHORT</strong>Position</div>
+      <div class="perp-price"><div><small>ORACLE / MARK</small><strong>PRICE</strong></div></div>
+      <div class="risk-bar"><div class="risk-fill"></div><div class="risk-text"><span>MAINTENANCE MARGIN</span><span>LIQUIDATION GUARD</span></div></div>
+    </div>
+  </div>
+  <div class="perp-flow"><div class="perp-chip"><b>Margin</b>Collateral control</div><div class="perp-chip"><b>Position</b>Long · Short</div><div class="perp-chip"><b>Funding</b>Market balance</div><div class="perp-chip"><b>Insurance</b>Loss buffer</div><div class="perp-chip"><b>ADL</b>Last safeguard</div></div>
+</div></section>
+
 
 <section id="token"><div class="wrap">
   <div class="section-head"><div class="eyebrow">LQC token</div><h2>A utility layer tied to liquidity activity.</h2><p>LQC is designed as the utility token of the Liquidity Chain ecosystem, with fee utility and token-burning mechanics linked to designated protocol activity.</p></div>
