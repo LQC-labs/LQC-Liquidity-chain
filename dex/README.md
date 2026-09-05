@@ -8,7 +8,7 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - `LQCFlowPair`: constant-product (`x*y=k`) pool and ERC-20 LP shares
 - `LQCFlowRouter`: token/BNB liquidity add/remove, exact-input swaps, exact-output swaps, and multi-hop paths
 - `LQCFlowQuoter`: compares up to 16 candidate routes and selects the highest-output viable path
-- `LQCFlowRouterV2`: compares approved external-DEX adapters and atomically executes the best ERC-20 route
+- `LQCFlowRouterV2`: compares approved external-DEX adapters and executes the best token or native-BNB route
 - `UniswapV2DEXAdapter`: integration layer for PancakeSwap V2, Biswap, and compatible routers
 - Native BNB wrapping/unwrapping through the configured WBNB contract
 - 0.30% swap fee retained in the pool for liquidity providers
@@ -52,6 +52,6 @@ Never commit private keys or `.env` files.
 
 ## Current limitations
 
-This is an unaudited testnet MVP, not production-ready software. Router V2 now provides the adapter registry, best-quote execution core, and a Uniswap V2-compatible adapter; network-specific router addresses still require testnet verification and allowlisting. Native-BNB entry points, fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, governance timelocks, pausability, price oracles, and the full chart-based trading interface are intentionally deferred.
+This is an unaudited testnet MVP, not production-ready software. Router V2 now provides the adapter registry, best-quote execution core, native-BNB wrapping/unwrapping, and a Uniswap V2-compatible adapter; network-specific router addresses still require testnet verification and allowlisting. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, governance timelocks, pausability, price oracles, and the full chart-based trading interface are intentionally deferred.
 
 Before any mainnet use, complete independent audits, invariant/fuzz testing, economic simulations, legal review, multisig/timelock setup, token and pool allowlisting decisions, monitoring, and a capped-liquidity testnet/pilot phase.
