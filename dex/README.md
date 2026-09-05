@@ -37,6 +37,22 @@ export FACTORY_OWNER="0x..." # preferably a multisig; optional for testnet
 node scripts/deploy.mjs
 ```
 
+Validate the official BSC testnet contracts without using a private key:
+
+```bash
+npm run verify:testnet
+```
+
+After Router V2 is deployed, deploy its PancakeSwap V2 adapter:
+
+```bash
+export ROUTER_V2_ADDRESS="0x..."
+export DEPLOYER_PRIVATE_KEY="..."
+npm run deploy:pancake-adapter
+```
+
+The adapter script verifies chain ID 97, Router V2 WBNB, PancakeSwap WBNB, and PancakeSwap Factory before deployment. It enables the adapter automatically only when the deployer is the Router V2 owner; otherwise it prints the exact multisig action required.
+
 After deployment, configure the verified Router, WBNB, and LQC test-token addresses:
 
 ```bash
