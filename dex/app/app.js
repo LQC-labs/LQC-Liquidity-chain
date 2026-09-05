@@ -9,6 +9,11 @@
     "function swapExactBNBForTokens(uint256 amountOutMin,address[] path,address to,uint256 deadline) payable returns (uint256[] amounts)",
     "function swapExactTokensForBNB(uint256 amountIn,uint256 amountOutMin,address[] path,address to,uint256 deadline) returns (uint256[] amounts)"
   ];
+  const routerV2Abi = [
+    "function swapBestExactInput(address tokenIn,address tokenOut,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) returns (address adapter,uint256 amountOut)",
+    "function swapExactBNBForTokens(address tokenOut,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) payable returns (address adapter,uint256 amountOut)",
+    "function swapExactTokensForBNB(address tokenIn,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) returns (address adapter,uint256 amountOut)"
+  ];
   const erc20Abi = [
     "function balanceOf(address account) view returns (uint256)",
     "function allowance(address owner,address spender) view returns (uint256)",
@@ -19,27 +24,33 @@
   const ui = {
     connect: $("connectButton"), settings: $("settingsButton"), settingsPanel: $("settingsPanel"),
     amountIn: $("amountIn"), amountOut: $("amountOut"), minimum: $("minimumReceived"),
-    route: $("routeLabel"), balanceIn: $("balanceIn"), balanceOut: $("balanceOut"),
+    route: $("routeLabel"), routeDex: $("routeDex"), routeAlternatives: $("routeAlternatives"),
+    routerMode: $("routerMode"), balanceIn: $("balanceIn"), balanceOut: $("balanceOut"),
     tokenInButton: $("tokenInButton"), tokenOutButton: $("tokenOutButton"), flip: $("flipButton"),
     max: $("maxButton"), buyAction: $("buyAction"), sellAction: $("sellAction"), status: $("statusBox"), statusText: $("statusText"),
     dialog: $("tokenDialog"), tokenList: $("tokenList"), slippage: $("slippageInput"),
     contractState: $("contractState")
   };
 
-  let provider, signer, account, router, choosingSide = "in", quoteTimer;
+  let provider, signer, account, router, routerV2, currentQuote, choosingSide = "in", quoteTimer;
   let tokenIn = config.tokens[0];
   let tokenOut = config.tokens[2];
   let tradeMode = "buy";
 
-  const deployed = ethers.isAddress(config.routerAddress) && config.tokens
+  const tokensConfigured = config.tokens
     .filter((token) => token.address !== "native")
     .every((token) => ethers.isAddress(token.address));
+  const deployedV1 = ethers.isAddress(config.routerAddress) && tokensConfigured;
+  const configuredAdapters = (config.adapters || []).filter((adapter) => ethers.isAddress(adapter.address));
+  const deployedV2 = ethers.isAddress(config.routerV2Address) && configuredAdapters.length > 0 && tokensConfigured;
+  const deployed = deployedV2 || deployedV1;
 
   if (deployed) {
     ui.contractState.textContent = "연결 준비";
     ui.contractState.className = "";
     setStatus("컨트랙트가 설정되었습니다. 지갑을 연결하세요.");
   }
+  ui.routerMode.textContent = deployedV2 ? "ROUTER 2.0" : "AMM V1";
 
   function setStatus(message, type = "") {
     ui.status.className = `status ${type}`.trim();
@@ -58,6 +69,11 @@
     return token.address;
   }
 
+  function symbolForAddress(address) {
+    return config.tokens.find((token) => tokenAddress(token).toLowerCase() === address.toLowerCase())?.symbol
+      || shortAddress(address);
+  }
+
   function renderTokens() {
     for (const [side, token] of [["In", tokenIn], ["Out", tokenOut]]) {
       $(`token${side}Label`).textContent = token.symbol;
@@ -65,6 +81,9 @@
       $(`token${side}Icon`).classList.toggle("mint", token.symbol === "LQC");
     }
     ui.route.textContent = `${tokenIn.symbol} → ${tokenOut.symbol}`;
+    ui.routeDex.textContent = deployedV2 ? "경로 탐색 대기" : "LQC Flow AMM";
+    ui.routeAlternatives.textContent = deployedV2 ? "수량을 입력하세요" : "직접 경로";
+    currentQuote = null;
     syncModeFromPair();
   }
 
@@ -133,7 +152,8 @@
       signer = await provider.getSigner();
       account = await signer.getAddress();
       ui.connect.textContent = shortAddress(account);
-      router = deployed ? new ethers.Contract(config.routerAddress, routerAbi, signer) : null;
+      router = deployedV1 ? new ethers.Contract(config.routerAddress, routerAbi, signer) : null;
+      routerV2 = deployedV2 ? new ethers.Contract(config.routerV2Address, routerV2Abi, signer) : null;
       setTradeActionsDisabled(!deployed);
       setStatus(deployed ? "지갑이 연결되었습니다." : "지갑 연결 완료 · 테스트넷 배포 주소가 아직 없습니다.", deployed ? "success" : "");
       await updateBalances();
@@ -178,39 +198,89 @@
   async function updateQuote() {
     ui.amountOut.textContent = "0.0";
     ui.minimum.textContent = "—";
+    currentQuote = null;
     const raw = ui.amountIn.value.trim();
-    if (!raw || Number(raw) <= 0 || !router) return;
+    if (!raw || Number(raw) <= 0 || (!router && !routerV2)) return;
     const path = [tokenAddress(tokenIn), tokenAddress(tokenOut)];
     if (!path.every(ethers.isAddress)) return;
     try {
       const amount = ethers.parseUnits(raw, tokenIn.decimals);
-      const amounts = await router.getAmountsOut(amount, path);
-      const out = amounts[amounts.length - 1];
       const slippageBps = Math.round(Number(ui.slippage.value) * 100);
-      const minimum = out * BigInt(10_000 - slippageBps) / 10_000n;
+      let out, minimum;
+      if (routerV2) {
+        const connectors = config.tokens
+          .filter((token) => token.address !== "native" && ethers.isAddress(token.address))
+          .map((token) => token.address);
+        currentQuote = await window.LQCRouteOptimizer.findOptimalRoute({
+          provider,
+          tokenIn: path[0],
+          tokenOut: path[1],
+          amountIn: amount,
+          adapters: configuredAdapters,
+          connectors,
+          slippageBps
+        });
+        out = currentQuote.amountOut;
+        minimum = currentQuote.amountOutMin;
+        ui.route.textContent = currentQuote.path.map(symbolForAddress).join(" → ");
+        ui.routeDex.textContent = currentQuote.adapter.name || currentQuote.adapter.id;
+        ui.routeAlternatives.textContent = `${currentQuote.alternatives.length + 1}개 경로 비교`;
+      } else {
+        const amounts = await router.getAmountsOut(amount, path);
+        out = amounts[amounts.length - 1];
+        minimum = out * BigInt(10_000 - slippageBps) / 10_000n;
+        currentQuote = { path, amountOut: out, amountOutMin: minimum };
+        ui.routeDex.textContent = "LQC Flow AMM";
+        ui.routeAlternatives.textContent = "직접 경로";
+      }
       ui.amountOut.textContent = ethers.formatUnits(out, tokenOut.decimals);
       ui.minimum.textContent = `${Number(ethers.formatUnits(minimum, tokenOut.decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 })} ${tokenOut.symbol}`;
       setTradeActionsDisabled(false);
-    } catch {
+    } catch (error) {
       setTradeActionsDisabled(true);
-      setStatus("이 거래쌍의 유동성을 확인할 수 없습니다.", "error");
+      ui.routeDex.textContent = "경로 없음";
+      ui.routeAlternatives.textContent = "유동성 확인 필요";
+      setStatus(error.message || "이 거래쌍의 유동성을 확인할 수 없습니다.", "error");
     }
   }
 
   async function executeSwap() {
-    if (!router || !account) return connectWallet();
+    if ((!router && !routerV2) || !account) return connectWallet();
     const raw = ui.amountIn.value.trim();
     if (!raw || Number(raw) <= 0) return setStatus("보낼 수량을 입력하세요.", "error");
     try {
       setTradeActionsDisabled(true);
+      await updateQuote();
+      if (!currentQuote) throw new Error("실행 가능한 최적경로가 없습니다.");
       const amountIn = ethers.parseUnits(raw, tokenIn.decimals);
       const path = [tokenAddress(tokenIn), tokenAddress(tokenOut)];
-      const amounts = await router.getAmountsOut(amountIn, path);
-      const slippageBps = Math.round(Number(ui.slippage.value) * 100);
-      const amountOutMin = amounts.at(-1) * BigInt(10_000 - slippageBps) / 10_000n;
+      const amountOutMin = currentQuote.amountOutMin;
       const deadline = Math.floor(Date.now() / 1000) + 1_200;
       let tx;
-      if (tokenIn.address === "native") {
+      if (routerV2) {
+        const adapters = [currentQuote.adapter.address];
+        const routeData = [currentQuote.routeData];
+        if (tokenIn.address === "native") {
+          tx = await routerV2.swapExactBNBForTokens(
+            tokenAddress(tokenOut), amountOutMin, adapters, routeData, account, deadline, { value: amountIn }
+          );
+        } else {
+          const token = new ethers.Contract(tokenIn.address, erc20Abi, signer);
+          const allowance = await token.allowance(account, config.routerV2Address);
+          if (allowance < amountIn) {
+            setStatus(`${tokenIn.symbol} 사용 승인을 확인하세요.`);
+            await (await token.approve(config.routerV2Address, amountIn)).wait();
+          }
+          tx = tokenOut.address === "native"
+            ? await routerV2.swapExactTokensForBNB(
+              tokenAddress(tokenIn), amountIn, amountOutMin, adapters, routeData, account, deadline
+            )
+            : await routerV2.swapBestExactInput(
+              tokenAddress(tokenIn), tokenAddress(tokenOut), amountIn, amountOutMin,
+              adapters, routeData, account, deadline
+            );
+        }
+      } else if (tokenIn.address === "native") {
         tx = await router.swapExactBNBForTokens(amountOutMin, path, account, deadline, { value: amountIn });
       } else {
         const token = new ethers.Contract(tokenIn.address, erc20Abi, signer);
