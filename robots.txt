@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://lqc-labs.github.io/LQC-Liquidity-chain/sitemap.xml
