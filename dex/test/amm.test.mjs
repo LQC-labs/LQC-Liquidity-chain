@@ -8,7 +8,7 @@ const artifact = (name, source = name) => JSON.parse(
 );
 
 describe("LQC Flow DEX MVP", function () {
-  let eip1193, provider, owner, trader, factory, router, tokenA, tokenB, wbnb;
+  let eip1193, provider, owner, trader, factory, router, quoter, tokenA, tokenB, wbnb;
 
   beforeEach(async function () {
     eip1193 = ganache.provider({ logging: { quiet: true }, wallet: { totalAccounts: 3 } });
@@ -27,6 +27,9 @@ describe("LQC Flow DEX MVP", function () {
     const Router = new ethers.ContractFactory(artifact("LQCFlowRouter").abi, artifact("LQCFlowRouter").bytecode, owner);
     router = await Router.deploy(await factory.getAddress(), await wbnb.getAddress());
     await router.waitForDeployment();
+    const Quoter = new ethers.ContractFactory(artifact("LQCFlowQuoter").abi, artifact("LQCFlowQuoter").bytecode, owner);
+    quoter = await Quoter.deploy(await router.getAddress());
+    await quoter.waitForDeployment();
 
     const ownerAddress = await owner.getAddress();
     const traderAddress = await trader.getAddress();
@@ -187,5 +190,50 @@ describe("LQC Flow DEX MVP", function () {
     await assert.rejects(
       trader.sendTransaction({ to: await router.getAddress(), value: 1n })
     );
+  });
+
+  it("selects the highest-output route and skips unavailable candidates", async function () {
+    await (await wbnb.deposit({ value: ethers.parseEther("20") })).wait();
+    await (await wbnb.approve(await router.getAddress(), ethers.MaxUint256)).wait();
+
+    await (await router.addLiquidity(
+      await tokenA.getAddress(), await tokenB.getAddress(),
+      ethers.parseEther("100"), ethers.parseEther("100"), 0, 0,
+      await owner.getAddress(), await deadline()
+    )).wait();
+    await (await router.addLiquidity(
+      await tokenA.getAddress(), await wbnb.getAddress(),
+      ethers.parseEther("10000"), ethers.parseEther("10"), 0, 0,
+      await owner.getAddress(), await deadline()
+    )).wait();
+    await (await router.addLiquidity(
+      await wbnb.getAddress(), await tokenB.getAddress(),
+      ethers.parseEther("10"), ethers.parseEther("10000"), 0, 0,
+      await owner.getAddress(), await deadline()
+    )).wait();
+
+    const missingToken = ethers.Wallet.createRandom().address;
+    const candidates = [
+      [await tokenA.getAddress(), missingToken, await tokenB.getAddress()],
+      [await tokenA.getAddress(), await tokenB.getAddress()],
+      [await tokenA.getAddress(), await wbnb.getAddress(), await tokenB.getAddress()]
+    ];
+    const result = await quoter.quoteBestExactInput(ethers.parseEther("10"), candidates);
+    assert.equal(result.bestIndex, 2n);
+    assert.equal(result.amounts.length, 3);
+    assert.equal(result.amountOut, result.amounts[2]);
+  });
+
+  it("rejects route candidates with different input or output assets", async function () {
+    const candidates = [
+      [await tokenA.getAddress(), await tokenB.getAddress()],
+      [await wbnb.getAddress(), await tokenB.getAddress()]
+    ];
+    await assert.rejects(quoter.quoteBestExactInput(1n, candidates));
+  });
+
+  it("rejects oversized paths before evaluating pool state", async function () {
+    const path = Array(6).fill(null).map(() => ethers.Wallet.createRandom().address);
+    await assert.rejects(quoter.quoteExactInput(1n, path));
   });
 });
