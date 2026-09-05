@@ -35,3 +35,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+# redeploy: JEONG JAE-WON portrait 2026-09-05
