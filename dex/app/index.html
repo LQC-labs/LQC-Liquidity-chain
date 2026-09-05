@@ -69,8 +69,9 @@
 
       <div class="quote-box" id="quoteBox">
         <div><span>최소 수령량</span><b id="minimumReceived">—</b></div>
-        <div><span>LP 수수료</span><b>0.30%</b></div>
-        <div><span>경로</span><b id="routeLabel">BNB → LQC</b></div>
+        <div><span>선택된 DEX</span><b id="routeDex">LQC Flow AMM</b></div>
+        <div><span>최적 경로</span><b id="routeLabel">BNB → LQC</b></div>
+        <div><span>비교 결과</span><b id="routeAlternatives">직접 경로</b></div>
       </div>
 
       <div class="status" id="statusBox" role="status">
@@ -85,7 +86,7 @@
     </section>
 
     <aside class="market-panel" aria-label="LQC Flow 거래 정보">
-      <div class="market-head"><span>ROUTE STATUS</span><b>AMM V1</b></div>
+      <div class="market-head"><span>ROUTE STATUS</span><b id="routerMode">AMM V1</b></div>
       <div class="route-visual" aria-hidden="true">
         <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div>
         <div class="route-node node-a">BNB</div><div class="route-node node-b">LQC</div>
@@ -109,6 +110,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
   <script src="config.js"></script>
+  <script src="route-optimizer.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
