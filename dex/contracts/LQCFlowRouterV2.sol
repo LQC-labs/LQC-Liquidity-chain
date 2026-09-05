@@ -3,15 +3,16 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "./interfaces/IERC20.sol";
 import {ILQCDEXAdapter} from "./interfaces/ILQCDEXAdapter.sol";
+import {IWBNB} from "./interfaces/IWBNB.sol";
 import {SafeTransferLib} from "./libraries/SafeTransferLib.sol";
 
-/// @notice Adapter-based best-price router for ERC-20 swaps across approved DEX integrations.
-/// @dev Native BNB support is intentionally deferred; callers can route through WBNB.
+/// @notice Adapter-based best-price router across approved DEX integrations.
 contract LQCFlowRouterV2 {
     using SafeTransferLib for address;
 
     uint256 public constant MAX_CANDIDATES = 16;
 
+    address public immutable WBNB;
     address public owner;
     address public pendingOwner;
     mapping(address => bool) public isAdapterEnabled;
@@ -40,6 +41,7 @@ contract LQCFlowRouterV2 {
     error Expired();
     error InsufficientOutput();
     error Reentrancy();
+    error NativeSenderNotWBNB();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
@@ -53,10 +55,15 @@ contract LQCFlowRouterV2 {
         unlocked = 1;
     }
 
-    constructor(address owner_) {
-        if (owner_ == address(0)) revert ZeroAddress();
+    constructor(address owner_, address wbnb_) {
+        if (owner_ == address(0) || wbnb_ == address(0)) revert ZeroAddress();
         owner = owner_;
+        WBNB = wbnb_;
         emit OwnershipTransferred(address(0), owner_);
+    }
+
+    receive() external payable {
+        if (msg.sender != WBNB) revert NativeSenderNotWBNB();
     }
 
     function setAdapter(address adapter, bool enabled) external onlyOwner {
@@ -119,27 +126,91 @@ contract LQCFlowRouterV2 {
         if (recipient == address(0)) revert ZeroAddress();
 
         (uint256 bestIndex, address bestAdapter,) = getBestQuote(tokenIn, tokenOut, amountIn, adapters, routeData);
-        if (!isAdapterEnabled[bestAdapter]) revert AdapterNotEnabled();
-
+        uint256 inputBalanceFloor = IERC20(tokenIn).balanceOf(address(this));
         tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
-        uint256 inputBalanceFloor = IERC20(tokenIn).balanceOf(address(this)) - amountIn;
-        _forceApprove(tokenIn, bestAdapter, amountIn);
-
-        uint256 balanceBefore = IERC20(tokenOut).balanceOf(address(this));
-        ILQCDEXAdapter(bestAdapter).swapExactInput(
-            tokenIn, tokenOut, amountIn, amountOutMin, address(this), routeData[bestIndex]
+        amountOut = _executeFunded(
+            tokenIn, tokenOut, amountIn, amountOutMin, bestAdapter, routeData[bestIndex]
         );
-        uint256 balanceAfter = IERC20(tokenOut).balanceOf(address(this));
-        amountOut = balanceAfter - balanceBefore;
-
-        _forceApprove(tokenIn, bestAdapter, 0);
-        if (amountOut < amountOutMin) revert InsufficientOutput();
         uint256 unusedInput = IERC20(tokenIn).balanceOf(address(this)) - inputBalanceFloor;
         if (unusedInput > 0) tokenIn.safeTransfer(msg.sender, unusedInput);
         tokenOut.safeTransfer(recipient, amountOut);
 
         emit BestRouteSwap(msg.sender, recipient, bestAdapter, tokenIn, tokenOut, amountIn, amountOut);
         return (bestAdapter, amountOut);
+    }
+
+    function swapExactBNBForTokens(
+        address tokenOut,
+        uint256 amountOutMin,
+        address[] calldata adapters,
+        bytes[] calldata routeData,
+        address recipient,
+        uint256 deadline
+    ) external payable nonReentrant returns (address adapter, uint256 amountOut) {
+        if (deadline < block.timestamp) revert Expired();
+        if (recipient == address(0)) revert ZeroAddress();
+
+        (uint256 bestIndex, address bestAdapter,) = getBestQuote(WBNB, tokenOut, msg.value, adapters, routeData);
+        uint256 inputBalanceFloor = IERC20(WBNB).balanceOf(address(this));
+        IWBNB(WBNB).deposit{value: msg.value}();
+        amountOut = _executeFunded(
+            WBNB, tokenOut, msg.value, amountOutMin, bestAdapter, routeData[bestIndex]
+        );
+        uint256 unusedInput = IERC20(WBNB).balanceOf(address(this)) - inputBalanceFloor;
+        if (unusedInput > 0) {
+            IWBNB(WBNB).withdraw(unusedInput);
+            SafeTransferLib.safeTransferBNB(msg.sender, unusedInput);
+        }
+        tokenOut.safeTransfer(recipient, amountOut);
+
+        emit BestRouteSwap(msg.sender, recipient, bestAdapter, WBNB, tokenOut, msg.value, amountOut);
+        return (bestAdapter, amountOut);
+    }
+
+    function swapExactTokensForBNB(
+        address tokenIn,
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata adapters,
+        bytes[] calldata routeData,
+        address recipient,
+        uint256 deadline
+    ) external nonReentrant returns (address adapter, uint256 amountOut) {
+        if (deadline < block.timestamp) revert Expired();
+        if (recipient == address(0)) revert ZeroAddress();
+
+        (uint256 bestIndex, address bestAdapter,) = getBestQuote(tokenIn, WBNB, amountIn, adapters, routeData);
+        uint256 inputBalanceFloor = IERC20(tokenIn).balanceOf(address(this));
+        tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
+        amountOut = _executeFunded(
+            tokenIn, WBNB, amountIn, amountOutMin, bestAdapter, routeData[bestIndex]
+        );
+        uint256 unusedInput = IERC20(tokenIn).balanceOf(address(this)) - inputBalanceFloor;
+        if (unusedInput > 0) tokenIn.safeTransfer(msg.sender, unusedInput);
+        IWBNB(WBNB).withdraw(amountOut);
+        SafeTransferLib.safeTransferBNB(recipient, amountOut);
+
+        emit BestRouteSwap(msg.sender, recipient, bestAdapter, tokenIn, WBNB, amountIn, amountOut);
+        return (bestAdapter, amountOut);
+    }
+
+    function _executeFunded(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address bestAdapter,
+        bytes calldata routeData
+    ) private returns (uint256 amountOut) {
+        if (!isAdapterEnabled[bestAdapter]) revert AdapterNotEnabled();
+        _forceApprove(tokenIn, bestAdapter, amountIn);
+        uint256 balanceBefore = IERC20(tokenOut).balanceOf(address(this));
+        ILQCDEXAdapter(bestAdapter).swapExactInput(
+            tokenIn, tokenOut, amountIn, amountOutMin, address(this), routeData
+        );
+        amountOut = IERC20(tokenOut).balanceOf(address(this)) - balanceBefore;
+        _forceApprove(tokenIn, bestAdapter, 0);
+        if (amountOut < amountOutMin) revert InsufficientOutput();
     }
 
     function _validateRequest(
