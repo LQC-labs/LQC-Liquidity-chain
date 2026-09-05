@@ -1,0 +1,17 @@
+{
+  "name": "BSC Testnet",
+  "chainId": 97,
+  "rpcUrl": "https://data-seed-prebsc-1-s1.bnbchain.org:8545",
+  "explorerUrl": "https://testnet.bscscan.com",
+  "contracts": {
+    "wbnb": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+    "pancakeV2Factory": "0x6725F303b657a9451d8BA641348b6761A6CC7a17",
+    "pancakeV2Router": "0xD99D1c33F9fC3444f8101754aBC46c52416550D1"
+  },
+  "sources": {
+    "network": "https://docs.bnbchain.org/bnb-opbnb/get-started/wallet-configuration/",
+    "pancakeV2": "https://developer.pancakeswap.finance/contracts/v2/addresses",
+    "wbnb": "https://www.bnbchain.org/en/blog/what-is-wbnb"
+  },
+  "verifiedOn": "2026-09-05"
+}

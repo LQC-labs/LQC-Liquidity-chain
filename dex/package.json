@@ -6,7 +6,9 @@
   "scripts": {
     "compile": "node scripts/compile.mjs",
     "test": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
-    "configure:app": "node scripts/configure-app.mjs"
+    "configure:app": "node scripts/configure-app.mjs",
+    "verify:testnet": "node scripts/verify-testnet.mjs",
+    "deploy:pancake-adapter": "node scripts/deploy-pancake-adapter.mjs"
   },
   "devDependencies": {
     "ethers": "^6.15.0",

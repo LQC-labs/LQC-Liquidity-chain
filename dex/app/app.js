@@ -9,6 +9,12 @@
     "function swapExactBNBForTokens(uint256 amountOutMin,address[] path,address to,uint256 deadline) payable returns (uint256[] amounts)",
     "function swapExactTokensForBNB(uint256 amountIn,uint256 amountOutMin,address[] path,address to,uint256 deadline) returns (uint256[] amounts)"
   ];
+  const routerV2Abi = [
+    "function swapBestExactInput(address tokenIn,address tokenOut,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) returns (address adapter,uint256 amountOut)",
+    "function swapSplitExactInput(address tokenIn,address tokenOut,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,uint16[] allocationBps,address recipient,uint256 deadline) returns (uint256 amountOut)",
+    "function swapExactBNBForTokens(address tokenOut,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) payable returns (address adapter,uint256 amountOut)",
+    "function swapExactTokensForBNB(address tokenIn,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) returns (address adapter,uint256 amountOut)"
+  ];
   const erc20Abi = [
     "function balanceOf(address account) view returns (uint256)",
     "function allowance(address owner,address spender) view returns (uint256)",
@@ -19,27 +25,37 @@
   const ui = {
     connect: $("connectButton"), settings: $("settingsButton"), settingsPanel: $("settingsPanel"),
     amountIn: $("amountIn"), amountOut: $("amountOut"), minimum: $("minimumReceived"),
-    route: $("routeLabel"), balanceIn: $("balanceIn"), balanceOut: $("balanceOut"),
+    route: $("routeLabel"), routeDex: $("routeDex"), routeStrategy: $("routeStrategy"),
+    routeSavings: $("routeSavings"), priceImpact: $("priceImpact"), estimatedGasFee: $("estimatedGasFee"),
+    routeAlternatives: $("routeAlternatives"),
+    routerMode: $("routerMode"), balanceIn: $("balanceIn"), balanceOut: $("balanceOut"),
     tokenInButton: $("tokenInButton"), tokenOutButton: $("tokenOutButton"), flip: $("flipButton"),
     max: $("maxButton"), buyAction: $("buyAction"), sellAction: $("sellAction"), status: $("statusBox"), statusText: $("statusText"),
     dialog: $("tokenDialog"), tokenList: $("tokenList"), slippage: $("slippageInput"),
-    contractState: $("contractState")
+    contractState: $("contractState"), confirmDialog: $("confirmDialog"),
+    confirmPay: $("confirmPay"), confirmReceive: $("confirmReceive"), confirmStrategy: $("confirmStrategy"),
+    confirmGas: $("confirmGas"), confirmWarning: $("confirmWarning")
   };
 
-  let provider, signer, account, router, choosingSide = "in", quoteTimer;
+  let provider, signer, account, router, routerV2, currentQuote, choosingSide = "in", quoteTimer;
   let tokenIn = config.tokens[0];
   let tokenOut = config.tokens[2];
   let tradeMode = "buy";
 
-  const deployed = ethers.isAddress(config.routerAddress) && config.tokens
+  const tokensConfigured = config.tokens
     .filter((token) => token.address !== "native")
     .every((token) => ethers.isAddress(token.address));
+  const deployedV1 = ethers.isAddress(config.routerAddress) && tokensConfigured;
+  const configuredAdapters = (config.adapters || []).filter((adapter) => ethers.isAddress(adapter.address));
+  const deployedV2 = ethers.isAddress(config.routerV2Address) && configuredAdapters.length > 0 && tokensConfigured;
+  const deployed = deployedV2 || deployedV1;
 
   if (deployed) {
     ui.contractState.textContent = "연결 준비";
     ui.contractState.className = "";
     setStatus("컨트랙트가 설정되었습니다. 지갑을 연결하세요.");
   }
+  ui.routerMode.textContent = deployedV2 ? "ROUTER 2.0" : "AMM V1";
 
   function setStatus(message, type = "") {
     ui.status.className = `status ${type}`.trim();
@@ -58,6 +74,11 @@
     return token.address;
   }
 
+  function symbolForAddress(address) {
+    return config.tokens.find((token) => tokenAddress(token).toLowerCase() === address.toLowerCase())?.symbol
+      || shortAddress(address);
+  }
+
   function renderTokens() {
     for (const [side, token] of [["In", tokenIn], ["Out", tokenOut]]) {
       $(`token${side}Label`).textContent = token.symbol;
@@ -65,6 +86,13 @@
       $(`token${side}Icon`).classList.toggle("mint", token.symbol === "LQC");
     }
     ui.route.textContent = `${tokenIn.symbol} → ${tokenOut.symbol}`;
+    ui.routeDex.textContent = deployedV2 ? "경로 탐색 대기" : "LQC Flow AMM";
+    ui.routeStrategy.textContent = deployedV2 ? "자동 선택" : "단일 경로";
+    ui.routeSavings.textContent = "—";
+    ui.priceImpact.textContent = "—";
+    ui.estimatedGasFee.textContent = "—";
+    ui.routeAlternatives.textContent = deployedV2 ? "수량을 입력하세요" : "직접 경로";
+    currentQuote = null;
     syncModeFromPair();
   }
 
@@ -133,7 +161,8 @@
       signer = await provider.getSigner();
       account = await signer.getAddress();
       ui.connect.textContent = shortAddress(account);
-      router = deployed ? new ethers.Contract(config.routerAddress, routerAbi, signer) : null;
+      router = deployedV1 ? new ethers.Contract(config.routerAddress, routerAbi, signer) : null;
+      routerV2 = deployedV2 ? new ethers.Contract(config.routerV2Address, routerV2Abi, signer) : null;
       setTradeActionsDisabled(!deployed);
       setStatus(deployed ? "지갑이 연결되었습니다." : "지갑 연결 완료 · 테스트넷 배포 주소가 아직 없습니다.", deployed ? "success" : "");
       await updateBalances();
@@ -175,42 +204,158 @@
     quoteTimer = setTimeout(updateQuote, 300);
   }
 
+  async function updateExecutionMetrics() {
+    const impact = currentQuote?.priceImpactBps;
+    ui.priceImpact.textContent = impact === null || impact === undefined ? "계산 불가" : `${(impact / 100).toFixed(2)}%`;
+    try {
+      const feeData = await provider.getFeeData();
+      const gasPrice = feeData.gasPrice || feeData.maxFeePerGas;
+      if (!gasPrice) throw new Error("Gas price unavailable");
+      const pathLength = currentQuote.strategy === "split"
+        ? currentQuote.routes.reduce((total, route) => total + route.path.length, 0)
+        : (currentQuote.path?.length || 2);
+      const gasUnits = currentQuote.strategy === "split"
+        ? 420_000n + BigInt(pathLength - 4) * 35_000n
+        : 240_000n + BigInt(pathLength - 2) * 35_000n;
+      currentQuote.estimatedGasFee = `${Number(ethers.formatEther(gasUnits * gasPrice)).toLocaleString(undefined, { maximumFractionDigits: 6 })} BNB`;
+      ui.estimatedGasFee.textContent = currentQuote.estimatedGasFee;
+    } catch {
+      currentQuote.estimatedGasFee = "계산 불가";
+      ui.estimatedGasFee.textContent = currentQuote.estimatedGasFee;
+    }
+  }
+
+  function confirmSwap(raw) {
+    ui.confirmPay.textContent = `${raw} ${tokenIn.symbol}`;
+    ui.confirmReceive.textContent = ui.minimum.textContent;
+    ui.confirmStrategy.textContent = ui.routeStrategy.textContent;
+    ui.confirmGas.textContent = currentQuote.estimatedGasFee || "계산 불가";
+    const impact = currentQuote.priceImpactBps;
+    ui.confirmWarning.textContent = impact !== null && impact !== undefined && impact >= 300
+      ? `주의: 예상 가격 영향이 ${(impact / 100).toFixed(2)}%입니다. 거래 규모를 다시 확인하세요.`
+      : "최종 수령량과 가스비는 블록 상태에 따라 달라질 수 있습니다.";
+    ui.confirmWarning.classList.toggle("high-impact", impact !== null && impact !== undefined && impact >= 300);
+    ui.confirmDialog.returnValue = "";
+    ui.confirmDialog.showModal();
+    return new Promise((resolve) => ui.confirmDialog.addEventListener("close", () => {
+      resolve(ui.confirmDialog.returnValue === "confirm");
+    }, { once: true }));
+  }
+
   async function updateQuote() {
     ui.amountOut.textContent = "0.0";
     ui.minimum.textContent = "—";
+    currentQuote = null;
     const raw = ui.amountIn.value.trim();
-    if (!raw || Number(raw) <= 0 || !router) return;
+    if (!raw || Number(raw) <= 0 || (!router && !routerV2)) return;
     const path = [tokenAddress(tokenIn), tokenAddress(tokenOut)];
     if (!path.every(ethers.isAddress)) return;
     try {
       const amount = ethers.parseUnits(raw, tokenIn.decimals);
-      const amounts = await router.getAmountsOut(amount, path);
-      const out = amounts[amounts.length - 1];
       const slippageBps = Math.round(Number(ui.slippage.value) * 100);
-      const minimum = out * BigInt(10_000 - slippageBps) / 10_000n;
+      let out, minimum;
+      if (routerV2) {
+        const connectors = config.tokens
+          .filter((token) => token.address !== "native" && ethers.isAddress(token.address))
+          .map((token) => token.address);
+        currentQuote = await window.LQCRouteOptimizer.findOptimalRoute({
+          provider,
+          tokenIn: path[0],
+          tokenOut: path[1],
+          amountIn: amount,
+          adapters: configuredAdapters,
+          connectors,
+          slippageBps,
+          allowSplit: tokenIn.address !== "native" && tokenOut.address !== "native"
+        });
+        out = currentQuote.amountOut;
+        minimum = currentQuote.amountOutMin;
+        if (currentQuote.strategy === "split") {
+          ui.route.textContent = currentQuote.routes.map((route) => route.path.map(symbolForAddress).join(" → ")).join(" / ");
+          ui.routeDex.textContent = currentQuote.routes.map((route, index) =>
+            `${route.adapter.name || route.adapter.id} ${currentQuote.allocationBps[index] / 100}%`
+          ).join(" + ");
+          ui.routeStrategy.textContent = "2개 DEX 자동 분할";
+          ui.routeSavings.textContent = `+${Number(ethers.formatUnits(currentQuote.improvementAmount, tokenOut.decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 })} ${tokenOut.symbol} (${(currentQuote.improvementBps / 100).toFixed(2)}%)`;
+        } else {
+          ui.route.textContent = currentQuote.path.map(symbolForAddress).join(" → ");
+          ui.routeDex.textContent = currentQuote.adapter.name || currentQuote.adapter.id;
+          ui.routeStrategy.textContent = "단일 최적경로";
+          ui.routeSavings.textContent = "분할 이점 없음";
+        }
+        ui.routeAlternatives.textContent = `${currentQuote.comparedRoutes}개 경로 비교`;
+      } else {
+        const amounts = await router.getAmountsOut(amount, path);
+        out = amounts[amounts.length - 1];
+        minimum = out * BigInt(10_000 - slippageBps) / 10_000n;
+        currentQuote = { path, amountOut: out, amountOutMin: minimum };
+        ui.routeDex.textContent = "LQC Flow AMM";
+        ui.routeStrategy.textContent = "단일 경로";
+        ui.routeSavings.textContent = "—";
+        ui.routeAlternatives.textContent = "직접 경로";
+      }
+      await updateExecutionMetrics();
       ui.amountOut.textContent = ethers.formatUnits(out, tokenOut.decimals);
       ui.minimum.textContent = `${Number(ethers.formatUnits(minimum, tokenOut.decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 })} ${tokenOut.symbol}`;
       setTradeActionsDisabled(false);
-    } catch {
+    } catch (error) {
       setTradeActionsDisabled(true);
-      setStatus("이 거래쌍의 유동성을 확인할 수 없습니다.", "error");
+      ui.routeDex.textContent = "경로 없음";
+      ui.routeStrategy.textContent = "견적 실패";
+      ui.routeSavings.textContent = "—";
+      ui.priceImpact.textContent = "—";
+      ui.estimatedGasFee.textContent = "—";
+      ui.routeAlternatives.textContent = "유동성 확인 필요";
+      setStatus(error.message || "이 거래쌍의 유동성을 확인할 수 없습니다.", "error");
     }
   }
 
   async function executeSwap() {
-    if (!router || !account) return connectWallet();
+    if ((!router && !routerV2) || !account) return connectWallet();
     const raw = ui.amountIn.value.trim();
     if (!raw || Number(raw) <= 0) return setStatus("보낼 수량을 입력하세요.", "error");
     try {
       setTradeActionsDisabled(true);
+      await updateQuote();
+      if (!currentQuote) throw new Error("실행 가능한 최적경로가 없습니다.");
+      if (!(await confirmSwap(raw))) {
+        setStatus("거래 확인이 취소되었습니다.");
+        return;
+      }
       const amountIn = ethers.parseUnits(raw, tokenIn.decimals);
       const path = [tokenAddress(tokenIn), tokenAddress(tokenOut)];
-      const amounts = await router.getAmountsOut(amountIn, path);
-      const slippageBps = Math.round(Number(ui.slippage.value) * 100);
-      const amountOutMin = amounts.at(-1) * BigInt(10_000 - slippageBps) / 10_000n;
+      const amountOutMin = currentQuote.amountOutMin;
       const deadline = Math.floor(Date.now() / 1000) + 1_200;
       let tx;
-      if (tokenIn.address === "native") {
+      if (routerV2) {
+        const adapters = currentQuote.strategy === "split" ? currentQuote.adapters : [currentQuote.adapter.address];
+        const routeData = currentQuote.strategy === "split" ? currentQuote.routeData : [currentQuote.routeData];
+        if (tokenIn.address === "native") {
+          tx = await routerV2.swapExactBNBForTokens(
+            tokenAddress(tokenOut), amountOutMin, adapters, routeData, account, deadline, { value: amountIn }
+          );
+        } else {
+          const token = new ethers.Contract(tokenIn.address, erc20Abi, signer);
+          const allowance = await token.allowance(account, config.routerV2Address);
+          if (allowance < amountIn) {
+            setStatus(`${tokenIn.symbol} 사용 승인을 확인하세요.`);
+            await (await token.approve(config.routerV2Address, amountIn)).wait();
+          }
+          tx = currentQuote.strategy === "split"
+            ? await routerV2.swapSplitExactInput(
+              tokenAddress(tokenIn), tokenAddress(tokenOut), amountIn, amountOutMin,
+              adapters, routeData, currentQuote.allocationBps, account, deadline
+            )
+            : tokenOut.address === "native"
+            ? await routerV2.swapExactTokensForBNB(
+              tokenAddress(tokenIn), amountIn, amountOutMin, adapters, routeData, account, deadline
+            )
+            : await routerV2.swapBestExactInput(
+              tokenAddress(tokenIn), tokenAddress(tokenOut), amountIn, amountOutMin,
+              adapters, routeData, account, deadline
+            );
+        }
+      } else if (tokenIn.address === "native") {
         tx = await router.swapExactBNBForTokens(amountOutMin, path, account, deadline, { value: amountIn });
       } else {
         const token = new ethers.Contract(tokenIn.address, erc20Abi, signer);

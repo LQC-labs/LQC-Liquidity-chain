@@ -8,6 +8,22 @@ The legal entity established for the LQC project is **MMXlabs&LQC**, a limited l
 
 LQC provides a technical framework for cross-DEX route discovery, liquidity aggregation, protocol-level transaction execution, liquidity deployment across many DEX markets, and future DeFi services.
 
+## Technical Review Package
+
+The following documents provide an evidence-oriented review package for exchanges, auditors, integration partners, and technical reviewers:
+
+- [Development Status](DEVELOPMENT_STATUS.md) — implemented, tested, pending, and deferred scope
+- [Technical Architecture](ARCHITECTURE.md) — component boundaries and transaction flows
+- [Security](SECURITY.md) — implemented controls, known limitations, and disclosure process
+- [Roadmap](ROADMAP.md) — gated delivery plan from local MVP to controlled production readiness
+- [DEX Package Guide](dex/README.md) — build, test, configuration, and deployment commands
+
+### Current verifiable implementation
+
+As of **September 5, 2026**, the repository contains an unaudited, testnet-oriented DEX and Router 2.0 implementation. The current branch compiles 17 Solidity source files and passes 30 local automated tests. It includes a constant-product AMM, route quoter, allowlisted external-DEX adapters, native-BNB routes, two-way ERC-20 split execution, an off-chain route optimizer, and a wallet-connected static trading interface.
+
+No production deployment, live liquidity, independent audit, or exchange listing is claimed. Contract addresses will be published only after deployment, verification, and formal approval.
+
 ## LQC Flow DEX MVP
 
 The first testnet-oriented AMM implementation is available in [`dex/`](dex/README.md). It includes a token-pair factory, constant-product liquidity pools, LP shares, token and native-BNB routing, multi-hop swaps, deployment tooling, and local integration tests. It is unaudited and must not be used with production funds.
