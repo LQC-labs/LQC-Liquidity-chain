@@ -28,11 +28,7 @@
       <div class="trade-heading">
         <div>
           <span class="eyebrow">NON-CUSTODIAL SWAP</span>
-          <h1 class="sr-only" id="tradeTitle">LQC Buy and Sell</h1>
-          <div class="mode-tabs" role="tablist" aria-label="거래 방향">
-            <button id="buyMode" class="mode-tab active" type="button" role="tab" aria-selected="true">BUY</button>
-            <button id="sellMode" class="mode-tab" type="button" role="tab" aria-selected="false">SELL</button>
-          </div>
+          <h1 id="tradeTitle">LQC 거래</h1>
         </div>
         <button class="icon-button" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⚙</button>
       </div>
@@ -81,7 +77,10 @@
         <i></i><span id="statusText">테스트넷 배포 주소를 연결하면 거래가 활성화됩니다.</span>
       </div>
 
-      <button class="primary-action" id="swapButton" type="button" disabled>지갑을 연결하세요</button>
+      <div class="trade-actions" aria-label="LQC 매수 및 매도">
+        <button class="trade-action action-buy" id="buyAction" type="button" disabled>BUY</button>
+        <button class="trade-action action-sell" id="sellAction" type="button" disabled>SELL</button>
+      </div>
       <p class="risk-note">테스트넷 MVP · 실제 자금을 보내지 마세요. 독립 보안감사 전에는 메인넷에서 사용할 수 없습니다.</p>
     </section>
 

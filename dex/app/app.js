@@ -21,13 +21,10 @@
     amountIn: $("amountIn"), amountOut: $("amountOut"), minimum: $("minimumReceived"),
     route: $("routeLabel"), balanceIn: $("balanceIn"), balanceOut: $("balanceOut"),
     tokenInButton: $("tokenInButton"), tokenOutButton: $("tokenOutButton"), flip: $("flipButton"),
-    max: $("maxButton"), swap: $("swapButton"), status: $("statusBox"), statusText: $("statusText"),
+    max: $("maxButton"), buyAction: $("buyAction"), sellAction: $("sellAction"), status: $("statusBox"), statusText: $("statusText"),
     dialog: $("tokenDialog"), tokenList: $("tokenList"), slippage: $("slippageInput"),
     contractState: $("contractState")
   };
-
-  ui.buyMode = $("buyMode");
-  ui.sellMode = $("sellMode");
 
   let provider, signer, account, router, choosingSide = "in", quoteTimer;
   let tokenIn = config.tokens[0];
@@ -75,19 +72,14 @@
     return tradeMode === "sell" ? "SELL LQC" : "BUY LQC";
   }
 
-  function renderMode() {
-    for (const [button, mode] of [[ui.buyMode, "buy"], [ui.sellMode, "sell"]]) {
-      const active = tradeMode === mode;
-      button.classList.toggle("active", active);
-      button.setAttribute("aria-selected", String(active));
-    }
-    if (account) ui.swap.textContent = deployed ? actionLabel() : "테스트넷 배포 대기";
+  function setTradeActionsDisabled(disabled) {
+    ui.buyAction.disabled = disabled;
+    ui.sellAction.disabled = disabled;
   }
 
   function syncModeFromPair() {
     if (tokenOut.symbol === "LQC") tradeMode = "buy";
     else if (tokenIn.symbol === "LQC") tradeMode = "sell";
-    renderMode();
   }
 
   function setTradeMode(mode) {
@@ -142,8 +134,7 @@
       account = await signer.getAddress();
       ui.connect.textContent = shortAddress(account);
       router = deployed ? new ethers.Contract(config.routerAddress, routerAbi, signer) : null;
-      ui.swap.disabled = !deployed;
-      ui.swap.textContent = deployed ? actionLabel() : "테스트넷 배포 대기";
+      setTradeActionsDisabled(!deployed);
       setStatus(deployed ? "지갑이 연결되었습니다." : "지갑 연결 완료 · 테스트넷 배포 주소가 아직 없습니다.", deployed ? "success" : "");
       await updateBalances();
       scheduleQuote();
@@ -199,11 +190,9 @@
       const minimum = out * BigInt(10_000 - slippageBps) / 10_000n;
       ui.amountOut.textContent = ethers.formatUnits(out, tokenOut.decimals);
       ui.minimum.textContent = `${Number(ethers.formatUnits(minimum, tokenOut.decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 })} ${tokenOut.symbol}`;
-      ui.swap.disabled = false;
-      ui.swap.textContent = actionLabel();
+      setTradeActionsDisabled(false);
     } catch {
-      ui.swap.disabled = true;
-      ui.swap.textContent = "유동성이 부족합니다";
+      setTradeActionsDisabled(true);
       setStatus("이 거래쌍의 유동성을 확인할 수 없습니다.", "error");
     }
   }
@@ -213,8 +202,7 @@
     const raw = ui.amountIn.value.trim();
     if (!raw || Number(raw) <= 0) return setStatus("보낼 수량을 입력하세요.", "error");
     try {
-      ui.swap.disabled = true;
-      ui.swap.textContent = "거래 준비 중…";
+      setTradeActionsDisabled(true);
       const amountIn = ethers.parseUnits(raw, tokenIn.decimals);
       const path = [tokenAddress(tokenIn), tokenAddress(tokenOut)];
       const amounts = await router.getAmountsOut(amountIn, path);
@@ -245,14 +233,13 @@
     } catch (error) {
       setStatus(error.shortMessage || "거래가 취소되었거나 실패했습니다.", "error");
     } finally {
-      ui.swap.disabled = !deployed;
-      ui.swap.textContent = deployed ? actionLabel() : "테스트넷 배포 대기";
+      setTradeActionsDisabled(!deployed);
     }
   }
 
   ui.connect.addEventListener("click", connectWallet);
-  ui.buyMode.addEventListener("click", () => setTradeMode("buy"));
-  ui.sellMode.addEventListener("click", () => setTradeMode("sell"));
+  ui.buyAction.addEventListener("click", async () => { setTradeMode("buy"); await updateQuote(); await executeSwap(); });
+  ui.sellAction.addEventListener("click", async () => { setTradeMode("sell"); await updateQuote(); await executeSwap(); });
   ui.settings.addEventListener("click", () => {
     ui.settingsPanel.hidden = !ui.settingsPanel.hidden;
     ui.settings.setAttribute("aria-expanded", String(!ui.settingsPanel.hidden));
@@ -270,7 +257,6 @@
       scheduleQuote();
     }
   });
-  ui.swap.addEventListener("click", executeSwap);
   document.querySelectorAll(".slippage-option").forEach((button) => button.addEventListener("click", () => {
     document.querySelectorAll(".slippage-option").forEach((item) => item.classList.remove("active"));
     button.classList.add("active");
