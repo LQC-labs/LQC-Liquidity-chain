@@ -1,0 +1,35 @@
+name: Fix JEONG JAE-WON image binary
+
+on:
+  push:
+    paths:
+      - '.github/workflows/fix-jeong-binary.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode final JEONG image to real JPEG
+        run: |
+          base64 -d assets/jeong-jae-won-final-web.jpg > /tmp/jeong-final.jpg
+          mv /tmp/jeong-final.jpg assets/jeong-jae-won-final-web.jpg
+      - name: Point homepage card to final image
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          s=s.replace('assets/jeong-jae-won-lqc-profile.jpg?v=card-20260905','assets/jeong-jae-won-final-web.jpg?v=20260905-1948')
+          p.write_text(s)
+          PY
+      - name: Commit fixed binary and homepage reference
+        run: |
+          git config user.name "LQC-labs"
+          git config user.email "mahogani2018@gmail.com"
+          git add assets/jeong-jae-won-final-web.jpg index.html
+          git commit -m "Fix JEONG JAE-WON final image binary and homepage link" || exit 0
+          git push
