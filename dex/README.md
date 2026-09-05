@@ -10,6 +10,7 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - `LQCFlowQuoter`: compares up to 16 candidate routes and selects the highest-output viable path
 - `LQCFlowRouterV2`: compares approved external-DEX adapters and executes the best token or native-BNB route
 - Router V2 split execution: divides one ERC-20 trade across up to 8 approved DEX routes using basis-point allocations
+- `sdk/route-optimizer.mjs`: discovers direct, one-hop, and two-hop routes across up to 16 DEX adapters and returns the best executable route
 - `UniswapV2DEXAdapter`: integration layer for PancakeSwap V2, Biswap, and compatible routers
 - Native BNB wrapping/unwrapping through the configured WBNB contract
 - 0.30% swap fee retained in the pool for liquidity providers
@@ -53,6 +54,10 @@ npm run deploy:pancake-adapter
 ```
 
 The adapter script verifies chain ID 97, Router V2 WBNB, PancakeSwap WBNB, and PancakeSwap Factory before deployment. It enables the adapter automatically only when the deployer is the Router V2 owner; otherwise it prints the exact multisig action required.
+
+## Optimal route guidance
+
+The route optimizer generates direct and connector-token paths, requests every configured DEX adapter quote in parallel, ignores unavailable pools, and ranks viable results by final output after the DEX's pool fee and price impact. It returns the selected adapter, full token path, expected output, slippage-adjusted minimum output, and ready-to-submit Router V2 arrays. Quotes must be refreshed immediately before transaction submission; gas-adjusted ranking and automatic split-percentage search are planned next.
 
 After deployment, configure the verified Router, WBNB, and LQC test-token addresses:
 
