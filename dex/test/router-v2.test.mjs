@@ -187,4 +187,36 @@ describe("LQC Flow Router V2", function () {
   it("rejects unsolicited native BNB transfers", async function () {
     await assert.rejects(trader.sendTransaction({ to: await router.getAddress(), value: 1n }));
   });
+
+  it("quotes and executes a split trade across two adapters", async function () {
+    const amountIn = ethers.parseEther("10");
+    const allocation = [5000, 5000];
+    const quote = await router.getSplitQuote(
+      await tokenIn.getAddress(), await tokenOut.getAddress(), amountIn,
+      await adapters(), routes(), allocation
+    );
+    assert.deepEqual(Array.from(quote.amountsIn), [ethers.parseEther("5"), ethers.parseEther("5")]);
+    assert.deepEqual(Array.from(quote.amountsOut), [ethers.parseEther("7.5"), ethers.parseEther("10")]);
+    assert.equal(quote.totalOut, ethers.parseEther("17.5"));
+
+    await (await router.connect(trader).swapSplitExactInput(
+      await tokenIn.getAddress(), await tokenOut.getAddress(), amountIn, quote.totalOut,
+      await adapters(), routes(), allocation, await trader.getAddress(), deadline()
+    )).wait();
+    assert.equal(await tokenOut.balanceOf(await trader.getAddress()), quote.totalOut);
+    assert.equal(await tokenIn.balanceOf(await adapterA.getAddress()), ethers.parseEther("5"));
+    assert.equal(await tokenIn.balanceOf(await adapterB.getAddress()), ethers.parseEther("5"));
+  });
+
+  it("rejects invalid split allocations and disabled split routes", async function () {
+    await assert.rejects(router.getSplitQuote(
+      await tokenIn.getAddress(), await tokenOut.getAddress(), ethers.parseEther("10"),
+      await adapters(), routes(), [4000, 5000]
+    ));
+    await (await router.setAdapter(await adapterB.getAddress(), false)).wait();
+    await assert.rejects(router.getSplitQuote(
+      await tokenIn.getAddress(), await tokenOut.getAddress(), ethers.parseEther("10"),
+      await adapters(), routes(), [5000, 5000]
+    ));
+  });
 });
