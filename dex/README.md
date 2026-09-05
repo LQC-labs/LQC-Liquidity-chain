@@ -57,7 +57,7 @@ The adapter script verifies chain ID 97, Router V2 WBNB, PancakeSwap WBNB, and P
 
 ## Optimal route guidance
 
-The route optimizer generates direct and connector-token paths, requests every configured DEX adapter quote in parallel, ignores unavailable pools, and ranks viable results by final output after the DEX's pool fee and price impact. It returns the selected adapter, full token path, expected output, slippage-adjusted minimum output, and ready-to-submit Router V2 arrays. Quotes must be refreshed immediately before transaction submission; gas-adjusted ranking and automatic split-percentage search are planned next.
+The route optimizer generates direct and connector-token paths, requests every configured DEX adapter quote in parallel, ignores unavailable pools, and ranks viable results by net output after pool fee, price impact, and an optional output-token-denominated gas estimate. It returns the selected adapter, full token path, expected and net output, slippage-adjusted minimum output, and ready-to-submit Router V2 arrays. The two-way split optimizer tests allocation steps across route pairs and returns the highest-net-output split plus Router V2 execution arrays. Quotes must be refreshed immediately before transaction submission.
 
 After deployment, configure the verified Router, WBNB, and LQC test-token addresses:
 
