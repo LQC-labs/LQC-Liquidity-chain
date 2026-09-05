@@ -1,3 +1,4 @@
+# trigger: 2026-09-05 JEONG JAE-WON homepage correction
 name: Fix JEONG JAE-WON homepage link
 on:
   push:
