@@ -20,15 +20,14 @@ jobs:
           import base64
           p = Path('assets/jeong-jae-won-final-web.jpg')
           raw = p.read_bytes()
-          try:
-              text = raw.decode('ascii')
-              decoded = base64.b64decode(''.join(text.split()), validate=False)
-              if not decoded.startswith(b'\xff\xd8\xff'):
-                  raise SystemExit('decoded data is not JPEG')
-              p.write_bytes(decoded)
-          except UnicodeDecodeError:
-              if not raw.startswith(b'\xff\xd8\xff'):
-                  raise SystemExit('file is neither base64 text nor JPEG')
+          if raw.startswith(b'\xff\xd8\xff'):
+              raise SystemExit(0)
+          text = ''.join(raw.decode('ascii').split())
+          text += '=' * ((4 - len(text) % 4) % 4)
+          decoded = base64.b64decode(text, validate=False)
+          if not decoded.startswith(b'\xff\xd8\xff'):
+              raise SystemExit('decoded data is not JPEG')
+          p.write_bytes(decoded)
           PY
       - name: Point homepage card to final image
         run: |
