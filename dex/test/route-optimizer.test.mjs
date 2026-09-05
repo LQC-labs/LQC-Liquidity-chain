@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
-import { findOptimalRoute, generateCandidatePaths } from "../sdk/route-optimizer.mjs";
+import { findOptimalRoute, findOptimalTwoWaySplit, generateCandidatePaths } from "../sdk/route-optimizer.mjs";
 
 const tokenIn = "0x0000000000000000000000000000000000000001";
 const tokenOut = "0x0000000000000000000000000000000000000002";
@@ -62,5 +62,56 @@ describe("LQC route optimizer", function () {
       maxIntermediates: 2,
       maxPaths: 3
     }));
+  });
+
+  it("selects the best net route after output-denominated gas cost", async function () {
+    const expensive = {
+      id: "high-output-high-gas",
+      address: "0x0000000000000000000000000000000000000010",
+      quoteExactInput: async (_in, _out, amount) => amount + 100n,
+      estimateGasCostInOutput: async () => 80n
+    };
+    const efficient = {
+      id: "lower-output-low-gas",
+      address: "0x0000000000000000000000000000000000000020",
+      quoteExactInput: async (_in, _out, amount) => amount + 70n,
+      estimateGasCostInOutput: async () => 10n
+    };
+    const result = await findOptimalRoute({ tokenIn, tokenOut, amountIn: 1000n, adapters: [expensive, efficient] });
+    assert.equal(result.adapterId, "lower-output-low-gas");
+    assert.equal(result.amountOut, 1070n);
+    assert.equal(result.gasCostInOutput, 10n);
+    assert.equal(result.netAmountOut, 1060n);
+  });
+
+  it("finds the best two-DEX split percentage automatically", async function () {
+    const priceImpactQuote = async (amount) => amount - amount * amount / 20_000n;
+    const result = await findOptimalTwoWaySplit({
+      amountIn: 10_000n,
+      stepBps: 1000,
+      slippageBps: 100,
+      routes: [
+        { address: "0x0000000000000000000000000000000000000010", routeData: "0x01", quoteExactInput: priceImpactQuote },
+        { address: "0x0000000000000000000000000000000000000020", routeData: "0x02", quoteExactInput: priceImpactQuote }
+      ]
+    });
+    assert.deepEqual(result.allocationBps, [5000, 5000]);
+    assert.deepEqual(result.amountsIn, [5000n, 5000n]);
+    assert.equal(result.totalOut, 7500n);
+    assert.equal(result.amountOutMin, 7425n);
+  });
+
+  it("subtracts both route gas costs when ranking a split", async function () {
+    const result = await findOptimalTwoWaySplit({
+      amountIn: 1000n,
+      stepBps: 5000,
+      routes: [
+        { address: "0x0000000000000000000000000000000000000010", routeData: "0x01", quoteExactInput: async (amount) => amount, gasCostInOutput: 10n },
+        { address: "0x0000000000000000000000000000000000000020", routeData: "0x02", quoteExactInput: async (amount) => amount, gasCostInOutput: 20n }
+      ]
+    });
+    assert.equal(result.totalOut, 1000n);
+    assert.equal(result.gasCostInOutput, 30n);
+    assert.equal(result.netAmountOut, 970n);
   });
 });
