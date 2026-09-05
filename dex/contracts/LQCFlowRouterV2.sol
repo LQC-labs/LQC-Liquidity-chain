@@ -11,6 +11,8 @@ contract LQCFlowRouterV2 {
     using SafeTransferLib for address;
 
     uint256 public constant MAX_CANDIDATES = 16;
+    uint256 public constant MAX_SPLIT_ROUTES = 8;
+    uint256 public constant BPS_DENOMINATOR = 10_000;
 
     address public immutable WBNB;
     address public owner;
@@ -30,6 +32,15 @@ contract LQCFlowRouterV2 {
         uint256 amountIn,
         uint256 amountOut
     );
+    event SplitRouteSwap(
+        address indexed sender,
+        address indexed recipient,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOut,
+        uint256 routeCount
+    );
 
     error Forbidden();
     error ZeroAddress();
@@ -42,6 +53,7 @@ contract LQCFlowRouterV2 {
     error InsufficientOutput();
     error Reentrancy();
     error NativeSenderNotWBNB();
+    error InvalidAllocation();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
@@ -112,6 +124,35 @@ contract LQCFlowRouterV2 {
         if (bestAdapter == address(0) || amountOut == 0) revert NoViableQuote();
     }
 
+    function getSplitQuote(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        address[] calldata adapters,
+        bytes[] calldata routeData,
+        uint16[] calldata allocationBps
+    ) public view returns (uint256[] memory amountsIn, uint256[] memory amountsOut, uint256 totalOut) {
+        _validateSplitRequest(tokenIn, tokenOut, amountIn, adapters, routeData, allocationBps);
+        amountsIn = new uint256[](adapters.length);
+        amountsOut = new uint256[](adapters.length);
+        uint256 allocated;
+
+        for (uint256 i; i < adapters.length; ++i) {
+            if (!isAdapterEnabled[adapters[i]]) revert AdapterNotEnabled();
+            uint256 legAmount = i == adapters.length - 1
+                ? amountIn - allocated
+                : amountIn * allocationBps[i] / BPS_DENOMINATOR;
+            if (legAmount == 0) revert InvalidAllocation();
+            allocated += legAmount;
+            amountsIn[i] = legAmount;
+            amountsOut[i] = ILQCDEXAdapter(adapters[i]).quoteExactInput(
+                tokenIn, tokenOut, legAmount, routeData[i]
+            );
+            if (amountsOut[i] == 0) revert NoViableQuote();
+            totalOut += amountsOut[i];
+        }
+    }
+
     function swapBestExactInput(
         address tokenIn,
         address tokenOut,
@@ -137,6 +178,44 @@ contract LQCFlowRouterV2 {
 
         emit BestRouteSwap(msg.sender, recipient, bestAdapter, tokenIn, tokenOut, amountIn, amountOut);
         return (bestAdapter, amountOut);
+    }
+
+    function swapSplitExactInput(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOutMin,
+        address[] calldata adapters,
+        bytes[] calldata routeData,
+        uint16[] calldata allocationBps,
+        address recipient,
+        uint256 deadline
+    ) external nonReentrant returns (uint256 amountOut) {
+        if (deadline < block.timestamp) revert Expired();
+        if (recipient == address(0)) revert ZeroAddress();
+
+        (uint256[] memory legAmounts,,) = getSplitQuote(
+            tokenIn, tokenOut, amountIn, adapters, routeData, allocationBps
+        );
+        uint256 inputBalanceFloor = IERC20(tokenIn).balanceOf(address(this));
+        uint256 outputBalanceFloor = IERC20(tokenOut).balanceOf(address(this));
+        tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
+
+        for (uint256 i; i < adapters.length; ++i) {
+            _forceApprove(tokenIn, adapters[i], legAmounts[i]);
+            ILQCDEXAdapter(adapters[i]).swapExactInput(
+                tokenIn, tokenOut, legAmounts[i], 0, address(this), routeData[i]
+            );
+            _forceApprove(tokenIn, adapters[i], 0);
+        }
+
+        amountOut = IERC20(tokenOut).balanceOf(address(this)) - outputBalanceFloor;
+        if (amountOut < amountOutMin) revert InsufficientOutput();
+        uint256 unusedInput = IERC20(tokenIn).balanceOf(address(this)) - inputBalanceFloor;
+        if (unusedInput > 0) tokenIn.safeTransfer(msg.sender, unusedInput);
+        tokenOut.safeTransfer(recipient, amountOut);
+
+        emit SplitRouteSwap(msg.sender, recipient, tokenIn, tokenOut, amountIn, amountOut, adapters.length);
     }
 
     function swapExactBNBForTokens(
@@ -225,6 +304,29 @@ contract LQCFlowRouterV2 {
         if (adapters.length == 0 || adapters.length > MAX_CANDIDATES || adapters.length != routeData.length) {
             revert InvalidCandidates();
         }
+    }
+
+    function _validateSplitRequest(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        address[] calldata adapters,
+        bytes[] calldata routeData,
+        uint16[] calldata allocationBps
+    ) private pure {
+        if (tokenIn == address(0) || tokenOut == address(0) || tokenIn == tokenOut) revert InvalidTokens();
+        if (amountIn == 0) revert InvalidAmount();
+        if (
+            adapters.length == 0 || adapters.length > MAX_SPLIT_ROUTES
+                || adapters.length != routeData.length || adapters.length != allocationBps.length
+        ) revert InvalidCandidates();
+
+        uint256 totalBps;
+        for (uint256 i; i < allocationBps.length; ++i) {
+            if (adapters[i] == address(0) || allocationBps[i] == 0) revert InvalidAllocation();
+            totalBps += allocationBps[i];
+        }
+        if (totalBps != BPS_DENOMINATOR) revert InvalidAllocation();
     }
 
     function _forceApprove(address token, address spender, uint256 amount) private {
