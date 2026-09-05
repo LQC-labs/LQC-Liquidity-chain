@@ -8,10 +8,11 @@ const artifact = (name, source = name) => JSON.parse(
 );
 
 describe("LQC Flow Router V2", function () {
-  let provider, owner, trader, tokenIn, tokenOut, router, adapterA, adapterB;
+  let eip1193, provider, owner, trader, tokenIn, tokenOut, wbnb, router, adapterA, adapterB;
 
   beforeEach(async function () {
-    provider = new ethers.BrowserProvider(ganache.provider({ logging: { quiet: true }, wallet: { totalAccounts: 3 } }));
+    eip1193 = ganache.provider({ logging: { quiet: true }, wallet: { totalAccounts: 3 } });
+    provider = new ethers.BrowserProvider(eip1193);
     owner = await provider.getSigner(0);
     trader = await provider.getSigner(1);
 
@@ -22,9 +23,15 @@ describe("LQC Flow Router V2", function () {
     );
     tokenIn = await Token.deploy("Input", "IN");
     tokenOut = await Token.deploy("Output", "OUT");
+    const WBNB = new ethers.ContractFactory(
+      artifact("MockWBNB", "mocks/MockWBNB").abi,
+      artifact("MockWBNB", "mocks/MockWBNB").bytecode,
+      owner
+    );
+    wbnb = await WBNB.deploy();
 
     const Router = new ethers.ContractFactory(artifact("LQCFlowRouterV2").abi, artifact("LQCFlowRouterV2").bytecode, owner);
-    router = await Router.deploy(await owner.getAddress());
+    router = await Router.deploy(await owner.getAddress(), await wbnb.getAddress());
 
     const Adapter = new ethers.ContractFactory(
       artifact("MockDEXAdapter", "mocks/MockDEXAdapter").abi,
@@ -34,7 +41,7 @@ describe("LQC Flow Router V2", function () {
     adapterA = await Adapter.deploy(150, 150, 100);
     adapterB = await Adapter.deploy(200, 200, 100);
     await Promise.all([
-      tokenIn.waitForDeployment(), tokenOut.waitForDeployment(), router.waitForDeployment(),
+      tokenIn.waitForDeployment(), tokenOut.waitForDeployment(), wbnb.waitForDeployment(), router.waitForDeployment(),
       adapterA.waitForDeployment(), adapterB.waitForDeployment()
     ]);
 
@@ -142,5 +149,42 @@ describe("LQC Flow Router V2", function () {
       [await adapter.getAddress()], [routeData], await trader.getAddress(), deadline()
     )).wait();
     assert.equal(await tokenOut.balanceOf(await trader.getAddress()), quote.amountOut);
+  });
+
+  it("swaps native BNB directly for a token through the best adapter", async function () {
+    const amountIn = ethers.parseEther("1");
+    const quote = await router.getBestQuote(
+      await wbnb.getAddress(), await tokenOut.getAddress(), amountIn, await adapters(), routes()
+    );
+    await (await router.connect(trader).swapExactBNBForTokens(
+      await tokenOut.getAddress(), quote.amountOut, await adapters(), routes(),
+      await trader.getAddress(), deadline(), { value: amountIn }
+    )).wait();
+    assert.equal(await tokenOut.balanceOf(await trader.getAddress()), ethers.parseEther("2"));
+    assert.equal(await wbnb.balanceOf(await router.getAddress()), 0n);
+    assert.equal(await provider.getBalance(await router.getAddress()), 0n);
+  });
+
+  it("swaps a token directly for native BNB", async function () {
+    await (await wbnb.deposit({ value: ethers.parseEther("100") })).wait();
+    await (await wbnb.transfer(await adapterA.getAddress(), ethers.parseEther("50"))).wait();
+    await (await wbnb.transfer(await adapterB.getAddress(), ethers.parseEther("50"))).wait();
+    const amountIn = ethers.parseEther("1");
+    const quote = await router.getBestQuote(
+      await tokenIn.getAddress(), await wbnb.getAddress(), amountIn, await adapters(), routes()
+    );
+    const recipient = await owner.getAddress();
+    const before = BigInt(await eip1193.request({ method: "eth_getBalance", params: [recipient, "latest"] }));
+    await (await router.connect(trader).swapExactTokensForBNB(
+      await tokenIn.getAddress(), amountIn, quote.amountOut, await adapters(), routes(), recipient, deadline()
+    )).wait();
+    const after = BigInt(await eip1193.request({ method: "eth_getBalance", params: [recipient, "latest"] }));
+    assert.equal(after - before, ethers.parseEther("2"));
+    assert.equal(await wbnb.balanceOf(await router.getAddress()), 0n);
+    assert.equal(await provider.getBalance(await router.getAddress()), 0n);
+  });
+
+  it("rejects unsolicited native BNB transfers", async function () {
+    await assert.rejects(trader.sendTransaction({ to: await router.getAddress(), value: 1n }));
   });
 });
