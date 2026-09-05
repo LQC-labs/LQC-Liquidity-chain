@@ -15,8 +15,21 @@ jobs:
       - uses: actions/checkout@v4
       - name: Decode final JEONG image to real JPEG
         run: |
-          base64 -d assets/jeong-jae-won-final-web.jpg > /tmp/jeong-final.jpg
-          mv /tmp/jeong-final.jpg assets/jeong-jae-won-final-web.jpg
+          python - <<'PY'
+          from pathlib import Path
+          import base64
+          p = Path('assets/jeong-jae-won-final-web.jpg')
+          raw = p.read_bytes()
+          try:
+              text = raw.decode('ascii')
+              decoded = base64.b64decode(''.join(text.split()), validate=False)
+              if not decoded.startswith(b'\xff\xd8\xff'):
+                  raise SystemExit('decoded data is not JPEG')
+              p.write_bytes(decoded)
+          except UnicodeDecodeError:
+              if not raw.startswith(b'\xff\xd8\xff'):
+                  raise SystemExit('file is neither base64 text nor JPEG')
+          PY
       - name: Point homepage card to final image
         run: |
           python - <<'PY'
