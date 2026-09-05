@@ -53,6 +53,8 @@ Liquidity Chain is developing non-custodial infrastructure for discovering and e
 - Browser comparison of single and two-way ERC-20 routes
 - Browser split selection only when expected output improves by more than 0.10%
 - Display of selected DEX allocation, token paths, expected output, minimum output, and estimated split benefit
+- Estimated price impact from a proportional probe quote and indicative BNB network fee
+- Pre-submission confirmation dialog with a high-price-impact warning at 3% or above
 - Quote refresh immediately before transaction submission
 
 Native-BNB split execution is not implemented; native-BNB trades use a single optimal route.
