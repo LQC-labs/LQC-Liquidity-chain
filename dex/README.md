@@ -20,7 +20,7 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - Local compilation plus AMM, route-selection, and security-boundary integration tests
 - BSC testnet deployment script
 - Static wallet-connected swap interface in `app/`
-- Trading UI compares single and two-way split routes, displays each DEX allocation, full paths, expected improvement, expected output, and minimum output when Router V2 is configured
+- Trading UI compares single and two-way split routes, displays each DEX allocation, full paths, expected improvement, price impact, indicative network fee, expected output, and minimum output when Router V2 is configured
 
 ## Commands
 
@@ -72,6 +72,8 @@ npm run configure:app
 The interface remains visibly disabled until all three addresses are configured.
 
 For Router V2 mode, also configure `ROUTER_V2_ADDRESS` and `PANCAKE_ADAPTER_ADDRESS`. The UI refreshes quotes immediately before submission, automatically uses a two-way ERC-20 split when it improves output by more than 0.10%, and calls the appropriate split, token/token, BNB/token, or token/BNB Router V2 entry point. Native-BNB trades remain single-route because Router V2 split execution accepts ERC-20 inputs. When Router V2 is not configured, the existing LQC Flow AMM V1 flow remains available.
+
+Before requesting the wallet transaction, the UI shows a confirmation summary with the minimum received amount, selected strategy, indicative BNB network fee, and a warning when estimated price impact is 3% or higher. Price impact and network fee values are estimates, not execution guarantees.
 
 Never commit private keys or `.env` files.
 
