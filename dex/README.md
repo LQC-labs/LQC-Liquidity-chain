@@ -20,6 +20,7 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - Local compilation plus AMM, route-selection, and security-boundary integration tests
 - BSC testnet deployment script
 - Static wallet-connected swap interface in `app/`
+- Trading UI automatically displays the selected DEX, full token path, compared-route count, expected output, and minimum output when Router V2 is configured
 
 ## Commands
 
@@ -69,6 +70,8 @@ npm run configure:app
 ```
 
 The interface remains visibly disabled until all three addresses are configured.
+
+For Router V2 mode, also configure `ROUTER_V2_ADDRESS` and `PANCAKE_ADAPTER_ADDRESS`. The UI then refreshes the optimal adapter quote immediately before submission and calls the appropriate token/token, BNB/token, or token/BNB Router V2 entry point. When Router V2 is not configured, the existing LQC Flow AMM V1 flow remains available.
 
 Never commit private keys or `.env` files.
 
