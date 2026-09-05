@@ -1,4 +1,4 @@
-name: Update JEONG JAE-WON portrait
+name: Sync JEONG JAE-WON homepage card
 on:
   push:
     branches: [main]
@@ -10,21 +10,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Replace profile image reference
+      - name: Sync homepage card to current JEONG profile image
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('team/jeong-jae-won.html')
+          p=Path('index.html')
           s=p.read_text()
-          s=s.replace('https://lqc-labs.github.io/LQC-Liquidity-chain/assets/jeong-jae-yoon-lqc-profile.png','https://lqc-labs.github.io/LQC-Liquidity-chain/assets/jeong-jae-won-profile.jpg')
-          s=s.replace('../assets/jeong-jae-yoon-lqc-profile.png','../assets/jeong-jae-won-profile.jpg')
+          old='assets/jeong-jae-won-profile.jpg'
+          new='assets/jeong-jae-won-lqc-profile.jpg?v=card-20260905'
+          if old not in s:
+              raise SystemExit('Old JEONG homepage image reference not found')
+          s=s.replace(old,new)
           p.write_text(s)
           PY
       - name: Commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add team/jeong-jae-won.html
+          git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "Use updated JEONG JAE-WON portrait"
+          git commit -m "Sync JEONG JAE-WON homepage card with current profile image"
           git push
