@@ -31,6 +31,10 @@ const quoter = await new ethers.ContractFactory(quoterArtifact.abi, quoterArtifa
 );
 await quoter.waitForDeployment();
 
+const routerV2Artifact = load("LQCFlowRouterV2");
+const routerV2 = await new ethers.ContractFactory(routerV2Artifact.abi, routerV2Artifact.bytecode, wallet).deploy(owner);
+await routerV2.waitForDeployment();
+
 console.log(JSON.stringify({
   chainId: network.chainId.toString(),
   deployer: wallet.address,
@@ -38,5 +42,6 @@ console.log(JSON.stringify({
   wbnb: WBNB_ADDRESS,
   factory: await factory.getAddress(),
   router: await router.getAddress(),
-  quoter: await quoter.getAddress()
+  quoter: await quoter.getAddress(),
+  routerV2: await routerV2.getAddress()
 }, null, 2));
