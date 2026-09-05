@@ -7,12 +7,13 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - `LQCFlowFactory`: permissionless token-pair creation and two-step owner transfer
 - `LQCFlowPair`: constant-product (`x*y=k`) pool and ERC-20 LP shares
 - `LQCFlowRouter`: token/BNB liquidity add/remove, exact-input swaps, exact-output swaps, and multi-hop paths
+- `LQCFlowQuoter`: compares up to 16 candidate routes and selects the highest-output viable path
 - Native BNB wrapping/unwrapping through the configured WBNB contract
 - 0.30% swap fee retained in the pool for liquidity providers
 - Minimum permanently locked liquidity
 - Slippage bounds and transaction deadlines
 - Pair-level reentrancy lock and safe ERC-20 transfers
-- Local compilation and integration tests
+- Local compilation plus AMM, route-selection, and security-boundary integration tests
 - BSC testnet deployment script
 - Static wallet-connected swap interface in `app/`
 
@@ -49,6 +50,6 @@ Never commit private keys or `.env` files.
 
 ## Current limitations
 
-This is an unaudited testnet MVP, not production-ready software. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, governance timelocks, pausability, price oracles, Router 2.0 cross-DEX aggregation, and the web trading interface are intentionally deferred.
+This is an unaudited testnet MVP, not production-ready software. The current Quoter compares paths only inside LQC Flow pools; cross-DEX aggregation is deferred to Router 2.0. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, governance timelocks, pausability, price oracles, and the full chart-based trading interface are also intentionally deferred.
 
 Before any mainnet use, complete independent audits, invariant/fuzz testing, economic simulations, legal review, multisig/timelock setup, token and pool allowlisting decisions, monitoring, and a capped-liquidity testnet/pilot phase.
