@@ -1,0 +1,33 @@
+name: Remove Ali and Jeong photos from homepage
+on:
+  push:
+    paths:
+      - '.github/workflows/remove-team-photos.yml'
+permissions:
+  contents: write
+jobs:
+  remove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove Ali and Jeong photo cards
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          start=s.find('  <div style="margin-top:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px">', s.find('<section id="team">'))
+          end=s.find('\n\n  <div class="partners">', start)
+          if start != -1 and end != -1:
+              s=s[:start]+s[end:]
+          else:
+              raise SystemExit('team photo block not found')
+          p.write_text(s)
+          PY
+      - name: Commit
+        run: |
+          git config user.name "LQC-labs"
+          git config user.email "mahogani2018@gmail.com"
+          git add index.html
+          git commit -m "Remove Ali Isik and Jeong Jae-won photos from homepage"
+          git push
