@@ -1,0 +1,39 @@
+name: Add homepage team profile cards
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/add-team-profile-cards.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Add visible profile cards below legal address
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          old = '''  <div class="entity-note"><strong>Legal entity:</strong> MMXlabs&amp;LQC LLC · Wyoming limited liability company · Filed April 30, 2026.<br><strong>Principal office and mailing address:</strong> 1603 Capitol Ave., Suite 310 - #WY144, Cheyenne, WY 82001, United States.</div>\n  <div style="margin-top:22px;display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="team/ali-isik.html" aria-label="View ALI ISIK Co-Founder profile">Meet ALI ISIK · Co-Founder →</a><a class="btn" href="team/jeong-jae-won.html" aria-label="View JEONG JAE-WON Advisor profile">Meet JEONG JAE-WON · Advisor →</a></div>'''
+          new = '''  <div class="entity-note"><strong>Legal entity:</strong> MMXlabs&amp;LQC LLC · Wyoming limited liability company · Filed April 30, 2026.<br><strong>Principal office and mailing address:</strong> 1603 Capitol Ave., Suite 310 - #WY144, Cheyenne, WY 82001, United States.</div>\n  <div style="margin-top:24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px">\n    <a href="team/ali-isik.html" aria-label="View ALI ISIK Co-Founder profile" style="display:block;padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:22px;background:rgba(255,255,255,.025)">\n      <img src="assets/ali-isik-lqc-profile.png" alt="ALI ISIK, Co-Founder of LQC" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px;margin-bottom:16px">\n      <strong style="display:block;font-size:20px">ALI ISIK</strong><span style="color:var(--muted);font-size:13px">Co-Founder · LQC</span>\n      <div style="margin-top:14px"><span class="btn">View personal profile →</span></div>\n    </a>\n    <a href="team/jeong-jae-won.html" aria-label="View JEONG JAE-WON Advisor profile" style="display:block;padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:22px;background:rgba(255,255,255,.025)">\n      <img src="assets/jeong-jae-won-profile.jpg" alt="JEONG JAE-WON, Advisor of LQC" style="display:block;width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:16px;margin-bottom:16px">\n      <strong style="display:block;font-size:20px">JEONG JAE-WON</strong><span style="color:var(--muted);font-size:13px">Advisor · LQC</span>\n      <div style="margin-top:14px"><span class="btn">View personal profile →</span></div>\n    </a>\n  </div>'''
+          if old not in s:
+              raise SystemExit('Target homepage team block not found')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit homepage update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Show ALI ISIK and JEONG JAE-WON profile cards on homepage"
+          git push
