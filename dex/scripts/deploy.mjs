@@ -32,7 +32,9 @@ const quoter = await new ethers.ContractFactory(quoterArtifact.abi, quoterArtifa
 await quoter.waitForDeployment();
 
 const routerV2Artifact = load("LQCFlowRouterV2");
-const routerV2 = await new ethers.ContractFactory(routerV2Artifact.abi, routerV2Artifact.bytecode, wallet).deploy(owner);
+const routerV2 = await new ethers.ContractFactory(routerV2Artifact.abi, routerV2Artifact.bytecode, wallet).deploy(
+  owner, WBNB_ADDRESS
+);
 await routerV2.waitForDeployment();
 
 console.log(JSON.stringify({
