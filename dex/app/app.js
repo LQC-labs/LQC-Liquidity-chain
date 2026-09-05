@@ -26,12 +26,15 @@
     connect: $("connectButton"), settings: $("settingsButton"), settingsPanel: $("settingsPanel"),
     amountIn: $("amountIn"), amountOut: $("amountOut"), minimum: $("minimumReceived"),
     route: $("routeLabel"), routeDex: $("routeDex"), routeStrategy: $("routeStrategy"),
-    routeSavings: $("routeSavings"), routeAlternatives: $("routeAlternatives"),
+    routeSavings: $("routeSavings"), priceImpact: $("priceImpact"), estimatedGasFee: $("estimatedGasFee"),
+    routeAlternatives: $("routeAlternatives"),
     routerMode: $("routerMode"), balanceIn: $("balanceIn"), balanceOut: $("balanceOut"),
     tokenInButton: $("tokenInButton"), tokenOutButton: $("tokenOutButton"), flip: $("flipButton"),
     max: $("maxButton"), buyAction: $("buyAction"), sellAction: $("sellAction"), status: $("statusBox"), statusText: $("statusText"),
     dialog: $("tokenDialog"), tokenList: $("tokenList"), slippage: $("slippageInput"),
-    contractState: $("contractState")
+    contractState: $("contractState"), confirmDialog: $("confirmDialog"),
+    confirmPay: $("confirmPay"), confirmReceive: $("confirmReceive"), confirmStrategy: $("confirmStrategy"),
+    confirmGas: $("confirmGas"), confirmWarning: $("confirmWarning")
   };
 
   let provider, signer, account, router, routerV2, currentQuote, choosingSide = "in", quoteTimer;
@@ -86,6 +89,8 @@
     ui.routeDex.textContent = deployedV2 ? "경로 탐색 대기" : "LQC Flow AMM";
     ui.routeStrategy.textContent = deployedV2 ? "자동 선택" : "단일 경로";
     ui.routeSavings.textContent = "—";
+    ui.priceImpact.textContent = "—";
+    ui.estimatedGasFee.textContent = "—";
     ui.routeAlternatives.textContent = deployedV2 ? "수량을 입력하세요" : "직접 경로";
     currentQuote = null;
     syncModeFromPair();
@@ -199,6 +204,44 @@
     quoteTimer = setTimeout(updateQuote, 300);
   }
 
+  async function updateExecutionMetrics() {
+    const impact = currentQuote?.priceImpactBps;
+    ui.priceImpact.textContent = impact === null || impact === undefined ? "계산 불가" : `${(impact / 100).toFixed(2)}%`;
+    try {
+      const feeData = await provider.getFeeData();
+      const gasPrice = feeData.gasPrice || feeData.maxFeePerGas;
+      if (!gasPrice) throw new Error("Gas price unavailable");
+      const pathLength = currentQuote.strategy === "split"
+        ? currentQuote.routes.reduce((total, route) => total + route.path.length, 0)
+        : (currentQuote.path?.length || 2);
+      const gasUnits = currentQuote.strategy === "split"
+        ? 420_000n + BigInt(pathLength - 4) * 35_000n
+        : 240_000n + BigInt(pathLength - 2) * 35_000n;
+      currentQuote.estimatedGasFee = `${Number(ethers.formatEther(gasUnits * gasPrice)).toLocaleString(undefined, { maximumFractionDigits: 6 })} BNB`;
+      ui.estimatedGasFee.textContent = currentQuote.estimatedGasFee;
+    } catch {
+      currentQuote.estimatedGasFee = "계산 불가";
+      ui.estimatedGasFee.textContent = currentQuote.estimatedGasFee;
+    }
+  }
+
+  function confirmSwap(raw) {
+    ui.confirmPay.textContent = `${raw} ${tokenIn.symbol}`;
+    ui.confirmReceive.textContent = ui.minimum.textContent;
+    ui.confirmStrategy.textContent = ui.routeStrategy.textContent;
+    ui.confirmGas.textContent = currentQuote.estimatedGasFee || "계산 불가";
+    const impact = currentQuote.priceImpactBps;
+    ui.confirmWarning.textContent = impact !== null && impact !== undefined && impact >= 300
+      ? `주의: 예상 가격 영향이 ${(impact / 100).toFixed(2)}%입니다. 거래 규모를 다시 확인하세요.`
+      : "최종 수령량과 가스비는 블록 상태에 따라 달라질 수 있습니다.";
+    ui.confirmWarning.classList.toggle("high-impact", impact !== null && impact !== undefined && impact >= 300);
+    ui.confirmDialog.returnValue = "";
+    ui.confirmDialog.showModal();
+    return new Promise((resolve) => ui.confirmDialog.addEventListener("close", () => {
+      resolve(ui.confirmDialog.returnValue === "confirm");
+    }, { once: true }));
+  }
+
   async function updateQuote() {
     ui.amountOut.textContent = "0.0";
     ui.minimum.textContent = "—";
@@ -251,6 +294,7 @@
         ui.routeSavings.textContent = "—";
         ui.routeAlternatives.textContent = "직접 경로";
       }
+      await updateExecutionMetrics();
       ui.amountOut.textContent = ethers.formatUnits(out, tokenOut.decimals);
       ui.minimum.textContent = `${Number(ethers.formatUnits(minimum, tokenOut.decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 })} ${tokenOut.symbol}`;
       setTradeActionsDisabled(false);
@@ -259,6 +303,8 @@
       ui.routeDex.textContent = "경로 없음";
       ui.routeStrategy.textContent = "견적 실패";
       ui.routeSavings.textContent = "—";
+      ui.priceImpact.textContent = "—";
+      ui.estimatedGasFee.textContent = "—";
       ui.routeAlternatives.textContent = "유동성 확인 필요";
       setStatus(error.message || "이 거래쌍의 유동성을 확인할 수 없습니다.", "error");
     }
@@ -272,6 +318,10 @@
       setTradeActionsDisabled(true);
       await updateQuote();
       if (!currentQuote) throw new Error("실행 가능한 최적경로가 없습니다.");
+      if (!(await confirmSwap(raw))) {
+        setStatus("거래 확인이 취소되었습니다.");
+        return;
+      }
       const amountIn = ethers.parseUnits(raw, tokenIn.decimals);
       const path = [tokenAddress(tokenIn), tokenAddress(tokenOut)];
       const amountOutMin = currentQuote.amountOutMin;
