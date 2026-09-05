@@ -1,0 +1,33 @@
+name: Remove team personal profile links
+
+on:
+  push:
+    paths:
+      - '.github/workflows/remove-personal-profile-links.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove ALI ISIK and JEONG JAE-WON personal links
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          s = s.replace('<a href="team/ali-isik.html" aria-label="View ALI ISIK Co-Founder profile" style="display:block;padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:22px;background:rgba(255,255,255,.025)">', '<div style="display:block;padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:22px;background:rgba(255,255,255,.025)">')
+          s = s.replace('      <div style="margin-top:14px"><span class="btn">View personal profile →</span></div>\n    </a>\n    <a href="team/jeong-jae-won.html" aria-label="View JEONG JAE-WON Advisor profile" style="display:block;padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:22px;background:rgba(255,255,255,.025)">', '    </div>\n    <div style="display:block;padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:22px;background:rgba(255,255,255,.025)">', 1)
+          s = s.replace('      <div style="margin-top:14px"><span class="btn">View personal profile →</span></div>\n    </a>\n  </div>', '    </div>\n  </div>', 1)
+          p.write_text(s)
+          PY
+      - name: Commit homepage update
+        run: |
+          git config user.name "LQC-labs"
+          git config user.email "mahogani2018@gmail.com"
+          git add index.html
+          git commit -m "Remove ALI ISIK and JEONG JAE-WON personal profile links" || exit 0
+          git push
