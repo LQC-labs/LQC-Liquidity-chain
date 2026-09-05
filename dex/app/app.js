@@ -11,6 +11,7 @@
   ];
   const routerV2Abi = [
     "function swapBestExactInput(address tokenIn,address tokenOut,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) returns (address adapter,uint256 amountOut)",
+    "function swapSplitExactInput(address tokenIn,address tokenOut,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,uint16[] allocationBps,address recipient,uint256 deadline) returns (uint256 amountOut)",
     "function swapExactBNBForTokens(address tokenOut,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) payable returns (address adapter,uint256 amountOut)",
     "function swapExactTokensForBNB(address tokenIn,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) returns (address adapter,uint256 amountOut)"
   ];
@@ -24,7 +25,8 @@
   const ui = {
     connect: $("connectButton"), settings: $("settingsButton"), settingsPanel: $("settingsPanel"),
     amountIn: $("amountIn"), amountOut: $("amountOut"), minimum: $("minimumReceived"),
-    route: $("routeLabel"), routeDex: $("routeDex"), routeAlternatives: $("routeAlternatives"),
+    route: $("routeLabel"), routeDex: $("routeDex"), routeStrategy: $("routeStrategy"),
+    routeSavings: $("routeSavings"), routeAlternatives: $("routeAlternatives"),
     routerMode: $("routerMode"), balanceIn: $("balanceIn"), balanceOut: $("balanceOut"),
     tokenInButton: $("tokenInButton"), tokenOutButton: $("tokenOutButton"), flip: $("flipButton"),
     max: $("maxButton"), buyAction: $("buyAction"), sellAction: $("sellAction"), status: $("statusBox"), statusText: $("statusText"),
@@ -82,6 +84,8 @@
     }
     ui.route.textContent = `${tokenIn.symbol} → ${tokenOut.symbol}`;
     ui.routeDex.textContent = deployedV2 ? "경로 탐색 대기" : "LQC Flow AMM";
+    ui.routeStrategy.textContent = deployedV2 ? "자동 선택" : "단일 경로";
+    ui.routeSavings.textContent = "—";
     ui.routeAlternatives.textContent = deployedV2 ? "수량을 입력하세요" : "직접 경로";
     currentQuote = null;
     syncModeFromPair();
@@ -218,19 +222,33 @@
           amountIn: amount,
           adapters: configuredAdapters,
           connectors,
-          slippageBps
+          slippageBps,
+          allowSplit: tokenIn.address !== "native" && tokenOut.address !== "native"
         });
         out = currentQuote.amountOut;
         minimum = currentQuote.amountOutMin;
-        ui.route.textContent = currentQuote.path.map(symbolForAddress).join(" → ");
-        ui.routeDex.textContent = currentQuote.adapter.name || currentQuote.adapter.id;
-        ui.routeAlternatives.textContent = `${currentQuote.alternatives.length + 1}개 경로 비교`;
+        if (currentQuote.strategy === "split") {
+          ui.route.textContent = currentQuote.routes.map((route) => route.path.map(symbolForAddress).join(" → ")).join(" / ");
+          ui.routeDex.textContent = currentQuote.routes.map((route, index) =>
+            `${route.adapter.name || route.adapter.id} ${currentQuote.allocationBps[index] / 100}%`
+          ).join(" + ");
+          ui.routeStrategy.textContent = "2개 DEX 자동 분할";
+          ui.routeSavings.textContent = `+${Number(ethers.formatUnits(currentQuote.improvementAmount, tokenOut.decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 })} ${tokenOut.symbol} (${(currentQuote.improvementBps / 100).toFixed(2)}%)`;
+        } else {
+          ui.route.textContent = currentQuote.path.map(symbolForAddress).join(" → ");
+          ui.routeDex.textContent = currentQuote.adapter.name || currentQuote.adapter.id;
+          ui.routeStrategy.textContent = "단일 최적경로";
+          ui.routeSavings.textContent = "분할 이점 없음";
+        }
+        ui.routeAlternatives.textContent = `${currentQuote.comparedRoutes}개 경로 비교`;
       } else {
         const amounts = await router.getAmountsOut(amount, path);
         out = amounts[amounts.length - 1];
         minimum = out * BigInt(10_000 - slippageBps) / 10_000n;
         currentQuote = { path, amountOut: out, amountOutMin: minimum };
         ui.routeDex.textContent = "LQC Flow AMM";
+        ui.routeStrategy.textContent = "단일 경로";
+        ui.routeSavings.textContent = "—";
         ui.routeAlternatives.textContent = "직접 경로";
       }
       ui.amountOut.textContent = ethers.formatUnits(out, tokenOut.decimals);
@@ -239,6 +257,8 @@
     } catch (error) {
       setTradeActionsDisabled(true);
       ui.routeDex.textContent = "경로 없음";
+      ui.routeStrategy.textContent = "견적 실패";
+      ui.routeSavings.textContent = "—";
       ui.routeAlternatives.textContent = "유동성 확인 필요";
       setStatus(error.message || "이 거래쌍의 유동성을 확인할 수 없습니다.", "error");
     }
@@ -258,8 +278,8 @@
       const deadline = Math.floor(Date.now() / 1000) + 1_200;
       let tx;
       if (routerV2) {
-        const adapters = [currentQuote.adapter.address];
-        const routeData = [currentQuote.routeData];
+        const adapters = currentQuote.strategy === "split" ? currentQuote.adapters : [currentQuote.adapter.address];
+        const routeData = currentQuote.strategy === "split" ? currentQuote.routeData : [currentQuote.routeData];
         if (tokenIn.address === "native") {
           tx = await routerV2.swapExactBNBForTokens(
             tokenAddress(tokenOut), amountOutMin, adapters, routeData, account, deadline, { value: amountIn }
@@ -271,7 +291,12 @@
             setStatus(`${tokenIn.symbol} 사용 승인을 확인하세요.`);
             await (await token.approve(config.routerV2Address, amountIn)).wait();
           }
-          tx = tokenOut.address === "native"
+          tx = currentQuote.strategy === "split"
+            ? await routerV2.swapSplitExactInput(
+              tokenAddress(tokenIn), tokenAddress(tokenOut), amountIn, amountOutMin,
+              adapters, routeData, currentQuote.allocationBps, account, deadline
+            )
+            : tokenOut.address === "native"
             ? await routerV2.swapExactTokensForBNB(
               tokenAddress(tokenIn), amountIn, amountOutMin, adapters, routeData, account, deadline
             )
