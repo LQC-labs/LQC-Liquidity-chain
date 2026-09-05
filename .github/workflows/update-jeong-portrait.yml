@@ -2,7 +2,7 @@ name: Update JEONG JAE-WON portrait
 on:
   push:
     branches: [main]
-    paths: ['assets/jeong-jae-won-profile.jpg']
+    paths: ['.github/workflows/update-jeong-portrait.yml']
 permissions:
   contents: write
 jobs:
@@ -16,7 +16,7 @@ jobs:
           from pathlib import Path
           p=Path('team/jeong-jae-won.html')
           s=p.read_text()
-          s=s.replace('assets/jeong-jae-yoon-lqc-profile.png','assets/jeong-jae-won-profile.jpg')
+          s=s.replace('https://lqc-labs.github.io/LQC-Liquidity-chain/assets/jeong-jae-yoon-lqc-profile.png','https://lqc-labs.github.io/LQC-Liquidity-chain/assets/jeong-jae-won-profile.jpg')
           s=s.replace('../assets/jeong-jae-yoon-lqc-profile.png','../assets/jeong-jae-won-profile.jpg')
           p.write_text(s)
           PY
