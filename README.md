@@ -8,7 +8,11 @@ The legal entity established for the LQC project is **MMXlabs&LQC**, a limited l
 
 LQC provides a technical framework for cross-DEX route discovery, liquidity aggregation, protocol-level transaction execution, liquidity deployment across many DEX markets, and future DeFi services.
 
-LQC is not itself a decentralized exchange, centralized exchange, broker, custodian, or investment product.
+## LQC Flow DEX MVP
+
+The first testnet-oriented AMM implementation is available in [`dex/`](dex/README.md). It includes a token-pair factory, constant-product liquidity pools, LP shares, token and native-BNB routing, multi-hop swaps, deployment tooling, and local integration tests. It is unaudited and must not be used with production funds.
+
+The Liquidity Chain base protocol is not itself a centralized exchange, broker, custodian, or investment product. LQC Flow DEX is a separate, non-custodial application in development on top of that infrastructure.
 
 ## Design Principle
 

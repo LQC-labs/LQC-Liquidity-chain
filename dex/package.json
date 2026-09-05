@@ -1,0 +1,17 @@
+{
+  "name": "@lqc-flow/dex-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "LQC Flow DEX constant-product AMM MVP",
+  "scripts": {
+    "compile": "node scripts/compile.mjs",
+    "test": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
+    "configure:app": "node scripts/configure-app.mjs"
+  },
+  "devDependencies": {
+    "ethers": "^6.15.0",
+    "ganache": "^7.9.2",
+    "mocha": "^11.7.1",
+    "solc": "0.8.30"
+  }
+}

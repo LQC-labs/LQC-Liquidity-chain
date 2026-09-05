@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#03070c">
+  <meta name="description" content="LQC Flow DEX — BNB Smart Chain testnet swap interface">
+  <title>LQC Flow DEX</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+
+  <header class="topbar">
+    <a class="brand" href="../../index.html" aria-label="Liquidity Chain homepage">
+      <span class="brand-mark"><img src="../../lqc-token-symbol.png" alt=""></span>
+      <span><strong>LQC FLOW</strong><small>DECENTRALIZED EXCHANGE</small></span>
+    </a>
+    <div class="top-actions">
+      <span class="network-pill"><i></i><span id="networkLabel">BSC Testnet</span></span>
+      <button class="wallet-button" id="connectButton" type="button">지갑 연결</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="trade-shell" aria-labelledby="swapTitle">
+      <div class="trade-heading">
+        <div>
+          <span class="eyebrow">NON-CUSTODIAL SWAP</span>
+          <h1 id="swapTitle">Swap</h1>
+        </div>
+        <button class="icon-button" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⚙</button>
+      </div>
+
+      <div class="settings" id="settingsPanel" hidden>
+        <label for="slippageInput">슬리피지 허용 범위</label>
+        <div class="slippage-row">
+          <button class="slippage-option" data-value="0.1" type="button">0.1%</button>
+          <button class="slippage-option active" data-value="0.5" type="button">0.5%</button>
+          <button class="slippage-option" data-value="1" type="button">1.0%</button>
+          <span class="custom-slippage"><input id="slippageInput" inputmode="decimal" value="0.5" aria-label="직접 입력 슬리피지"><b>%</b></span>
+        </div>
+      </div>
+
+      <div class="token-panel">
+        <div class="panel-label"><span>보내는 토큰</span><button id="maxButton" type="button">MAX</button></div>
+        <div class="amount-row">
+          <input id="amountIn" inputmode="decimal" autocomplete="off" placeholder="0.0" aria-label="보낼 수량">
+          <button class="token-button" id="tokenInButton" type="button" aria-haspopup="listbox">
+            <span class="token-symbol" id="tokenInIcon">BNB</span><b id="tokenInLabel">BNB</b><span>⌄</span>
+          </button>
+        </div>
+        <div class="balance">잔액 <span id="balanceIn">—</span></div>
+      </div>
+
+      <div class="flip-wrap"><button class="flip-button" id="flipButton" type="button" aria-label="토큰 순서 변경">↓</button></div>
+
+      <div class="token-panel receive-panel">
+        <div class="panel-label"><span>받는 토큰</span><span>예상 수량</span></div>
+        <div class="amount-row">
+          <output id="amountOut">0.0</output>
+          <button class="token-button" id="tokenOutButton" type="button" aria-haspopup="listbox">
+            <span class="token-symbol mint" id="tokenOutIcon">LQC</span><b id="tokenOutLabel">LQC</b><span>⌄</span>
+          </button>
+        </div>
+        <div class="balance">잔액 <span id="balanceOut">—</span></div>
+      </div>
+
+      <div class="quote-box" id="quoteBox">
+        <div><span>최소 수령량</span><b id="minimumReceived">—</b></div>
+        <div><span>LP 수수료</span><b>0.30%</b></div>
+        <div><span>경로</span><b id="routeLabel">BNB → LQC</b></div>
+      </div>
+
+      <div class="status" id="statusBox" role="status">
+        <i></i><span id="statusText">테스트넷 배포 주소를 연결하면 거래가 활성화됩니다.</span>
+      </div>
+
+      <button class="primary-action" id="swapButton" type="button" disabled>지갑을 연결하세요</button>
+      <p class="risk-note">테스트넷 MVP · 실제 자금을 보내지 마세요. 독립 보안감사 전에는 메인넷에서 사용할 수 없습니다.</p>
+    </section>
+
+    <aside class="market-panel" aria-label="LQC Flow 거래 정보">
+      <div class="market-head"><span>ROUTE STATUS</span><b>AMM V1</b></div>
+      <div class="route-visual" aria-hidden="true">
+        <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div>
+        <div class="route-node node-a">BNB</div><div class="route-node node-b">LQC</div>
+        <div class="route-core">FLOW<small>0.30%</small></div><div class="route-pulse"></div>
+      </div>
+      <dl class="market-data">
+        <div><dt>네트워크</dt><dd>BNB Smart Chain</dd></div>
+        <div><dt>거래 방식</dt><dd>Constant Product AMM</dd></div>
+        <div><dt>자산 보관</dt><dd>Non-custodial</dd></div>
+        <div><dt>컨트랙트</dt><dd id="contractState" class="pending">배포 대기</dd></div>
+      </dl>
+    </aside>
+  </main>
+
+  <dialog id="tokenDialog">
+    <form method="dialog">
+      <div class="dialog-head"><h2>토큰 선택</h2><button value="cancel" aria-label="닫기">×</button></div>
+      <div class="token-list" id="tokenList" role="listbox"></div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
