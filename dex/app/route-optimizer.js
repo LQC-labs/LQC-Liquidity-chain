@@ -50,6 +50,31 @@
     return splits.sort((a, b) => a.amountOut === b.amountOut ? 0 : a.amountOut > b.amountOut ? -1 : 1)[0] || null;
   }
 
+  async function estimatePriceImpact(selection, amountIn) {
+    const probeAmount = amountIn / 1_000n;
+    if (probeAmount === 0n) return null;
+    try {
+      let probeOut;
+      if (selection.strategy === "split") {
+        const firstAmount = probeAmount * BigInt(selection.allocationBps[0]) / 10_000n;
+        const legAmounts = [firstAmount, probeAmount - firstAmount];
+        const outputs = await Promise.all(selection.routes.map((route, index) =>
+          route.contract.quoteExactInput(route.path[0], route.path.at(-1), legAmounts[index], route.routeData)
+        ));
+        probeOut = outputs.reduce((total, value) => total + value, 0n);
+      } else {
+        probeOut = await selection.contract.quoteExactInput(
+          selection.path[0], selection.path.at(-1), probeAmount, selection.routeData
+        );
+      }
+      const linearOut = probeOut * amountIn / probeAmount;
+      if (linearOut <= selection.amountOut || linearOut === 0n) return 0;
+      return Number((linearOut - selection.amountOut) * 10_000n / linearOut);
+    } catch {
+      return null;
+    }
+  }
+
   async function findOptimalRoute({ provider, tokenIn, tokenOut, amountIn, adapters, connectors, slippageBps, allowSplit = false }) {
     const attempts = [];
     for (const adapter of adapters.filter((item) => ethers.isAddress(item.address))) {
@@ -73,9 +98,10 @@
     const best = viable[0];
     const split = allowSplit ? await findOptimalSplit(viable, amountIn) : null;
     const minimumImprovement = best.amountOut * 10n / 10_000n;
+    let selection;
     if (split && split.amountOut > best.amountOut + minimumImprovement) {
       const improvementAmount = split.amountOut - best.amountOut;
-      return {
+      selection = {
         strategy: "split",
         amountOut: split.amountOut,
         amountOutMin: split.amountOut * BigInt(10_000 - slippageBps) / 10_000n,
@@ -88,14 +114,17 @@
         alternatives: viable.slice(0, 3),
         comparedRoutes: viable.length
       };
+    } else {
+      selection = {
+        ...best,
+        strategy: "single",
+        amountOutMin: best.amountOut * BigInt(10_000 - slippageBps) / 10_000n,
+        alternatives: viable.slice(1, 4),
+        comparedRoutes: viable.length
+      };
     }
-    return {
-      ...best,
-      strategy: "single",
-      amountOutMin: best.amountOut * BigInt(10_000 - slippageBps) / 10_000n,
-      alternatives: viable.slice(1, 4),
-      comparedRoutes: viable.length
-    };
+    selection.priceImpactBps = await estimatePriceImpact(selection, amountIn);
+    return selection;
   }
 
   window.LQCRouteOptimizer = Object.freeze({ findOptimalRoute });
