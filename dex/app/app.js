@@ -26,9 +26,13 @@
     contractState: $("contractState")
   };
 
+  ui.buyMode = $("buyMode");
+  ui.sellMode = $("sellMode");
+
   let provider, signer, account, router, choosingSide = "in", quoteTimer;
   let tokenIn = config.tokens[0];
   let tokenOut = config.tokens[2];
+  let tradeMode = "buy";
 
   const deployed = ethers.isAddress(config.routerAddress) && config.tokens
     .filter((token) => token.address !== "native")
@@ -64,6 +68,37 @@
       $(`token${side}Icon`).classList.toggle("mint", token.symbol === "LQC");
     }
     ui.route.textContent = `${tokenIn.symbol} → ${tokenOut.symbol}`;
+    syncModeFromPair();
+  }
+
+  function actionLabel() {
+    return tradeMode === "sell" ? "SELL LQC" : "BUY LQC";
+  }
+
+  function renderMode() {
+    for (const [button, mode] of [[ui.buyMode, "buy"], [ui.sellMode, "sell"]]) {
+      const active = tradeMode === mode;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    }
+    if (account) ui.swap.textContent = deployed ? actionLabel() : "테스트넷 배포 대기";
+  }
+
+  function syncModeFromPair() {
+    if (tokenOut.symbol === "LQC") tradeMode = "buy";
+    else if (tokenIn.symbol === "LQC") tradeMode = "sell";
+    renderMode();
+  }
+
+  function setTradeMode(mode) {
+    const lqc = config.tokens.find((token) => token.symbol === "LQC");
+    const bnb = config.tokens.find((token) => token.symbol === "BNB");
+    if (!lqc || !bnb) return;
+    tradeMode = mode;
+    [tokenIn, tokenOut] = mode === "buy" ? [bnb, lqc] : [lqc, bnb];
+    renderTokens();
+    updateBalances();
+    scheduleQuote();
   }
 
   function renderTokenList() {
@@ -108,7 +143,7 @@
       ui.connect.textContent = shortAddress(account);
       router = deployed ? new ethers.Contract(config.routerAddress, routerAbi, signer) : null;
       ui.swap.disabled = !deployed;
-      ui.swap.textContent = deployed ? "Swap" : "테스트넷 배포 대기";
+      ui.swap.textContent = deployed ? actionLabel() : "테스트넷 배포 대기";
       setStatus(deployed ? "지갑이 연결되었습니다." : "지갑 연결 완료 · 테스트넷 배포 주소가 아직 없습니다.", deployed ? "success" : "");
       await updateBalances();
       scheduleQuote();
@@ -165,7 +200,7 @@
       ui.amountOut.textContent = ethers.formatUnits(out, tokenOut.decimals);
       ui.minimum.textContent = `${Number(ethers.formatUnits(minimum, tokenOut.decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 })} ${tokenOut.symbol}`;
       ui.swap.disabled = false;
-      ui.swap.textContent = "Swap";
+      ui.swap.textContent = actionLabel();
     } catch {
       ui.swap.disabled = true;
       ui.swap.textContent = "유동성이 부족합니다";
@@ -203,7 +238,7 @@
       }
       setStatus("거래가 제출되었습니다. 블록 확인을 기다리는 중입니다.");
       await tx.wait();
-      setStatus("Swap이 완료되었습니다.", "success");
+      setStatus(`${actionLabel()} 거래가 완료되었습니다.`, "success");
       ui.amountIn.value = "";
       await updateBalances();
       await updateQuote();
@@ -211,11 +246,13 @@
       setStatus(error.shortMessage || "거래가 취소되었거나 실패했습니다.", "error");
     } finally {
       ui.swap.disabled = !deployed;
-      ui.swap.textContent = deployed ? "Swap" : "테스트넷 배포 대기";
+      ui.swap.textContent = deployed ? actionLabel() : "테스트넷 배포 대기";
     }
   }
 
   ui.connect.addEventListener("click", connectWallet);
+  ui.buyMode.addEventListener("click", () => setTradeMode("buy"));
+  ui.sellMode.addEventListener("click", () => setTradeMode("sell"));
   ui.settings.addEventListener("click", () => {
     ui.settingsPanel.hidden = !ui.settingsPanel.hidden;
     ui.settings.setAttribute("aria-expanded", String(!ui.settingsPanel.hidden));

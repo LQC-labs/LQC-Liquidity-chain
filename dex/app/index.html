@@ -24,11 +24,15 @@
   </header>
 
   <main>
-    <section class="trade-shell" aria-labelledby="swapTitle">
+    <section class="trade-shell" aria-labelledby="tradeTitle">
       <div class="trade-heading">
         <div>
           <span class="eyebrow">NON-CUSTODIAL SWAP</span>
-          <h1 id="swapTitle">Swap</h1>
+          <h1 class="sr-only" id="tradeTitle">LQC Buy and Sell</h1>
+          <div class="mode-tabs" role="tablist" aria-label="거래 방향">
+            <button id="buyMode" class="mode-tab active" type="button" role="tab" aria-selected="true">BUY</button>
+            <button id="sellMode" class="mode-tab" type="button" role="tab" aria-selected="false">SELL</button>
+          </div>
         </div>
         <button class="icon-button" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⚙</button>
       </div>
