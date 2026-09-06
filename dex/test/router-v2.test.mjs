@@ -6,7 +6,7 @@ import { ethers } from "ethers";
 const artifact = (name, source = name) => JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${source}.sol/${name}.json`, import.meta.url)));
 
 describe("LQC Router 2.0", function () {
-  let provider, owner, other, tokenA, tokenB, flowRouter, registry, quoteRouter, executionRouter, splitOptimizer, adapter;
+  let provider, owner, other, tokenA, tokenB, flowRouter, registry, quoteRouter, executionRouter, splitOptimizer, autoRouter, adapter;
 
   beforeEach(async function () {
     provider = new ethers.BrowserProvider(ganache.provider({ logging: { quiet: true } }));
@@ -31,9 +31,11 @@ describe("LQC Router 2.0", function () {
     executionRouter = await ExecutionRouter.deploy(await registry.getAddress());
     const SplitOptimizer = new ethers.ContractFactory(artifact("LQCSplitOptimizer", "router-v2/LQCSplitOptimizer").abi, artifact("LQCSplitOptimizer", "router-v2/LQCSplitOptimizer").bytecode, owner);
     splitOptimizer = await SplitOptimizer.deploy(await registry.getAddress());
+    const AutoRouter = new ethers.ContractFactory(artifact("LQCAutoRouter", "router-v2/LQCAutoRouter").abi, artifact("LQCAutoRouter", "router-v2/LQCAutoRouter").bytecode, owner);
+    autoRouter = await AutoRouter.deploy(await splitOptimizer.getAddress(), await executionRouter.getAddress());
     const Adapter = new ethers.ContractFactory(artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").abi, artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").bytecode, owner);
     adapter = await Adapter.deploy(await flowRouter.getAddress());
-    await Promise.all([quoteRouter.waitForDeployment(), executionRouter.waitForDeployment(), splitOptimizer.waitForDeployment(), adapter.waitForDeployment()]);
+    await Promise.all([quoteRouter.waitForDeployment(), executionRouter.waitForDeployment(), splitOptimizer.waitForDeployment(), autoRouter.waitForDeployment(), adapter.waitForDeployment()]);
     const amount = ethers.parseEther("10000");
     await (await tokenA.mint(await owner.getAddress(), amount)).wait();
     await (await tokenB.mint(await owner.getAddress(), amount)).wait();
@@ -327,5 +329,21 @@ describe("LQC Router 2.0", function () {
     assert(optimized.amountsIn[1] > 0n);
     assert(optimized.totalAmountOut > singleRouteOut);
     assert.equal(optimized.totalNetAmountOut, optimized.totalAmountOut);
+
+    await (await tokenA.mint(await owner.getAddress(), amountIn)).wait();
+    await (await tokenA.approve(await autoRouter.getAddress(), amountIn)).wait();
+    const before = await tokenB.balanceOf(await other.getAddress());
+    await assert.rejects(autoRouter.swapOptimizedExactInput(
+      tokenIn, tokenOut, amountIn, await other.getAddress(), BigInt(block.timestamp + 3600),
+      [route, route], [0, 0], 10, 2001
+    ));
+    await (await autoRouter.swapOptimizedExactInput(
+      tokenIn, tokenOut, amountIn, await other.getAddress(), BigInt(block.timestamp + 3600),
+      [route, route], [0, 0], 10, 100
+    )).wait();
+    const received = (await tokenB.balanceOf(await other.getAddress())) - before;
+    assert(received >= optimized.totalAmountOut * 9900n / 10000n);
+    assert.equal(await tokenA.balanceOf(await autoRouter.getAddress()), 0n);
+    assert.equal(await tokenA.allowance(await autoRouter.getAddress(), await executionRouter.getAddress()), 0n);
   });
 });

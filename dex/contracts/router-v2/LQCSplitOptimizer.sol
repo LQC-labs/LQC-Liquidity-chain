@@ -26,6 +26,7 @@ contract LQCSplitOptimizer {
     error InvalidParts();
     error InvalidRouteData();
     error NoExecutableRoute();
+    error InvalidMaxRoutes();
 
     constructor(address registry_) {
         if (registry_ == address(0)) revert ZeroAddress();
@@ -43,6 +44,36 @@ contract LQCSplitOptimizer {
         uint256[] calldata routeCostInTokenOut,
         uint256 parts
     ) external view returns (SplitQuote memory result) {
+        return _quoteOptimalSplit(
+            tokenIn, tokenOut, amountIn, routeData, routeCostInTokenOut, parts, registry.dexCount()
+        );
+    }
+
+    /// @notice Same optimizer with a cap on distinct routes for bounded execution.
+    function quoteOptimalSplitCapped(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        bytes[] calldata routeData,
+        uint256[] calldata routeCostInTokenOut,
+        uint256 parts,
+        uint256 maxRoutes
+    ) external view returns (SplitQuote memory result) {
+        if (maxRoutes == 0 || maxRoutes > 4) revert InvalidMaxRoutes();
+        return _quoteOptimalSplit(
+            tokenIn, tokenOut, amountIn, routeData, routeCostInTokenOut, parts, maxRoutes
+        );
+    }
+
+    function _quoteOptimalSplit(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        bytes[] calldata routeData,
+        uint256[] calldata routeCostInTokenOut,
+        uint256 parts,
+        uint256 maxRoutes
+    ) private view returns (SplitQuote memory result) {
         if (tokenIn == address(0) || tokenOut == address(0)) revert ZeroAddress();
         if (tokenIn == tokenOut) revert InvalidTokens();
         if (amountIn == 0) revert InvalidAmount();
@@ -69,6 +100,7 @@ contract LQCSplitOptimizer {
         uint256 basePart = amountIn / parts;
         uint256 remainder = amountIn % parts;
         bool allocatedAny;
+        uint256 usedRoutes;
         for (uint256 part; part < parts; ++part) {
             uint256 chunk = basePart + (part == parts - 1 ? remainder : 0);
             uint256 bestIndex;
@@ -79,6 +111,7 @@ contract LQCSplitOptimizer {
 
             for (uint256 i; i < count; ++i) {
                 if (!executable[i]) continue;
+                if (result.amountsIn[i] == 0 && usedRoutes >= maxRoutes) continue;
                 uint256 newAllocation = result.amountsIn[i] + chunk;
                 try ILQCDexAdapter(result.adapters[i]).quoteExactInput(
                     tokenIn, tokenOut, newAllocation, routeData[i]
@@ -103,6 +136,7 @@ contract LQCSplitOptimizer {
                 }
             }
             if (!found) revert NoExecutableRoute();
+            if (result.amountsIn[bestIndex] == 0) ++usedRoutes;
             result.amountsIn[bestIndex] += chunk;
             result.amountsOut[bestIndex] = bestNewQuote;
             allocatedAny = true;

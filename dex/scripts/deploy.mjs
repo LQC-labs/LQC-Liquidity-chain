@@ -51,6 +51,12 @@ const splitOptimizerArtifact = load("router-v2/LQCSplitOptimizer");
 const splitOptimizer = await new ethers.ContractFactory(splitOptimizerArtifact.abi, splitOptimizerArtifact.bytecode, wallet).deploy(await registry.getAddress());
 await splitOptimizer.waitForDeployment();
 
+const autoRouterArtifact = load("router-v2/LQCAutoRouter");
+const autoRouter = await new ethers.ContractFactory(autoRouterArtifact.abi, autoRouterArtifact.bytecode, wallet).deploy(
+  await splitOptimizer.getAddress(), await executionRouter.getAddress()
+);
+await autoRouter.waitForDeployment();
+
 const flowAdapterArtifact = load("router-v2/adapters/LQCFlowAdapter");
 const flowAdapter = await new ethers.ContractFactory(flowAdapterArtifact.abi, flowAdapterArtifact.bytecode, wallet).deploy(await router.getAddress());
 await flowAdapter.waitForDeployment();
@@ -90,6 +96,7 @@ console.log(JSON.stringify({
   quoteRouter: await quoteRouter.getAddress(),
   executionRouter: await executionRouter.getAddress(),
   splitOptimizer: await splitOptimizer.getAddress(),
+  autoRouter: await autoRouter.getAddress(),
   flowAdapter: await flowAdapter.getAddress(),
   flowDexId,
   pancakeV2Router: PANCAKE_V2_ROUTER_ADDRESS || null,
