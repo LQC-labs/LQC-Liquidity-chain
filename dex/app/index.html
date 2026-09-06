@@ -15,7 +15,7 @@
       <span class="asset-logo"><img src="../../lqc-token-symbol.png" alt=""></span>
       <div class="asset-copy">
         <div><h1>LQC</h1><span class="pair">/ WBNB</span><span class="testnet-badge">TESTNET</span></div>
-        <p><strong>시세 연결 대기</strong><span>Router 2.0 최적경로</span></p>
+        <p><strong id="marketPrice">시세 연결 대기</strong><span id="marketChange" class="market-change neutral">—</span></p>
       </div>
       <button class="wallet-button" id="connectButton" type="button">지갑 연결</button>
     </header>
@@ -46,8 +46,9 @@
             <span class="ma5">MA5 <b id="ma5Value">—</b></span>
             <span class="ma10">MA10 <b id="ma10Value">—</b></span>
             <span class="ma20">MA20 <b id="ma20Value">—</b></span>
-            <span class="demo-label">TESTNET DEMO</span>
+            <span class="demo-label" id="marketSource">TESTNET DEMO</span>
           </div>
+          <p class="market-freshness" id="marketFreshness">풀 주소 미설정</p>
           <div class="chart-stage"><canvas id="marketChart" aria-label="LQC 테스트넷 데모 캔들차트"></canvas></div>
           <div class="indicator-tabs" aria-label="차트 보조지표">
             <button class="active" type="button">VOL</button><button type="button">MA</button>
@@ -139,7 +140,7 @@
   </form></dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js"></script><script src="market-chart.js"></script>
+  <script src="config.js"></script><script src="market-data.js"></script><script src="market-chart.js"></script>
   <script src="route-optimizer.js"></script><script src="app.js"></script>
 </body>
 </html>
