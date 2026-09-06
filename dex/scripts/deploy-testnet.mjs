@@ -10,6 +10,7 @@ const {
   PANCAKE_V2_ROUTER_ADDRESS = "",
   PANCAKE_V3_QUOTER_ADDRESS = "",
   PANCAKE_V3_ROUTER_ADDRESS = "",
+  TIMELOCK_DELAY = "3600",
   TEST_LQC_SUPPLY = "1000000",
   TEST_USDT_SUPPLY = "1000000",
   LQC_USDT_LIQUIDITY_LQC = "100000",
@@ -49,6 +50,9 @@ const usdt = await deploy("testnet/LQCTestToken", ["Mock USDT", "USDT", 18, wall
 const factory = await deploy("LQCFlowFactory", [owner]);
 const router = await deploy("LQCFlowRouter", [await factory.getAddress(), WBNB_ADDRESS]);
 const registry = await deploy("router-v2/LQCDexRegistry", [wallet.address]);
+const timelock = await deploy("router-v2/LQCTimelockController", [owner, BigInt(TIMELOCK_DELAY)]);
+const emergencyController = await deploy("router-v2/LQCEmergencyController", [owner, await registry.getAddress()]);
+await (await registry.setPauseAdmin(await emergencyController.getAddress())).wait();
 const quoteRouter = await deploy("router-v2/LQCQuoteRouter", [await registry.getAddress()]);
 const executionRouter = await deploy("router-v2/LQCExecutionRouter", [await registry.getAddress()]);
 const splitOptimizer = await deploy("router-v2/LQCSplitOptimizer", [await registry.getAddress()]);
@@ -81,9 +85,8 @@ if (PANCAKE_V3_QUOTER_ADDRESS || PANCAKE_V3_ROUTER_ADDRESS) {
   await (await registry.addDex(pancakeV3DexId, await pancakeV3Adapter.getAddress(), "PancakeSwap V3", 95)).wait();
   dexes.push({ id: pancakeV3DexId, name: "PancakeSwap V3" });
 }
-if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
-  await (await registry.beginOwnershipTransfer(owner)).wait();
-}
+await (await registry.beginOwnershipTransfer(await timelock.getAddress())).wait();
+await (await timelock.acceptRegistryOwnership(await registry.getAddress())).wait();
 
 const lqcSupply = ethers.parseUnits(TEST_LQC_SUPPLY, 18);
 const usdtSupply = ethers.parseUnits(TEST_USDT_SUPPLY, 18);
@@ -114,9 +117,10 @@ const record = {
   deployer: wallet.address,
   owner,
   dexRegistryOwnership: {
-    currentOwner: wallet.address,
-    pendingOwner: owner.toLowerCase() === wallet.address.toLowerCase() ? null : owner,
-    acceptanceRequired: owner.toLowerCase() !== wallet.address.toLowerCase()
+    currentOwner: await timelock.getAddress(),
+    governanceProposer: owner,
+    pauseAdmin: await emergencyController.getAddress(),
+    timelockDelaySeconds: Number(TIMELOCK_DELAY)
   },
   contracts: {
     lqc: { address: lqcAddress, decimals: 18, deploymentTx: txHash(lqc) },
@@ -125,6 +129,8 @@ const record = {
     factory: { address: await factory.getAddress(), deploymentTx: txHash(factory) },
     router: { address: await router.getAddress(), deploymentTx: txHash(router) },
     dexRegistry: { address: await registry.getAddress(), deploymentTx: txHash(registry) },
+    timelock: { address: await timelock.getAddress(), deploymentTx: txHash(timelock) },
+    emergencyController: { address: await emergencyController.getAddress(), deploymentTx: txHash(emergencyController) },
     quoteRouter: { address: await quoteRouter.getAddress(), deploymentTx: txHash(quoteRouter) },
     executionRouter: { address: await executionRouter.getAddress(), deploymentTx: txHash(executionRouter) },
     splitOptimizer: { address: await splitOptimizer.getAddress(), deploymentTx: txHash(splitOptimizer) },

@@ -15,6 +15,7 @@ contract LQCDexRegistry is ILQCDexRegistry {
 
     address public owner;
     address public pendingOwner;
+    address public pauseAdmin;
     bytes32[] private dexIds;
     mapping(bytes32 => Dex) private dexes;
     mapping(bytes32 => uint256) private indexPlusOne;
@@ -25,6 +26,7 @@ contract LQCDexRegistry is ILQCDexRegistry {
     event DexRemoved(bytes32 indexed dexId);
     event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event PauseAdminChanged(address indexed previousAdmin, address indexed newAdmin);
 
     error Forbidden();
     error ZeroAddress();
@@ -40,7 +42,9 @@ contract LQCDexRegistry is ILQCDexRegistry {
     constructor(address owner_) {
         if (owner_ == address(0)) revert ZeroAddress();
         owner = owner_;
+        pauseAdmin = owner_;
         emit OwnershipTransferred(address(0), owner_);
+        emit PauseAdminChanged(address(0), owner_);
     }
 
     function addDex(bytes32 dexId, address adapter, string calldata name, uint32 priority) external onlyOwner {
@@ -62,10 +66,22 @@ contract LQCDexRegistry is ILQCDexRegistry {
         emit DexUpdated(dexId, adapter, priority);
     }
 
-    function setDexEnabled(bytes32 dexId, bool enabled) external onlyOwner {
+    function setDexEnabled(bytes32 dexId, bool enabled) external {
+        if (enabled) {
+            if (msg.sender != owner) revert Forbidden();
+        } else if (msg.sender != owner && msg.sender != pauseAdmin) {
+            revert Forbidden();
+        }
         if (indexPlusOne[dexId] == 0) revert DexNotFound();
         dexes[dexId].enabled = enabled;
         emit DexStatusChanged(dexId, enabled);
+    }
+
+    function setPauseAdmin(address newPauseAdmin) external onlyOwner {
+        if (newPauseAdmin == address(0)) revert ZeroAddress();
+        address previousAdmin = pauseAdmin;
+        pauseAdmin = newPauseAdmin;
+        emit PauseAdminChanged(previousAdmin, newPauseAdmin);
     }
 
     function removeDex(bytes32 dexId) external onlyOwner {

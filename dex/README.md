@@ -33,8 +33,10 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - \`LQCSplitOptimizer\`: read-only incremental optimizer that distributes an order across every enabled execution adapter according to marginal output, price impact, route cost, and deterministic priority
 - \`LQCAutoRouter\`: converts a capped optimizer result into a single-route or two-to-four-route atomic swap and derives route-level minimum outputs from user slippage tolerance
 - \`LQCGasCostOracle\`: converts estimated BNB gas into output-token units only after primary/secondary price freshness and deviation checks
+- \`LQCTimelockController\`: delays structural registry changes behind a governance proposer and review window
+- \`LQCEmergencyController\`: gives guardians immediate disable-only authority while re-enabling remains governance-only
 
-New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap V2 or V3 when their reviewed addresses are supplied. Exact-input token execution, oracle-validated gas-cost conversion, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, and atomic optimized execution are now available. Native BNB execution, live production feed configuration, timelocks, and production integrations remain pending.
+New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap V2 or V3 when their reviewed addresses are supplied. Exact-input token execution, oracle-validated gas-cost conversion, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, atomic optimized execution, timelocked registry ownership, and disable-only emergency control are now available. Native BNB execution, live production feed configuration, multisig assignment, and production integrations remain pending.
 
 Router 2.0 is intentionally protocol-neutral: every EVM DEX can be integrated through the same reviewed adapter interfaces and enabled or paused independently in the registry. A DEX is never treated as compatible until its protocol-specific quote and execution adapter, route validation, tests, and security review are complete. Non-EVM liquidity will be connected later through the cross-chain routing layer rather than unsafe direct assumptions.
 
@@ -70,8 +72,9 @@ npm run deploy:testnet
 
 The default mock supplies and pool amounts are configurable environment values for testing only;
 they do not define LQC mainnet supply, allocation, valuation, or launch liquidity.
-When `FACTORY_OWNER` differs from the deployer, the registry starts a two-step ownership transfer;
-the multisig must call `acceptOwnership()` after reviewing the deployment record.
+The deployment transfers registry ownership to the timelock. `FACTORY_OWNER` becomes the governance
+proposer and should be a reviewed multisig address. Emergency guardians may disable a route immediately,
+but only a timelocked governance operation can re-enable or structurally change it.
 
 The automated test suite also reproduces the complete bootstrap locally and verifies both pool
 creation, Router 2.0 quoting, a capped smoke swap, and rejection when minimum-output protection fails.
@@ -93,6 +96,6 @@ Never commit private keys or `.env` files.
 
 ## Current limitations
 
-This is an unaudited testnet MVP, not production-ready software. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, governance timelocks, pausability, price oracles, Router 2.0 cross-DEX aggregation, and the web trading interface are intentionally deferred.
+This is an unaudited testnet MVP, not production-ready software. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, production oracle feeds, native Router 2.0 BNB execution, and audited production integrations are intentionally deferred.
 
 Before any mainnet use, complete independent audits, invariant/fuzz testing, economic simulations, legal review, multisig/timelock setup, token and pool allowlisting decisions, monitoring, and a capped-liquidity testnet/pilot phase.
