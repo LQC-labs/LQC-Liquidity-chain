@@ -82,8 +82,9 @@
       <div class="quote-box"><div><span>최소 수령량</span><b id="minimumReceived">—</b></div><div><span>LP 수수료</span><b>0.30%</b></div><div><span>경로</span><b id="routeLabel">BNB → LQC</b></div></div>
       <div class="route-card" aria-label="LQC 최적 거래 경로">
         <div class="route-card-head"><span>OPTIMAL PATH</span><b>TESTNET</b></div>
-        <div class="route-source"><span>LQC Flow AMM</span><strong>Direct route</strong></div>
-        <div class="route-source muted-route"><span>Split routing</span><strong>Router 2.0 준비 중</strong></div>
+        <div class="route-source"><span>선택된 DEX</span><strong id="selectedDex">LQC Flow · PancakeSwap 비교 대기</strong></div>
+        <div class="route-source"><span>최적 경로</span><strong id="selectedPath">BNB → LQC</strong></div>
+        <div class="route-source muted-route"><span>실행 전략</span><strong id="routeStrategy">단일 경로 · 견적 우선</strong></div>
       </div>
       <div class="status" id="statusBox" role="status"><i></i><span id="statusText">테스트넷 배포 주소를 연결하면 거래가 활성화됩니다.</span></div>
       <button class="execute-button buy" id="executeButton" type="button" disabled>LQC 매수</button>
@@ -96,6 +97,6 @@
 
   <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><h2>토큰 선택</h2><button value="cancel" aria-label="닫기">×</button></div><div class="token-list" id="tokenList" role="listbox"></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js?v=20260906k"></script><script src="app.js?v=20260906k"></script>
+  <script src="config.js?v=20260906m"></script><script src="app.js?v=20260906m"></script>
 </body>
 </html>
