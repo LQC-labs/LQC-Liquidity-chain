@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="LQC Flow DEX — BNB Smart Chain testnet trading interface">
+  <title>LQC Flow DEX</title>
+  <link rel="stylesheet" href="lqc-trade-f.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="back" href="../../index.html" aria-label="홈으로 돌아가기">‹</a>
+    <div class="asset-title">
+      <span class="asset-logo"><img src="../../lqc-token-symbol.png" alt="LQC"></span>
+      <span><strong>LQC / WBNB</strong><small>BNB Smart Chain · Testnet</small></span>
+    </div>
+    <button class="wallet-button" id="connectButton" type="button">지갑 연결</button>
+  </header>
+
+  <main class="exchange">
+    <section class="market" aria-label="LQC 시장 차트">
+      <div class="ticker-row">
+        <div class="price-block"><span class="price-label">Price ⇌</span><strong class="ticker-price">$0.091138</strong><span class="ticker-change negative">-0.59%</span></div>
+        <dl class="quick-stats">
+          <div><dt>Market cap</dt><dd>$191.39M</dd></div>
+          <div><dt>Liquidity</dt><dd>$29.78K</dd></div>
+          <div><dt>24h volume</dt><dd>$513.06</dd></div>
+          <div><dt>Holders</dt><dd>249</dd></div>
+          <div><dt>Top 10</dt><dd>99.93%</dd></div>
+        </dl>
+      </div>
+
+      <nav class="section-tabs" aria-label="시장 정보">
+        <button class="active" type="button">Charts</button><button type="button">Info</button><button type="button">Data</button><button type="button">Risk</button><button type="button">Vibes</button>
+      </nav>
+
+      <div class="market-facts"><button type="button" aria-label="시장 검색">⌕</button><span>LP Fee <b>0.30%</b></span><span>Route <b>Optimal Path</b></span><span class="demo-badge">TESTNET DEMO</span></div>
+
+      <div class="timeframes" aria-label="차트 시간 단위">
+        <button type="button">1s</button><button type="button">30s</button><button class="active" type="button">1m</button><button type="button">15m</button><button type="button">More⌄</button><span class="tool-divider"></span><button class="chart-icon" type="button" aria-label="차트 유형">⌁</button><button class="chart-tool" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⬡</button>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="ma-legend"><span>MA5: 0.09199</span><span>MA10: 0.09153</span><span>MA20: 0.09112</span></div>
+        <svg class="chart" viewBox="0 0 760 390" role="img" aria-label="LQC 테스트넷 예시 캔들 차트">
+          <defs>
+            <linearGradient id="chartFade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#4fe0d1" stop-opacity=".22"/><stop offset="1" stop-color="#4fe0d1" stop-opacity="0"/></linearGradient>
+          </defs>
+          <g class="grid"><path d="M0 65H760M0 145H760M0 225H760M0 305H760"/><path d="M120 0V390M260 0V390M400 0V390M540 0V390M680 0V390"/></g>
+          <path class="area" d="M0 98L45 112L83 176L120 255L160 190L205 170L245 182L285 145L322 285L360 218L403 177L444 205L485 315L525 248L565 150L603 132L642 260L680 230L720 204L760 245V390H0Z"/>
+          <path class="ma ma-a" d="M0 105C90 112 90 275 160 195S260 175 320 250S405 155 480 290S560 130 635 235S720 180 760 230"/>
+          <path class="ma ma-b" d="M0 112C95 120 100 225 165 205S260 165 330 235S410 180 490 265S565 170 640 220S710 205 760 220"/>
+          <path class="ma ma-c" d="M0 91C110 135 105 190 178 192S280 182 345 218S435 205 500 232S590 200 660 214S720 205 760 211"/>
+          <g id="candles"></g>
+          <line class="current-line" x1="0" x2="760" y1="286" y2="286"/><text class="current-label" x="687" y="280">0.09135</text>
+          <g class="axis"><text x="697" y="70">0.09480</text><text x="697" y="150">0.09400</text><text x="697" y="230">0.09240</text><text x="697" y="310">0.09160</text></g>
+        </svg>
+        <div class="time-axis" aria-hidden="true"><span>09/03, 20:38</span><span>09/04, 01:39</span><span>09/04, 22:27</span><span>09/05, 10:43</span></div>
+      </div>
+
+      <div class="volume"><span>VOL (LQC): 108.5751</span><div class="volume-bars" id="volumeBars"></div></div>
+      <div class="indicators" aria-label="차트 지표"><button class="active">VOL</button><button>MA</button><button>EMA</button><button>BOLL</button><button>SAR</button><button>MACD</button><button>KDJ</button></div>
+
+      <nav class="position-tabs" aria-label="계정 정보"><button class="active">My positions</button><button>Holders <span>(249)</span></button><button>Top traders</button><button>Activities</button></nav>
+      <div class="position-card">
+        <div class="position-label"><span class="mini-logo">L</span><span>LQC balance</span></div>
+        <strong id="portfolioValue">$0.00</strong>
+        <p>Unrealized PnL <span>$0.00 (0.00%)</span></p>
+        <div class="position-meta"><span>보유 수량 <b id="positionBalance">—</b></span><span>네트워크 <b>BSC Testnet</b></span></div>
+      </div>
+    </section>
+
+    <section class="order-panel" id="orderPanel" aria-labelledby="orderTitle">
+      <div class="order-head"><div><span class="eyebrow">NON-CUSTODIAL SWAP</span><h1 id="orderTitle">LQC 매수</h1></div><button class="close-order" id="closeOrder" type="button" aria-label="주문창 닫기">×</button></div>
+      <div class="settings" id="settingsPanel" hidden><label for="slippageInput">슬리피지 허용 범위</label><div class="slippage-row"><button class="slippage-option" data-value="0.1">0.1%</button><button class="slippage-option active" data-value="0.5">0.5%</button><button class="slippage-option" data-value="1">1.0%</button><span class="custom-slippage"><input id="slippageInput" inputmode="decimal" value="0.5" aria-label="직접 입력 슬리피지"><b>%</b></span></div></div>
+      <div class="token-panel"><div class="panel-label"><span>보내는 토큰</span><button id="maxButton" type="button">MAX</button></div><div class="amount-row"><input id="amountIn" inputmode="decimal" autocomplete="off" placeholder="0.0" aria-label="보낼 수량"><button class="token-button" id="tokenInButton" type="button"><span class="token-symbol" id="tokenInIcon">BNB</span><b id="tokenInLabel">BNB</b><span>⌄</span></button></div><div class="balance">잔액 <span id="balanceIn">—</span></div></div>
+      <div class="flip-wrap"><button class="flip-button" id="flipButton" type="button" aria-label="토큰 순서 변경">⇅</button></div>
+      <div class="token-panel receive-panel"><div class="panel-label"><span>받는 토큰</span><span>예상 수량</span></div><div class="amount-row"><output id="amountOut">0.0</output><button class="token-button" id="tokenOutButton" type="button"><span class="token-symbol mint" id="tokenOutIcon">LQC</span><b id="tokenOutLabel">LQC</b><span>⌄</span></button></div><div class="balance">잔액 <span id="balanceOut">—</span></div></div>
+      <div class="quote-box"><div><span>최소 수령량</span><b id="minimumReceived">—</b></div><div><span>LP 수수료</span><b>0.30%</b></div><div><span>경로</span><b id="routeLabel">BNB → LQC</b></div></div>
+      <div class="status" id="statusBox" role="status"><i></i><span id="statusText">테스트넷 배포 주소를 연결하면 거래가 활성화됩니다.</span></div>
+      <button class="execute-button buy" id="executeButton" type="button" disabled>LQC 매수</button>
+      <p class="risk-note">테스트넷 MVP · 실제 자금을 보내지 마세요. 독립 보안감사 전에는 메인넷에서 사용할 수 없습니다.</p>
+      <span id="contractState" hidden>배포 대기</span>
+    </section>
+  </main>
+
+  <div class="bottom-actions" aria-label="LQC 매수 및 매도"><button class="action-buy active" id="buyAction" type="button">Buy</button><button class="action-sell" id="sellAction" type="button">Sell</button><button class="quick" id="quickTrade" type="button" aria-label="빠른 거래">↯</button></div>
+
+  <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><h2>토큰 선택</h2><button value="cancel" aria-label="닫기">×</button></div><div class="token-list" id="tokenList" role="listbox"></div></form></dialog>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
+  <script src="config.js?v=trade-f"></script><script src="app.js?v=trade-f"></script>
+</body>
+</html>
