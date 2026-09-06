@@ -20,6 +20,7 @@ Liquidity Chain is developing non-custodial infrastructure for discovering and e
 | ERC-20 split execution | Implemented and locally tested | `swapSplitExactInput` and split-route tests |
 | Off-chain route optimization | Implemented and locally tested | `dex/sdk/route-optimizer.mjs` |
 | Browser route comparison | Implemented; static syntax validated | `dex/app/route-optimizer.js`, `dex/app/app.js` |
+| Responsive market UI | Implemented; live data pending | `dex/app/index.html`, `dex/app/styles.css`, `dex/app/market-chart.js` |
 | BSC testnet tooling | Implemented; live deployment pending | `dex/scripts/verify-testnet.mjs`, deployment scripts |
 | Independent security audit | Not started | Required before production use |
 | Production/mainnet deployment | Not started | Depends on audit and release gates |
@@ -60,6 +61,8 @@ Liquidity Chain is developing non-custodial infrastructure for discovering and e
 - Estimated price impact from a proportional probe quote and indicative BNB network fee
 - Pre-submission confirmation dialog with a high-price-impact warning at 3% or above
 - Quote refresh immediately before transaction submission
+- Mobile-first LQC market layout with candlestick, moving-average, volume, wallet-balance, and fixed BUY/SELL controls
+- Deterministic chart demonstration explicitly labelled `TESTNET DEMO`; no live price-feed claim
 
 Native-BNB split execution is not implemented; native-BNB trades use a single optimal route.
 
@@ -79,6 +82,7 @@ cd dex
 npm install
 npm test
 node --check app/app.js
+node --check app/market-chart.js
 node --check app/route-optimizer.js
 node --check scripts/configure-app.mjs
 ```
