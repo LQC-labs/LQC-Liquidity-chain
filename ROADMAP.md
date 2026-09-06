@@ -24,6 +24,7 @@ Exit evidence: reproducible compilation, automated test results, conservative do
 **Status: tooling implemented; deployment pending**
 
 - Expand boundary, differential, invariant, fuzz, and fork tests
+- Extend the implemented sampled split invariants into stateful fuzzing and fork-based execution tests
 - Refine the implemented transaction confirmation, price-impact warning, and indicative gas estimate with live transaction simulation
 - Validate official BSC testnet WBNB and external DEX router addresses
 - Deploy contracts to BSC testnet from a controlled account
