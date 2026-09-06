@@ -11,6 +11,7 @@
   ];
   const routerV2Abi = [
     "function swapsPaused() view returns (bool)",
+    "function riskStatus(address tokenIn,address tokenOut,uint256 amountIn) view returns (bool allowed,uint256 remainingDailyInput)",
     "function swapBestExactInput(address tokenIn,address tokenOut,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) returns (address adapter,uint256 amountOut)",
     "function swapSplitExactInput(address tokenIn,address tokenOut,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,uint16[] allocationBps,address recipient,uint256 deadline) returns (uint256 amountOut)",
     "function swapExactBNBForTokens(address tokenOut,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) payable returns (address adapter,uint256 amountOut)",
@@ -27,7 +28,7 @@
     connect: $("connectButton"), settings: $("settingsButton"), settingsPanel: $("settingsPanel"),
     amountIn: $("amountIn"), amountOut: $("amountOut"), minimum: $("minimumReceived"),
     route: $("routeLabel"), routeDex: $("routeDex"), routeStrategy: $("routeStrategy"),
-    routeSavings: $("routeSavings"), priceImpact: $("priceImpact"), estimatedGasFee: $("estimatedGasFee"),
+    routeSavings: $("routeSavings"), priceImpact: $("priceImpact"), estimatedGasFee: $("estimatedGasFee"), riskLimit: $("riskLimit"),
     routeAlternatives: $("routeAlternatives"),
     routerMode: $("routerMode"), balanceIn: $("balanceIn"), balanceOut: $("balanceOut"),
     tokenInButton: $("tokenInButton"), tokenOutButton: $("tokenOutButton"), flip: $("flipButton"),
@@ -94,6 +95,7 @@
     ui.routeSavings.textContent = "—";
     ui.priceImpact.textContent = "—";
     ui.estimatedGasFee.textContent = "—";
+    ui.riskLimit.textContent = deployedV2 ? "한도 확인 대기" : "Router V2 필요";
     ui.routeAlternatives.textContent = deployedV2 ? "수량을 입력하세요" : "직접 경로";
     currentQuote = null;
     syncModeFromPair();
@@ -270,6 +272,7 @@
       let out, minimum;
       if (routerV2) {
         routerV2Paused = await routerV2.swapsPaused();
+        const risk = await routerV2.riskStatus(path[0], path[1], amount);
         const connectors = config.tokens
           .filter((token) => token.address !== "native" && ethers.isAddress(token.address))
           .map((token) => token.address);
@@ -299,6 +302,10 @@
           ui.routeSavings.textContent = "분할 이점 없음";
         }
         ui.routeAlternatives.textContent = `${currentQuote.comparedRoutes}개 경로 비교`;
+        currentQuote.riskAllowed = risk.allowed;
+        ui.riskLimit.textContent = risk.allowed
+          ? `허용 · 일일 잔여 ${Number(ethers.formatUnits(risk.remainingDailyInput, tokenIn.decimals)).toLocaleString(undefined, { maximumFractionDigits: 5 })} ${tokenIn.symbol}`
+          : "차단 · 토큰 또는 거래한도 확인";
       } else {
         const amounts = await router.getAmountsOut(amount, path);
         out = amounts[amounts.length - 1];
@@ -312,8 +319,9 @@
       await updateExecutionMetrics();
       ui.amountOut.textContent = ethers.formatUnits(out, tokenOut.decimals);
       ui.minimum.textContent = `${Number(ethers.formatUnits(minimum, tokenOut.decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 })} ${tokenOut.symbol}`;
-      setTradeActionsDisabled(routerV2Paused);
+      setTradeActionsDisabled(routerV2Paused || currentQuote.riskAllowed === false);
       if (routerV2Paused) setStatus("Router 2.0 거래 일시 정지 · 현재 견적은 조회용입니다.", "error");
+      else if (currentQuote.riskAllowed === false) setStatus("위험관리 정책에 따라 이 거래는 현재 실행할 수 없습니다.", "error");
     } catch (error) {
       setTradeActionsDisabled(true);
       ui.routeDex.textContent = "경로 없음";
@@ -322,6 +330,7 @@
       ui.priceImpact.textContent = "—";
       ui.estimatedGasFee.textContent = "—";
       ui.routeAlternatives.textContent = "유동성 확인 필요";
+      ui.riskLimit.textContent = "확인 실패";
       setStatus(error.message || "이 거래쌍의 유동성을 확인할 수 없습니다.", "error");
     }
   }
