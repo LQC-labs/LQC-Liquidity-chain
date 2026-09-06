@@ -35,6 +35,8 @@ The LQC Flow DEX and Router 2.0 code is an **unaudited MVP** intended for local 
 - Safe ERC-20 transfer wrappers supporting tokens that return no value
 - Native BNB accepted by Router 2.0 only from configured WBNB
 - Limits of 16 best-route candidates, 8 split routes, and 5 addresses per compatible-adapter path
+- Input/output token allowlisting and raw-token per-trade and UTC-day cumulative input limits across all Router V2 swap entry points
+- Owner-only risk changes, routed through the timelock when the documented deployment ownership is used
 
 ### Test coverage currently exercised
 
@@ -49,6 +51,7 @@ The LQC Flow DEX and Router 2.0 code is an **unaudited MVP** intended for local 
 - Pause authorization, full swap-entry-point blocking, and safe resume
 - Sampled split-allocation conservation across 20 allocation points
 - Timelock early-execution rejection, cancellation, replay prevention, and two-step admin transfer
+- Token allowlist, invalid configuration, per-trade cap, cumulative daily cap, native-BNB boundary, and timelocked risk-update enforcement
 - AMM liquidity, exact-input, exact-output, and multi-hop behavior
 - Route optimizer failure handling, path limits, gas adjustment, and split selection
 
@@ -68,6 +71,7 @@ The LQC Flow DEX and Router 2.0 code is an **unaudited MVP** intended for local 
 - The browser chart can read third-party GeckoTerminal OHLCV data from a specifically configured pool, but labels stale data and falls back to `TESTNET DEMO`; neither source is a valuation, lending oracle, execution guarantee, or trading signal
 - Market-data pool address and LQC base/quote position must be independently verified before configuration; the UI feed does not influence Router minimum-output enforcement
 - Native-BNB split execution is not implemented
+- USD-denominated TVL/volume caps, price-movement stops, liquidity-loss alerts, concentration limits, and stablecoin-depeg rules require reviewed oracle and pool-accounting inputs and are not yet enforced on-chain
 - External DEX, RPC, wallet, MEV, and network risks remain outside the contracts' control
 
 ## 4. Required Production Gates
