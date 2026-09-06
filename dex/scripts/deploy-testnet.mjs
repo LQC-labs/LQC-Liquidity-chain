@@ -55,6 +55,7 @@ const splitOptimizer = await deploy("router-v2/LQCSplitOptimizer", [await regist
 const autoRouter = await deploy("router-v2/LQCAutoRouter", [
   await splitOptimizer.getAddress(), await executionRouter.getAddress()
 ]);
+const gasCostOracle = await deploy("router-v2/LQCGasCostOracle", [wallet.address, WBNB_ADDRESS]);
 const flowAdapter = await deploy("router-v2/adapters/LQCFlowAdapter", [await router.getAddress()]);
 
 const flowDexId = ethers.id("LQC_FLOW");
@@ -128,6 +129,7 @@ const record = {
     executionRouter: { address: await executionRouter.getAddress(), deploymentTx: txHash(executionRouter) },
     splitOptimizer: { address: await splitOptimizer.getAddress(), deploymentTx: txHash(splitOptimizer) },
     autoRouter: { address: await autoRouter.getAddress(), deploymentTx: txHash(autoRouter) },
+    gasCostOracle: { address: await gasCostOracle.getAddress(), deploymentTx: txHash(gasCostOracle), feedsConfigured: false },
     flowAdapter: { address: await flowAdapter.getAddress(), deploymentTx: txHash(flowAdapter) },
     pancakeAdapter: pancakeAdapter ? { address: await pancakeAdapter.getAddress(), deploymentTx: txHash(pancakeAdapter) } : null,
     pancakeV3Adapter: pancakeV3Adapter ? { address: await pancakeV3Adapter.getAddress(), deploymentTx: txHash(pancakeV3Adapter) } : null
@@ -155,6 +157,7 @@ const appConfig = `window.LQC_FLOW_CONFIG = Object.freeze(${JSON.stringify({
   executionRouterAddress: await executionRouter.getAddress(),
   splitOptimizerAddress: await splitOptimizer.getAddress(),
   autoRouterAddress: await autoRouter.getAddress(),
+  gasCostOracleAddress: await gasCostOracle.getAddress(),
   dexes,
   tokens: [
     { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },
