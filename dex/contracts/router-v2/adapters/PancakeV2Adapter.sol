@@ -33,6 +33,10 @@ contract PancakeV2Adapter is ILQCExecutionAdapter {
         pancakeRouter = IPancakeV2Router(pancakeRouter_);
     }
 
+    function supportsExecution() external pure override returns (bool) {
+        return true;
+    }
+
     /// @dev routeData is abi.encode(address[] path). Native BNB execution is intentionally deferred.
     function quoteExactInput(address tokenIn, address tokenOut, uint256 amountIn, bytes calldata routeData)
         external

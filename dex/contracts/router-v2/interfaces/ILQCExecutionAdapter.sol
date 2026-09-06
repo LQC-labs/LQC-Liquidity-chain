@@ -5,6 +5,8 @@ import {ILQCDexAdapter} from "./ILQCDexAdapter.sol";
 
 /// @notice Execution surface for reviewed Router 2.0 adapters.
 interface ILQCExecutionAdapter is ILQCDexAdapter {
+    function supportsExecution() external pure returns (bool);
+
     function executeExactInput(
         address tokenIn,
         address tokenOut,

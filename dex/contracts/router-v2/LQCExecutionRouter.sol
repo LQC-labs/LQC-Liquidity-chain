@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {SafeTransferLib} from "../libraries/SafeTransferLib.sol";
 import {ILQCDexRegistry} from "./interfaces/ILQCDexRegistry.sol";
 import {ILQCExecutionAdapter} from "./interfaces/ILQCExecutionAdapter.sol";
+import {ILQCDexAdapter} from "./interfaces/ILQCDexAdapter.sol";
 
 interface IERC20Balance {
     function balanceOf(address account) external view returns (uint256);
@@ -35,6 +36,8 @@ contract LQCExecutionRouter {
     error InsufficientOutput();
     error UnsupportedToken();
     error Reentrancy();
+    error NoExecutableRoute();
+    error InvalidRouteData();
 
     modifier nonReentrant() {
         if (unlocked != 1) revert Reentrancy();
@@ -58,13 +61,76 @@ contract LQCExecutionRouter {
         uint256 deadline,
         bytes calldata routeData
     ) external nonReentrant returns (uint256 amountOut) {
+        amountOut = _execute(
+            dexId, tokenIn, tokenOut, amountIn, amountOutMinimum, recipient, deadline, routeData
+        );
+    }
+
+    /// @notice Selects and atomically executes the best enabled route after route-cost adjustment.
+    /// @dev routeData and routeCostInTokenOut are aligned with the registry order. Costs are
+    ///      off-chain gas estimates denominated in tokenOut; callers may pass zero for each route.
+    function swapBestExactInput(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOutMinimum,
+        address recipient,
+        uint256 deadline,
+        bytes[] calldata routeData,
+        uint256[] calldata routeCostInTokenOut
+    ) external nonReentrant returns (bytes32 dexId, uint256 amountOut) {
+        if (block.timestamp > deadline) revert Expired();
+        uint256 count = registry.dexCount();
+        if (routeData.length != count || routeCostInTokenOut.length != count) revert InvalidRouteData();
+
+        uint256 bestNetOutput;
+        uint32 bestPriority;
+        uint256 bestIndex;
+        bool found;
+        for (uint256 i; i < count; ++i) {
+            bytes32 candidateId = registry.dexIdAt(i);
+            (address adapter, bool enabled, uint32 priority) = registry.getDex(candidateId);
+            if (!enabled || adapter == address(0) || !_supportsExecution(adapter)) continue;
+            try ILQCDexAdapter(adapter).quoteExactInput(tokenIn, tokenOut, amountIn, routeData[i])
+                returns (uint256 grossOutput)
+            {
+                uint256 cost = routeCostInTokenOut[i];
+                if (grossOutput <= cost) continue;
+                uint256 netOutput = grossOutput - cost;
+                if (!found || netOutput > bestNetOutput || (netOutput == bestNetOutput && priority > bestPriority)) {
+                    found = true;
+                    dexId = candidateId;
+                    bestNetOutput = netOutput;
+                    bestPriority = priority;
+                    bestIndex = i;
+                }
+            } catch {
+                // One malformed or unavailable route must not block other registered DEXs.
+            }
+        }
+        if (!found) revert NoExecutableRoute();
+        amountOut = _execute(
+            dexId, tokenIn, tokenOut, amountIn, amountOutMinimum, recipient, deadline, routeData[bestIndex]
+        );
+    }
+
+    function _execute(
+        bytes32 dexId,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 amountOutMinimum,
+        address recipient,
+        uint256 deadline,
+        bytes calldata routeData
+    ) private returns (uint256 amountOut) {
         if (tokenIn == address(0) || tokenOut == address(0) || recipient == address(0)) revert ZeroAddress();
         if (tokenIn == tokenOut) revert InvalidTokens();
         if (amountIn == 0 || amountOutMinimum == 0) revert InvalidAmount();
         if (block.timestamp > deadline) revert Expired();
 
         (address adapter, bool enabled,) = registry.getDex(dexId);
-        if (!enabled || adapter == address(0)) revert DexDisabled();
+        if (!enabled || adapter == address(0) || !_supportsExecution(adapter)) revert DexDisabled();
 
         uint256 routerBefore = IERC20Balance(tokenIn).balanceOf(address(this));
         tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
@@ -82,5 +148,13 @@ contract LQCExecutionRouter {
         if (IERC20Balance(tokenIn).balanceOf(address(this)) != routerBefore) revert UnsupportedToken();
 
         emit SwapExecuted(msg.sender, dexId, recipient, tokenIn, tokenOut, amountIn, amountOut);
+    }
+
+    function _supportsExecution(address adapter) private pure returns (bool supported) {
+        try ILQCExecutionAdapter(adapter).supportsExecution() returns (bool value) {
+            supported = value;
+        } catch {
+            supported = false;
+        }
     }
 }

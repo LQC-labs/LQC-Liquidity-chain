@@ -170,4 +170,56 @@ describe("LQC Router 2.0", function () {
       dexId, tokenIn, tokenOut, amountIn, 1n, await owner.getAddress(), BigInt(block.timestamp + 3600), routeData
     ));
   });
+
+  it("automatically executes the best net-output route after estimated gas cost", async function () {
+    const Factory = new ethers.ContractFactory(artifact("LQCFlowFactory").abi, artifact("LQCFlowFactory").bytecode, owner);
+    const pancakeFactory = await Factory.deploy(await owner.getAddress());
+    const WBNB = new ethers.ContractFactory(artifact("MockWBNB", "mocks/MockWBNB").abi, artifact("MockWBNB", "mocks/MockWBNB").bytecode, owner);
+    const pancakeWbnb = await WBNB.deploy();
+    await Promise.all([pancakeFactory.waitForDeployment(), pancakeWbnb.waitForDeployment()]);
+    const FlowRouter = new ethers.ContractFactory(artifact("LQCFlowRouter").abi, artifact("LQCFlowRouter").bytecode, owner);
+    const pancakeRouter = await FlowRouter.deploy(await pancakeFactory.getAddress(), await pancakeWbnb.getAddress());
+    await pancakeRouter.waitForDeployment();
+    const PancakeAdapter = new ethers.ContractFactory(artifact("PancakeV2Adapter", "router-v2/adapters/PancakeV2Adapter").abi, artifact("PancakeV2Adapter", "router-v2/adapters/PancakeV2Adapter").bytecode, owner);
+    const pancakeAdapter = await PancakeAdapter.deploy(await pancakeRouter.getAddress());
+    await pancakeAdapter.waitForDeployment();
+
+    const liquidityA = ethers.parseEther("10000");
+    const liquidityB = ethers.parseEther("12000");
+    await (await tokenA.mint(await owner.getAddress(), liquidityA)).wait();
+    await (await tokenB.mint(await owner.getAddress(), liquidityB)).wait();
+    await (await tokenA.approve(await pancakeRouter.getAddress(), liquidityA)).wait();
+    await (await tokenB.approve(await pancakeRouter.getAddress(), liquidityB)).wait();
+    const block = await provider.getBlock("latest");
+    await (await pancakeRouter.addLiquidity(
+      await tokenA.getAddress(), await tokenB.getAddress(), liquidityA, liquidityB,
+      0, 0, await owner.getAddress(), BigInt(block.timestamp + 3600)
+    )).wait();
+
+    const flowId = ethers.id("LQC_FLOW");
+    const pancakeId = ethers.id("PANCAKE_V2");
+    await (await registry.addDex(flowId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    await (await registry.addDex(pancakeId, await pancakeAdapter.getAddress(), "PancakeSwap V2", 90)).wait();
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    const path = [tokenIn, tokenOut];
+    const route = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [path]);
+    const amountIn = ethers.parseEther("10");
+    const flowQuote = (await flowRouter.getAmountsOut(amountIn, path))[1];
+    const pancakeQuote = (await pancakeRouter.getAmountsOut(amountIn, path))[1];
+    const pancakeCost = pancakeQuote - flowQuote + 1n;
+    await (await tokenA.mint(await owner.getAddress(), amountIn)).wait();
+    await (await tokenA.approve(await executionRouter.getAddress(), amountIn)).wait();
+
+    const tx = await executionRouter.swapBestExactInput(
+      tokenIn, tokenOut, amountIn, flowQuote, await other.getAddress(), BigInt(block.timestamp + 3600),
+      [route, route], [0, pancakeCost]
+    );
+    const receipt = await tx.wait();
+    const event = receipt.logs.map((log) => {
+      try { return executionRouter.interface.parseLog(log); } catch { return null; }
+    }).find((parsed) => parsed?.name === "SwapExecuted");
+    assert.equal(event.args.dexId, flowId);
+    assert.equal(event.args.amountOut, flowQuote);
+  });
 });

@@ -33,6 +33,10 @@ contract LQCFlowAdapter is ILQCExecutionAdapter {
         flowRouter = ILQCFlowQuoteRouter(flowRouter_);
     }
 
+    function supportsExecution() external pure override returns (bool) {
+        return true;
+    }
+
     /// @dev routeData is abi.encode(address[] path). It supports direct and multi-hop routes.
     function quoteExactInput(address tokenIn, address tokenOut, uint256 amountIn, bytes calldata routeData)
         external
