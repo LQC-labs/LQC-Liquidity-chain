@@ -17,10 +17,12 @@ contract LQCFlowRouterV2 {
     address public immutable WBNB;
     address public owner;
     address public pendingOwner;
+    bool public swapsPaused;
     mapping(address => bool) public isAdapterEnabled;
     uint256 private unlocked = 1;
 
     event AdapterStatusChanged(address indexed adapter, bool enabled);
+    event SwapPauseStatusChanged(bool paused);
     event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event BestRouteSwap(
@@ -54,6 +56,7 @@ contract LQCFlowRouterV2 {
     error Reentrancy();
     error NativeSenderNotWBNB();
     error InvalidAllocation();
+    error SwapsPaused();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
@@ -65,6 +68,11 @@ contract LQCFlowRouterV2 {
         unlocked = 2;
         _;
         unlocked = 1;
+    }
+
+    modifier whenSwapsActive() {
+        if (swapsPaused) revert SwapsPaused();
+        _;
     }
 
     constructor(address owner_, address wbnb_) {
@@ -82,6 +90,11 @@ contract LQCFlowRouterV2 {
         if (adapter == address(0)) revert ZeroAddress();
         isAdapterEnabled[adapter] = enabled;
         emit AdapterStatusChanged(adapter, enabled);
+    }
+
+    function setSwapsPaused(bool paused) external onlyOwner {
+        swapsPaused = paused;
+        emit SwapPauseStatusChanged(paused);
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
@@ -162,7 +175,7 @@ contract LQCFlowRouterV2 {
         bytes[] calldata routeData,
         address recipient,
         uint256 deadline
-    ) external nonReentrant returns (address adapter, uint256 amountOut) {
+    ) external nonReentrant whenSwapsActive returns (address adapter, uint256 amountOut) {
         if (deadline < block.timestamp) revert Expired();
         if (recipient == address(0)) revert ZeroAddress();
 
@@ -190,7 +203,7 @@ contract LQCFlowRouterV2 {
         uint16[] calldata allocationBps,
         address recipient,
         uint256 deadline
-    ) external nonReentrant returns (uint256 amountOut) {
+    ) external nonReentrant whenSwapsActive returns (uint256 amountOut) {
         if (deadline < block.timestamp) revert Expired();
         if (recipient == address(0)) revert ZeroAddress();
 
@@ -225,7 +238,7 @@ contract LQCFlowRouterV2 {
         bytes[] calldata routeData,
         address recipient,
         uint256 deadline
-    ) external payable nonReentrant returns (address adapter, uint256 amountOut) {
+    ) external payable nonReentrant whenSwapsActive returns (address adapter, uint256 amountOut) {
         if (deadline < block.timestamp) revert Expired();
         if (recipient == address(0)) revert ZeroAddress();
 
@@ -254,7 +267,7 @@ contract LQCFlowRouterV2 {
         bytes[] calldata routeData,
         address recipient,
         uint256 deadline
-    ) external nonReentrant returns (address adapter, uint256 amountOut) {
+    ) external nonReentrant whenSwapsActive returns (address adapter, uint256 amountOut) {
         if (deadline < block.timestamp) revert Expired();
         if (recipient == address(0)) revert ZeroAddress();
 
