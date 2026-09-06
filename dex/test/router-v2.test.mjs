@@ -31,7 +31,7 @@ describe("LQC Flow Router V2", function () {
     wbnb = await WBNB.deploy();
 
     const Router = new ethers.ContractFactory(artifact("LQCFlowRouterV2").abi, artifact("LQCFlowRouterV2").bytecode, owner);
-    router = await Router.deploy(await owner.getAddress(), await wbnb.getAddress());
+    router = await Router.deploy(await owner.getAddress(), await trader.getAddress(), await wbnb.getAddress());
 
     const Adapter = new ethers.ContractFactory(
       artifact("MockDEXAdapter", "mocks/MockDEXAdapter").abi,
@@ -115,8 +115,7 @@ describe("LQC Flow Router V2", function () {
     const quote = await router.getBestQuote(
       await tokenIn.getAddress(), await tokenOut.getAddress(), amountIn, adapterList, routes()
     );
-    await assert.rejects(router.connect(trader).setSwapsPaused(true));
-    await (await router.setSwapsPaused(true)).wait();
+    await (await router.connect(trader).setSwapsPaused(true)).wait();
     assert.equal(await router.swapsPaused(), true);
     assert.equal((await router.getBestQuote(
       await tokenIn.getAddress(), await tokenOut.getAddress(), amountIn, adapterList, routes()
@@ -137,6 +136,7 @@ describe("LQC Flow Router V2", function () {
       await tokenIn.getAddress(), amountIn, 0n, adapterList, routes(), await trader.getAddress(), deadline()
     ));
 
+    await assert.rejects(router.connect(trader).setSwapsPaused(false));
     await (await router.setSwapsPaused(false)).wait();
     await (await router.connect(trader).swapBestExactInput(
       await tokenIn.getAddress(), await tokenOut.getAddress(), amountIn, quote.amountOut,
