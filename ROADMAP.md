@@ -43,7 +43,7 @@ Exit evidence: verified testnet contracts, reproducible deployment record, compl
 - Commission independent smart-contract audit
 - Remediate findings and publish audit artifacts
 - Transfer privileged roles to multisig
-- Introduce timelocks and function-level emergency controls
+- Deploy and operationally validate the implemented timelock, external multisig administration, and function-level emergency controls
 - Establish security contact, disclosure process, and bug bounty
 - Deploy monitoring for contract, adapter, balance, and privilege events
 - Document change management and incident response
