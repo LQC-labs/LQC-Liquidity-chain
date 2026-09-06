@@ -17,7 +17,8 @@ The LQC Flow DEX and Router 2.0 code is an **unaudited MVP** intended for local 
 
 ### External integration controls
 
-- Owner-managed adapter allowlist
+- Router-owner-managed adapter allowlist, assigned to the timelock in the controlled deployment flow
+- Timelocked privileged execution designed for administration by an external multisig
 - Disabled or reverting adapters skipped during best-route quotation
 - Split execution rejects any disabled adapter
 - Adapter swap entry points restricted to the configured aggregator
@@ -29,6 +30,8 @@ The LQC Flow DEX and Router 2.0 code is an **unaudited MVP** intended for local 
 - Reentrancy locks on state-changing pair and Router 2.0 swap functions
 - Two-step ownership transfer
 - Owner-controlled emergency pause across all Router 2.0 swap entry points; view-only quotes remain available
+- Separate pause guardian with pause-only authority; only timelock ownership can resume swaps
+- Timelock operation domain separation, enforced delay bounds, cancellation, and replay prevention
 - Safe ERC-20 transfer wrappers supporting tokens that return no value
 - Native BNB accepted by Router 2.0 only from configured WBNB
 - Limits of 16 best-route candidates, 8 split routes, and 5 addresses per compatible-adapter path
@@ -45,6 +48,7 @@ The LQC Flow DEX and Router 2.0 code is an **unaudited MVP** intended for local 
 - Native wrapping/unwrapping flows
 - Pause authorization, full swap-entry-point blocking, and safe resume
 - Sampled split-allocation conservation across 20 allocation points
+- Timelock early-execution rejection, cancellation, replay prevention, and two-step admin transfer
 - AMM liquidity, exact-input, exact-output, and multi-hop behavior
 - Route optimizer failure handling, path limits, gas adjustment, and split selection
 
@@ -53,8 +57,9 @@ The LQC Flow DEX and Router 2.0 code is an **unaudited MVP** intended for local 
 - No independent audit or formal verification
 - No invariant or fuzz-testing suite yet
 - No live BSC testnet deployment evidence or verified production address
-- Single owner controls the current Router 2.0 adapter allowlist
-- No timelock or on-chain multisig enforcement in current Router 2.0 code; the emergency pause is controlled by the current owner
+- Before controlled deployment, the timelock admin must be assigned to a verified external multisig; using an individual wallet would preserve single-key risk
+- The timelock does not implement multisig signatures itself; security depends on assigning its admin to a correctly configured and verified external multisig
+- The pause guardian remains a privileged hot-path role and requires operational key protection and monitoring
 - No token/pool risk registry beyond the adapter allowlist
 - Fee-on-transfer, rebasing, ERC-777-style callback, and other non-standard tokens are not supported or certified
 - Browser quote comparison does not guarantee execution price; state can change before mining
@@ -71,7 +76,7 @@ Production use requires, at minimum:
 2. Expanded unit, integration, invariant, fuzz, and fork testing
 3. Reputable independent smart-contract audit
 4. Remediation and public verification of material findings
-5. Multisig ownership and timelocked privileged operations
+5. Deploy the implemented timelock with verified multisig ownership and an approved delay
 6. Function-level emergency controls with transparent operating policy
 7. Adapter, token, pool, and DEX due diligence
 8. Monitoring for failed swaps, unusual approvals, balance changes, and privileged events
