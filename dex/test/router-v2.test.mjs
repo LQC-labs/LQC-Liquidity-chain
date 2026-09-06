@@ -109,6 +109,58 @@ describe("LQC Flow Router V2", function () {
     ));
   });
 
+  it("pauses every swap entry point while keeping quotes available", async function () {
+    const amountIn = ethers.parseEther("1");
+    const adapterList = await adapters();
+    const quote = await router.getBestQuote(
+      await tokenIn.getAddress(), await tokenOut.getAddress(), amountIn, adapterList, routes()
+    );
+    await assert.rejects(router.connect(trader).setSwapsPaused(true));
+    await (await router.setSwapsPaused(true)).wait();
+    assert.equal(await router.swapsPaused(), true);
+    assert.equal((await router.getBestQuote(
+      await tokenIn.getAddress(), await tokenOut.getAddress(), amountIn, adapterList, routes()
+    )).amountOut, quote.amountOut);
+
+    await assert.rejects(router.connect(trader).swapBestExactInput(
+      await tokenIn.getAddress(), await tokenOut.getAddress(), amountIn, 0n,
+      adapterList, routes(), await trader.getAddress(), deadline()
+    ));
+    await assert.rejects(router.connect(trader).swapSplitExactInput(
+      await tokenIn.getAddress(), await tokenOut.getAddress(), amountIn, 0n,
+      adapterList, routes(), [5000, 5000], await trader.getAddress(), deadline()
+    ));
+    await assert.rejects(router.connect(trader).swapExactBNBForTokens(
+      await tokenOut.getAddress(), 0n, adapterList, routes(), await trader.getAddress(), deadline(), { value: amountIn }
+    ));
+    await assert.rejects(router.connect(trader).swapExactTokensForBNB(
+      await tokenIn.getAddress(), amountIn, 0n, adapterList, routes(), await trader.getAddress(), deadline()
+    ));
+
+    await (await router.setSwapsPaused(false)).wait();
+    await (await router.connect(trader).swapBestExactInput(
+      await tokenIn.getAddress(), await tokenOut.getAddress(), amountIn, quote.amountOut,
+      adapterList, routes(), await trader.getAddress(), deadline()
+    )).wait();
+    assert.equal(await tokenOut.balanceOf(await trader.getAddress()), quote.amountOut);
+  });
+
+  it("preserves split input and output invariants across allocation samples", async function () {
+    const amountIn = ethers.parseEther("10");
+    const adapterList = await adapters();
+    for (let firstBps = 250; firstBps < 10_000; firstBps += 487) {
+      const allocation = [firstBps, 10_000 - firstBps];
+      const quote = await router.getSplitQuote(
+        await tokenIn.getAddress(), await tokenOut.getAddress(), amountIn,
+        adapterList, routes(), allocation
+      );
+      assert.equal(quote.amountsIn[0] + quote.amountsIn[1], amountIn);
+      assert.equal(quote.amountsOut[0] + quote.amountsOut[1], quote.totalOut);
+      assert(quote.amountsIn[0] > 0n && quote.amountsIn[1] > 0n);
+      assert(quote.amountsOut[0] > 0n && quote.amountsOut[1] > 0n);
+    }
+  });
+
   it("routes through a Uniswap V2-compatible DEX adapter", async function () {
     const Factory = new ethers.ContractFactory(artifact("LQCFlowFactory").abi, artifact("LQCFlowFactory").bytecode, owner);
     const factory = await Factory.deploy(await owner.getAddress());
