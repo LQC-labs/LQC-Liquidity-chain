@@ -6,16 +6,17 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="LQC Flow DEX — BNB Smart Chain testnet trading interface">
   <title>LQC Flow DEX</title>
-  <link rel="stylesheet" href="styles.css?v=20260906f">
+  <link rel="stylesheet" href="styles.css?v=20260906k">
 </head>
 <body>
   <header class="topbar">
     <a class="back" href="../../index.html" aria-label="홈으로 돌아가기">‹</a>
     <div class="asset-title">
       <span class="asset-logo"><img src="../../lqc-token-symbol.png" alt="LQC"></span>
-      <span><strong>LQC / WBNB</strong><small>BNB Smart Chain · Testnet</small></span>
+      <span><strong>LQC FLOW <i>⌄</i></strong><button class="address-connect" id="connectButton" type="button">지갑 연결 <b>▣</b></button></span>
     </div>
-    <button class="wallet-button" id="connectButton" type="button">지갑 연결</button>
+    <button class="header-icon favorite" type="button" aria-label="즐겨찾기">★</button>
+    <button class="header-icon menu" type="button" aria-label="더보기">•••</button>
   </header>
 
   <main class="exchange">
@@ -32,10 +33,10 @@
       </div>
 
       <nav class="section-tabs" aria-label="시장 정보">
-        <button class="active" type="button">Charts</button><button type="button">Info</button><button type="button">Data</button><button type="button">Risk</button><button type="button">Vibes</button>
+        <button class="active" type="button">Charts</button><button type="button">Info</button><button type="button">Data</button><button type="button">Risk</button><button type="button">Routes</button>
       </nav>
 
-      <div class="market-facts"><button type="button" aria-label="시장 검색">⌕</button><span>LP Fee <b>0.30%</b></span><span>Route <b>Optimal Path</b></span><span class="demo-badge">TESTNET DEMO</span></div>
+      <div class="market-facts"><button type="button" aria-label="시장 검색">⌕</button><span>LP Fee <b>0.30%</b></span><span>Route <b>Optimal Path</b></span><span class="sell-all">TESTNET</span></div>
 
       <div class="timeframes" aria-label="차트 시간 단위">
         <button type="button">1s</button><button type="button">30s</button><button class="active" type="button">1m</button><button type="button">15m</button><button type="button">More⌄</button><span class="tool-divider"></span><button class="chart-icon" type="button" aria-label="차트 유형">⌁</button><button class="chart-tool" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⬡</button>
@@ -43,6 +44,7 @@
 
       <div class="chart-wrap">
         <div class="ma-legend"><span>MA5: 0.09199</span><span>MA10: 0.09153</span><span>MA20: 0.09112</span></div>
+        <div class="pnl-strip"><b>PnL -0.4817</b><span>68.4199</span><em>0.09564</em></div>
         <svg class="chart" viewBox="0 0 760 390" role="img" aria-label="LQC 테스트넷 예시 캔들 차트">
           <defs>
             <linearGradient id="chartFade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#4fe0d1" stop-opacity=".22"/><stop offset="1" stop-color="#4fe0d1" stop-opacity="0"/></linearGradient>
@@ -54,7 +56,7 @@
           <path class="ma ma-c" d="M0 91C110 135 105 190 178 192S280 182 345 218S435 205 500 232S590 200 660 214S720 205 760 211"/>
           <g id="candles"></g>
           <line class="current-line" x1="0" x2="760" y1="286" y2="286"/><text class="current-label" x="687" y="280">0.09135</text>
-          <g class="axis"><text x="697" y="70">0.09480</text><text x="697" y="150">0.09400</text><text x="697" y="230">0.09240</text><text x="697" y="310">0.09160</text></g>
+          <g class="axis"><text x="697" y="48">0.09500</text><text x="697" y="98">0.09450</text><text x="697" y="148">0.09400</text><text x="697" y="198">0.09350</text><text x="697" y="248">0.09300</text><text x="697" y="298">0.09250</text><text x="697" y="348">0.09200</text></g>
         </svg>
         <div class="time-axis" aria-hidden="true"><span>09/03, 20:38</span><span>09/04, 01:39</span><span>09/04, 22:27</span><span>09/05, 10:43</span></div>
       </div>
@@ -78,6 +80,11 @@
       <div class="flip-wrap"><button class="flip-button" id="flipButton" type="button" aria-label="토큰 순서 변경">⇅</button></div>
       <div class="token-panel receive-panel"><div class="panel-label"><span>받는 토큰</span><span>예상 수량</span></div><div class="amount-row"><output id="amountOut">0.0</output><button class="token-button" id="tokenOutButton" type="button"><span class="token-symbol mint" id="tokenOutIcon">LQC</span><b id="tokenOutLabel">LQC</b><span>⌄</span></button></div><div class="balance">잔액 <span id="balanceOut">—</span></div></div>
       <div class="quote-box"><div><span>최소 수령량</span><b id="minimumReceived">—</b></div><div><span>LP 수수료</span><b>0.30%</b></div><div><span>경로</span><b id="routeLabel">BNB → LQC</b></div></div>
+      <div class="route-card" aria-label="LQC 최적 거래 경로">
+        <div class="route-card-head"><span>OPTIMAL PATH</span><b>TESTNET</b></div>
+        <div class="route-source"><span>LQC Flow AMM</span><strong>Direct route</strong></div>
+        <div class="route-source muted-route"><span>Split routing</span><strong>Router 2.0 준비 중</strong></div>
+      </div>
       <div class="status" id="statusBox" role="status"><i></i><span id="statusText">테스트넷 배포 주소를 연결하면 거래가 활성화됩니다.</span></div>
       <button class="execute-button buy" id="executeButton" type="button" disabled>LQC 매수</button>
       <p class="risk-note">테스트넷 MVP · 실제 자금을 보내지 마세요. 독립 보안감사 전에는 메인넷에서 사용할 수 없습니다.</p>
@@ -89,6 +96,6 @@
 
   <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><h2>토큰 선택</h2><button value="cancel" aria-label="닫기">×</button></div><div class="token-list" id="tokenList" role="listbox"></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js?v=20260906f"></script><script src="app.js?v=20260906f"></script>
+  <script src="config.js?v=20260906k"></script><script src="app.js?v=20260906k"></script>
 </body>
 </html>
