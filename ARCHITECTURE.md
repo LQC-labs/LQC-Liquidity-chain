@@ -48,6 +48,8 @@ For each leg, Router 2.0:
 
 The global `amountOutMin` is enforced after all legs complete. A failure in any leg reverts the entire transaction. Split execution currently supports ERC-20 input and output assets; native BNB uses the single-route wrapper flow.
 
+The Router 2.0 owner can pause all four state-changing swap entry points without disabling view-only route quotation. The application reads this state, keeps quotes visible for transparency, and disables transaction execution while paused.
+
 ## 5. Adapter Model
 
 Every external integration implements `ILQCDEXAdapter`:
