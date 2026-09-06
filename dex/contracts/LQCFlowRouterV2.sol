@@ -17,12 +17,14 @@ contract LQCFlowRouterV2 {
     address public immutable WBNB;
     address public owner;
     address public pendingOwner;
+    address public pauseGuardian;
     bool public swapsPaused;
     mapping(address => bool) public isAdapterEnabled;
     uint256 private unlocked = 1;
 
     event AdapterStatusChanged(address indexed adapter, bool enabled);
     event SwapPauseStatusChanged(bool paused);
+    event PauseGuardianChanged(address indexed previousGuardian, address indexed newGuardian);
     event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event BestRouteSwap(
@@ -75,11 +77,13 @@ contract LQCFlowRouterV2 {
         _;
     }
 
-    constructor(address owner_, address wbnb_) {
-        if (owner_ == address(0) || wbnb_ == address(0)) revert ZeroAddress();
+    constructor(address owner_, address pauseGuardian_, address wbnb_) {
+        if (owner_ == address(0) || pauseGuardian_ == address(0) || wbnb_ == address(0)) revert ZeroAddress();
         owner = owner_;
+        pauseGuardian = pauseGuardian_;
         WBNB = wbnb_;
         emit OwnershipTransferred(address(0), owner_);
+        emit PauseGuardianChanged(address(0), pauseGuardian_);
     }
 
     receive() external payable {
@@ -92,9 +96,21 @@ contract LQCFlowRouterV2 {
         emit AdapterStatusChanged(adapter, enabled);
     }
 
-    function setSwapsPaused(bool paused) external onlyOwner {
+    function setSwapsPaused(bool paused) external {
+        if (paused) {
+            if (msg.sender != owner && msg.sender != pauseGuardian) revert Forbidden();
+        } else if (msg.sender != owner) {
+            revert Forbidden();
+        }
         swapsPaused = paused;
         emit SwapPauseStatusChanged(paused);
+    }
+
+    function setPauseGuardian(address newGuardian) external onlyOwner {
+        if (newGuardian == address(0)) revert ZeroAddress();
+        address previousGuardian = pauseGuardian;
+        pauseGuardian = newGuardian;
+        emit PauseGuardianChanged(previousGuardian, newGuardian);
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
