@@ -42,6 +42,7 @@ Liquidity Chain is developing non-custodial infrastructure for discovering and e
 - Up to 8 ERC-20 split legs with basis-point allocations totaling 10,000
 - Global minimum-output enforcement based on actual balance received
 - Two-step ownership transfer
+- Owner-controlled emergency pause for every Router 2.0 swap entry point while quotes remain available
 - Native BNB wrapping and unwrapping through configured WBNB
 - Refund of unused input and reset of temporary token approvals
 
@@ -64,7 +65,7 @@ Native-BNB split execution is not implemented; native-BNB trades use a single op
 The latest local validation produced:
 
 - 17 Solidity source files compiled successfully
-- 30 automated tests passed
+- 32 automated tests passed, including sampled split-allocation invariants and full swap-pause coverage
 - JavaScript syntax checks passed for application and configuration scripts
 - Git whitespace/error validation passed
 
