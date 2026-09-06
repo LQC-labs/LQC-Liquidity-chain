@@ -15,6 +15,7 @@ Liquidity Chain is developing non-custodial infrastructure for discovering and e
 | Best-route quoting | Implemented and locally tested | `LQCFlowQuoter.sol` |
 | Adapter-based Router 2.0 | Implemented and locally tested | `LQCFlowRouterV2.sol` |
 | Router governance timelock | Implemented and locally tested | `LQCRouterTimelock.sol`, governance tests |
+| Token execution limits | Implemented and locally tested | Router V2 token allowlist, per-trade cap, UTC-day cumulative cap |
 | Uniswap V2-compatible adapter | Implemented and locally tested | `dex/contracts/adapters/UniswapV2DEXAdapter.sol` |
 | Native BNB routes | Implemented and locally tested | Router V1 and Router V2 tests |
 | ERC-20 split execution | Implemented and locally tested | `swapSplitExactInput` and split-route tests |
@@ -49,6 +50,9 @@ Liquidity Chain is developing non-custodial infrastructure for discovering and e
 - Delayed privileged execution with cancellation, replay prevention, and two-step timelock-admin transfer
 - Native BNB wrapping and unwrapping through configured WBNB
 - Refund of unused input and reset of temporary token approvals
+- Owner-managed input/output token allowlisting
+- Raw-token per-trade maximum and UTC-day cumulative input cap applied once to best, split, BNB-in, and BNB-out swaps
+- Read-only risk status exposed to the browser; governance changes follow Router ownership through the timelock
 
 ### Route optimization and application
 
@@ -72,7 +76,7 @@ Native-BNB split execution is not implemented; native-BNB trades use a single op
 The latest local validation produced:
 
 - 18 Solidity source files compiled successfully
-- 40 automated tests passed, including market-data validation, timelock delay/cancellation/replay controls, role separation, sampled split-allocation invariants, and full swap-pause coverage
+- 45 automated tests passed, including token allowlisting and caps, market-data validation, timelock risk changes, role separation, sampled split-allocation invariants, and full swap-pause coverage
 - JavaScript syntax checks passed for application and configuration scripts
 - Git whitespace/error validation passed
 
@@ -115,6 +119,8 @@ Before any production use, the project requires:
 7. Monitoring, incident response, and emergency-pause controls
 8. Legal and regulatory review
 9. Capped-liquidity pilot with defined transaction and TVL limits
+
+The approved pilot targets remain pool TVL USD 25,000, pool daily volume USD 50,000, and LQC/USDT token daily volume USD 25,000 each. Five-minute price movement of ±10%, one-hour liquidity loss of 20%, USDT deviation of ±3%, and the 40% token concentration threshold remain monitoring/oracle rules pending reviewed price, liquidity, decimal-normalization, and pool-accounting inputs. They are not represented as active on-chain USD controls.
 
 Lending, oracle, bridge, fee burning, staking, governance, and an independent mainnet are roadmap items and are not represented as deployed services.
 
