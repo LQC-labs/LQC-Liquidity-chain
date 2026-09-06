@@ -35,7 +35,8 @@
     dialog: $("tokenDialog"), tokenList: $("tokenList"), slippage: $("slippageInput"),
     contractState: $("contractState"), confirmDialog: $("confirmDialog"),
     confirmPay: $("confirmPay"), confirmReceive: $("confirmReceive"), confirmStrategy: $("confirmStrategy"),
-    confirmGas: $("confirmGas"), confirmWarning: $("confirmWarning")
+    confirmGas: $("confirmGas"), confirmWarning: $("confirmWarning"),
+    portfolioValue: $("portfolioValue"), refreshBalance: $("refreshBalance")
   };
 
   let provider, signer, account, router, routerV2, currentQuote, choosingSide = "in", quoteTimer;
@@ -201,9 +202,15 @@
   }
 
   async function updateBalances() {
-    const [inBalance, outBalance] = await Promise.all([balanceOf(tokenIn), balanceOf(tokenOut)]);
+    const lqc = config.tokens.find((token) => token.symbol === "LQC");
+    const [inBalance, outBalance, lqcBalance] = await Promise.all([
+      balanceOf(tokenIn), balanceOf(tokenOut), lqc ? balanceOf(lqc) : null
+    ]);
     ui.balanceIn.textContent = inBalance === null ? "—" : Number(ethers.formatUnits(inBalance, tokenIn.decimals)).toLocaleString(undefined, { maximumFractionDigits: 5 });
     ui.balanceOut.textContent = outBalance === null ? "—" : Number(ethers.formatUnits(outBalance, tokenOut.decimals)).toLocaleString(undefined, { maximumFractionDigits: 5 });
+    ui.portfolioValue.textContent = !lqc || lqcBalance === null
+      ? "—"
+      : `${Number(ethers.formatUnits(lqcBalance, lqc.decimals)).toLocaleString(undefined, { maximumFractionDigits: 5 })} LQC`;
   }
 
   function scheduleQuote() {
@@ -393,6 +400,7 @@
   }
 
   ui.connect.addEventListener("click", connectWallet);
+  ui.refreshBalance.addEventListener("click", updateBalances);
   ui.buyAction.addEventListener("click", async () => { setTradeMode("buy"); await updateQuote(); await executeSwap(); });
   ui.sellAction.addEventListener("click", async () => { setTradeMode("sell"); await updateQuote(); await executeSwap(); });
   ui.settings.addEventListener("click", () => {
