@@ -50,8 +50,10 @@ After deployment, configure the verified Router, WBNB, and LQC test-token addres
 
 ```bash
 export ROUTER_ADDRESS="0x..."
+export QUOTE_ROUTER_ADDRESS="0x..."
 export WBNB_ADDRESS="0x..."
 export LQC_ADDRESS="0x..."
+export REGISTERED_DEXES='[{"id":"0x...","name":"LQC Flow"},{"id":"0x...","name":"PancakeSwap V2"}]'
 npm run configure:app
 ```
 
