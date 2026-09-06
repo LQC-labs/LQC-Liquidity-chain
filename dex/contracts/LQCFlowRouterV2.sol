@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {IERC20} from "./interfaces/IERC20.sol";
 import {ILQCDEXAdapter} from "./interfaces/ILQCDEXAdapter.sol";
 import {IWBNB} from "./interfaces/IWBNB.sol";
+import {ILQCRiskGuard} from "./interfaces/ILQCRiskGuard.sol";
 import {SafeTransferLib} from "./libraries/SafeTransferLib.sol";
 
 /// @notice Adapter-based best-price router across approved DEX integrations.
@@ -18,6 +19,7 @@ contract LQCFlowRouterV2 {
     address public owner;
     address public pendingOwner;
     address public pauseGuardian;
+    address public riskGuard;
     bool public swapsPaused;
     mapping(address => bool) public isAdapterEnabled;
     struct TokenRiskConfig {
@@ -38,6 +40,7 @@ contract LQCFlowRouterV2 {
     event TokenDailyVolumeConsumed(address indexed token, uint64 indexed day, uint256 amount, uint256 cumulativeAmount);
     event SwapPauseStatusChanged(bool paused);
     event PauseGuardianChanged(address indexed previousGuardian, address indexed newGuardian);
+    event RiskGuardChanged(address indexed previousGuard, address indexed newGuard);
     event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event BestRouteSwap(
@@ -137,6 +140,10 @@ contract LQCFlowRouterV2 {
         remainingDailyInput = inputRisk.dailyInputCap > used ? inputRisk.dailyInputCap - used : 0;
         allowed = inputRisk.allowed && outputRisk.allowed && amountIn > 0
             && amountIn <= inputRisk.maxTradeAmount && amountIn <= remainingDailyInput;
+        if (allowed && riskGuard != address(0)) {
+            try ILQCRiskGuard(riskGuard).validateSwap(tokenIn, tokenOut) {}
+            catch { allowed = false; }
+        }
     }
 
     function setSwapsPaused(bool paused) external {
@@ -154,6 +161,12 @@ contract LQCFlowRouterV2 {
         address previousGuardian = pauseGuardian;
         pauseGuardian = newGuardian;
         emit PauseGuardianChanged(previousGuardian, newGuardian);
+    }
+
+    function setRiskGuard(address newGuard) external onlyOwner {
+        address previousGuard = riskGuard;
+        riskGuard = newGuard;
+        emit RiskGuardChanged(previousGuard, newGuard);
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
@@ -369,6 +382,7 @@ contract LQCFlowRouterV2 {
     }
 
     function _consumeRisk(address tokenIn, address tokenOut, uint256 amountIn) private {
+        if (riskGuard != address(0)) ILQCRiskGuard(riskGuard).validateSwap(tokenIn, tokenOut);
         TokenRiskConfig memory inputRisk = tokenRiskConfig[tokenIn];
         if (!inputRisk.allowed || !tokenRiskConfig[tokenOut].allowed) revert TokenNotAllowed();
         if (amountIn > inputRisk.maxTradeAmount) revert MaxTradeExceeded();
