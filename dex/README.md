@@ -82,6 +82,16 @@ but only a timelocked governance operation can re-enable or structurally change 
 The automated test suite also reproduces the complete bootstrap locally and verifies both pool
 creation, Router 2.0 quoting, a capped smoke swap, and rejection when minimum-output protection fails.
 
+After deployment, run the read-only real-address validator before any smoke swap. It refuses every
+chain except BSC testnet `97`, checks deployed bytecode, verifies PancakeSwap V2/V3 Router-to-Factory
+and WBNB links, and confirms LQC timelock ownership, emergency pause authority, executor, and DEX count.
+
+```bash
+export BSC_TESTNET_RPC_URL="https://..."
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
+npm run validate:testnet
+```
+
 After deployment, configure the verified Router, WBNB, and LQC test-token addresses:
 
 ```bash
@@ -98,12 +108,12 @@ export REGISTERED_DEXES='[{"id":"0x...","name":"LQC Flow"},{"id":"0x...","name":
 npm run configure:app
 ```
 
-The interface remains visibly disabled until all three addresses are configured.
+The interface remains visibly disabled until all required Router 2.0 addresses are configured.
 
 Never commit private keys or `.env` files.
 
 ## Current limitations
 
-This is an unaudited testnet MVP, not production-ready software. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, production oracle feeds, native Router 2.0 BNB execution, and audited production integrations are intentionally deferred.
+This is an unaudited testnet MVP, not production-ready software. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, production oracle feeds, and audited production integrations are intentionally deferred.
 
 Before any mainnet use, complete independent audits, invariant/fuzz testing, economic simulations, legal review, multisig/timelock setup, token and pool allowlisting decisions, monitoring, and a capped-liquidity testnet/pilot phase.
