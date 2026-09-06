@@ -346,4 +346,54 @@ describe("LQC Router 2.0", function () {
     assert.equal(await tokenA.balanceOf(await autoRouter.getAddress()), 0n);
     assert.equal(await tokenA.allowance(await autoRouter.getAddress(), await executionRouter.getAddress()), 0n);
   });
+
+  it("quotes and executes a protected PancakeSwap V3 packed path", async function () {
+    const Quoter = new ethers.ContractFactory(
+      artifact("MockV3Quoter", "mocks/MockV3Quoter").abi,
+      artifact("MockV3Quoter", "mocks/MockV3Quoter").bytecode,
+      owner
+    );
+    const SwapRouter = new ethers.ContractFactory(
+      artifact("MockV3SwapRouter", "mocks/MockV3SwapRouter").abi,
+      artifact("MockV3SwapRouter", "mocks/MockV3SwapRouter").bytecode,
+      owner
+    );
+    const quoter = await Quoter.deploy(2);
+    const swapRouter = await SwapRouter.deploy(2);
+    await Promise.all([quoter.waitForDeployment(), swapRouter.waitForDeployment()]);
+    const Adapter = new ethers.ContractFactory(
+      artifact("PancakeV3ExecutionAdapter", "router-v2/adapters/PancakeV3ExecutionAdapter").abi,
+      artifact("PancakeV3ExecutionAdapter", "router-v2/adapters/PancakeV3ExecutionAdapter").bytecode,
+      owner
+    );
+    const v3Adapter = await Adapter.deploy(await quoter.getAddress(), await swapRouter.getAddress());
+    await v3Adapter.waitForDeployment();
+
+    const dexId = ethers.id("PANCAKE_V3");
+    await (await registry.addDex(dexId, await v3Adapter.getAddress(), "PancakeSwap V3", 95)).wait();
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    const packedPath = ethers.solidityPacked(["address", "uint24", "address"], [tokenIn, 2500, tokenOut]);
+    const amountIn = ethers.parseEther("10");
+    const expectedOut = amountIn * 2n;
+    await (await tokenA.mint(await owner.getAddress(), amountIn)).wait();
+    await (await tokenB.mint(await swapRouter.getAddress(), expectedOut)).wait();
+    await (await tokenA.approve(await executionRouter.getAddress(), amountIn)).wait();
+    const block = await provider.getBlock("latest");
+    const before = await tokenB.balanceOf(await other.getAddress());
+
+    assert.equal(await v3Adapter.quoteExactInput(tokenIn, tokenOut, amountIn, packedPath), expectedOut);
+    await assert.rejects(executionRouter.swapExactInput(
+      dexId, tokenIn, tokenOut, amountIn, expectedOut + 1n, await other.getAddress(),
+      BigInt(block.timestamp + 3600), packedPath
+    ));
+    await (await executionRouter.swapExactInput(
+      dexId, tokenIn, tokenOut, amountIn, expectedOut, await other.getAddress(),
+      BigInt(block.timestamp + 3600), packedPath
+    )).wait();
+
+    assert.equal((await tokenB.balanceOf(await other.getAddress())) - before, expectedOut);
+    assert.equal(await tokenA.balanceOf(await v3Adapter.getAddress()), 0n);
+    assert.equal(await tokenA.allowance(await v3Adapter.getAddress(), await swapRouter.getAddress()), 0n);
+  });
 });

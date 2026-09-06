@@ -26,13 +26,14 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - \`LQCFlowAdapter\`: connects native LQC Flow direct or multi-hop pool quotes to Router 2.0
 - \`PancakeV2Adapter\`: connects reviewed PancakeSwap V2-compatible routers for cross-DEX quote comparison
 - \`PancakeV3Adapter\`: validates packed V3 paths and reads PancakeSwap QuoterV2 through an isolated static call
+- \`PancakeV3ExecutionAdapter\`: executes reviewed token-to-token PancakeSwap V3 paths with deadline, exact-approval, and minimum-output protection
 - \`LQCExecutionRouter\`: executes token exact-input swaps only through enabled registry adapters, with minimum-output, deadline, recipient balance verification, exact temporary approvals, and reentrancy protection
 - Automatic best-route execution compares every enabled execution adapter, isolates failed routes, applies caller-supplied gas estimates denominated in the output token, and uses deterministic registry priority for ties
 - Atomic split execution can divide one order across two to four reviewed routes, enforcing exact input allocation plus per-route and aggregate minimum-output protection
 - \`LQCSplitOptimizer\`: read-only incremental optimizer that distributes an order across every enabled execution adapter according to marginal output, price impact, route cost, and deterministic priority
 - \`LQCAutoRouter\`: converts a capped optimizer result into a single-route or two-to-four-route atomic swap and derives route-level minimum outputs from user slippage tolerance
 
-New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap when \`PANCAKE_V2_ROUTER_ADDRESS\` is supplied. Exact-input token execution, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, and atomic optimized execution are now available for the LQC Flow and PancakeSwap V2 adapters. Native BNB execution, PancakeSwap V3 execution, oracle-backed gas conversion, timelocks, and production integrations remain pending.
+New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap V2 or V3 when their reviewed addresses are supplied. Exact-input token execution, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, and atomic optimized execution are now available for LQC Flow, PancakeSwap V2, and PancakeSwap V3 adapters. Native BNB execution, oracle-backed gas conversion, timelocks, and production integrations remain pending.
 
 Router 2.0 is intentionally protocol-neutral: every EVM DEX can be integrated through the same reviewed adapter interfaces and enabled or paused independently in the registry. A DEX is never treated as compatible until its protocol-specific quote and execution adapter, route validation, tests, and security review are complete. Non-EVM liquidity will be connected later through the cross-chain routing layer rather than unsafe direct assumptions.
 
@@ -61,6 +62,8 @@ creates LQC/USDT and LQC/WBNB pools, records all addresses, and configures the w
 export BSC_TESTNET_RPC_URL="..."
 export DEPLOYER_PRIVATE_KEY="..." # never commit this value
 export WBNB_ADDRESS="0x..."
+export PANCAKE_V3_QUOTER_ADDRESS="0x..." # optional; set together with the V3 router
+export PANCAKE_V3_ROUTER_ADDRESS="0x..." # optional; token-to-token execution
 npm run deploy:testnet
 ```
 

@@ -8,6 +8,8 @@ const {
   WBNB_ADDRESS,
   FACTORY_OWNER,
   PANCAKE_V2_ROUTER_ADDRESS = "",
+  PANCAKE_V3_QUOTER_ADDRESS = "",
+  PANCAKE_V3_ROUTER_ADDRESS = "",
   TEST_LQC_SUPPLY = "1000000",
   TEST_USDT_SUPPLY = "1000000",
   LQC_USDT_LIQUIDITY_LQC = "100000",
@@ -66,6 +68,18 @@ if (PANCAKE_V2_ROUTER_ADDRESS) {
   await (await registry.addDex(pancakeDexId, await pancakeAdapter.getAddress(), "PancakeSwap V2", 90)).wait();
   dexes.push({ id: pancakeDexId, name: "PancakeSwap V2" });
 }
+let pancakeV3Adapter = null;
+if (PANCAKE_V3_QUOTER_ADDRESS || PANCAKE_V3_ROUTER_ADDRESS) {
+  if (!ethers.isAddress(PANCAKE_V3_QUOTER_ADDRESS) || !ethers.isAddress(PANCAKE_V3_ROUTER_ADDRESS)) {
+    throw new Error("Set both valid PANCAKE_V3_QUOTER_ADDRESS and PANCAKE_V3_ROUTER_ADDRESS values.");
+  }
+  pancakeV3Adapter = await deploy("router-v2/adapters/PancakeV3ExecutionAdapter", [
+    PANCAKE_V3_QUOTER_ADDRESS, PANCAKE_V3_ROUTER_ADDRESS
+  ]);
+  const pancakeV3DexId = ethers.id("PANCAKE_V3");
+  await (await registry.addDex(pancakeV3DexId, await pancakeV3Adapter.getAddress(), "PancakeSwap V3", 95)).wait();
+  dexes.push({ id: pancakeV3DexId, name: "PancakeSwap V3" });
+}
 if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
   await (await registry.beginOwnershipTransfer(owner)).wait();
 }
@@ -115,7 +129,8 @@ const record = {
     splitOptimizer: { address: await splitOptimizer.getAddress(), deploymentTx: txHash(splitOptimizer) },
     autoRouter: { address: await autoRouter.getAddress(), deploymentTx: txHash(autoRouter) },
     flowAdapter: { address: await flowAdapter.getAddress(), deploymentTx: txHash(flowAdapter) },
-    pancakeAdapter: pancakeAdapter ? { address: await pancakeAdapter.getAddress(), deploymentTx: txHash(pancakeAdapter) } : null
+    pancakeAdapter: pancakeAdapter ? { address: await pancakeAdapter.getAddress(), deploymentTx: txHash(pancakeAdapter) } : null,
+    pancakeV3Adapter: pancakeV3Adapter ? { address: await pancakeV3Adapter.getAddress(), deploymentTx: txHash(pancakeV3Adapter) } : null
   },
   pools: [
     { pair: "LQC/Mock USDT", address: addresses.lqcUsdt, lqc: LQC_USDT_LIQUIDITY_LQC, quote: LQC_USDT_LIQUIDITY_USDT },
