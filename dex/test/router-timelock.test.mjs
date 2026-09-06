@@ -66,6 +66,21 @@ describe("LQC Router governance timelock", function () {
     await assert.rejects(timelock.execute(target, 0, data, operationSalt));
   });
 
+  it("delays token risk-limit changes through the same governance path", async function () {
+    const target = await router.getAddress();
+    const token = await wbnb.getAddress();
+    const data = router.interface.encodeFunctionData("setTokenRisk", [token, true, 1000n, 5000n]);
+    const operationSalt = salt("configure-wbnb-risk");
+    await (await timelock.schedule(target, 0, data, operationSalt)).wait();
+    await assert.rejects(timelock.execute(target, 0, data, operationSalt));
+    await advanceDelay();
+    await (await timelock.execute(target, 0, data, operationSalt, { gasLimit: 500_000 })).wait();
+    const config = await router.tokenRiskConfig(token);
+    assert.equal(config.allowed, true);
+    assert.equal(config.maxTradeAmount, 1000n);
+    assert.equal(config.dailyInputCap, 5000n);
+  });
+
   it("allows guardian pause but reserves resume for delayed governance", async function () {
     await (await router.connect(guardian).setSwapsPaused(true)).wait();
     assert.equal(await router.swapsPaused(), true);
