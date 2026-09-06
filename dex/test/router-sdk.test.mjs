@@ -49,4 +49,11 @@ describe("LQC Router browser SDK", function () {
     );
     assert.throws(() => sdk.summarizeSplit(dexes, [1n], 1n));
   });
+
+  it("selects split routing only when its gas-adjusted net output is higher", function () {
+    assert.equal(sdk.isSplitNetBetter(1000n, 20n, 981n), true);
+    assert.equal(sdk.isSplitNetBetter(1000n, 20n, 980n), false);
+    assert.equal(sdk.isSplitNetBetter(10n, 20n, 1n), true);
+    assert.throws(() => sdk.isSplitNetBetter(1n, -1n, 1n));
+  });
 });

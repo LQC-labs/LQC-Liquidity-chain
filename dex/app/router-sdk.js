@@ -37,5 +37,10 @@
     if(!Array.isArray(dexes)||!Array.isArray(amountsIn)||dexes.length!==amountsIn.length||typeof totalAmountIn!=='bigint'||totalAmountIn<=0n)throw new Error('Invalid split');
     return amountsIn.map((amount,index)=>({dex:dexes[index],amountIn:amount,percent:Number(amount*10000n/totalAmountIn)/100})).filter(item=>item.amountIn>0n);
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,estimatedGasWei,routeFeeBps,summarizeSplit,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  function isSplitNetBetter(singleAmountOut,singleCost,splitNetAmountOut){
+    for(const value of [singleAmountOut,singleCost,splitNetAmountOut])if(typeof value!=='bigint'||value<0n)throw new Error('Invalid net quote');
+    const singleNet=singleAmountOut>singleCost?singleAmountOut-singleCost:0n;
+    return splitNetAmountOut>singleNet;
+  }
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);

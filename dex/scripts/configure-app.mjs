@@ -2,8 +2,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { ethers } from "ethers";
 
-const { ROUTER_ADDRESS, QUOTE_ROUTER_ADDRESS, EXECUTION_ROUTER_ADDRESS, NATIVE_ROUTER_ADDRESS, SPLIT_OPTIMIZER_ADDRESS, AUTO_ROUTER_ADDRESS, WBNB_ADDRESS, LQC_ADDRESS, REGISTERED_DEXES = "[]" } = process.env;
-for (const [name, value] of Object.entries({ ROUTER_ADDRESS, QUOTE_ROUTER_ADDRESS, EXECUTION_ROUTER_ADDRESS, NATIVE_ROUTER_ADDRESS, SPLIT_OPTIMIZER_ADDRESS, AUTO_ROUTER_ADDRESS, WBNB_ADDRESS, LQC_ADDRESS })) {
+const { ROUTER_ADDRESS, QUOTE_ROUTER_ADDRESS, EXECUTION_ROUTER_ADDRESS, NATIVE_ROUTER_ADDRESS, SPLIT_OPTIMIZER_ADDRESS, AUTO_ROUTER_ADDRESS, GAS_COST_ORACLE_ADDRESS, WBNB_ADDRESS, LQC_ADDRESS, REGISTERED_DEXES = "[]" } = process.env;
+for (const [name, value] of Object.entries({ ROUTER_ADDRESS, QUOTE_ROUTER_ADDRESS, EXECUTION_ROUTER_ADDRESS, NATIVE_ROUTER_ADDRESS, SPLIT_OPTIMIZER_ADDRESS, AUTO_ROUTER_ADDRESS, GAS_COST_ORACLE_ADDRESS, WBNB_ADDRESS, LQC_ADDRESS })) {
   if (!ethers.isAddress(value)) throw new Error(`${name} must be a valid deployed contract address.`);
 }
 const dexes = JSON.parse(REGISTERED_DEXES);
@@ -24,6 +24,7 @@ const config = `window.LQC_FLOW_CONFIG = Object.freeze(${JSON.stringify({
   nativeRouterAddress: NATIVE_ROUTER_ADDRESS,
   splitOptimizerAddress: SPLIT_OPTIMIZER_ADDRESS,
   autoRouterAddress: AUTO_ROUTER_ADDRESS,
+  gasCostOracleAddress: GAS_COST_ORACLE_ADDRESS,
   dexes,
   tokens: [
     { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },

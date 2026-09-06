@@ -91,6 +91,7 @@ export EXECUTION_ROUTER_ADDRESS="0x..."
 export NATIVE_ROUTER_ADDRESS="0x..."
 export SPLIT_OPTIMIZER_ADDRESS="0x..."
 export AUTO_ROUTER_ADDRESS="0x..."
+export GAS_COST_ORACLE_ADDRESS="0x..."
 export WBNB_ADDRESS="0x..."
 export LQC_ADDRESS="0x..."
 export REGISTERED_DEXES='[{"id":"0x...","name":"LQC Flow"},{"id":"0x...","name":"PancakeSwap V2"}]'
