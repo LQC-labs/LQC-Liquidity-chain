@@ -22,7 +22,9 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - Pair-level reentrancy lock and safe ERC-20 transfers
 - Local compilation plus AMM, route-selection, and security-boundary integration tests
 - BSC testnet deployment script
-- Static wallet-connected swap interface in `app/`
+- Responsive mobile-first market and wallet-connected swap interface in `app/`
+- Clearly labelled deterministic testnet-demo candlestick, moving-average, and volume visualization
+- Wallet-linked LQC balance panel and prominent BUY/SELL controls on mobile
 - Trading UI compares single and two-way split routes, displays each DEX allocation, full paths, expected improvement, price impact, indicative network fee, expected output, and minimum output when Router V2 is configured
 
 ## Commands
@@ -79,7 +81,7 @@ The interface remains visibly disabled until all three addresses are configured.
 
 For Router V2 mode, also configure `ROUTER_V2_ADDRESS` and `PANCAKE_ADAPTER_ADDRESS`. The UI refreshes quotes immediately before submission, automatically uses a two-way ERC-20 split when it improves output by more than 0.10%, and calls the appropriate split, token/token, BNB/token, or token/BNB Router V2 entry point. Native-BNB trades remain single-route because Router V2 split execution accepts ERC-20 inputs. When Router V2 is not configured, the existing LQC Flow AMM V1 flow remains available.
 
-Before requesting the wallet transaction, the UI shows a confirmation summary with the minimum received amount, selected strategy, indicative BNB network fee, and a warning when estimated price impact is 3% or higher. Price impact and network fee values are estimates, not execution guarantees.
+Before requesting the wallet transaction, the UI shows a confirmation summary with the minimum received amount, selected strategy, indicative BNB network fee, and a warning when estimated price impact is 3% or higher. Price impact and network fee values are estimates, not execution guarantees. The market chart is deterministic demonstration data for interface testing; it is not a live feed, oracle, token valuation, or trading signal.
 
 The UI reads Router V2's on-chain pause state. When swaps are paused, quotes remain visible but BUY and SELL execution is disabled.
 
@@ -87,6 +89,6 @@ Never commit private keys or `.env` files.
 
 ## Current limitations
 
-This is an unaudited testnet MVP, not production-ready software. Router V2 now provides the adapter registry, best-quote execution core, native-BNB wrapping/unwrapping, ERC-20 split execution, function-level swap pausing, and a Uniswap V2-compatible adapter; the browser and SDK calculate optimal split percentages off-chain. Network-specific router addresses still require testnet verification and allowlisting. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, governance timelocks, price oracles, and the full chart-based trading interface are intentionally deferred.
+This is an unaudited testnet MVP, not production-ready software. Router V2 now provides the adapter registry, best-quote execution core, native-BNB wrapping/unwrapping, ERC-20 split execution, function-level swap pausing, and a Uniswap V2-compatible adapter; the browser and SDK calculate optimal split percentages off-chain. Network-specific router addresses still require testnet verification and allowlisting. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, live market-data feeds, and price oracles are intentionally deferred. The governance timelock and chart-based interface are implemented locally, but neither has been independently audited or deployed for production.
 
 Before any mainnet use, complete independent audits, invariant/fuzz testing, economic simulations, legal review, multisig/timelock setup, token and pool allowlisting decisions, monitoring, and a capped-liquidity testnet/pilot phase.
