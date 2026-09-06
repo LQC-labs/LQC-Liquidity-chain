@@ -64,6 +64,7 @@ const riskRegistry = await deploy("router-v2/LQCRiskRegistry", [wallet.address, 
 const executionRouter = await deploy("router-v2/LQCExecutionRouter", [
   await registry.getAddress(), await riskRegistry.getAddress()
 ]);
+const nativeRouter = await deploy("router-v2/LQCNativeRouter", [WBNB_ADDRESS, await executionRouter.getAddress()]);
 await (await riskRegistry.setExecutor(await executionRouter.getAddress())).wait();
 const splitOptimizer = await deploy("router-v2/LQCSplitOptimizer", [await registry.getAddress()]);
 const autoRouter = await deploy("router-v2/LQCAutoRouter", [
@@ -161,6 +162,7 @@ const record = {
     riskRegistry: { address: await riskRegistry.getAddress(), deploymentTx: txHash(riskRegistry) },
     quoteRouter: { address: await quoteRouter.getAddress(), deploymentTx: txHash(quoteRouter) },
     executionRouter: { address: await executionRouter.getAddress(), deploymentTx: txHash(executionRouter) },
+    nativeRouter: { address: await nativeRouter.getAddress(), deploymentTx: txHash(nativeRouter) },
     splitOptimizer: { address: await splitOptimizer.getAddress(), deploymentTx: txHash(splitOptimizer) },
     autoRouter: { address: await autoRouter.getAddress(), deploymentTx: txHash(autoRouter) },
     gasCostOracle: { address: await gasCostOracle.getAddress(), deploymentTx: txHash(gasCostOracle), feedsConfigured: false },
@@ -189,6 +191,7 @@ const appConfig = `window.LQC_FLOW_CONFIG = Object.freeze(${JSON.stringify({
   routerAddress: await router.getAddress(),
   quoteRouterAddress: await quoteRouter.getAddress(),
   executionRouterAddress: await executionRouter.getAddress(),
+  nativeRouterAddress: await nativeRouter.getAddress(),
   splitOptimizerAddress: await splitOptimizer.getAddress(),
   autoRouterAddress: await autoRouter.getAddress(),
   gasCostOracleAddress: await gasCostOracle.getAddress(),
