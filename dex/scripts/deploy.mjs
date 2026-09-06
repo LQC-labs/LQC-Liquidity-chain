@@ -6,7 +6,10 @@ if (!BSC_TESTNET_RPC_URL || !DEPLOYER_PRIVATE_KEY || !WBNB_ADDRESS) {
   throw new Error("Set BSC_TESTNET_RPC_URL, DEPLOYER_PRIVATE_KEY, and WBNB_ADDRESS in the environment.");
 }
 
-const load = (name) => JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${name}.sol/${name}.json`, import.meta.url)));
+const load = (source) => {
+  const contractName = source.split("/").at(-1);
+  return JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${source}.sol/${contractName}.json`, import.meta.url)));
+};
 const provider = new ethers.JsonRpcProvider(BSC_TESTNET_RPC_URL);
 const wallet = new ethers.Wallet(DEPLOYER_PRIVATE_KEY, provider);
 const owner = FACTORY_OWNER || wallet.address;
@@ -25,11 +28,30 @@ const router = await new ethers.ContractFactory(routerArtifact.abi, routerArtifa
 );
 await router.waitForDeployment();
 
+const registryArtifact = load("router-v2/LQCDexRegistry");
+const registry = await new ethers.ContractFactory(registryArtifact.abi, registryArtifact.bytecode, wallet).deploy(owner);
+await registry.waitForDeployment();
+
+const quoteRouterArtifact = load("router-v2/LQCQuoteRouter");
+const quoteRouter = await new ethers.ContractFactory(quoteRouterArtifact.abi, quoteRouterArtifact.bytecode, wallet).deploy(await registry.getAddress());
+await quoteRouter.waitForDeployment();
+
+const flowAdapterArtifact = load("router-v2/adapters/LQCFlowAdapter");
+const flowAdapter = await new ethers.ContractFactory(flowAdapterArtifact.abi, flowAdapterArtifact.bytecode, wallet).deploy(await router.getAddress());
+await flowAdapter.waitForDeployment();
+
+const flowDexId = ethers.id("LQC_FLOW");
+await (await registry.addDex(flowDexId, await flowAdapter.getAddress(), "LQC Flow", 100)).wait();
+
 console.log(JSON.stringify({
   chainId: network.chainId.toString(),
   deployer: wallet.address,
   factoryOwner: owner,
   wbnb: WBNB_ADDRESS,
   factory: await factory.getAddress(),
-  router: await router.getAddress()
+  router: await router.getAddress(),
+  dexRegistry: await registry.getAddress(),
+  quoteRouter: await quoteRouter.getAddress(),
+  flowAdapter: await flowAdapter.getAddress(),
+  flowDexId
 }, null, 2));
