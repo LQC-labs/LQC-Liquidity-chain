@@ -65,6 +65,7 @@ The LQC Flow DEX and Router 2.0 code is an **unaudited MVP** intended for local 
 - Browser quote comparison does not guarantee execution price; state can change before mining
 - Browser split selection uses a heuristic threshold; its displayed network fee uses the live gas price with a route-complexity gas-unit estimate rather than transaction simulation
 - Price impact is an estimate derived from a small proportional quote and is not an oracle or execution guarantee
+- The browser chart uses deterministic demonstration data labelled `TESTNET DEMO`; it is not a live price source, valuation, oracle, or trading signal
 - Native-BNB split execution is not implemented
 - External DEX, RPC, wallet, MEV, and network risks remain outside the contracts' control
 
