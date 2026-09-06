@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="LQC Flow DEX — BNB Smart Chain testnet trading interface">
   <title>LQC Flow DEX</title>
-  <link rel="stylesheet" href="styles.css?v=20260906e">
+  <link rel="stylesheet" href="styles.css?v=20260906f">
 </head>
 <body>
   <header class="topbar">
@@ -21,8 +21,9 @@
   <main class="exchange">
     <section class="market" aria-label="LQC 시장 차트">
       <div class="ticker-row">
-        <div class="price-block"><strong class="ticker-price">$0.091348</strong><span class="ticker-change">+1.61%</span></div>
+        <div class="price-block"><span class="price-label">Price ⇌</span><strong class="ticker-price">$0.091138</strong><span class="ticker-change negative">-0.59%</span></div>
         <dl class="quick-stats">
+          <div><dt>Market cap</dt><dd>$191.39M</dd></div>
           <div><dt>Liquidity</dt><dd>$29.78K</dd></div>
           <div><dt>24h volume</dt><dd>$513.06</dd></div>
           <div><dt>Holders</dt><dd>249</dd></div>
@@ -55,7 +56,7 @@
           <line class="current-line" x1="0" x2="760" y1="286" y2="286"/><text class="current-label" x="687" y="280">0.09135</text>
           <g class="axis"><text x="697" y="70">0.09480</text><text x="697" y="150">0.09400</text><text x="697" y="230">0.09240</text><text x="697" y="310">0.09160</text></g>
         </svg>
-        <div class="time-axis" aria-hidden="true"><span>08/26, 14:12</span><span>08/26, 20:29</span><span>08/27, 08:17</span><span>08/28, 07:49</span><span>08/28, 18:47</span></div>
+        <div class="time-axis" aria-hidden="true"><span>09/03, 20:38</span><span>09/04, 01:39</span><span>09/04, 22:27</span><span>09/05, 10:43</span></div>
       </div>
 
       <div class="volume"><span>VOL (LQC): 108.5751</span><div class="volume-bars" id="volumeBars"></div></div>
@@ -88,6 +89,6 @@
 
   <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><h2>토큰 선택</h2><button value="cancel" aria-label="닫기">×</button></div><div class="token-list" id="tokenList" role="listbox"></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js?v=20260906e"></script><script src="app.js?v=20260906e"></script>
+  <script src="config.js?v=20260906f"></script><script src="app.js?v=20260906f"></script>
 </body>
 </html>
