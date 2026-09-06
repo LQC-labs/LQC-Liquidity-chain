@@ -48,6 +48,7 @@ const factory = await deploy("LQCFlowFactory", [owner]);
 const router = await deploy("LQCFlowRouter", [await factory.getAddress(), WBNB_ADDRESS]);
 const registry = await deploy("router-v2/LQCDexRegistry", [wallet.address]);
 const quoteRouter = await deploy("router-v2/LQCQuoteRouter", [await registry.getAddress()]);
+const executionRouter = await deploy("router-v2/LQCExecutionRouter", [await registry.getAddress()]);
 const flowAdapter = await deploy("router-v2/adapters/LQCFlowAdapter", [await router.getAddress()]);
 
 const flowDexId = ethers.id("LQC_FLOW");
@@ -106,6 +107,7 @@ const record = {
     router: { address: await router.getAddress(), deploymentTx: txHash(router) },
     dexRegistry: { address: await registry.getAddress(), deploymentTx: txHash(registry) },
     quoteRouter: { address: await quoteRouter.getAddress(), deploymentTx: txHash(quoteRouter) },
+    executionRouter: { address: await executionRouter.getAddress(), deploymentTx: txHash(executionRouter) },
     flowAdapter: { address: await flowAdapter.getAddress(), deploymentTx: txHash(flowAdapter) },
     pancakeAdapter: pancakeAdapter ? { address: await pancakeAdapter.getAddress(), deploymentTx: txHash(pancakeAdapter) } : null
   },
@@ -129,6 +131,7 @@ const appConfig = `window.LQC_FLOW_CONFIG = Object.freeze(${JSON.stringify({
   nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 },
   routerAddress: await router.getAddress(),
   quoteRouterAddress: await quoteRouter.getAddress(),
+  executionRouterAddress: await executionRouter.getAddress(),
   dexes,
   tokens: [
     { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },

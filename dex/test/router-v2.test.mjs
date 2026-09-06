@@ -6,7 +6,7 @@ import { ethers } from "ethers";
 const artifact = (name, source = name) => JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${source}.sol/${name}.json`, import.meta.url)));
 
 describe("LQC Router 2.0", function () {
-  let provider, owner, other, tokenA, tokenB, flowRouter, registry, quoteRouter, adapter;
+  let provider, owner, other, tokenA, tokenB, flowRouter, registry, quoteRouter, executionRouter, adapter;
 
   beforeEach(async function () {
     provider = new ethers.BrowserProvider(ganache.provider({ logging: { quiet: true } }));
@@ -27,9 +27,11 @@ describe("LQC Router 2.0", function () {
     await Promise.all([flowRouter.waitForDeployment(), registry.waitForDeployment()]);
     const QuoteRouter = new ethers.ContractFactory(artifact("LQCQuoteRouter", "router-v2/LQCQuoteRouter").abi, artifact("LQCQuoteRouter", "router-v2/LQCQuoteRouter").bytecode, owner);
     quoteRouter = await QuoteRouter.deploy(await registry.getAddress());
+    const ExecutionRouter = new ethers.ContractFactory(artifact("LQCExecutionRouter", "router-v2/LQCExecutionRouter").abi, artifact("LQCExecutionRouter", "router-v2/LQCExecutionRouter").bytecode, owner);
+    executionRouter = await ExecutionRouter.deploy(await registry.getAddress());
     const Adapter = new ethers.ContractFactory(artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").abi, artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").bytecode, owner);
     adapter = await Adapter.deploy(await flowRouter.getAddress());
-    await Promise.all([quoteRouter.waitForDeployment(), adapter.waitForDeployment()]);
+    await Promise.all([quoteRouter.waitForDeployment(), executionRouter.waitForDeployment(), adapter.waitForDeployment()]);
     const amount = ethers.parseEther("10000");
     await (await tokenA.mint(await owner.getAddress(), amount)).wait();
     await (await tokenB.mint(await owner.getAddress(), amount)).wait();
@@ -120,5 +122,52 @@ describe("LQC Router 2.0", function () {
     await assert.rejects(v3Adapter.quoteExactInput(tokenInAddress, tokenOutAddress, 100n, "0x1234"));
     const reversed = ethers.solidityPacked(["address", "uint24", "address"], [tokenOutAddress, 2500, tokenInAddress]);
     await assert.rejects(v3Adapter.quoteExactInput(tokenInAddress, tokenOutAddress, 100n, reversed));
+  });
+
+  it("executes an approved exact-input route with minimum-output and deadline protection", async function () {
+    const dexId = ethers.id("LQC_FLOW");
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    const path = [tokenIn, tokenOut];
+    const routeData = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [path]);
+    const amountIn = ethers.parseEther("10");
+    const expected = await flowRouter.getAmountsOut(amountIn, path);
+    await (await tokenA.mint(await owner.getAddress(), amountIn)).wait();
+    await (await tokenA.approve(await executionRouter.getAddress(), amountIn)).wait();
+    const before = await tokenB.balanceOf(await other.getAddress());
+    const block = await provider.getBlock("latest");
+
+    await (await executionRouter.swapExactInput(
+      dexId, tokenIn, tokenOut, amountIn, expected[1], await other.getAddress(), BigInt(block.timestamp + 3600), routeData
+    )).wait();
+
+    assert.equal((await tokenB.balanceOf(await other.getAddress())) - before, expected[1]);
+    assert.equal(await tokenA.balanceOf(await executionRouter.getAddress()), 0n);
+    assert.equal(await tokenA.balanceOf(await adapter.getAddress()), 0n);
+    assert.equal(await tokenA.allowance(await executionRouter.getAddress(), await adapter.getAddress()), 0n);
+  });
+
+  it("rejects disabled DEXes, expired swaps, and impossible minimum output", async function () {
+    const dexId = ethers.id("LQC_FLOW");
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    const amountIn = ethers.parseEther("10");
+    const routeData = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [[tokenIn, tokenOut]]);
+    await (await tokenA.mint(await owner.getAddress(), amountIn * 3n)).wait();
+    await (await tokenA.approve(await executionRouter.getAddress(), amountIn * 3n)).wait();
+    const block = await provider.getBlock("latest");
+
+    await assert.rejects(executionRouter.swapExactInput(
+      dexId, tokenIn, tokenOut, amountIn, 1n, await owner.getAddress(), BigInt(block.timestamp - 1), routeData
+    ));
+    await assert.rejects(executionRouter.swapExactInput(
+      dexId, tokenIn, tokenOut, amountIn, ethers.MaxUint256, await owner.getAddress(), BigInt(block.timestamp + 3600), routeData
+    ));
+    await (await registry.setDexEnabled(dexId, false)).wait();
+    await assert.rejects(executionRouter.swapExactInput(
+      dexId, tokenIn, tokenOut, amountIn, 1n, await owner.getAddress(), BigInt(block.timestamp + 3600), routeData
+    ));
   });
 });
