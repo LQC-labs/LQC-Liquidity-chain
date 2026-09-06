@@ -20,9 +20,22 @@ contract LQCFlowRouterV2 {
     address public pauseGuardian;
     bool public swapsPaused;
     mapping(address => bool) public isAdapterEnabled;
+    struct TokenRiskConfig {
+        bool allowed;
+        uint128 maxTradeAmount;
+        uint128 dailyInputCap;
+    }
+    struct DailyVolume {
+        uint64 day;
+        uint192 amount;
+    }
+    mapping(address => TokenRiskConfig) public tokenRiskConfig;
+    mapping(address => DailyVolume) public tokenDailyVolume;
     uint256 private unlocked = 1;
 
     event AdapterStatusChanged(address indexed adapter, bool enabled);
+    event TokenRiskConfigChanged(address indexed token, bool allowed, uint128 maxTradeAmount, uint128 dailyInputCap);
+    event TokenDailyVolumeConsumed(address indexed token, uint64 indexed day, uint256 amount, uint256 cumulativeAmount);
     event SwapPauseStatusChanged(bool paused);
     event PauseGuardianChanged(address indexed previousGuardian, address indexed newGuardian);
     event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
@@ -59,6 +72,10 @@ contract LQCFlowRouterV2 {
     error NativeSenderNotWBNB();
     error InvalidAllocation();
     error SwapsPaused();
+    error TokenNotAllowed();
+    error MaxTradeExceeded();
+    error DailyCapExceeded();
+    error InvalidRiskConfig();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
@@ -94,6 +111,32 @@ contract LQCFlowRouterV2 {
         if (adapter == address(0)) revert ZeroAddress();
         isAdapterEnabled[adapter] = enabled;
         emit AdapterStatusChanged(adapter, enabled);
+    }
+
+    /// @notice Configures raw token-unit limits. Owner should be a timelock administered by an external multisig.
+    function setTokenRisk(address token, bool allowed, uint128 maxTradeAmount, uint128 dailyInputCap)
+        external
+        onlyOwner
+    {
+        if (token == address(0)) revert ZeroAddress();
+        if (allowed && (maxTradeAmount == 0 || dailyInputCap < maxTradeAmount)) revert InvalidRiskConfig();
+        tokenRiskConfig[token] = TokenRiskConfig(allowed, maxTradeAmount, dailyInputCap);
+        emit TokenRiskConfigChanged(token, allowed, maxTradeAmount, dailyInputCap);
+    }
+
+    function riskStatus(address tokenIn, address tokenOut, uint256 amountIn)
+        external
+        view
+        returns (bool allowed, uint256 remainingDailyInput)
+    {
+        TokenRiskConfig memory inputRisk = tokenRiskConfig[tokenIn];
+        TokenRiskConfig memory outputRisk = tokenRiskConfig[tokenOut];
+        uint256 used = tokenDailyVolume[tokenIn].day == uint64(block.timestamp / 1 days)
+            ? tokenDailyVolume[tokenIn].amount
+            : 0;
+        remainingDailyInput = inputRisk.dailyInputCap > used ? inputRisk.dailyInputCap - used : 0;
+        allowed = inputRisk.allowed && outputRisk.allowed && amountIn > 0
+            && amountIn <= inputRisk.maxTradeAmount && amountIn <= remainingDailyInput;
     }
 
     function setSwapsPaused(bool paused) external {
@@ -194,6 +237,7 @@ contract LQCFlowRouterV2 {
     ) external nonReentrant whenSwapsActive returns (address adapter, uint256 amountOut) {
         if (deadline < block.timestamp) revert Expired();
         if (recipient == address(0)) revert ZeroAddress();
+        _consumeRisk(tokenIn, tokenOut, amountIn);
 
         (uint256 bestIndex, address bestAdapter,) = getBestQuote(tokenIn, tokenOut, amountIn, adapters, routeData);
         uint256 inputBalanceFloor = IERC20(tokenIn).balanceOf(address(this));
@@ -222,6 +266,7 @@ contract LQCFlowRouterV2 {
     ) external nonReentrant whenSwapsActive returns (uint256 amountOut) {
         if (deadline < block.timestamp) revert Expired();
         if (recipient == address(0)) revert ZeroAddress();
+        _consumeRisk(tokenIn, tokenOut, amountIn);
 
         (uint256[] memory legAmounts,,) = getSplitQuote(
             tokenIn, tokenOut, amountIn, adapters, routeData, allocationBps
@@ -257,6 +302,7 @@ contract LQCFlowRouterV2 {
     ) external payable nonReentrant whenSwapsActive returns (address adapter, uint256 amountOut) {
         if (deadline < block.timestamp) revert Expired();
         if (recipient == address(0)) revert ZeroAddress();
+        _consumeRisk(WBNB, tokenOut, msg.value);
 
         (uint256 bestIndex, address bestAdapter,) = getBestQuote(WBNB, tokenOut, msg.value, adapters, routeData);
         uint256 inputBalanceFloor = IERC20(WBNB).balanceOf(address(this));
@@ -286,6 +332,7 @@ contract LQCFlowRouterV2 {
     ) external nonReentrant whenSwapsActive returns (address adapter, uint256 amountOut) {
         if (deadline < block.timestamp) revert Expired();
         if (recipient == address(0)) revert ZeroAddress();
+        _consumeRisk(tokenIn, WBNB, amountIn);
 
         (uint256 bestIndex, address bestAdapter,) = getBestQuote(tokenIn, WBNB, amountIn, adapters, routeData);
         uint256 inputBalanceFloor = IERC20(tokenIn).balanceOf(address(this));
@@ -319,6 +366,21 @@ contract LQCFlowRouterV2 {
         amountOut = IERC20(tokenOut).balanceOf(address(this)) - balanceBefore;
         _forceApprove(tokenIn, bestAdapter, 0);
         if (amountOut < amountOutMin) revert InsufficientOutput();
+    }
+
+    function _consumeRisk(address tokenIn, address tokenOut, uint256 amountIn) private {
+        TokenRiskConfig memory inputRisk = tokenRiskConfig[tokenIn];
+        if (!inputRisk.allowed || !tokenRiskConfig[tokenOut].allowed) revert TokenNotAllowed();
+        if (amountIn > inputRisk.maxTradeAmount) revert MaxTradeExceeded();
+
+        uint64 currentDay = uint64(block.timestamp / 1 days);
+        DailyVolume memory volume = tokenDailyVolume[tokenIn];
+        uint256 used = volume.day == currentDay ? volume.amount : 0;
+        uint256 cumulative = used + amountIn;
+        if (cumulative > inputRisk.dailyInputCap) revert DailyCapExceeded();
+        if (cumulative > type(uint192).max) revert DailyCapExceeded();
+        tokenDailyVolume[tokenIn] = DailyVolume(currentDay, uint192(cumulative));
+        emit TokenDailyVolumeConsumed(tokenIn, currentDay, amountIn, cumulative);
     }
 
     function _validateRequest(
