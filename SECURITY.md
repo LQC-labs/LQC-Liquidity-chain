@@ -28,6 +28,7 @@ The LQC Flow DEX and Router 2.0 code is an **unaudited MVP** intended for local 
 
 - Reentrancy locks on state-changing pair and Router 2.0 swap functions
 - Two-step ownership transfer
+- Owner-controlled emergency pause across all Router 2.0 swap entry points; view-only quotes remain available
 - Safe ERC-20 transfer wrappers supporting tokens that return no value
 - Native BNB accepted by Router 2.0 only from configured WBNB
 - Limits of 16 best-route candidates, 8 split routes, and 5 addresses per compatible-adapter path
@@ -42,6 +43,8 @@ The LQC Flow DEX and Router 2.0 code is an **unaudited MVP** intended for local 
 - Invalid split allocations and route rejection
 - Unsolicited native-BNB rejection
 - Native wrapping/unwrapping flows
+- Pause authorization, full swap-entry-point blocking, and safe resume
+- Sampled split-allocation conservation across 20 allocation points
 - AMM liquidity, exact-input, exact-output, and multi-hop behavior
 - Route optimizer failure handling, path limits, gas adjustment, and split selection
 
@@ -51,7 +54,7 @@ The LQC Flow DEX and Router 2.0 code is an **unaudited MVP** intended for local 
 - No invariant or fuzz-testing suite yet
 - No live BSC testnet deployment evidence or verified production address
 - Single owner controls the current Router 2.0 adapter allowlist
-- No timelock, multisig enforcement, or emergency pause in current Router 2.0 code
+- No timelock or on-chain multisig enforcement in current Router 2.0 code; the emergency pause is controlled by the current owner
 - No token/pool risk registry beyond the adapter allowlist
 - Fee-on-transfer, rebasing, ERC-777-style callback, and other non-standard tokens are not supported or certified
 - Browser quote comparison does not guarantee execution price; state can change before mining
