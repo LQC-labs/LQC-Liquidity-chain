@@ -14,7 +14,7 @@ This roadmap is gated by evidence, security review, liquidity conditions, legal 
 - Uniswap V2-compatible DEX adapter
 - Direct, one-hop, and two-hop off-chain path generation
 - Gas-aware SDK ranking and two-way split optimization
-- Wallet-connected static trading interface
+- Responsive wallet-connected market and trading interface with clearly labelled demo chart data
 - Local automated test suite
 
 Exit evidence: reproducible compilation, automated test results, conservative documentation, and reviewed source history.
@@ -26,6 +26,7 @@ Exit evidence: reproducible compilation, automated test results, conservative do
 - Expand boundary, differential, invariant, fuzz, and fork tests
 - Extend the implemented sampled split invariants into stateful fuzzing and fork-based execution tests
 - Refine the implemented transaction confirmation, price-impact warning, and indicative gas estimate with live transaction simulation
+- Replace deterministic demo candles with a reviewed, timestamped market-data source and explicit stale-data handling
 - Validate official BSC testnet WBNB and external DEX router addresses
 - Deploy contracts to BSC testnet from a controlled account
 - Verify source code on BscScan
