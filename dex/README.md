@@ -23,8 +23,9 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - \`ILQCDexAdapter\`: common exact-input quote interface for every reviewed DEX integration
 - \`LQCDexRegistry\`: owner-controlled registration, update, pause, removal, metadata, and two-step ownership transfer
 - \`LQCQuoteRouter\`: failure-isolated comparison across all enabled adapters with deterministic priority tie-breaking
+- \`LQCFlowAdapter\`: connects native LQC Flow direct or multi-hop pool quotes to Router 2.0
 
-New DEXs can be added through reviewed adapters without replacing the quote router. This foundation is quote-only: swap execution, token movement, split routing, gas-aware scoring, adapter-specific validation, timelocks, and production integrations remain pending.
+New DEXs can be added through reviewed adapters without replacing the quote router. The BSC testnet deployment script now deploys and registers the LQC Flow adapter automatically. This foundation is quote-only: swap execution, token movement, split routing, gas-aware scoring, external DEX adapters, timelocks, and production integrations remain pending.
 
 ## Commands
 
