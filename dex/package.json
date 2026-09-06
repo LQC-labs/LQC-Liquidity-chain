@@ -5,7 +5,7 @@
   "description": "LQC Flow DEX constant-product AMM MVP",
   "scripts": {
     "compile": "node scripts/compile.mjs",
-    "test": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
+    "test": "npm run compile && mocha --timeout 30000 \"test/**/*.test.{mjs,cjs}\"",
     "configure:app": "node scripts/configure-app.mjs",
     "verify:testnet": "node scripts/verify-testnet.mjs",
     "deploy:pancake-adapter": "node scripts/deploy-pancake-adapter.mjs"
