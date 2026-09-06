@@ -15,6 +15,7 @@ The current code is an unaudited MVP. Treasury, lending, oracle, bridge, governa
 | `LQCFlowRouter` | AMM liquidity and swap entry points | User-defined slippage and deadline |
 | `LQCFlowQuoter` | Compares LQC AMM path candidates | View-only; no custody |
 | `LQCFlowRouterV2` | Selects or executes routes through approved adapters | Owner-controlled adapter allowlist |
+| `LQCRouterTimelock` | Delays Router 2.0 administrative calls | Admin should be a verified external multisig |
 | `UniswapV2DEXAdapter` | Translates LQC route data to compatible DEX router calls | Callable for swaps only by Router 2.0 |
 | SDK optimizer | Generates and ranks route/path candidates | Off-chain recommendation only |
 | Browser optimizer | Compares configured routes and split allocations | Quote refreshed before user submission |
@@ -48,7 +49,9 @@ For each leg, Router 2.0:
 
 The global `amountOutMin` is enforced after all legs complete. A failure in any leg reverts the entire transaction. Split execution currently supports ERC-20 input and output assets; native BNB uses the single-route wrapper flow.
 
-The Router 2.0 owner can pause all four state-changing swap entry points without disabling view-only route quotation. The application reads this state, keeps quotes visible for transparency, and disables transaction execution while paused.
+The Router 2.0 owner can pause all four state-changing swap entry points without disabling view-only route quotation. A separate pause guardian can pause immediately but cannot resume swaps. The application reads this state, keeps quotes visible for transparency, and disables transaction execution while paused.
+
+For controlled deployment, Router 2.0 ownership is assigned to `LQCRouterTimelock`. Its administrator should be a verified external multisig wallet. Privileged Router calls are hashed with chain ID, timelock address, target, value, calldata, and salt; they must be scheduled, wait between one hour and thirty days as configured, and can execute only once. Scheduled operations may be cancelled before execution. The timelock administrator itself uses a two-step transfer.
 
 ## 5. Adapter Model
 
