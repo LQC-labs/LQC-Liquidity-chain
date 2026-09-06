@@ -9,8 +9,10 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - `LQCFlowRouter`: token/BNB liquidity add/remove, exact-input swaps, exact-output swaps, and multi-hop paths
 - `LQCFlowQuoter`: compares up to 16 candidate routes and selects the highest-output viable path
 - `LQCFlowRouterV2`: compares approved external-DEX adapters and executes the best token or native-BNB route
+- `LQCRouterTimelock`: delayed privileged execution designed to place Router V2 ownership behind an external multisig
 - Router V2 split execution: divides one ERC-20 trade across up to 8 approved DEX routes using basis-point allocations
 - Router V2 emergency pause: blocks every swap entry point while leaving route quotes available for inspection
+- Pause-guardian separation: the guardian can stop swaps immediately, while only timelock ownership can resume them
 - `sdk/route-optimizer.mjs`: discovers direct, one-hop, and two-hop routes across up to 16 DEX adapters and returns the best executable route
 - `UniswapV2DEXAdapter`: integration layer for PancakeSwap V2, Biswap, and compatible routers
 - Native BNB wrapping/unwrapping through the configured WBNB contract
@@ -38,6 +40,9 @@ export DEPLOYER_PRIVATE_KEY="..."
 export WBNB_ADDRESS="0x..." # official WBNB for the selected BSC network
 export EXPECTED_CHAIN_ID="97" # deployment safety check; defaults to BSC testnet
 export FACTORY_OWNER="0x..." # preferably a multisig; optional for testnet
+export TIMELOCK_ADMIN="0x..." # external multisig address
+export PAUSE_GUARDIAN="0x..." # distinct operational security address
+export TIMELOCK_DELAY_SECONDS="172800" # 48 hours; allowed range is 1 hour to 30 days
 node scripts/deploy.mjs
 ```
 
@@ -55,7 +60,7 @@ export DEPLOYER_PRIVATE_KEY="..."
 npm run deploy:pancake-adapter
 ```
 
-The adapter script verifies chain ID 97, Router V2 WBNB, PancakeSwap WBNB, and PancakeSwap Factory before deployment. It enables the adapter automatically only when the deployer is the Router V2 owner; otherwise it prints the exact multisig action required.
+The adapter script verifies chain ID 97, Router V2 WBNB, PancakeSwap WBNB, and PancakeSwap Factory before deployment. When Router V2 is timelock-owned, set `ROUTER_TIMELOCK_ADDRESS`; the script schedules adapter enablement only if the deployer is the timelock admin, otherwise it prints the required governance action. Execution remains unavailable until the configured delay expires.
 
 ## Optimal route guidance
 
