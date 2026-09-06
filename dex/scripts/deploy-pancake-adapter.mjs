@@ -6,6 +6,7 @@ const {
   BSC_TESTNET_RPC_URL = config.rpcUrl,
   DEPLOYER_PRIVATE_KEY,
   ROUTER_V2_ADDRESS,
+  ROUTER_TIMELOCK_ADDRESS,
   PANCAKE_V2_ROUTER_ADDRESS = config.contracts.pancakeV2Router,
   EXPECTED_CHAIN_ID = String(config.chainId)
 } = process.env;
@@ -56,9 +57,28 @@ await adapter.waitForDeployment();
 const adapterAddress = await adapter.getAddress();
 
 let enabled = false;
+let scheduled = false;
+let operationId = null;
 if (owner.toLowerCase() === wallet.address.toLowerCase()) {
   await (await routerV2.setAdapter(adapterAddress, true)).wait();
   enabled = true;
+} else if (ROUTER_TIMELOCK_ADDRESS && owner.toLowerCase() === ROUTER_TIMELOCK_ADDRESS.toLowerCase()) {
+  if (!ethers.isAddress(ROUTER_TIMELOCK_ADDRESS)) throw new Error("ROUTER_TIMELOCK_ADDRESS must be a valid address.");
+  const timelock = new ethers.Contract(ROUTER_TIMELOCK_ADDRESS, [
+    "function admin() view returns (address)",
+    "function minDelay() view returns (uint256)",
+    "function hashOperation(address target,uint256 value,bytes data,bytes32 salt) view returns (bytes32)",
+    "function schedule(address target,uint256 value,bytes data,bytes32 salt) returns (bytes32)"
+  ], wallet);
+  const data = routerV2.interface.encodeFunctionData("setAdapter", [adapterAddress, true]);
+  const operationSalt = ethers.keccak256(ethers.solidityPacked(
+    ["string", "address", "address"], ["LQC_ENABLE_ADAPTER", ROUTER_V2_ADDRESS, adapterAddress]
+  ));
+  operationId = await timelock.hashOperation(ROUTER_V2_ADDRESS, 0, data, operationSalt);
+  if ((await timelock.admin()).toLowerCase() === wallet.address.toLowerCase()) {
+    await (await timelock.schedule(ROUTER_V2_ADDRESS, 0, data, operationSalt)).wait();
+    scheduled = true;
+  }
 }
 
 console.log(JSON.stringify({
@@ -68,5 +88,9 @@ console.log(JSON.stringify({
   pancakeV2Router: PANCAKE_V2_ROUTER_ADDRESS,
   pancakeAdapter: adapterAddress,
   adapterEnabled: enabled,
-  nextAction: enabled ? null : `Multisig owner ${owner} must call setAdapter(${adapterAddress}, true)`
+  timelockScheduled: scheduled,
+  timelockOperationId: operationId,
+  nextAction: enabled ? null : scheduled
+    ? `Execute timelock operation ${operationId} after the configured delay`
+    : `Timelock or multisig owner ${owner} must approve setAdapter(${adapterAddress}, true)`
 }, null, 2));
