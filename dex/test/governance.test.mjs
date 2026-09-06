@@ -8,7 +8,7 @@ const artifact = (name, source) => JSON.parse(fs.readFileSync(
 ));
 
 describe("LQC Router governance controls", function () {
-  let eip1193, provider, proposer, guardian, outsider, registry, timelock, emergency;
+  let eip1193, provider, proposer, guardian, outsider, registry, risk, timelock, emergency;
 
   beforeEach(async function () {
     eip1193 = ganache.provider({ logging: { quiet: true } });
@@ -22,6 +22,12 @@ describe("LQC Router governance controls", function () {
       proposer
     );
     registry = await Registry.deploy(await proposer.getAddress());
+    const Risk = new ethers.ContractFactory(
+      artifact("LQCRiskRegistry", "router-v2/LQCRiskRegistry").abi,
+      artifact("LQCRiskRegistry", "router-v2/LQCRiskRegistry").bytecode,
+      proposer
+    );
+    risk = await Risk.deploy(await proposer.getAddress(), await proposer.getAddress());
     const Timelock = new ethers.ContractFactory(
       artifact("LQCTimelockController", "router-v2/LQCTimelockController").abi,
       artifact("LQCTimelockController", "router-v2/LQCTimelockController").bytecode,
@@ -33,8 +39,19 @@ describe("LQC Router governance controls", function () {
       artifact("LQCEmergencyController", "router-v2/LQCEmergencyController").bytecode,
       proposer
     );
-    emergency = await Emergency.deploy(await proposer.getAddress(), await registry.getAddress());
-    await Promise.all([registry.waitForDeployment(), timelock.waitForDeployment(), emergency.waitForDeployment()]);
+    emergency = await Emergency.deploy(await proposer.getAddress(), await registry.getAddress(), await risk.getAddress());
+    await Promise.all([registry.waitForDeployment(), risk.waitForDeployment(), timelock.waitForDeployment(), emergency.waitForDeployment()]);
+  });
+
+  it("lets guardians pause all swaps but never resume them", async function () {
+    await (await risk.setPauseAdmin(await emergency.getAddress())).wait();
+    await (await emergency.setGuardian(await guardian.getAddress(), true)).wait();
+    await assert.rejects(emergency.connect(outsider).pauseAllSwaps());
+    await (await emergency.connect(guardian).pauseAllSwaps()).wait();
+    assert.equal(await risk.swapsPaused(), true);
+    await assert.rejects(risk.connect(guardian).resumeSwaps());
+    await (await risk.resumeSwaps()).wait();
+    assert.equal(await risk.swapsPaused(), false);
   });
 
   it("lets guardians pause immediately but only governance re-enable", async function () {

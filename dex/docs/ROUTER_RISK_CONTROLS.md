@@ -7,7 +7,7 @@ Status: **unaudited testnet MVP**. This document describes implemented controls;
 - The protocol governance proposer is intended to be a 3-of-5 multisig.
 - Registry and risk-parameter expansions execute only through `LQCTimelockController` after the configured delay. The target production policy remains 48 hours; the bootstrap default is one hour for testnet exercises.
 - The risk administrator is intended to be a separate 2-of-3 multisig. It can only reduce active token limits.
-- Emergency guardians can disable a DEX route immediately. They cannot re-enable routes, change adapters, move user funds, mint tokens, or expand limits.
+- Emergency guardians can disable a DEX route or pause all new swaps immediately. They cannot resume swaps, re-enable routes, change adapters, move user funds, mint tokens, or expand limits.
 
 ## Enforced swap checks
 

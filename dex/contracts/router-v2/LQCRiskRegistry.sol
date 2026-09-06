@@ -9,7 +9,9 @@ contract LQCRiskRegistry {
     address public owner;
     address public pendingOwner;
     address public riskAdmin;
+    address public pauseAdmin;
     address public executor;
+    bool public swapsPaused;
     mapping(address => TokenLimits) public tokenLimits;
     mapping(address => DailyUsage) public dailyUsage;
     mapping(bytes32 => mapping(address => uint256)) public dexTokenCap;
@@ -18,6 +20,8 @@ contract LQCRiskRegistry {
     event DexTokenCapSet(bytes32 indexed dexId, address indexed token, uint256 cap);
     event RiskAdminSet(address indexed riskAdmin);
     event ExecutorSet(address indexed executor);
+    event PauseAdminSet(address indexed pauseAdmin);
+    event SwapPauseChanged(bool paused, address indexed caller);
     event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
     event SwapConsumed(address indexed tokenIn, address indexed tokenOut, uint256 totalAmountIn, uint256 day);
@@ -30,6 +34,7 @@ contract LQCRiskRegistry {
     error DailyCapExceeded();
     error DexCapExceeded();
     error InvalidRoutes();
+    error SwapsPaused();
 
     modifier onlyOwner() { if (msg.sender != owner) revert Forbidden(); _; }
 
@@ -50,6 +55,23 @@ contract LQCRiskRegistry {
         if (riskAdmin_ == address(0)) revert ZeroAddress();
         riskAdmin = riskAdmin_;
         emit RiskAdminSet(riskAdmin_);
+    }
+
+    function setPauseAdmin(address pauseAdmin_) external onlyOwner {
+        if (pauseAdmin_ == address(0)) revert ZeroAddress();
+        pauseAdmin = pauseAdmin_;
+        emit PauseAdminSet(pauseAdmin_);
+    }
+
+    function pauseSwaps() external {
+        if (msg.sender != pauseAdmin && msg.sender != riskAdmin) revert Forbidden();
+        swapsPaused = true;
+        emit SwapPauseChanged(true, msg.sender);
+    }
+
+    function resumeSwaps() external onlyOwner {
+        swapsPaused = false;
+        emit SwapPauseChanged(false, msg.sender);
     }
 
     function beginOwnershipTransfer(address newOwner) external onlyOwner {
@@ -100,6 +122,7 @@ contract LQCRiskRegistry {
         external
     {
         if (msg.sender != executor) revert Forbidden();
+        if (swapsPaused) revert SwapsPaused();
         if (dexIds.length == 0 || dexIds.length != amountsIn.length) revert InvalidRoutes();
         TokenLimits memory inputLimits = tokenLimits[tokenIn];
         if (!inputLimits.allowed || !tokenLimits[tokenOut].allowed) revert TokenNotAllowed();

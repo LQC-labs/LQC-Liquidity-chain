@@ -57,10 +57,13 @@ const factory = await deploy("LQCFlowFactory", [owner]);
 const router = await deploy("LQCFlowRouter", [await factory.getAddress(), WBNB_ADDRESS]);
 const registry = await deploy("router-v2/LQCDexRegistry", [wallet.address]);
 const timelock = await deploy("router-v2/LQCTimelockController", [owner, BigInt(TIMELOCK_DELAY)]);
-const emergencyController = await deploy("router-v2/LQCEmergencyController", [owner, await registry.getAddress()]);
-await (await registry.setPauseAdmin(await emergencyController.getAddress())).wait();
-const quoteRouter = await deploy("router-v2/LQCQuoteRouter", [await registry.getAddress()]);
 const riskRegistry = await deploy("router-v2/LQCRiskRegistry", [wallet.address, owner]);
+const emergencyController = await deploy("router-v2/LQCEmergencyController", [
+  owner, await registry.getAddress(), await riskRegistry.getAddress()
+]);
+await (await registry.setPauseAdmin(await emergencyController.getAddress())).wait();
+await (await riskRegistry.setPauseAdmin(await emergencyController.getAddress())).wait();
+const quoteRouter = await deploy("router-v2/LQCQuoteRouter", [await registry.getAddress()]);
 const executionRouter = await deploy("router-v2/LQCExecutionRouter", [
   await registry.getAddress(), await riskRegistry.getAddress()
 ]);

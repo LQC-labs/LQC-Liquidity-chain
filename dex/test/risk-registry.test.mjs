@@ -53,4 +53,17 @@ describe("LQC Router risk registry", function () {
     await eip1193.request({ method: "evm_mine", params: [] });
     await (await risk.consumeSwap(input, output, [dexId], [100n])).wait();
   });
+
+  it("blocks new swaps during a module pause and restricts recovery to governance", async function () {
+    const input = await tokenIn.getAddress(), output = await tokenOut.getAddress();
+    await (await risk.setTokenLimits(input, true, 100n, 100n)).wait();
+    await (await risk.setTokenLimits(output, true, 100n, 100n)).wait();
+    await (await risk.setDexTokenCap(dexId, input, 100n)).wait();
+    await (await risk.connect(riskAdmin).pauseSwaps()).wait();
+    await assert.rejects(risk.consumeSwap(input, output, [dexId], [1n]));
+    await assert.rejects(risk.connect(riskAdmin).resumeSwaps());
+    await (await risk.resumeSwaps()).wait();
+    assert.equal(await risk.swapsPaused(), false);
+    await (await risk.consumeSwap(input, output, [dexId], [1n], { gasLimit: 500000n })).wait();
+  });
 });

@@ -48,11 +48,12 @@ describe("LQC Router 2.0 native BNB wrapper", function () {
     const outPath = [await token.getAddress(), await wbnb.getAddress()];
     const outRoute = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [outPath]);
     const outQuote = (await flow.getAmountsOut(tokenIn, outPath))[1];
-    const nativeBefore = await provider.getBalance(recipientAddress);
+    const nativeBefore = BigInt(await provider.send("eth_getBalance", [recipientAddress, "latest"]));
     await (await nativeRouter.swapExactTokenForNative(
       dexId, await token.getAddress(), tokenIn, outQuote, recipientAddress, deadline, outRoute
     )).wait();
-    assert.equal((await provider.getBalance(recipientAddress)) - nativeBefore, outQuote);
+    const nativeAfter = BigInt(await provider.send("eth_getBalance", [recipientAddress, "latest"]));
+    assert.equal(nativeAfter - nativeBefore, outQuote);
     assert.equal(await provider.getBalance(await nativeRouter.getAddress()), 0n);
     assert.equal(await wbnb.balanceOf(await nativeRouter.getAddress()), 0n);
     await assert.rejects(owner.sendTransaction({ to: await nativeRouter.getAddress(), value: 1n }));
