@@ -10,6 +10,7 @@
     "function swapExactTokensForBNB(uint256 amountIn,uint256 amountOutMin,address[] path,address to,uint256 deadline) returns (uint256[] amounts)"
   ];
   const routerV2Abi = [
+    "function swapsPaused() view returns (bool)",
     "function swapBestExactInput(address tokenIn,address tokenOut,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) returns (address adapter,uint256 amountOut)",
     "function swapSplitExactInput(address tokenIn,address tokenOut,uint256 amountIn,uint256 amountOutMin,address[] adapters,bytes[] routeData,uint16[] allocationBps,address recipient,uint256 deadline) returns (uint256 amountOut)",
     "function swapExactBNBForTokens(address tokenOut,uint256 amountOutMin,address[] adapters,bytes[] routeData,address recipient,uint256 deadline) payable returns (address adapter,uint256 amountOut)",
@@ -38,6 +39,7 @@
   };
 
   let provider, signer, account, router, routerV2, currentQuote, choosingSide = "in", quoteTimer;
+  let routerV2Paused = false;
   let tokenIn = config.tokens[0];
   let tokenOut = config.tokens[2];
   let tradeMode = "buy";
@@ -163,8 +165,13 @@
       ui.connect.textContent = shortAddress(account);
       router = deployedV1 ? new ethers.Contract(config.routerAddress, routerAbi, signer) : null;
       routerV2 = deployedV2 ? new ethers.Contract(config.routerV2Address, routerV2Abi, signer) : null;
-      setTradeActionsDisabled(!deployed);
-      setStatus(deployed ? "지갑이 연결되었습니다." : "지갑 연결 완료 · 테스트넷 배포 주소가 아직 없습니다.", deployed ? "success" : "");
+      routerV2Paused = routerV2 ? await routerV2.swapsPaused() : false;
+      setTradeActionsDisabled(!deployed || routerV2Paused);
+      setStatus(
+        routerV2Paused ? "Router 2.0 거래가 안전을 위해 일시 정지되었습니다. 견적만 확인할 수 있습니다."
+          : deployed ? "지갑이 연결되었습니다." : "지갑 연결 완료 · 테스트넷 배포 주소가 아직 없습니다.",
+        routerV2Paused ? "error" : deployed ? "success" : ""
+      );
       await updateBalances();
       scheduleQuote();
     } catch (error) {
@@ -255,6 +262,7 @@
       const slippageBps = Math.round(Number(ui.slippage.value) * 100);
       let out, minimum;
       if (routerV2) {
+        routerV2Paused = await routerV2.swapsPaused();
         const connectors = config.tokens
           .filter((token) => token.address !== "native" && ethers.isAddress(token.address))
           .map((token) => token.address);
@@ -297,7 +305,8 @@
       await updateExecutionMetrics();
       ui.amountOut.textContent = ethers.formatUnits(out, tokenOut.decimals);
       ui.minimum.textContent = `${Number(ethers.formatUnits(minimum, tokenOut.decimals)).toLocaleString(undefined, { maximumFractionDigits: 6 })} ${tokenOut.symbol}`;
-      setTradeActionsDisabled(false);
+      setTradeActionsDisabled(routerV2Paused);
+      if (routerV2Paused) setStatus("Router 2.0 거래 일시 정지 · 현재 견적은 조회용입니다.", "error");
     } catch (error) {
       setTradeActionsDisabled(true);
       ui.routeDex.textContent = "경로 없음";
@@ -318,6 +327,7 @@
       setTradeActionsDisabled(true);
       await updateQuote();
       if (!currentQuote) throw new Error("실행 가능한 최적경로가 없습니다.");
+      if (routerV2Paused) throw new Error("Router 2.0 거래가 일시 정지되었습니다.");
       if (!(await confirmSwap(raw))) {
         setStatus("거래 확인이 취소되었습니다.");
         return;
@@ -378,7 +388,7 @@
     } catch (error) {
       setStatus(error.shortMessage || "거래가 취소되었거나 실패했습니다.", "error");
     } finally {
-      setTradeActionsDisabled(!deployed);
+      setTradeActionsDisabled(!deployed || routerV2Paused);
     }
   }
 
