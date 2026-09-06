@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="LQC Flow DEX — BNB Smart Chain testnet trading interface">
   <title>LQC Flow DEX</title>
-  <link rel="stylesheet" href="styles.css?v=20260906c">
+  <link rel="stylesheet" href="styles.css?v=20260906d">
 </head>
 <body>
   <header class="topbar">
@@ -26,13 +26,13 @@
       </div>
 
       <nav class="section-tabs" aria-label="시장 정보">
-        <button class="active" type="button">차트</button><button type="button">정보</button><button type="button">데이터</button><button type="button">위험</button>
+        <button class="active" type="button">Charts</button><button type="button">Info</button><button type="button">Data</button><button type="button">Risk</button><button type="button">Vibes</button>
       </nav>
 
       <div class="market-facts"><span>LP 수수료 <b>0.30%</b></span><span>Buy / Sell <b>활성 준비 중</b></span><span>AMM V1</span></div>
 
       <div class="timeframes" aria-label="차트 시간 단위">
-        <button type="button">1초</button><button type="button">30초</button><button class="active" type="button">1분</button><button type="button">15분</button><button type="button">1시간</button><button class="chart-tool" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⚙</button>
+        <button type="button">1s</button><button type="button">30s</button><button class="active" type="button">1m</button><button type="button">15m</button><button type="button">More⌄</button><button class="chart-tool" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⚙</button>
       </div>
 
       <div class="chart-wrap">
@@ -50,16 +50,17 @@
           <line class="current-line" x1="0" x2="760" y1="286" y2="286"/><text class="current-label" x="687" y="280">0.09135</text>
           <g class="axis"><text x="697" y="70">0.09480</text><text x="697" y="150">0.09400</text><text x="697" y="230">0.09240</text><text x="697" y="310">0.09160</text></g>
         </svg>
+        <div class="time-axis" aria-hidden="true"><span>08/26, 14:12</span><span>08/26, 20:29</span><span>08/27, 08:17</span><span>08/28, 07:49</span><span>08/28, 18:47</span></div>
       </div>
 
       <div class="volume"><span>VOL (LQC): 108.5751</span><div class="volume-bars" id="volumeBars"></div></div>
       <div class="indicators" aria-label="차트 지표"><button class="active">VOL</button><button>MA</button><button>EMA</button><button>BOLL</button><button>SAR</button><button>MACD</button><button>KDJ</button></div>
 
-      <nav class="position-tabs" aria-label="계정 정보"><button class="active">내 포지션</button><button>보유자 <span>249</span></button><button>상위 거래자</button><button>활동</button></nav>
+      <nav class="position-tabs" aria-label="계정 정보"><button class="active">My positions</button><button>Holders <span>(249)</span></button><button>Top traders</button><button>Activities</button></nav>
       <div class="position-card">
-        <div class="position-label"><span class="mini-logo">L</span><span>LQC 잔액</span></div>
+        <div class="position-label"><span class="mini-logo">L</span><span>LQC balance</span></div>
         <strong id="portfolioValue">$0.00</strong>
-        <p>미실현 손익 <span>$0.00 (0.00%)</span></p>
+        <p>Unrealized PnL <span>$0.00 (0.00%)</span></p>
         <div class="position-meta"><span>보유 수량 <b id="positionBalance">—</b></span><span>네트워크 <b>BSC Testnet</b></span></div>
       </div>
     </section>
@@ -82,6 +83,6 @@
 
   <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><h2>토큰 선택</h2><button value="cancel" aria-label="닫기">×</button></div><div class="token-list" id="tokenList" role="listbox"></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js?v=20260906c"></script><script src="app.js?v=20260906c"></script>
+  <script src="config.js?v=20260906d"></script><script src="app.js?v=20260906d"></script>
 </body>
 </html>
