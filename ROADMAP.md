@@ -26,7 +26,7 @@ Exit evidence: reproducible compilation, automated test results, conservative do
 **Status: tooling implemented; deployment pending**
 
 - Expand boundary, differential, invariant, fuzz, and fork tests
-- Extend the implemented sampled split invariants into stateful fuzzing and fork-based execution tests
+- Extend the implemented deterministic stateful AMM invariants and sampled split invariants into fork-based execution tests
 - Refine the implemented transaction confirmation, price-impact warning, and indicative gas estimate with live transaction simulation
 - Verify and configure the implemented timestamped GeckoTerminal OHLCV source against the deployed LQC pool, then add provider redundancy
 - Validate official BSC testnet WBNB and external DEX router addresses
