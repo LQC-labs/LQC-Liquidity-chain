@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="LQC Flow DEX — BNB Smart Chain testnet trading interface">
+  <title>LQC Flow DEX</title>
+  <style>:root{--bg:#061018;--panel:#0b1721;--panel2:#0f202d;--line:rgba(105,220,255,.16);--line2:rgba(255,255,255,.09);--text:#f5fbff;--muted:#8ba1b0;--cyan:#69dcff;--mint:#62e2c2;--green:#42b85a;--pink:#e25391;--red:#ff758e}*{box-sizing:border-box}html{color-scheme:dark}body{margin:0;min-height:100vh;background:radial-gradient(circle at 50% -20%,rgba(47,143,255,.18),transparent 34%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:102px}button,input{font:inherit}.topbar{height:78px;padding:0 max(18px,env(safe-area-inset-left));display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--line2);background:rgba(5,14,22,.85);backdrop-filter:blur(18px);position:sticky;top:0;z-index:20}.back{font-size:38px;line-height:1;color:var(--text);text-decoration:none}.asset-title{display:flex;align-items:center;gap:11px;flex:1}.asset-logo{width:42px;height:42px;border-radius:50%;overflow:hidden;box-shadow:0 0 22px rgba(105,220,255,.22)}.asset-logo img{width:100%;height:100%;object-fit:cover}.asset-title strong,.asset-title small{display:block}.asset-title strong{font-size:17px}.asset-title small{font-size:10px;color:var(--muted);margin-top:2px}.wallet-button{height:39px;padding:0 13px;border-radius:999px;border:1px solid rgba(105,220,255,.24);background:rgba(105,220,255,.06);color:var(--text);font-weight:800;font-size:12px}.exchange{width:min(1180px,100%);margin:auto;display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:18px;padding:20px}.market,.order-panel{border:1px solid var(--line2);border-radius:24px;background:linear-gradient(155deg,rgba(255,255,255,.04),rgba(255,255,255,.015));overflow:hidden}.ticker-row{display:flex;align-items:flex-end;justify-content:space-between;padding:22px 24px 14px}.eyebrow{display:block;color:var(--cyan);font-size:9px;font-weight:900;letter-spacing:.16em}.ticker-price{font-size:28px;margin:0 10px 0 0}.ticker-change{color:var(--mint);font-weight:800}.demo-badge{font-size:9px;font-weight:900;letter-spacing:.11em;color:#f0c979;border:1px solid rgba(240,201,121,.25);border-radius:999px;padding:7px 10px;background:rgba(240,201,121,.05)}.section-tabs,.position-tabs{display:flex;gap:30px;padding:0 24px;border-bottom:1px solid var(--line2);overflow-x:auto}.section-tabs button,.position-tabs button,.indicators button,.timeframes button{border:0;background:none;color:var(--muted);white-space:nowrap;cursor:pointer}.section-tabs button,.position-tabs button{height:45px;font-size:14px;position:relative}.section-tabs button.active,.position-tabs button.active{color:var(--text);font-weight:850}.section-tabs button.active:after,.position-tabs button.active:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;border-radius:3px;background:var(--mint)}.market-facts{display:flex;gap:8px;padding:10px 24px;overflow-x:auto}.market-facts span{font-size:10px;white-space:nowrap;padding:6px 9px;border-radius:8px;background:rgba(255,255,255,.045);color:var(--muted)}.market-facts b{color:#c9d8e1}.timeframes{display:flex;align-items:center;gap:4px;padding:8px 18px}.timeframes button{height:34px;min-width:49px;border-radius:999px;font-size:12px}.timeframes button.active{background:rgba(105,220,255,.11);color:var(--text);font-weight:850}.timeframes .chart-tool{margin-left:auto;min-width:36px;font-size:16px}.chart-wrap{height:390px;position:relative;border-top:1px solid rgba(255,255,255,.035);border-bottom:1px solid rgba(255,255,255,.035);overflow:hidden}.ma-legend{position:absolute;top:8px;left:24px;z-index:2;display:flex;gap:10px;font-size:10px}.ma-legend span:nth-child(1){color:#f4c85a}.ma-legend span:nth-child(2){color:#ed70aa}.ma-legend span:nth-child(3){color:#56d5dc}.chart{width:100%;height:100%}.grid path{stroke:rgba(255,255,255,.055);stroke-width:1}.area{fill:url(#chartFade)}.ma{fill:none;stroke-width:1.3}.ma-a{stroke:#f0c44d}.ma-b{stroke:#df568f}.ma-c{stroke:#55cbd2}
+.candle.up{fill:#62d350}.candle.down{fill:#ed4ca0}.wick.up{stroke:#62d350}.wick.down{stroke:#ed4ca0}.current-line{stroke:rgba(255,255,255,.55);stroke-dasharray:6 6}.current-label{fill:#d6e0e7;font-size:12px}.axis text{fill:#728796;font-size:11px}.volume{height:92px;padding:8px 24px 12px}.volume>span{font-size:10px;color:#e9b955}.volume-bars{height:62px;display:flex;align-items:end;gap:4px}.volume-bars i{flex:1;min-width:2px;background:rgba(98,226,194,.62);border-radius:2px 2px 0 0}.volume-bars i.hot{background:rgba(226,83,145,.72)}.indicators{display:flex;gap:18px;padding:0 24px;height:44px;align-items:center;overflow-x:auto;border-bottom:1px solid var(--line2)}.indicators button{font-size:12px}.indicators button.active{color:var(--text);font-weight:850}.position-tabs{margin-top:10px}.position-card{padding:25px 24px 28px}.position-label{display:flex;align-items:center;gap:8px;color:var(--muted)}.mini-logo{width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#05090c;color:#fff;font-size:11px}.position-card>strong{display:block;font-size:44px;letter-spacing:-.04em;margin:10px 0}.position-card p{color:var(--muted);margin:0}.position-card p span{color:#b8c6ce;margin-left:8px}.position-meta{display:flex;gap:32px;margin-top:24px;font-size:11px;color:var(--muted)}.position-meta b{display:block;color:#d7e2e8;margin-top:4px}.order-panel{padding:22px;position:sticky;top:98px}.order-head{display:flex;justify-content:space-between;align-items:start;margin-bottom:16px}.order-head h1{margin:6px 0 0;font-size:24px}.close-order{display:none;border:0;background:none;color:var(--muted);font-size:28px}.settings{border:1px solid var(--line2);background:rgba(0,0,0,.18);border-radius:15px;padding:13px;margin-bottom:10px}.settings label{font-size:11px;color:var(--muted)}.slippage-row{display:flex;gap:5px;margin-top:8px}.slippage-option,.custom-slippage{height:33px;border:1px solid var(--line2);border-radius:9px;background:rgba(255,255,255,.03);color:var(--muted)}.slippage-option{padding:0 9px}.slippage-option.active{background:var(--mint);color:#04130f;font-weight:900}.custom-slippage{margin-left:auto;display:flex;align-items:center;padding:0 8px}.custom-slippage input{width:35px;border:0;background:none;color:var(--text);outline:0;text-align:right}.token-panel{border:1px solid var(--line2);border-radius:18px;background:rgba(6,16,24,.8);padding:15px}.panel-label,.balance{display:flex;justify-content:space-between;color:var(--muted);font-size:11px}.panel-label button{border:0;background:none;color:var(--cyan);font-weight:850}.amount-row{display:flex;align-items:center;gap:10px;margin:9px 0 5px}.amount-row input,.amount-row output{display:block;min-width:0;flex:1;border:0;background:none;outline:0;color:var(--text);font-size:29px}.token-button{display:flex;align-items:center;gap:7px;min-width:105px;height:43px;padding:0 9px;border-radius:13px;border:1px solid var(--line2);background:#102331;color:var(--text)}.token-button>span:last-child{margin-left:auto}.token-symbol{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#e7af3f;color:#241500;font-size:7px;font-weight:950}.token-symbol.mint{background:linear-gradient(145deg,#e4fff8,#62e2c2);color:#04130f}.flip-wrap{height:9px;display:grid;place-items:center;position:relative;z-index:2}.flip-button{position:absolute;width:35px;height:35px;border:4px solid #0a1720;border-radius:11px;background:#153044;color:var(--cyan)}.quote-box{display:grid;gap:7px;margin:14px 2px}.quote-box div{display:flex;justify-content:space-between;font-size:11px}.quote-box span{color:var(--muted)}.status{display:flex;gap:8px;align-items:center;padding:10px;border-radius:11px;background:rgba(105,220,255,.045);color:#9eb8c6;font-size:11px}.status i{width:7px;height:7px;border-radius:50%;background:#e9ba59;flex:none}.status.error{color:#ff9aae;background:rgba(255,117,142,.07)}.status.error i{background:var(--red)}.status.success{color:#9ef1d3;background:rgba(98,226,194,.07)}.status.success i{background:var(--mint)}.execute-button{width:100%;height:54px;border:0;border-radius:999px;margin-top:12px;color:white;font-weight:900;font-size:15px}.execute-button.buy{background:linear-gradient(135deg,#35a148,#257c35)}.execute-button.sell{background:linear-gradient(135deg,#c24979,#9f365f)}.execute-button:disabled{opacity:.45}.risk-note{text-align:center;color:#627887;font-size:9px;line-height:1.45}.bottom-actions{position:fixed;z-index:30;left:0;right:0;bottom:0;display:flex;gap:12px;padding:14px max(18px,env(safe-area-inset-right)) calc(14px + env(safe-area-inset-bottom));background:rgba(5,13,20,.92);border-top:1px solid var(--line2);backdrop-filter:blur(18px)}.bottom-actions button{height:57px;border:0;border-radius:999px;color:#fff;font-size:16px;font-weight:900}.bottom-actions .action-buy,.bottom-actions .action-sell{flex:1}.action-buy{background:#287f2c}.action-sell{background:#a83e68}.bottom-actions .quick{width:57px;flex:none;background:#172631;color:var(--cyan);font-size:24px}.bottom-actions button:not(.active){filter:saturate(.72);opacity:.85}dialog{width:min(420px,calc(100% - 28px));border:1px solid var(--line);border-radius:22px;padding:0;background:#091721;color:var(--text)}dialog::backdrop{background:rgba(0,4,8,.75);backdrop-filter:blur(8px)}dialog form{padding:20px}.dialog-head{display:flex;justify-content:space-between;align-items:center}.dialog-head h2{margin:0;font-size:18px}.dialog-head button{border:0;background:none;color:var(--muted);font-size:27px}.token-list{display:grid;gap:8px;margin-top:16px}.token-option{display:flex;align-items:center;gap:11px;width:100%;padding:12px;border:1px solid var(--line2);border-radius:13px;background:rgba(255,255,255,.025);color:var(--text)}.token-option span:last-child{margin-left:auto;color:var(--muted);font-size:10px}
+@media(min-width:781px){.bottom-actions{display:none}body{padding-bottom:30px}}
+@media(max-width:780px){.exchange{display:block;padding:0}.market{border:0;border-radius:0;background:transparent}.order-panel{position:fixed;z-index:40;left:0;right:0;bottom:0;top:auto;border-radius:26px 26px 0 0;padding:22px 18px calc(18px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .28s ease;background:#0a1721;max-height:88vh;overflow-y:auto}.order-panel.open{transform:translateY(0)}.close-order{display:block}.chart-wrap{height:360px}.ticker-row{padding-left:18px;padding-right:18px}.section-tabs,.market-facts,.indicators,.position-tabs{padding-left:18px;padding-right:18px}.topbar{height:70px}.position-card{padding-left:18px;padding-right:18px}}
+@media(max-width:470px){.wallet-button{max-width:100px;overflow:hidden;text-overflow:ellipsis}.section-tabs{gap:25px}.ticker-price{font-size:24px}.chart-wrap{height:330px}.ma-legend{left:18px;gap:7px}.position-card>strong{font-size:40px}.position-tabs{gap:28px}.position-meta{gap:20px}}
+@media(prefers-reduced-motion:reduce){.order-panel{transition:none}}
+
+/* Light trading theme */
+:root{--bg:#fff;--panel:#fff;--panel2:#f6f8fa;--line:rgba(22,88,104,.16);--line2:rgba(8,24,34,.10);--text:#10171c;--muted:#6d7880;--cyan:#079fb5;--mint:#16bfa5;--green:#2d8f31;--pink:#b3406b;--red:#d83f5d}
+html{color-scheme:light}body{background:#fff;color:var(--text)}
+.topbar{background:rgba(255,255,255,.94);border-bottom-color:#e8ecef}.asset-logo{box-shadow:0 0 0 1px #e5eaed,0 5px 18px rgba(19,98,112,.12)}.wallet-button{background:#effcf9;color:#087b6b;border-color:#a9e8dc}
+.market,.order-panel{background:#fff;border-color:#e7ebee;box-shadow:0 14px 44px rgba(25,43,51,.06)}.demo-badge{color:#9a6816;background:#fff8e9;border-color:#f0d59f}
+.section-tabs,.position-tabs,.indicators,.topbar,.bottom-actions{border-color:#e8ecef}.market-facts span{background:#f3f5f6;color:#6d777e}.market-facts b,.position-meta b{color:#26343c}.timeframes button.active{background:#edf1f3;color:#10171c}
+.chart-wrap{background:#fff;border-color:#edf0f2}.grid path{stroke:rgba(21,36,45,.08)}.area{opacity:.45}.axis text{fill:#879097}.current-line{stroke:rgba(20,29,34,.55)}.current-label{fill:#243038}
+.volume-bars i{background:rgba(67,176,89,.55)}.volume-bars i.hot{background:rgba(226,83,145,.58)}.position-card{background:#fff}.mini-logo{background:#0b1115}.position-card p span{color:#555f66}
+.order-panel{background:#fff}.settings{background:#f7f9fa}.slippage-option,.custom-slippage{background:#fff}.slippage-option.active{color:#053d34}.token-panel{background:#f7f9fa}.receive-panel{background:#f3f7f7}.token-button{background:#fff;color:#172127}.flip-button{border-color:#fff;background:#edf8f7}
+.status{background:#f0f8fa;color:#50717c}.status.error{background:#fff1f4}.status.success{background:#edfaf6}.risk-note{color:#7d888f}.bottom-actions{background:rgba(255,255,255,.95)}.bottom-actions .quick{background:#eef1f3;color:#087f91}
+dialog{background:#fff;color:#162027;box-shadow:0 24px 80px rgba(18,37,46,.18)}dialog::backdrop{background:rgba(14,24,30,.35)}.token-option{background:#f8fafb;color:#172127}
+@media(max-width:780px){.market{background:#fff}.order-panel{background:#fff;box-shadow:0 -18px 55px rgba(18,38,47,.16)}}
+
+/* Reference-style high contrast candles */
+.candle.up{fill:#009f87}.candle.down{fill:#f03ca0}.wick.up{stroke:#009f87;stroke-width:1.15}.wick.down{stroke:#f03ca0;stroke-width:1.15}
+
+/* Reference typography and time scale */
+body{font-family:Roboto,Arial,"Noto Sans KR",sans-serif;letter-spacing:-.012em}.asset-title strong{font-weight:700}.asset-title small{font-weight:400}.ticker-price{font-weight:700}.ticker-change{font-weight:500}
+.section-tabs{gap:36px}.section-tabs button{font-size:16px;font-weight:500;color:#666}.section-tabs button.active{font-weight:700;color:#111}.section-tabs button.active:after{height:2px;background:#111}
+.timeframes{padding-top:12px;padding-bottom:10px;gap:8px}.timeframes button{font-size:14px;font-weight:400;color:#7b7f83;min-width:52px}.timeframes button.active{font-weight:700;color:#111;background:#eef0f2}.timeframes .chart-tool{color:#222}
+.ma-legend{font-size:12px;font-weight:400}.chart-wrap{padding-bottom:30px}.chart{height:calc(100% - 30px)}
+.time-axis{position:absolute;left:0;right:0;bottom:0;height:30px;display:flex;align-items:center;justify-content:space-between;color:#858a8e;font-size:11px;border-top:1px solid #eceff1;padding:0 8px}.time-axis span{white-space:nowrap}
+.indicators button{font-size:14px}.position-tabs button{font-size:15px}.position-card>strong{font-weight:700}.position-label,.position-card p{font-size:15px}
+@media(max-width:560px){.section-tabs{gap:30px}.section-tabs button{font-size:15px}.timeframes{gap:2px}.timeframes button{min-width:54px;font-size:13px}.time-axis{font-size:9px;padding:0 2px}.time-axis span:nth-child(2),.time-axis span:nth-child(4){display:none}.ma-legend{font-size:10px}}
+
+/* Tall mobile trading layout based on the approved reference */
+.ticker-row{align-items:flex-start}.price-block{display:flex;align-items:baseline;gap:10px}.quick-stats{width:280px;margin:0;display:grid;gap:5px}.quick-stats div{display:flex;justify-content:space-between;gap:22px}.quick-stats dt{color:#92979b;font-size:13px}.quick-stats dd{margin:0;color:#151a1d;font-size:13px}.quick-stats div:last-child dd{color:#b3406b}.market-facts button{flex:none;width:30px;height:30px;border:0;border-radius:9px;background:#f2f3f4;color:#5e6569;font-size:21px}.market-facts .demo-badge{padding:6px 9px}.tool-divider{margin-left:auto;width:1px;height:28px;background:#e2e5e7}.timeframes .chart-icon,.timeframes .chart-tool{min-width:38px;font-size:20px;color:#111}
+@media(max-width:780px){body{padding-bottom:92px}.topbar{height:76px;padding-left:20px;padding-right:20px}.asset-logo{width:44px;height:44px}.asset-title strong{font-size:19px}.asset-title small{font-size:11px}.exchange{max-width:709px}.ticker-row{padding:15px 22px 12px}.price-block{display:block}.ticker-price{display:block;font-size:46px;line-height:1.03;color:#152027}.ticker-change{display:block;margin-top:8px;font-size:16px}.quick-stats{width:43%;gap:6px}.quick-stats dt,.quick-stats dd{font-size:12px}.section-tabs{height:52px;align-items:end}.section-tabs button{height:49px}.market-facts{padding-top:9px;padding-bottom:9px}.timeframes{height:58px;padding-left:18px;padding-right:18px}.chart-wrap{height:455px}.volume{height:112px}.volume-bars{height:78px}.indicators{height:51px}.position-tabs{height:62px;align-items:end;margin-top:0}.position-tabs button{height:58px;font-size:16px}.position-card{min-height:126px}.bottom-actions{padding-top:13px}.bottom-actions button{height:60px}.bottom-actions .quick{width:60px}}
+@media(max-width:480px){.ticker-price{font-size:42px}.quick-stats{width:45%}.quick-stats div{gap:10px}.section-tabs{gap:27px}.section-tabs button{font-size:14px}.market-facts{gap:5px}.market-facts span{font-size:9px;padding:6px}.timeframes button{min-width:50px}.chart-wrap{height:430px}.position-tabs{gap:26px}.position-tabs button{font-size:15px}}
+
+/* Reference layout fidelity — candle palette intentionally untouched */
+.price-label{display:block;color:#94999d;font-size:14px;margin-bottom:5px}.ticker-change.negative{color:#b3406b}.quick-stats{gap:7px}.quick-stats dt,.quick-stats dd{font-family:Roboto,Arial,"Noto Sans KR",sans-serif;font-weight:400}.quick-stats div:last-child dd{color:#b3406b}
+.axis text{font-family:Roboto,Arial,"Noto Sans KR",sans-serif;font-size:14px;fill:#8a8f92}.current-label{font-family:Roboto,Arial,"Noto Sans KR",sans-serif;font-size:13px;fill:#4f5558}.time-axis{font-family:Roboto,Arial,"Noto Sans KR",sans-serif;font-size:12px;color:#888d90}
+.volume>span{font-size:12px}.indicators{gap:26px}.indicators button{font-weight:400;color:#565d61}.indicators button.active{font-weight:500;color:#111}.position-tabs{gap:40px}.position-tabs button{font-weight:500;color:#606569}.position-tabs button.active{font-weight:700;color:#111}.bottom-actions .action-buy{background:#247821}.bottom-actions .action-sell{background:#ad3f68}
+@media(max-width:780px){.ticker-row{min-height:164px}.price-block{padding-top:2px}.ticker-price{font-size:47px;color:#b3406b;letter-spacing:-.025em}.ticker-change{font-size:17px;font-weight:500}.quick-stats{width:44%;padding-top:1px}.quick-stats dt,.quick-stats dd{font-size:13px}.market-facts{height:53px;align-items:center}.chart-wrap{height:460px}.axis text{font-size:14px}.time-axis{font-size:11px}.time-axis span{display:block!important}.volume{height:118px}.indicators{height:55px}.position-tabs{height:76px}.position-tabs button{height:72px;font-size:16px}.position-card{display:none}.bottom-actions{height:92px;align-items:center}.bottom-actions button{height:60px;font-size:17px}}
+@media(max-width:480px){.ticker-row{padding-left:22px;padding-right:22px}.ticker-price{font-size:43px}.quick-stats{width:46%}.quick-stats dt,.quick-stats dd{font-size:11px}.section-tabs{padding-left:22px;padding-right:22px;gap:30px}.timeframes{padding-left:18px;padding-right:18px}.time-axis{font-size:9px}.indicators{gap:24px}.position-tabs{gap:30px}.bottom-actions{gap:12px;padding-left:22px;padding-right:22px}}
+
+/* Correct CSS-pixel proportions for high-density Android screens */
+@media(max-width:780px){.ticker-row{min-height:142px}.section-tabs{height:46px}.section-tabs button{height:43px}.market-facts{height:45px}.timeframes{height:49px}.chart-wrap{height:300px}.volume{height:78px;padding-top:6px;padding-bottom:6px}.volume-bars{height:48px}.indicators{height:44px}.position-tabs{height:62px}.position-tabs button{height:58px}.bottom-actions{height:76px;padding-top:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom))}.bottom-actions button{height:54px}}
+@media(max-width:480px){.chart-wrap{height:285px}.ticker-row{min-height:136px}.ticker-price{font-size:41px}.quick-stats{gap:4px}.quick-stats dt,.quick-stats dd{font-size:10.5px}.time-axis{height:26px}.chart{height:calc(100% - 26px)}}
+</style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="back" href="../../index.html" aria-label="홈으로 돌아가기">‹</a>
+    <div class="asset-title">
+      <span class="asset-logo"><img src="../../lqc-token-symbol.png" alt="LQC"></span>
+      <span><strong>LQC / WBNB</strong><small>BNB Smart Chain · Testnet</small></span>
+    </div>
+    <button class="wallet-button" id="connectButton" type="button">지갑 연결</button>
+  </header>
+
+  <main class="exchange">
+    <section class="market" aria-label="LQC 시장 차트">
+      <div class="ticker-row">
+        <div class="price-block"><span class="price-label">Price ⇌</span><strong class="ticker-price">$0.091138</strong><span class="ticker-change negative">-0.59%</span></div>
+        <dl class="quick-stats">
+          <div><dt>Market cap</dt><dd>$191.39M</dd></div>
+          <div><dt>Liquidity</dt><dd>$29.78K</dd></div>
+          <div><dt>24h volume</dt><dd>$513.06</dd></div>
+          <div><dt>Holders</dt><dd>249</dd></div>
+          <div><dt>Top 10</dt><dd>99.93%</dd></div>
+        </dl>
+      </div>
+
+      <nav class="section-tabs" aria-label="시장 정보">
+        <button class="active" type="button">Charts</button><button type="button">Info</button><button type="button">Data</button><button type="button">Risk</button><button type="button">Vibes</button>
+      </nav>
+
+      <div class="market-facts"><button type="button" aria-label="시장 검색">⌕</button><span>LP Fee <b>0.30%</b></span><span>Route <b>Optimal Path</b></span><span class="demo-badge">TESTNET DEMO</span></div>
+
+      <div class="timeframes" aria-label="차트 시간 단위">
+        <button type="button">1s</button><button type="button">30s</button><button class="active" type="button">1m</button><button type="button">15m</button><button type="button">More⌄</button><span class="tool-divider"></span><button class="chart-icon" type="button" aria-label="차트 유형">⌁</button><button class="chart-tool" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⬡</button>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="ma-legend"><span>MA5: 0.09199</span><span>MA10: 0.09153</span><span>MA20: 0.09112</span></div>
+        <svg class="chart" viewBox="0 0 760 390" role="img" aria-label="LQC 테스트넷 예시 캔들 차트">
+          <defs>
+            <linearGradient id="chartFade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#4fe0d1" stop-opacity=".22"/><stop offset="1" stop-color="#4fe0d1" stop-opacity="0"/></linearGradient>
+          </defs>
+          <g class="grid"><path d="M0 65H760M0 145H760M0 225H760M0 305H760"/><path d="M120 0V390M260 0V390M400 0V390M540 0V390M680 0V390"/></g>
+          <path class="area" d="M0 98L45 112L83 176L120 255L160 190L205 170L245 182L285 145L322 285L360 218L403 177L444 205L485 315L525 248L565 150L603 132L642 260L680 230L720 204L760 245V390H0Z"/>
+          <path class="ma ma-a" d="M0 105C90 112 90 275 160 195S260 175 320 250S405 155 480 290S560 130 635 235S720 180 760 230"/>
+          <path class="ma ma-b" d="M0 112C95 120 100 225 165 205S260 165 330 235S410 180 490 265S565 170 640 220S710 205 760 220"/>
+          <path class="ma ma-c" d="M0 91C110 135 105 190 178 192S280 182 345 218S435 205 500 232S590 200 660 214S720 205 760 211"/>
+          <g id="candles"></g>
+          <line class="current-line" x1="0" x2="760" y1="286" y2="286"/><text class="current-label" x="687" y="280">0.09135</text>
+          <g class="axis"><text x="697" y="70">0.09480</text><text x="697" y="150">0.09400</text><text x="697" y="230">0.09240</text><text x="697" y="310">0.09160</text></g>
+        </svg>
+        <div class="time-axis" aria-hidden="true"><span>09/03, 20:38</span><span>09/04, 01:39</span><span>09/04, 22:27</span><span>09/05, 10:43</span></div>
+      </div>
+
+      <div class="volume"><span>VOL (LQC): 108.5751</span><div class="volume-bars" id="volumeBars"></div></div>
+      <div class="indicators" aria-label="차트 지표"><button class="active">VOL</button><button>MA</button><button>EMA</button><button>BOLL</button><button>SAR</button><button>MACD</button><button>KDJ</button></div>
+
+      <nav class="position-tabs" aria-label="계정 정보"><button class="active">My positions</button><button>Holders <span>(249)</span></button><button>Top traders</button><button>Activities</button></nav>
+      <div class="position-card">
+        <div class="position-label"><span class="mini-logo">L</span><span>LQC balance</span></div>
+        <strong id="portfolioValue">$0.00</strong>
+        <p>Unrealized PnL <span>$0.00 (0.00%)</span></p>
+        <div class="position-meta"><span>보유 수량 <b id="positionBalance">—</b></span><span>네트워크 <b>BSC Testnet</b></span></div>
+      </div>
+    </section>
+
+    <section class="order-panel" id="orderPanel" aria-labelledby="orderTitle">
+      <div class="order-head"><div><span class="eyebrow">NON-CUSTODIAL SWAP</span><h1 id="orderTitle">LQC 매수</h1></div><button class="close-order" id="closeOrder" type="button" aria-label="주문창 닫기">×</button></div>
+      <div class="settings" id="settingsPanel" hidden><label for="slippageInput">슬리피지 허용 범위</label><div class="slippage-row"><button class="slippage-option" data-value="0.1">0.1%</button><button class="slippage-option active" data-value="0.5">0.5%</button><button class="slippage-option" data-value="1">1.0%</button><span class="custom-slippage"><input id="slippageInput" inputmode="decimal" value="0.5" aria-label="직접 입력 슬리피지"><b>%</b></span></div></div>
+      <div class="token-panel"><div class="panel-label"><span>보내는 토큰</span><button id="maxButton" type="button">MAX</button></div><div class="amount-row"><input id="amountIn" inputmode="decimal" autocomplete="off" placeholder="0.0" aria-label="보낼 수량"><button class="token-button" id="tokenInButton" type="button"><span class="token-symbol" id="tokenInIcon">BNB</span><b id="tokenInLabel">BNB</b><span>⌄</span></button></div><div class="balance">잔액 <span id="balanceIn">—</span></div></div>
+      <div class="flip-wrap"><button class="flip-button" id="flipButton" type="button" aria-label="토큰 순서 변경">⇅</button></div>
+      <div class="token-panel receive-panel"><div class="panel-label"><span>받는 토큰</span><span>예상 수량</span></div><div class="amount-row"><output id="amountOut">0.0</output><button class="token-button" id="tokenOutButton" type="button"><span class="token-symbol mint" id="tokenOutIcon">LQC</span><b id="tokenOutLabel">LQC</b><span>⌄</span></button></div><div class="balance">잔액 <span id="balanceOut">—</span></div></div>
+      <div class="quote-box"><div><span>최소 수령량</span><b id="minimumReceived">—</b></div><div><span>LP 수수료</span><b>0.30%</b></div><div><span>경로</span><b id="routeLabel">BNB → LQC</b></div></div>
+      <div class="status" id="statusBox" role="status"><i></i><span id="statusText">테스트넷 배포 주소를 연결하면 거래가 활성화됩니다.</span></div>
+      <button class="execute-button buy" id="executeButton" type="button" disabled>LQC 매수</button>
+      <p class="risk-note">테스트넷 MVP · 실제 자금을 보내지 마세요. 독립 보안감사 전에는 메인넷에서 사용할 수 없습니다.</p>
+      <span id="contractState" hidden>배포 대기</span>
+    </section>
+  </main>
+
+  <div class="bottom-actions" aria-label="LQC 매수 및 매도"><button class="action-buy active" id="buyAction" type="button">Buy</button><button class="action-sell" id="sellAction" type="button">Sell</button><button class="quick" id="quickTrade" type="button" aria-label="빠른 거래">↯</button></div>
+
+  <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><h2>토큰 선택</h2><button value="cancel" aria-label="닫기">×</button></div><div class="token-list" id="tokenList" role="listbox"></div></form></dialog>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
+  <script src="config.js?v=trade-h"></script><script src="app.js?v=trade-h"></script>
+</body>
+</html>
