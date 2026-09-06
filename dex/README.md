@@ -12,6 +12,8 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - `LQCRouterTimelock`: delayed privileged execution designed to place Router V2 ownership behind an external multisig
 - Router V2 split execution: divides one ERC-20 trade across up to 8 approved DEX routes using basis-point allocations
 - Router V2 emergency pause: blocks every swap entry point while leaving route quotes available for inspection
+- Router V2 token allowlist, per-trade maximum input, and UTC-day cumulative input cap across every swap entry point
+- Read-only risk status for wallet interfaces; quotes remain inspectable while disallowed execution is blocked
 - Pause-guardian separation: the guardian can stop swaps immediately, while only timelock ownership can resume them
 - `sdk/route-optimizer.mjs`: discovers direct, one-hop, and two-hop routes across up to 16 DEX adapters and returns the best executable route
 - `UniswapV2DEXAdapter`: integration layer for PancakeSwap V2, Biswap, and compatible routers
@@ -88,6 +90,8 @@ For Router V2 mode, also configure `ROUTER_V2_ADDRESS` and `PANCAKE_ADAPTER_ADDR
 Before requesting the wallet transaction, the UI shows a confirmation summary with the minimum received amount, selected strategy, indicative BNB network fee, and a warning when estimated price impact is 3% or higher. Price impact and network fee values are estimates, not execution guarantees. With a verified market pool configured, the chart reads OHLCV data from GeckoTerminal, refreshes no more than once per minute, and labels stale observations. Without a pool—or when the feed fails—it shows deterministic demonstration data. Neither mode is a lending oracle, execution guarantee, token valuation, or trading signal.
 
 The UI reads Router V2's on-chain pause state. When swaps are paused, quotes remain visible but BUY and SELL execution is disabled.
+
+Router V2 also reads the configured token risk policy before enabling execution. Both input and output tokens must be allowed, the input must remain within its raw-token per-trade limit, and its cumulative input must remain within the current UTC-day cap. Risk-policy updates are owner-only and therefore follow the same timelock governance path when deployed as documented. USD-denominated limits must not be approximated on-chain without a reviewed oracle and decimal-normalization design.
 
 Never commit private keys or `.env` files.
 
