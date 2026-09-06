@@ -36,7 +36,7 @@ const router = await new ethers.ContractFactory(routerArtifact.abi, routerArtifa
 await router.waitForDeployment();
 
 const registryArtifact = load("router-v2/LQCDexRegistry");
-const registry = await new ethers.ContractFactory(registryArtifact.abi, registryArtifact.bytecode, wallet).deploy(owner);
+const registry = await new ethers.ContractFactory(registryArtifact.abi, registryArtifact.bytecode, wallet).deploy(wallet.address);
 await registry.waitForDeployment();
 
 const quoteRouterArtifact = load("router-v2/LQCQuoteRouter");
@@ -65,6 +65,9 @@ if (PANCAKE_V2_ROUTER_ADDRESS) {
   pancakeDexId = ethers.id("PANCAKE_V2");
   await (await registry.addDex(pancakeDexId, pancakeAdapterAddress, "PancakeSwap V2", 90)).wait();
 }
+if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
+  await (await registry.beginOwnershipTransfer(owner)).wait();
+}
 
 console.log(JSON.stringify({
   chainId: network.chainId.toString(),
@@ -74,6 +77,8 @@ console.log(JSON.stringify({
   factory: await factory.getAddress(),
   router: await router.getAddress(),
   dexRegistry: await registry.getAddress(),
+  dexRegistryOwner: wallet.address,
+  dexRegistryPendingOwner: owner.toLowerCase() === wallet.address.toLowerCase() ? null : owner,
   quoteRouter: await quoteRouter.getAddress(),
   flowAdapter: await flowAdapter.getAddress(),
   flowDexId,
