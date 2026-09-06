@@ -5,6 +5,7 @@ import {SafeTransferLib} from "../libraries/SafeTransferLib.sol";
 import {ILQCDexRegistry} from "./interfaces/ILQCDexRegistry.sol";
 import {ILQCExecutionAdapter} from "./interfaces/ILQCExecutionAdapter.sol";
 import {ILQCDexAdapter} from "./interfaces/ILQCDexAdapter.sol";
+import {ILQCRiskRegistry} from "./interfaces/ILQCRiskRegistry.sol";
 
 interface IERC20Balance {
     function balanceOf(address account) external view returns (uint256);
@@ -17,6 +18,7 @@ contract LQCExecutionRouter {
 
     uint256 public constant MAX_SPLIT_ROUTES = 4;
     ILQCDexRegistry public immutable registry;
+    ILQCRiskRegistry public immutable riskRegistry;
     uint256 private unlocked = 1;
 
     event SwapExecuted(
@@ -55,9 +57,10 @@ contract LQCExecutionRouter {
         unlocked = 1;
     }
 
-    constructor(address registry_) {
+    constructor(address registry_, address riskRegistry_) {
         if (registry_ == address(0)) revert ZeroAddress();
         registry = ILQCDexRegistry(registry_);
+        riskRegistry = ILQCRiskRegistry(riskRegistry_);
     }
 
     function swapExactInput(
@@ -70,6 +73,7 @@ contract LQCExecutionRouter {
         uint256 deadline,
         bytes calldata routeData
     ) external nonReentrant returns (uint256 amountOut) {
+        _consumeSingle(tokenIn, tokenOut, dexId, amountIn);
         amountOut = _execute(
             dexId, tokenIn, tokenOut, amountIn, amountOutMinimum, recipient, deadline, routeData
         );
@@ -118,6 +122,7 @@ contract LQCExecutionRouter {
             }
         }
         if (!found) revert NoExecutableRoute();
+        _consumeSingle(tokenIn, tokenOut, dexId, amountIn);
         amountOut = _execute(
             dexId, tokenIn, tokenOut, amountIn, amountOutMinimum, recipient, deadline, routeData[bestIndex]
         );
@@ -147,6 +152,14 @@ contract LQCExecutionRouter {
             allocated += route.amountIn;
         }
         if (allocated != totalAmountIn) revert InvalidSplit();
+
+        bytes32[] memory dexIds = new bytes32[](length);
+        uint256[] memory amountsIn = new uint256[](length);
+        for (uint256 i; i < length; ++i) {
+            dexIds[i] = routes[i].dexId;
+            amountsIn[i] = routes[i].amountIn;
+        }
+        _consume(tokenIn, tokenOut, dexIds, amountsIn);
 
         for (uint256 i; i < length; ++i) {
             SplitRoute calldata route = routes[i];
@@ -206,5 +219,17 @@ contract LQCExecutionRouter {
         } catch {
             supported = false;
         }
+    }
+
+    function _consumeSingle(address tokenIn, address tokenOut, bytes32 dexId, uint256 amountIn) private {
+        bytes32[] memory dexIds = new bytes32[](1);
+        uint256[] memory amountsIn = new uint256[](1);
+        dexIds[0] = dexId;
+        amountsIn[0] = amountIn;
+        _consume(tokenIn, tokenOut, dexIds, amountsIn);
+    }
+
+    function _consume(address tokenIn, address tokenOut, bytes32[] memory dexIds, uint256[] memory amountsIn) private {
+        if (address(riskRegistry) != address(0)) riskRegistry.consumeSwap(tokenIn, tokenOut, dexIds, amountsIn);
     }
 }

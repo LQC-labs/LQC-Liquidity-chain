@@ -28,7 +28,7 @@ describe("LQC Router 2.0", function () {
     const QuoteRouter = new ethers.ContractFactory(artifact("LQCQuoteRouter", "router-v2/LQCQuoteRouter").abi, artifact("LQCQuoteRouter", "router-v2/LQCQuoteRouter").bytecode, owner);
     quoteRouter = await QuoteRouter.deploy(await registry.getAddress());
     const ExecutionRouter = new ethers.ContractFactory(artifact("LQCExecutionRouter", "router-v2/LQCExecutionRouter").abi, artifact("LQCExecutionRouter", "router-v2/LQCExecutionRouter").bytecode, owner);
-    executionRouter = await ExecutionRouter.deploy(await registry.getAddress());
+    executionRouter = await ExecutionRouter.deploy(await registry.getAddress(), ethers.ZeroAddress);
     const SplitOptimizer = new ethers.ContractFactory(artifact("LQCSplitOptimizer", "router-v2/LQCSplitOptimizer").abi, artifact("LQCSplitOptimizer", "router-v2/LQCSplitOptimizer").bytecode, owner);
     splitOptimizer = await SplitOptimizer.deploy(await registry.getAddress());
     const AutoRouter = new ethers.ContractFactory(artifact("LQCAutoRouter", "router-v2/LQCAutoRouter").abi, artifact("LQCAutoRouter", "router-v2/LQCAutoRouter").bytecode, owner);

@@ -11,6 +11,12 @@ const {
   PANCAKE_V3_QUOTER_ADDRESS = "",
   PANCAKE_V3_ROUTER_ADDRESS = "",
   TIMELOCK_DELAY = "3600",
+  TEST_LQC_MAX_TX = "10000",
+  TEST_LQC_MAX_DAY = "100000",
+  TEST_USDT_MAX_TX = "10000",
+  TEST_USDT_MAX_DAY = "100000",
+  TEST_WBNB_MAX_TX = "10",
+  TEST_WBNB_MAX_DAY = "100",
   TEST_LQC_SUPPLY = "1000000",
   TEST_USDT_SUPPLY = "1000000",
   LQC_USDT_LIQUIDITY_LQC = "100000",
@@ -54,7 +60,11 @@ const timelock = await deploy("router-v2/LQCTimelockController", [owner, BigInt(
 const emergencyController = await deploy("router-v2/LQCEmergencyController", [owner, await registry.getAddress()]);
 await (await registry.setPauseAdmin(await emergencyController.getAddress())).wait();
 const quoteRouter = await deploy("router-v2/LQCQuoteRouter", [await registry.getAddress()]);
-const executionRouter = await deploy("router-v2/LQCExecutionRouter", [await registry.getAddress()]);
+const riskRegistry = await deploy("router-v2/LQCRiskRegistry", [wallet.address, owner]);
+const executionRouter = await deploy("router-v2/LQCExecutionRouter", [
+  await registry.getAddress(), await riskRegistry.getAddress()
+]);
+await (await riskRegistry.setExecutor(await executionRouter.getAddress())).wait();
 const splitOptimizer = await deploy("router-v2/LQCSplitOptimizer", [await registry.getAddress()]);
 const autoRouter = await deploy("router-v2/LQCAutoRouter", [
   await splitOptimizer.getAddress(), await executionRouter.getAddress()
@@ -85,8 +95,25 @@ if (PANCAKE_V3_QUOTER_ADDRESS || PANCAKE_V3_ROUTER_ADDRESS) {
   await (await registry.addDex(pancakeV3DexId, await pancakeV3Adapter.getAddress(), "PancakeSwap V3", 95)).wait();
   dexes.push({ id: pancakeV3DexId, name: "PancakeSwap V3" });
 }
+const lqcAddressForLimits = await lqc.getAddress();
+const usdtAddressForLimits = await usdt.getAddress();
+const limits = [
+  [lqcAddressForLimits, TEST_LQC_MAX_TX, TEST_LQC_MAX_DAY],
+  [usdtAddressForLimits, TEST_USDT_MAX_TX, TEST_USDT_MAX_DAY],
+  [WBNB_ADDRESS, TEST_WBNB_MAX_TX, TEST_WBNB_MAX_DAY]
+];
+for (const [token, perTx, perDay] of limits) {
+  await (await riskRegistry.setTokenLimits(
+    token, true, ethers.parseUnits(perTx, 18), ethers.parseUnits(perDay, 18)
+  )).wait();
+  for (const dex of dexes) {
+    await (await riskRegistry.setDexTokenCap(dex.id, token, ethers.parseUnits(perTx, 18))).wait();
+  }
+}
 await (await registry.beginOwnershipTransfer(await timelock.getAddress())).wait();
 await (await timelock.acceptRegistryOwnership(await registry.getAddress())).wait();
+await (await riskRegistry.beginOwnershipTransfer(await timelock.getAddress())).wait();
+await (await timelock.acceptRegistryOwnership(await riskRegistry.getAddress())).wait();
 
 const lqcSupply = ethers.parseUnits(TEST_LQC_SUPPLY, 18);
 const usdtSupply = ethers.parseUnits(TEST_USDT_SUPPLY, 18);
@@ -131,6 +158,7 @@ const record = {
     dexRegistry: { address: await registry.getAddress(), deploymentTx: txHash(registry) },
     timelock: { address: await timelock.getAddress(), deploymentTx: txHash(timelock) },
     emergencyController: { address: await emergencyController.getAddress(), deploymentTx: txHash(emergencyController) },
+    riskRegistry: { address: await riskRegistry.getAddress(), deploymentTx: txHash(riskRegistry) },
     quoteRouter: { address: await quoteRouter.getAddress(), deploymentTx: txHash(quoteRouter) },
     executionRouter: { address: await executionRouter.getAddress(), deploymentTx: txHash(executionRouter) },
     splitOptimizer: { address: await splitOptimizer.getAddress(), deploymentTx: txHash(splitOptimizer) },

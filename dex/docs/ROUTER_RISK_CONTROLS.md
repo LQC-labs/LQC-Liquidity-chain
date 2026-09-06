@@ -1,0 +1,30 @@
+# LQC Router 2.0 — Risk Controls Review Note
+
+Status: **unaudited testnet MVP**. This document describes implemented controls; it is not an audit report or a mainnet-readiness claim.
+
+## Control model
+
+- The protocol governance proposer is intended to be a 3-of-5 multisig.
+- Registry and risk-parameter expansions execute only through `LQCTimelockController` after the configured delay. The target production policy remains 48 hours; the bootstrap default is one hour for testnet exercises.
+- The risk administrator is intended to be a separate 2-of-3 multisig. It can only reduce active token limits.
+- Emergency guardians can disable a DEX route immediately. They cannot re-enable routes, change adapters, move user funds, mint tokens, or expand limits.
+
+## Enforced swap checks
+
+`LQCRiskRegistry` rejects execution unless:
+
+1. both input and output tokens are allowlisted;
+2. every selected DEX has a non-zero cap for the input token;
+3. every route allocation is within its DEX/token cap;
+4. the complete order is within the token's per-transaction cap; and
+5. the token's cumulative input volume remains within its UTC-day cap.
+
+Split orders are checked as one complete order, preventing a caller from bypassing the per-transaction cap by dividing an order across routes.
+
+## Parameter policy
+
+Repository defaults are test-only examples. Final token lists and numeric caps require BSC testnet measurements and risk-committee approval based on liquidity depth, execution reliability, oracle quality, security history, audit history, and operational monitoring.
+
+## Mainnet gates
+
+Do not activate user funds until independent review is complete, Critical/High findings are resolved, role assignments and multisig signers are published, pause/recovery drills pass, monitoring is active, and capped-pilot accounting shows no mismatch.
