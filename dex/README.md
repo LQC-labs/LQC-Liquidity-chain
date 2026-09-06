@@ -25,6 +25,7 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - \`LQCQuoteRouter\`: failure-isolated comparison across all enabled adapters with deterministic priority tie-breaking
 - \`LQCFlowAdapter\`: connects native LQC Flow direct or multi-hop pool quotes to Router 2.0
 - \`PancakeV2Adapter\`: connects reviewed PancakeSwap V2-compatible routers for cross-DEX quote comparison
+- \`PancakeV3Adapter\`: validates packed V3 paths and reads PancakeSwap QuoterV2 through an isolated static call
 
 New DEXs can be added through reviewed adapters without replacing the quote router. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap when \`PANCAKE_V2_ROUTER_ADDRESS\` is supplied. This foundation is quote-only: swap execution, token movement, split routing, gas-aware scoring, timelocks, and production integrations remain pending.
 
