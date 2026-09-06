@@ -1,7 +1,14 @@
 import fs from "node:fs";
 import { ethers } from "ethers";
 
-const { BSC_TESTNET_RPC_URL, DEPLOYER_PRIVATE_KEY, FACTORY_OWNER, WBNB_ADDRESS, EXPECTED_CHAIN_ID = "97" } = process.env;
+const {
+  BSC_TESTNET_RPC_URL,
+  DEPLOYER_PRIVATE_KEY,
+  FACTORY_OWNER,
+  WBNB_ADDRESS,
+  PANCAKE_V2_ROUTER_ADDRESS,
+  EXPECTED_CHAIN_ID = "97"
+} = process.env;
 if (!BSC_TESTNET_RPC_URL || !DEPLOYER_PRIVATE_KEY || !WBNB_ADDRESS) {
   throw new Error("Set BSC_TESTNET_RPC_URL, DEPLOYER_PRIVATE_KEY, and WBNB_ADDRESS in the environment.");
 }
@@ -43,6 +50,22 @@ await flowAdapter.waitForDeployment();
 const flowDexId = ethers.id("LQC_FLOW");
 await (await registry.addDex(flowDexId, await flowAdapter.getAddress(), "LQC Flow", 100)).wait();
 
+let pancakeAdapterAddress = null;
+let pancakeDexId = null;
+if (PANCAKE_V2_ROUTER_ADDRESS) {
+  if (!ethers.isAddress(PANCAKE_V2_ROUTER_ADDRESS)) throw new Error("PANCAKE_V2_ROUTER_ADDRESS must be valid.");
+  const pancakeAdapterArtifact = load("router-v2/adapters/PancakeV2Adapter");
+  const pancakeAdapter = await new ethers.ContractFactory(
+    pancakeAdapterArtifact.abi,
+    pancakeAdapterArtifact.bytecode,
+    wallet
+  ).deploy(PANCAKE_V2_ROUTER_ADDRESS);
+  await pancakeAdapter.waitForDeployment();
+  pancakeAdapterAddress = await pancakeAdapter.getAddress();
+  pancakeDexId = ethers.id("PANCAKE_V2");
+  await (await registry.addDex(pancakeDexId, pancakeAdapterAddress, "PancakeSwap V2", 90)).wait();
+}
+
 console.log(JSON.stringify({
   chainId: network.chainId.toString(),
   deployer: wallet.address,
@@ -53,5 +76,8 @@ console.log(JSON.stringify({
   dexRegistry: await registry.getAddress(),
   quoteRouter: await quoteRouter.getAddress(),
   flowAdapter: await flowAdapter.getAddress(),
-  flowDexId
+  flowDexId,
+  pancakeV2Router: PANCAKE_V2_ROUTER_ADDRESS || null,
+  pancakeAdapter: pancakeAdapterAddress,
+  pancakeDexId
 }, null, 2));
