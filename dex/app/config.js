@@ -7,6 +7,7 @@ window.LQC_FLOW_CONFIG = Object.freeze({
   nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 },
   routerAddress: "",
   routerV2Address: "",
+  marketData: { provider: "geckoterminal", network: "bsc", poolAddress: "", tokenSide: "base" },
   adapters: [
     { id: "pancake-v2", name: "PancakeSwap V2", address: "" }
   ],
