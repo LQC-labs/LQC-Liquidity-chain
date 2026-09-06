@@ -162,6 +162,27 @@ describe("LQC Flow Router V2", function () {
     ));
   });
 
+  it("fails closed when the configured oracle risk guard blocks a swap", async function () {
+    const Guard = new ethers.ContractFactory(
+      artifact("MockRiskGuard", "mocks/MockRiskGuard").abi,
+      artifact("MockRiskGuard", "mocks/MockRiskGuard").bytecode, owner
+    );
+    const riskGuard = await Guard.deploy();
+    await riskGuard.waitForDeployment();
+    await (await router.setRiskGuard(await riskGuard.getAddress())).wait();
+    await (await riskGuard.setBlocked(true)).wait();
+    const status = await router.riskStatus(
+      await tokenIn.getAddress(), await tokenOut.getAddress(), ethers.parseEther("1")
+    );
+    assert.equal(status.allowed, false);
+    await assert.rejects(router.connect(trader).swapBestExactInput(
+      await tokenIn.getAddress(), await tokenOut.getAddress(), ethers.parseEther("1"), 0n,
+      await adapters(), routes(), await trader.getAddress(), deadline()
+    ));
+    const volume = await router.tokenDailyVolume(await tokenIn.getAddress());
+    assert.equal(volume.amount, 0n);
+  });
+
   it("pauses every swap entry point while keeping quotes available", async function () {
     const amountIn = ethers.parseEther("1");
     const adapterList = await adapters();
