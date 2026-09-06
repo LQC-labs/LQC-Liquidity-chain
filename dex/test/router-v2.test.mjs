@@ -105,4 +105,20 @@ describe("LQC Router 2.0", function () {
     assert.equal(best.dexId, pancakeId);
     assert.equal(best.adapter, await pancakeAdapter.getAddress());
   });
+
+  it("adapts a packed PancakeSwap V3 path and isolates malformed paths", async function () {
+    const Quoter = new ethers.ContractFactory(artifact("MockV3Quoter", "mocks/MockV3Quoter").abi, artifact("MockV3Quoter", "mocks/MockV3Quoter").bytecode, owner);
+    const quoter = await Quoter.deploy(2);
+    await quoter.waitForDeployment();
+    const Adapter = new ethers.ContractFactory(artifact("PancakeV3Adapter", "router-v2/adapters/PancakeV3Adapter").abi, artifact("PancakeV3Adapter", "router-v2/adapters/PancakeV3Adapter").bytecode, owner);
+    const v3Adapter = await Adapter.deploy(await quoter.getAddress());
+    await v3Adapter.waitForDeployment();
+    const tokenInAddress = await tokenA.getAddress();
+    const tokenOutAddress = await tokenB.getAddress();
+    const packedPath = ethers.solidityPacked(["address", "uint24", "address"], [tokenInAddress, 2500, tokenOutAddress]);
+    assert.equal(await v3Adapter.quoteExactInput(tokenInAddress, tokenOutAddress, 100n, packedPath), 200n);
+    await assert.rejects(v3Adapter.quoteExactInput(tokenInAddress, tokenOutAddress, 100n, "0x1234"));
+    const reversed = ethers.solidityPacked(["address", "uint24", "address"], [tokenOutAddress, 2500, tokenInAddress]);
+    await assert.rejects(v3Adapter.quoteExactInput(tokenInAddress, tokenOutAddress, 100n, reversed));
+  });
 });
