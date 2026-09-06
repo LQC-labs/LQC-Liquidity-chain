@@ -47,6 +47,9 @@ describe("LQC Flow Router V2", function () {
 
     await (await router.setAdapter(await adapterA.getAddress(), true)).wait();
     await (await router.setAdapter(await adapterB.getAddress(), true)).wait();
+    await (await router.setTokenRisk(await tokenIn.getAddress(), true, ethers.parseEther("100"), ethers.parseEther("1000"))).wait();
+    await (await router.setTokenRisk(await tokenOut.getAddress(), true, ethers.parseEther("100"), ethers.parseEther("1000"))).wait();
+    await (await router.setTokenRisk(await wbnb.getAddress(), true, ethers.parseEther("100"), ethers.parseEther("1000"))).wait();
     await (await tokenIn.mint(await trader.getAddress(), ethers.parseEther("100"))).wait();
     await (await tokenOut.mint(await adapterA.getAddress(), ethers.parseEther("1000"))).wait();
     await (await tokenOut.mint(await adapterB.getAddress(), ethers.parseEther("1000"))).wait();
@@ -106,6 +109,56 @@ describe("LQC Flow Router V2", function () {
     await assert.rejects(router.connect(trader).swapBestExactInput(
       await tokenIn.getAddress(), await tokenOut.getAddress(), 1n, 0n,
       await adapters(), routes(), await trader.getAddress(), 1n
+    ));
+  });
+
+  it("enforces token allowlisting and owner-only risk configuration", async function () {
+    const tokenInAddress = await tokenIn.getAddress();
+    const tokenOutAddress = await tokenOut.getAddress();
+    await assert.rejects(router.connect(trader).setTokenRisk(tokenInAddress, false, 0, 0));
+    await (await router.setTokenRisk(tokenOutAddress, false, 0, 0)).wait();
+    await assert.rejects(router.connect(trader).swapBestExactInput(
+      tokenInAddress, tokenOutAddress, ethers.parseEther("1"), 0n,
+      await adapters(), routes(), await trader.getAddress(), deadline()
+    ));
+  });
+
+  it("enforces per-trade and cumulative daily input caps", async function () {
+    const tokenInAddress = await tokenIn.getAddress();
+    const tokenOutAddress = await tokenOut.getAddress();
+    await (await router.setTokenRisk(tokenInAddress, true, ethers.parseEther("6"), ethers.parseEther("10"))).wait();
+    await assert.rejects(router.connect(trader).swapBestExactInput(
+      tokenInAddress, tokenOutAddress, ethers.parseEther("7"), 0n,
+      await adapters(), routes(), await trader.getAddress(), deadline()
+    ));
+    await (await router.connect(trader).swapBestExactInput(
+      tokenInAddress, tokenOutAddress, ethers.parseEther("6"), 0n,
+      await adapters(), routes(), await trader.getAddress(), deadline()
+    )).wait();
+    await assert.rejects(router.connect(trader).swapSplitExactInput(
+      tokenInAddress, tokenOutAddress, ethers.parseEther("5"), 0n,
+      await adapters(), routes(), [5000, 5000], await trader.getAddress(), deadline()
+    ));
+    const status = await router.riskStatus(tokenInAddress, tokenOutAddress, ethers.parseEther("4"));
+    assert.equal(status.allowed, true);
+    assert.equal(status.remainingDailyInput, ethers.parseEther("4"));
+  });
+
+  it("rejects inconsistent risk limits", async function () {
+    await assert.rejects(router.setTokenRisk(
+      await tokenIn.getAddress(), true, ethers.parseEther("10"), ethers.parseEther("9")
+    ));
+  });
+
+  it("applies token allowlisting to native-BNB entry and exit", async function () {
+    await (await router.setTokenRisk(await wbnb.getAddress(), false, 0, 0)).wait();
+    await assert.rejects(router.connect(trader).swapExactBNBForTokens(
+      await tokenOut.getAddress(), 0n, await adapters(), routes(), await trader.getAddress(), deadline(),
+      { value: ethers.parseEther("1") }
+    ));
+    await assert.rejects(router.connect(trader).swapExactTokensForBNB(
+      await tokenIn.getAddress(), ethers.parseEther("1"), 0n, await adapters(), routes(),
+      await trader.getAddress(), deadline()
     ));
   });
 
