@@ -16,6 +16,7 @@ Liquidity Chain is developing non-custodial infrastructure for discovering and e
 | Adapter-based Router 2.0 | Implemented and locally tested | `LQCFlowRouterV2.sol` |
 | Router governance timelock | Implemented and locally tested | `LQCRouterTimelock.sol`, governance tests |
 | Token execution limits | Implemented and locally tested | Router V2 token allowlist, per-trade cap, UTC-day cumulative cap |
+| Dual-source oracle guard | Implemented and locally tested; sources not deployed | `LQCOracleRiskGuard.sol` |
 | Uniswap V2-compatible adapter | Implemented and locally tested | `dex/contracts/adapters/UniswapV2DEXAdapter.sol` |
 | Native BNB routes | Implemented and locally tested | Router V1 and Router V2 tests |
 | ERC-20 split execution | Implemented and locally tested | `swapSplitExactInput` and split-route tests |
@@ -53,6 +54,8 @@ Liquidity Chain is developing non-custodial infrastructure for discovering and e
 - Owner-managed input/output token allowlisting
 - Raw-token per-trade maximum and UTC-day cumulative input cap applied once to best, split, BNB-in, and BNB-out swaps
 - Read-only risk status exposed to the browser; governance changes follow Router ownership through the timelock
+- Optional fail-closed oracle guard with two independent normalized price sources per asset
+- Per-source freshness, cross-source deviation, future/zero observation, unavailable-source, and optional stablecoin-peg checks
 
 ### Route optimization and application
 
@@ -75,8 +78,8 @@ Native-BNB split execution is not implemented; native-BNB trades use a single op
 
 The latest local validation produced:
 
-- 18 Solidity source files compiled successfully
-- 45 automated tests passed, including token allowlisting and caps, market-data validation, timelock risk changes, role separation, sampled split-allocation invariants, and full swap-pause coverage
+- 23 Solidity source files compiled successfully
+- 51 automated tests passed, including dual-source oracle failures, token allowlisting and caps, market-data validation, timelock risk changes, role separation, sampled split-allocation invariants, and full swap-pause coverage
 - JavaScript syntax checks passed for application and configuration scripts
 - Git whitespace/error validation passed
 
@@ -120,7 +123,7 @@ Before any production use, the project requires:
 8. Legal and regulatory review
 9. Capped-liquidity pilot with defined transaction and TVL limits
 
-The approved pilot targets remain pool TVL USD 25,000, pool daily volume USD 50,000, and LQC/USDT token daily volume USD 25,000 each. Five-minute price movement of ±10%, one-hour liquidity loss of 20%, USDT deviation of ±3%, and the 40% token concentration threshold remain monitoring/oracle rules pending reviewed price, liquidity, decimal-normalization, and pool-accounting inputs. They are not represented as active on-chain USD controls.
+The approved pilot targets remain pool TVL USD 25,000, pool daily volume USD 50,000, and LQC/USDT token daily volume USD 25,000 each. The oracle guard can represent a configurable cross-source threshold and USDT peg band; tests exercise 10% and 3% respectively, but no production setting is claimed. Five-minute movement, one-hour liquidity loss of 20%, the 40% token concentration threshold, and USD-denominated caps still require reviewed historical price, liquidity, decimal-normalization, and pool-accounting inputs.
 
 Lending, oracle, bridge, fee burning, staking, governance, and an independent mainnet are roadmap items and are not represented as deployed services.
 
