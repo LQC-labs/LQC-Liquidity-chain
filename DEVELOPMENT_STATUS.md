@@ -1,6 +1,6 @@
 # LQC Development Status
 
-**Review date:** September 5, 2026  
+**Review date:** September 6, 2026
 **Primary implementation:** LQC Flow DEX and LQC Router 2.0  
 **Target environment:** EVM-compatible networks, with BNB Smart Chain testnet first  
 **Release state:** Unaudited local/testnet-oriented MVP; not production ready
@@ -14,6 +14,7 @@ Liquidity Chain is developing non-custodial infrastructure for discovering and e
 | Constant-product AMM | Implemented and locally tested | `dex/contracts/LQCFlowFactory.sol`, `LQCFlowPair.sol`, `LQCFlowRouter.sol` |
 | Best-route quoting | Implemented and locally tested | `LQCFlowQuoter.sol` |
 | Adapter-based Router 2.0 | Implemented and locally tested | `LQCFlowRouterV2.sol` |
+| Router governance timelock | Implemented and locally tested | `LQCRouterTimelock.sol`, governance tests |
 | Uniswap V2-compatible adapter | Implemented and locally tested | `dex/contracts/adapters/UniswapV2DEXAdapter.sol` |
 | Native BNB routes | Implemented and locally tested | Router V1 and Router V2 tests |
 | ERC-20 split execution | Implemented and locally tested | `swapSplitExactInput` and split-route tests |
@@ -36,13 +37,15 @@ Liquidity Chain is developing non-custodial infrastructure for discovering and e
 
 ### Router 2.0
 
-- Owner-managed allowlist for DEX adapter contracts
+- Timelock-owner-managed allowlist for DEX adapter contracts
 - Up to 16 candidate routes for best-route quotation
 - Best-output execution across enabled adapters
 - Up to 8 ERC-20 split legs with basis-point allocations totaling 10,000
 - Global minimum-output enforcement based on actual balance received
 - Two-step ownership transfer
 - Owner-controlled emergency pause for every Router 2.0 swap entry point while quotes remain available
+- Separate pause guardian that can stop swaps immediately but cannot resume them or change adapters
+- Delayed privileged execution with cancellation, replay prevention, and two-step timelock-admin transfer
 - Native BNB wrapping and unwrapping through configured WBNB
 - Refund of unused input and reset of temporary token approvals
 
@@ -64,8 +67,8 @@ Native-BNB split execution is not implemented; native-BNB trades use a single op
 
 The latest local validation produced:
 
-- 17 Solidity source files compiled successfully
-- 32 automated tests passed, including sampled split-allocation invariants and full swap-pause coverage
+- 18 Solidity source files compiled successfully
+- 36 automated tests passed, including timelock delay/cancellation/replay controls, role separation, sampled split-allocation invariants, and full swap-pause coverage
 - JavaScript syntax checks passed for application and configuration scripts
 - Git whitespace/error validation passed
 
@@ -102,7 +105,7 @@ Before any production use, the project requires:
 3. BSC testnet deployment with verified source and published addresses
 4. Controlled adapter and token allowlisting
 5. Independent smart-contract audit and remediation
-6. Multisig and timelock administration
+6. Deploy timelock administration under a verified external multisig and publish signer/threshold policy
 7. Monitoring, incident response, and emergency-pause controls
 8. Legal and regulatory review
 9. Capped-liquidity pilot with defined transaction and TVL limits
