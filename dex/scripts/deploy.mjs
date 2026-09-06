@@ -47,6 +47,10 @@ const executionRouterArtifact = load("router-v2/LQCExecutionRouter");
 const executionRouter = await new ethers.ContractFactory(executionRouterArtifact.abi, executionRouterArtifact.bytecode, wallet).deploy(await registry.getAddress());
 await executionRouter.waitForDeployment();
 
+const splitOptimizerArtifact = load("router-v2/LQCSplitOptimizer");
+const splitOptimizer = await new ethers.ContractFactory(splitOptimizerArtifact.abi, splitOptimizerArtifact.bytecode, wallet).deploy(await registry.getAddress());
+await splitOptimizer.waitForDeployment();
+
 const flowAdapterArtifact = load("router-v2/adapters/LQCFlowAdapter");
 const flowAdapter = await new ethers.ContractFactory(flowAdapterArtifact.abi, flowAdapterArtifact.bytecode, wallet).deploy(await router.getAddress());
 await flowAdapter.waitForDeployment();
@@ -85,6 +89,7 @@ console.log(JSON.stringify({
   dexRegistryPendingOwner: owner.toLowerCase() === wallet.address.toLowerCase() ? null : owner,
   quoteRouter: await quoteRouter.getAddress(),
   executionRouter: await executionRouter.getAddress(),
+  splitOptimizer: await splitOptimizer.getAddress(),
   flowAdapter: await flowAdapter.getAddress(),
   flowDexId,
   pancakeV2Router: PANCAKE_V2_ROUTER_ADDRESS || null,
