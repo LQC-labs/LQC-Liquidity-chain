@@ -10,10 +10,12 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - `LQCFlowQuoter`: compares up to 16 candidate routes and selects the highest-output viable path
 - `LQCFlowRouterV2`: compares approved external-DEX adapters and executes the best token or native-BNB route
 - `LQCRouterTimelock`: delayed privileged execution designed to place Router V2 ownership behind an external multisig
+- `LQCOracleRiskGuard`: fail-closed comparison of independent normalized price sources with freshness, divergence, and optional peg checks
 - Router V2 split execution: divides one ERC-20 trade across up to 8 approved DEX routes using basis-point allocations
 - Router V2 emergency pause: blocks every swap entry point while leaving route quotes available for inspection
 - Router V2 token allowlist, per-trade maximum input, and UTC-day cumulative input cap across every swap entry point
 - Read-only risk status for wallet interfaces; quotes remain inspectable while disallowed execution is blocked
+- Optional Router oracle guard applied before volume accounting and external adapter execution
 - Pause-guardian separation: the guardian can stop swaps immediately, while only timelock ownership can resume them
 - `sdk/route-optimizer.mjs`: discovers direct, one-hop, and two-hop routes across up to 16 DEX adapters and returns the best executable route
 - `UniswapV2DEXAdapter`: integration layer for PancakeSwap V2, Biswap, and compatible routers
@@ -92,6 +94,8 @@ Before requesting the wallet transaction, the UI shows a confirmation summary wi
 The UI reads Router V2's on-chain pause state. When swaps are paused, quotes remain visible but BUY and SELL execution is disabled.
 
 Router V2 also reads the configured token risk policy before enabling execution. Both input and output tokens must be allowed, the input must remain within its raw-token per-trade limit, and its cumulative input must remain within the current UTC-day cap. Risk-policy updates are owner-only and therefore follow the same timelock governance path when deployed as documented. USD-denominated limits must not be approximated on-chain without a reviewed oracle and decimal-normalization design.
+
+When a risk guard is configured, both assets must have enabled primary and secondary 18-decimal price sources. Each observation must be non-zero, not from the future, and within its configured freshness window. The guard rejects excessive source divergence and can enforce a separate stablecoin peg band. A missing, reverting, stale, divergent, or depegged source fails closed. Source adapters, sequencer checks, TWAP construction, and production addresses remain deployment-specific and must be independently reviewed.
 
 Never commit private keys or `.env` files.
 
