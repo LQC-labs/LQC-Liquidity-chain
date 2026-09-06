@@ -15,6 +15,7 @@ interface IERC20Balance {
 contract LQCExecutionRouter {
     using SafeTransferLib for address;
 
+    uint256 public constant MAX_SPLIT_ROUTES = 4;
     ILQCDexRegistry public immutable registry;
     uint256 private unlocked = 1;
 
@@ -38,6 +39,14 @@ contract LQCExecutionRouter {
     error Reentrancy();
     error NoExecutableRoute();
     error InvalidRouteData();
+    error InvalidSplit();
+
+    struct SplitRoute {
+        bytes32 dexId;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+        bytes routeData;
+    }
 
     modifier nonReentrant() {
         if (unlocked != 1) revert Reentrancy();
@@ -112,6 +121,47 @@ contract LQCExecutionRouter {
         amountOut = _execute(
             dexId, tokenIn, tokenOut, amountIn, amountOutMinimum, recipient, deadline, routeData[bestIndex]
         );
+    }
+
+    /// @notice Atomically divides one exact-input order across reviewed DEX routes.
+    /// @dev The caller or off-chain optimizer supplies allocations. Every leg and the aggregate
+    ///      output are protected; failure in any leg reverts the complete split order.
+    function swapSplitExactInput(
+        address tokenIn,
+        address tokenOut,
+        uint256 totalAmountIn,
+        uint256 totalAmountOutMinimum,
+        address recipient,
+        uint256 deadline,
+        SplitRoute[] calldata routes
+    ) external nonReentrant returns (uint256 totalAmountOut) {
+        uint256 length = routes.length;
+        if (length < 2 || length > MAX_SPLIT_ROUTES) revert InvalidSplit();
+        if (totalAmountIn == 0 || totalAmountOutMinimum == 0) revert InvalidAmount();
+        if (block.timestamp > deadline) revert Expired();
+
+        uint256 allocated;
+        for (uint256 i; i < length; ++i) {
+            SplitRoute calldata route = routes[i];
+            if (route.amountIn == 0 || route.amountOutMinimum == 0) revert InvalidSplit();
+            allocated += route.amountIn;
+        }
+        if (allocated != totalAmountIn) revert InvalidSplit();
+
+        for (uint256 i; i < length; ++i) {
+            SplitRoute calldata route = routes[i];
+            totalAmountOut += _execute(
+                route.dexId,
+                tokenIn,
+                tokenOut,
+                route.amountIn,
+                route.amountOutMinimum,
+                recipient,
+                deadline,
+                route.routeData
+            );
+        }
+        if (totalAmountOut < totalAmountOutMinimum) revert InsufficientOutput();
     }
 
     function _execute(

@@ -222,4 +222,65 @@ describe("LQC Router 2.0", function () {
     assert.equal(event.args.dexId, flowId);
     assert.equal(event.args.amountOut, flowQuote);
   });
+
+  it("atomically splits one order across two reviewed DEX routes", async function () {
+    const Factory = new ethers.ContractFactory(artifact("LQCFlowFactory").abi, artifact("LQCFlowFactory").bytecode, owner);
+    const secondFactory = await Factory.deploy(await owner.getAddress());
+    const WBNB = new ethers.ContractFactory(artifact("MockWBNB", "mocks/MockWBNB").abi, artifact("MockWBNB", "mocks/MockWBNB").bytecode, owner);
+    const secondWbnb = await WBNB.deploy();
+    await Promise.all([secondFactory.waitForDeployment(), secondWbnb.waitForDeployment()]);
+    const FlowRouter = new ethers.ContractFactory(artifact("LQCFlowRouter").abi, artifact("LQCFlowRouter").bytecode, owner);
+    const secondRouter = await FlowRouter.deploy(await secondFactory.getAddress(), await secondWbnb.getAddress());
+    await secondRouter.waitForDeployment();
+    const PancakeAdapter = new ethers.ContractFactory(artifact("PancakeV2Adapter", "router-v2/adapters/PancakeV2Adapter").abi, artifact("PancakeV2Adapter", "router-v2/adapters/PancakeV2Adapter").bytecode, owner);
+    const secondAdapter = await PancakeAdapter.deploy(await secondRouter.getAddress());
+    await secondAdapter.waitForDeployment();
+
+    const liquidity = ethers.parseEther("10000");
+    await (await tokenA.mint(await owner.getAddress(), liquidity)).wait();
+    await (await tokenB.mint(await owner.getAddress(), liquidity)).wait();
+    await (await tokenA.approve(await secondRouter.getAddress(), liquidity)).wait();
+    await (await tokenB.approve(await secondRouter.getAddress(), liquidity)).wait();
+    const block = await provider.getBlock("latest");
+    await (await secondRouter.addLiquidity(
+      await tokenA.getAddress(), await tokenB.getAddress(), liquidity, liquidity,
+      0, 0, await owner.getAddress(), BigInt(block.timestamp + 3600)
+    )).wait();
+
+    const flowId = ethers.id("LQC_FLOW");
+    const secondId = ethers.id("PANCAKE_V2");
+    await (await registry.addDex(flowId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    await (await registry.addDex(secondId, await secondAdapter.getAddress(), "PancakeSwap V2", 90)).wait();
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    const path = [tokenIn, tokenOut];
+    const routeData = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [path]);
+    const half = ethers.parseEther("5");
+    const total = half * 2n;
+    const flowOut = (await flowRouter.getAmountsOut(half, path))[1];
+    const secondOut = (await secondRouter.getAmountsOut(half, path))[1];
+    const routes = [
+      { dexId: flowId, amountIn: half, amountOutMinimum: flowOut, routeData },
+      { dexId: secondId, amountIn: half, amountOutMinimum: secondOut, routeData }
+    ];
+    await (await tokenA.mint(await owner.getAddress(), total)).wait();
+    await (await tokenA.approve(await executionRouter.getAddress(), total)).wait();
+    await assert.rejects(executionRouter.swapSplitExactInput(
+      tokenIn, tokenOut, total + 1n, flowOut + secondOut, await other.getAddress(),
+      BigInt(block.timestamp + 3600), routes
+    ));
+
+    const before = await tokenB.balanceOf(await other.getAddress());
+    const tx = await executionRouter.swapSplitExactInput(
+      tokenIn, tokenOut, total, flowOut + secondOut, await other.getAddress(),
+      BigInt(block.timestamp + 3600), routes
+    );
+    const receipt = await tx.wait();
+    const swaps = receipt.logs.map((log) => {
+      try { return executionRouter.interface.parseLog(log); } catch { return null; }
+    }).filter((parsed) => parsed?.name === "SwapExecuted");
+    assert.equal(swaps.length, 2);
+    assert.equal((await tokenB.balanceOf(await other.getAddress())) - before, flowOut + secondOut);
+    assert.equal(await tokenA.balanceOf(await executionRouter.getAddress()), 0n);
+  });
 });
