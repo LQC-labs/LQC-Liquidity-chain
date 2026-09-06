@@ -79,14 +79,14 @@ const flowAdapter = await deploy("router-v2/adapters/LQCFlowAdapter", [await rou
 
 const flowDexId = ethers.id("LQC_FLOW");
 await (await registry.addDex(flowDexId, await flowAdapter.getAddress(), "LQC Flow", 100)).wait();
-const dexes = [{ id: flowDexId, name: "LQC Flow" }];
+const dexes = [{ id: flowDexId, name: "LQC Flow", kind: "v2" }];
 let pancakeAdapter = null;
 if (PANCAKE_V2_ROUTER_ADDRESS) {
   if (!ethers.isAddress(PANCAKE_V2_ROUTER_ADDRESS)) throw new Error("PANCAKE_V2_ROUTER_ADDRESS must be valid.");
   pancakeAdapter = await deploy("router-v2/adapters/PancakeV2Adapter", [PANCAKE_V2_ROUTER_ADDRESS]);
   const pancakeDexId = ethers.id("PANCAKE_V2");
   await (await registry.addDex(pancakeDexId, await pancakeAdapter.getAddress(), "PancakeSwap V2", 90)).wait();
-  dexes.push({ id: pancakeDexId, name: "PancakeSwap V2" });
+  dexes.push({ id: pancakeDexId, name: "PancakeSwap V2", kind: "v2" });
 }
 let pancakeV3Adapter = null;
 if (PANCAKE_V3_QUOTER_ADDRESS || PANCAKE_V3_ROUTER_ADDRESS) {
@@ -112,7 +112,7 @@ if (PANCAKE_V3_QUOTER_ADDRESS || PANCAKE_V3_ROUTER_ADDRESS) {
   }
   const pancakeV3DexId = ethers.id("PANCAKE_V3");
   await (await registry.addDex(pancakeV3DexId, await pancakeV3Adapter.getAddress(), "PancakeSwap V3", 95)).wait();
-  dexes.push({ id: pancakeV3DexId, name: "PancakeSwap V3" });
+  dexes.push({ id: pancakeV3DexId, name: "PancakeSwap V3", kind: "v3", pools: approvedV3Pools });
 }
 const lqcAddressForLimits = await lqc.getAddress();
 const usdtAddressForLimits = await usdt.getAddress();

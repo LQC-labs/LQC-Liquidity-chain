@@ -7,6 +7,8 @@ window.LQC_FLOW_CONFIG = Object.freeze({
   nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 },
   routerAddress: "",
   quoteRouterAddress: "",
+  executionRouterAddress: "",
+  nativeRouterAddress: "",
   dexes: [],
   tokens: [
     { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },
