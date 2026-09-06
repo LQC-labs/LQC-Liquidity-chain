@@ -11,6 +11,7 @@ This roadmap is gated by evidence, security review, liquidity conditions, legal 
 - Adapter-based Router 2.0
 - Native BNB single-route execution
 - ERC-20 split quotation and execution
+- Token allowlisting plus per-trade and UTC-day cumulative input limits
 - Uniswap V2-compatible DEX adapter
 - Direct, one-hop, and two-hop off-chain path generation
 - Gas-aware SDK ranking and two-way split optimization
@@ -32,7 +33,8 @@ Exit evidence: reproducible compilation, automated test results, conservative do
 - Verify source code on BscScan
 - Publish addresses, compiler settings, deployment transaction hashes, and configuration
 - Run failure, recovery, and RPC-degradation scenarios
-- Apply initial transaction and adapter limits
+- Configure the implemented token and transaction limits through timelock governance
+- Add reviewed USD normalization and pool accounting before activating TVL/volume USD caps or market-triggered stops
 
 Exit evidence: verified testnet contracts, reproducible deployment record, complete test report, and resolved high-severity internal findings.
 
