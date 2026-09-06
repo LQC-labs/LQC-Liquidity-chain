@@ -2,136 +2,144 @@
 <html lang="ko">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#03070c">
-  <meta name="description" content="LQC Flow DEX — BNB Smart Chain testnet swap interface">
-  <title>LQC Flow DEX</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="LQC Flow DEX — optimal-route BSC testnet trading interface">
+  <title>LQC Flow DEX · LQC Market</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="ambient ambient-a"></div>
-  <div class="ambient ambient-b"></div>
-
-  <header class="topbar">
-    <a class="brand" href="../../index.html" aria-label="Liquidity Chain homepage">
-      <span class="brand-mark"><img src="../../lqc-token-symbol.png" alt=""></span>
-      <span><strong>LQC FLOW</strong><small>DECENTRALIZED EXCHANGE</small></span>
-    </a>
-    <div class="top-actions">
-      <span class="network-pill"><i></i><span id="networkLabel">BSC Testnet</span></span>
+  <div class="app-shell">
+    <header class="market-header">
+      <a class="back-button" href="../../index.html" aria-label="Liquidity Chain 홈페이지로 돌아가기">‹</a>
+      <span class="asset-logo"><img src="../../lqc-token-symbol.png" alt=""></span>
+      <div class="asset-copy">
+        <div><h1>LQC</h1><span class="pair">/ WBNB</span><span class="testnet-badge">TESTNET</span></div>
+        <p><strong>시세 연결 대기</strong><span>Router 2.0 최적경로</span></p>
+      </div>
       <button class="wallet-button" id="connectButton" type="button">지갑 연결</button>
+    </header>
+
+    <nav class="market-tabs" aria-label="LQC 시장 정보">
+      <button class="active" type="button">차트</button><button type="button">정보</button>
+      <button type="button">데이터</button><button type="button">위험</button>
+    </nav>
+
+    <main class="market-layout">
+      <div class="market-column">
+        <section class="chart-card" aria-labelledby="chartTitle">
+          <div class="market-chips">
+            <span id="routerMode">AMM V1</span><span>최적경로 비교</span>
+            <span id="contractState" class="pending">배포 대기</span>
+          </div>
+          <div class="chart-toolbar">
+            <h2 id="chartTitle">LQC / WBNB</h2>
+            <div class="timeframes" aria-label="차트 주기">
+              <button data-period="1m" type="button">1분</button>
+              <button class="active" data-period="15m" type="button">15분</button>
+              <button data-period="1h" type="button">1시간</button>
+              <button data-period="4h" type="button">4시간</button>
+              <button data-period="1d" type="button">1일</button>
+            </div>
+          </div>
+          <div class="chart-legend" aria-label="이동평균">
+            <span class="ma5">MA5 <b id="ma5Value">—</b></span>
+            <span class="ma10">MA10 <b id="ma10Value">—</b></span>
+            <span class="ma20">MA20 <b id="ma20Value">—</b></span>
+            <span class="demo-label">TESTNET DEMO</span>
+          </div>
+          <div class="chart-stage"><canvas id="marketChart" aria-label="LQC 테스트넷 데모 캔들차트"></canvas></div>
+          <div class="indicator-tabs" aria-label="차트 보조지표">
+            <button class="active" type="button">VOL</button><button type="button">MA</button>
+            <button type="button">EMA</button><button type="button">BOLL</button>
+            <button type="button">MACD</button><button type="button">KDJ</button>
+          </div>
+        </section>
+
+        <section class="positions-card" aria-labelledby="positionsTitle">
+          <div class="position-tabs">
+            <button class="active" id="positionsTitle" type="button">내 자산</button>
+            <button type="button">보유자</button><button type="button">거래 현황</button>
+          </div>
+          <div class="position-body">
+            <div class="position-label"><span class="mini-logo">L</span><span>LQC 잔액</span><button id="refreshBalance" type="button" aria-label="잔액 새로고침">↻</button></div>
+            <strong id="portfolioValue">—</strong>
+            <p>지갑을 연결하면 LQC와 선택 토큰 잔액을 확인할 수 있습니다.</p>
+          </div>
+        </section>
+      </div>
+
+      <aside class="trade-shell" aria-labelledby="tradeTitle">
+        <div class="trade-heading">
+          <div><span class="eyebrow">OPTIMAL ROUTE SWAP</span><h2 id="tradeTitle">LQC 거래</h2></div>
+          <button class="icon-button" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⚙</button>
+        </div>
+        <div class="settings" id="settingsPanel" hidden>
+          <label for="slippageInput">슬리피지 허용 범위</label>
+          <div class="slippage-row">
+            <button class="slippage-option" data-value="0.1" type="button">0.1%</button>
+            <button class="slippage-option active" data-value="0.5" type="button">0.5%</button>
+            <button class="slippage-option" data-value="1" type="button">1.0%</button>
+            <span class="custom-slippage"><input id="slippageInput" inputmode="decimal" value="0.5" aria-label="직접 입력 슬리피지"><b>%</b></span>
+          </div>
+        </div>
+        <div class="token-panel">
+          <div class="panel-label"><span>보내는 토큰</span><button id="maxButton" type="button">MAX</button></div>
+          <div class="amount-row">
+            <input id="amountIn" inputmode="decimal" autocomplete="off" placeholder="0.0" aria-label="보낼 수량">
+            <button class="token-button" id="tokenInButton" type="button" aria-haspopup="listbox">
+              <span class="token-symbol" id="tokenInIcon">BNB</span><b id="tokenInLabel">BNB</b><span>⌄</span>
+            </button>
+          </div>
+          <div class="balance">잔액 <span id="balanceIn">—</span></div>
+        </div>
+        <div class="flip-wrap"><button class="flip-button" id="flipButton" type="button" aria-label="토큰 순서 변경">↓</button></div>
+        <div class="token-panel receive-panel">
+          <div class="panel-label"><span>받는 토큰</span><span>예상 수량</span></div>
+          <div class="amount-row">
+            <output id="amountOut">0.0</output>
+            <button class="token-button" id="tokenOutButton" type="button" aria-haspopup="listbox">
+              <span class="token-symbol mint" id="tokenOutIcon">LQC</span><b id="tokenOutLabel">LQC</b><span>⌄</span>
+            </button>
+          </div>
+          <div class="balance">잔액 <span id="balanceOut">—</span></div>
+        </div>
+        <div class="quote-box" id="quoteBox">
+          <div><span>최소 수령량</span><b id="minimumReceived">—</b></div>
+          <div><span>선택된 DEX</span><b id="routeDex">LQC Flow AMM</b></div>
+          <div><span>최적 경로</span><b id="routeLabel">BNB → LQC</b></div>
+          <div><span>실행 전략</span><b id="routeStrategy">단일 경로</b></div>
+          <div><span>분할 예상 이점</span><b id="routeSavings">—</b></div>
+          <div><span>예상 가격 영향</span><b id="priceImpact">—</b></div>
+          <div><span>예상 네트워크 수수료</span><b id="estimatedGasFee">—</b></div>
+          <div><span>비교 결과</span><b id="routeAlternatives">직접 경로</b></div>
+        </div>
+        <div class="status" id="statusBox" role="status"><i></i><span id="statusText">테스트넷 배포 주소를 연결하면 거래가 활성화됩니다.</span></div>
+        <div class="trade-actions" aria-label="LQC 매수 및 매도">
+          <button class="trade-action action-buy" id="buyAction" type="button" disabled>BUY</button>
+          <button class="trade-action action-sell" id="sellAction" type="button" disabled>SELL</button>
+        </div>
+        <p class="risk-note">테스트넷 MVP · 실제 자금을 보내지 마세요. 독립 보안감사 전에는 메인넷에서 사용할 수 없습니다.</p>
+      </aside>
+    </main>
+  </div>
+
+  <dialog id="tokenDialog"><form method="dialog">
+    <div class="dialog-head"><h2>토큰 선택</h2><button value="cancel" aria-label="닫기">×</button></div>
+    <div class="token-list" id="tokenList" role="listbox"></div>
+  </form></dialog>
+  <dialog id="confirmDialog"><form method="dialog">
+    <div class="dialog-head"><h2>거래 내용 확인</h2><button value="cancel" aria-label="닫기">×</button></div>
+    <div class="confirm-summary">
+      <div><span>보내는 수량</span><b id="confirmPay">—</b></div><div><span>최소 수령량</span><b id="confirmReceive">—</b></div>
+      <div><span>실행 전략</span><b id="confirmStrategy">—</b></div><div><span>예상 가스비</span><b id="confirmGas">—</b></div>
     </div>
-  </header>
-
-  <main>
-    <section class="trade-shell" aria-labelledby="tradeTitle">
-      <div class="trade-heading">
-        <div>
-          <span class="eyebrow">NON-CUSTODIAL SWAP</span>
-          <h1 id="tradeTitle">LQC 거래</h1>
-        </div>
-        <button class="icon-button" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⚙</button>
-      </div>
-
-      <div class="settings" id="settingsPanel" hidden>
-        <label for="slippageInput">슬리피지 허용 범위</label>
-        <div class="slippage-row">
-          <button class="slippage-option" data-value="0.1" type="button">0.1%</button>
-          <button class="slippage-option active" data-value="0.5" type="button">0.5%</button>
-          <button class="slippage-option" data-value="1" type="button">1.0%</button>
-          <span class="custom-slippage"><input id="slippageInput" inputmode="decimal" value="0.5" aria-label="직접 입력 슬리피지"><b>%</b></span>
-        </div>
-      </div>
-
-      <div class="token-panel">
-        <div class="panel-label"><span>보내는 토큰</span><button id="maxButton" type="button">MAX</button></div>
-        <div class="amount-row">
-          <input id="amountIn" inputmode="decimal" autocomplete="off" placeholder="0.0" aria-label="보낼 수량">
-          <button class="token-button" id="tokenInButton" type="button" aria-haspopup="listbox">
-            <span class="token-symbol" id="tokenInIcon">BNB</span><b id="tokenInLabel">BNB</b><span>⌄</span>
-          </button>
-        </div>
-        <div class="balance">잔액 <span id="balanceIn">—</span></div>
-      </div>
-
-      <div class="flip-wrap"><button class="flip-button" id="flipButton" type="button" aria-label="토큰 순서 변경">↓</button></div>
-
-      <div class="token-panel receive-panel">
-        <div class="panel-label"><span>받는 토큰</span><span>예상 수량</span></div>
-        <div class="amount-row">
-          <output id="amountOut">0.0</output>
-          <button class="token-button" id="tokenOutButton" type="button" aria-haspopup="listbox">
-            <span class="token-symbol mint" id="tokenOutIcon">LQC</span><b id="tokenOutLabel">LQC</b><span>⌄</span>
-          </button>
-        </div>
-        <div class="balance">잔액 <span id="balanceOut">—</span></div>
-      </div>
-
-      <div class="quote-box" id="quoteBox">
-        <div><span>최소 수령량</span><b id="minimumReceived">—</b></div>
-        <div><span>선택된 DEX</span><b id="routeDex">LQC Flow AMM</b></div>
-        <div><span>최적 경로</span><b id="routeLabel">BNB → LQC</b></div>
-        <div><span>실행 전략</span><b id="routeStrategy">단일 경로</b></div>
-        <div><span>분할 예상 이점</span><b id="routeSavings">—</b></div>
-        <div><span>예상 가격 영향</span><b id="priceImpact">—</b></div>
-        <div><span>예상 네트워크 수수료</span><b id="estimatedGasFee">—</b></div>
-        <div><span>비교 결과</span><b id="routeAlternatives">직접 경로</b></div>
-      </div>
-
-      <div class="status" id="statusBox" role="status">
-        <i></i><span id="statusText">테스트넷 배포 주소를 연결하면 거래가 활성화됩니다.</span>
-      </div>
-
-      <div class="trade-actions" aria-label="LQC 매수 및 매도">
-        <button class="trade-action action-buy" id="buyAction" type="button" disabled>BUY</button>
-        <button class="trade-action action-sell" id="sellAction" type="button" disabled>SELL</button>
-      </div>
-      <p class="risk-note">테스트넷 MVP · 실제 자금을 보내지 마세요. 독립 보안감사 전에는 메인넷에서 사용할 수 없습니다.</p>
-    </section>
-
-    <aside class="market-panel" aria-label="LQC Flow 거래 정보">
-      <div class="market-head"><span>ROUTE STATUS</span><b id="routerMode">AMM V1</b></div>
-      <div class="route-visual" aria-hidden="true">
-        <div class="orbit orbit-a"></div><div class="orbit orbit-b"></div>
-        <div class="route-node node-a">BNB</div><div class="route-node node-b">LQC</div>
-        <div class="route-core">FLOW<small>0.30%</small></div><div class="route-pulse"></div>
-      </div>
-      <dl class="market-data">
-        <div><dt>네트워크</dt><dd>BNB Smart Chain</dd></div>
-        <div><dt>거래 방식</dt><dd>Constant Product AMM</dd></div>
-        <div><dt>자산 보관</dt><dd>Non-custodial</dd></div>
-        <div><dt>컨트랙트</dt><dd id="contractState" class="pending">배포 대기</dd></div>
-      </dl>
-    </aside>
-  </main>
-
-  <dialog id="tokenDialog">
-    <form method="dialog">
-      <div class="dialog-head"><h2>토큰 선택</h2><button value="cancel" aria-label="닫기">×</button></div>
-      <div class="token-list" id="tokenList" role="listbox"></div>
-    </form>
-  </dialog>
-
-  <dialog id="confirmDialog">
-    <form method="dialog">
-      <div class="dialog-head"><h2>거래 내용 확인</h2><button value="cancel" aria-label="닫기">×</button></div>
-      <div class="confirm-summary">
-        <div><span>보내는 수량</span><b id="confirmPay">—</b></div>
-        <div><span>최소 수령량</span><b id="confirmReceive">—</b></div>
-        <div><span>실행 전략</span><b id="confirmStrategy">—</b></div>
-        <div><span>예상 가스비</span><b id="confirmGas">—</b></div>
-      </div>
-      <p class="confirm-warning" id="confirmWarning">견적은 블록 상태에 따라 달라질 수 있습니다.</p>
-      <div class="confirm-actions">
-        <button value="cancel" type="submit">취소</button>
-        <button value="confirm" type="submit">지갑에서 계속</button>
-      </div>
-    </form>
-  </dialog>
+    <p class="confirm-warning" id="confirmWarning">견적은 블록 상태에 따라 달라질 수 있습니다.</p>
+    <div class="confirm-actions"><button value="cancel" type="submit">취소</button><button value="confirm" type="submit">지갑에서 계속</button></div>
+  </form></dialog>
 
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js"></script>
-  <script src="route-optimizer.js"></script>
-  <script src="app.js"></script>
+  <script src="config.js"></script><script src="market-chart.js"></script>
+  <script src="route-optimizer.js"></script><script src="app.js"></script>
 </body>
 </html>
