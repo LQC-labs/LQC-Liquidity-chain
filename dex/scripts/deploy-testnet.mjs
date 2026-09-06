@@ -10,6 +10,7 @@ const {
   PANCAKE_V2_ROUTER_ADDRESS = "",
   PANCAKE_V3_QUOTER_ADDRESS = "",
   PANCAKE_V3_ROUTER_ADDRESS = "",
+  PANCAKE_V3_ALLOWED_POOLS = "[]",
   TIMELOCK_DELAY = "3600",
   TEST_LQC_MAX_TX = "10000",
   TEST_LQC_MAX_DAY = "100000",
@@ -93,8 +94,22 @@ if (PANCAKE_V3_QUOTER_ADDRESS || PANCAKE_V3_ROUTER_ADDRESS) {
     throw new Error("Set both valid PANCAKE_V3_QUOTER_ADDRESS and PANCAKE_V3_ROUTER_ADDRESS values.");
   }
   pancakeV3Adapter = await deploy("router-v2/adapters/PancakeV3ExecutionAdapter", [
-    PANCAKE_V3_QUOTER_ADDRESS, PANCAKE_V3_ROUTER_ADDRESS
+    PANCAKE_V3_QUOTER_ADDRESS, PANCAKE_V3_ROUTER_ADDRESS, wallet.address
   ]);
+  for (const fee of [100, 500, 2500, 10000]) {
+    await (await pancakeV3Adapter.setFeeTierAllowed(fee, true)).wait();
+  }
+  const approvedV3Pools = JSON.parse(PANCAKE_V3_ALLOWED_POOLS);
+  if (!Array.isArray(approvedV3Pools) || approvedV3Pools.length === 0) {
+    throw new Error("PANCAKE_V3_ALLOWED_POOLS must contain at least one reviewed pool.");
+  }
+  for (const pool of approvedV3Pools) {
+    if (!ethers.isAddress(pool.tokenA) || !ethers.isAddress(pool.tokenB) ||
+        ![100, 500, 2500, 10000].includes(Number(pool.fee))) {
+      throw new Error("Each PancakeSwap V3 pool needs valid tokenA, tokenB, and reviewed fee tier.");
+    }
+    await (await pancakeV3Adapter.setPoolAllowed(pool.tokenA, pool.tokenB, Number(pool.fee), true)).wait();
+  }
   const pancakeV3DexId = ethers.id("PANCAKE_V3");
   await (await registry.addDex(pancakeV3DexId, await pancakeV3Adapter.getAddress(), "PancakeSwap V3", 95)).wait();
   dexes.push({ id: pancakeV3DexId, name: "PancakeSwap V3" });
@@ -118,6 +133,10 @@ await (await registry.beginOwnershipTransfer(await timelock.getAddress())).wait(
 await (await timelock.acceptRegistryOwnership(await registry.getAddress())).wait();
 await (await riskRegistry.beginOwnershipTransfer(await timelock.getAddress())).wait();
 await (await timelock.acceptRegistryOwnership(await riskRegistry.getAddress())).wait();
+if (pancakeV3Adapter) {
+  await (await pancakeV3Adapter.beginOwnershipTransfer(await timelock.getAddress())).wait();
+  await (await timelock.acceptRegistryOwnership(await pancakeV3Adapter.getAddress())).wait();
+}
 
 const lqcSupply = ethers.parseUnits(TEST_LQC_SUPPLY, 18);
 const usdtSupply = ethers.parseUnits(TEST_USDT_SUPPLY, 18);

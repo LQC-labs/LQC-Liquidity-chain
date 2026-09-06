@@ -366,7 +366,9 @@ describe("LQC Router 2.0", function () {
       artifact("PancakeV3ExecutionAdapter", "router-v2/adapters/PancakeV3ExecutionAdapter").bytecode,
       owner
     );
-    const v3Adapter = await Adapter.deploy(await quoter.getAddress(), await swapRouter.getAddress());
+    const v3Adapter = await Adapter.deploy(
+      await quoter.getAddress(), await swapRouter.getAddress(), await owner.getAddress()
+    );
     await v3Adapter.waitForDeployment();
 
     const dexId = ethers.id("PANCAKE_V3");
@@ -374,6 +376,10 @@ describe("LQC Router 2.0", function () {
     const tokenIn = await tokenA.getAddress();
     const tokenOut = await tokenB.getAddress();
     const packedPath = ethers.solidityPacked(["address", "uint24", "address"], [tokenIn, 2500, tokenOut]);
+    await assert.rejects(v3Adapter.connect(other).setFeeTierAllowed(2500, true));
+    await (await v3Adapter.setFeeTierAllowed(2500, true)).wait();
+    await assert.rejects(v3Adapter.quoteExactInput(tokenIn, tokenOut, 1n, packedPath));
+    await (await v3Adapter.setPoolAllowed(tokenIn, tokenOut, 2500, true)).wait();
     const amountIn = ethers.parseEther("10");
     const expectedOut = amountIn * 2n;
     await (await tokenA.mint(await owner.getAddress(), amountIn)).wait();
@@ -395,5 +401,15 @@ describe("LQC Router 2.0", function () {
     assert.equal((await tokenB.balanceOf(await other.getAddress())) - before, expectedOut);
     assert.equal(await tokenA.balanceOf(await v3Adapter.getAddress()), 0n);
     assert.equal(await tokenA.allowance(await v3Adapter.getAddress(), await swapRouter.getAddress()), 0n);
+
+    const unapprovedFeePath = ethers.solidityPacked(
+      ["address", "uint24", "address"], [tokenIn, 500, tokenOut]
+    );
+    await assert.rejects(v3Adapter.quoteExactInput(tokenIn, tokenOut, 1n, unapprovedFeePath));
+    const fourHopPath = ethers.solidityPacked(
+      ["address", "uint24", "address", "uint24", "address", "uint24", "address", "uint24", "address"],
+      [tokenIn, 2500, tokenOut, 2500, tokenIn, 2500, tokenOut, 2500, tokenOut]
+    );
+    await assert.rejects(v3Adapter.quoteExactInput(tokenIn, tokenOut, 1n, fourHopPath));
   });
 });

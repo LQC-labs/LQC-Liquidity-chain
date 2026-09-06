@@ -26,7 +26,7 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - \`LQCFlowAdapter\`: connects native LQC Flow direct or multi-hop pool quotes to Router 2.0
 - \`PancakeV2Adapter\`: connects reviewed PancakeSwap V2-compatible routers for cross-DEX quote comparison
 - \`PancakeV3Adapter\`: validates packed V3 paths and reads PancakeSwap QuoterV2 through an isolated static call
-- \`PancakeV3ExecutionAdapter\`: executes reviewed token-to-token PancakeSwap V3 paths with deadline, exact-approval, and minimum-output protection
+- \`PancakeV3ExecutionAdapter\`: executes only reviewed V3 fee tiers and token-pair pools, caps paths at three hops, and applies deadline, exact-approval, and minimum-output protection
 - \`LQCExecutionRouter\`: executes token exact-input swaps only through enabled registry adapters, with minimum-output, deadline, recipient balance verification, exact temporary approvals, and reentrancy protection
 - Automatic best-route execution compares every enabled execution adapter, isolates failed routes, applies caller-supplied gas estimates denominated in the output token, and uses deterministic registry priority for ties
 - Atomic split execution can divide one order across two to four reviewed routes, enforcing exact input allocation plus per-route and aggregate minimum-output protection
@@ -69,6 +69,7 @@ export DEPLOYER_PRIVATE_KEY="..." # never commit this value
 export WBNB_ADDRESS="0x..."
 export PANCAKE_V3_QUOTER_ADDRESS="0x..." # optional; set together with the V3 router
 export PANCAKE_V3_ROUTER_ADDRESS="0x..." # optional; token-to-token execution
+export PANCAKE_V3_ALLOWED_POOLS='[{"tokenA":"0x...","tokenB":"0x...","fee":2500}]'
 npm run deploy:testnet
 ```
 
