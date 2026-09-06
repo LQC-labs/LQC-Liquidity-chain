@@ -61,6 +61,9 @@ they do not define LQC mainnet supply, allocation, valuation, or launch liquidit
 When `FACTORY_OWNER` differs from the deployer, the registry starts a two-step ownership transfer;
 the multisig must call `acceptOwnership()` after reviewing the deployment record.
 
+The automated test suite also reproduces the complete bootstrap locally and verifies both pool
+creation, Router 2.0 quoting, a capped smoke swap, and rejection when minimum-output protection fails.
+
 After deployment, configure the verified Router, WBNB, and LQC test-token addresses:
 
 ```bash
