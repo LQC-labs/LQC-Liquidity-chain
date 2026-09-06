@@ -10,6 +10,7 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - `LQCFlowQuoter`: compares up to 16 candidate routes and selects the highest-output viable path
 - `LQCFlowRouterV2`: compares approved external-DEX adapters and executes the best token or native-BNB route
 - Router V2 split execution: divides one ERC-20 trade across up to 8 approved DEX routes using basis-point allocations
+- Router V2 emergency pause: blocks every swap entry point while leaving route quotes available for inspection
 - `sdk/route-optimizer.mjs`: discovers direct, one-hop, and two-hop routes across up to 16 DEX adapters and returns the best executable route
 - `UniswapV2DEXAdapter`: integration layer for PancakeSwap V2, Biswap, and compatible routers
 - Native BNB wrapping/unwrapping through the configured WBNB contract
@@ -75,10 +76,12 @@ For Router V2 mode, also configure `ROUTER_V2_ADDRESS` and `PANCAKE_ADAPTER_ADDR
 
 Before requesting the wallet transaction, the UI shows a confirmation summary with the minimum received amount, selected strategy, indicative BNB network fee, and a warning when estimated price impact is 3% or higher. Price impact and network fee values are estimates, not execution guarantees.
 
+The UI reads Router V2's on-chain pause state. When swaps are paused, quotes remain visible but BUY and SELL execution is disabled.
+
 Never commit private keys or `.env` files.
 
 ## Current limitations
 
-This is an unaudited testnet MVP, not production-ready software. Router V2 now provides the adapter registry, best-quote execution core, native-BNB wrapping/unwrapping, ERC-20 split execution, and a Uniswap V2-compatible adapter; the browser and SDK calculate optimal split percentages off-chain. Network-specific router addresses still require testnet verification and allowlisting. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, governance timelocks, pausability, price oracles, and the full chart-based trading interface are intentionally deferred.
+This is an unaudited testnet MVP, not production-ready software. Router V2 now provides the adapter registry, best-quote execution core, native-BNB wrapping/unwrapping, ERC-20 split execution, function-level swap pausing, and a Uniswap V2-compatible adapter; the browser and SDK calculate optimal split percentages off-chain. Network-specific router addresses still require testnet verification and allowlisting. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, governance timelocks, price oracles, and the full chart-based trading interface are intentionally deferred.
 
 Before any mainnet use, complete independent audits, invariant/fuzz testing, economic simulations, legal review, multisig/timelock setup, token and pool allowlisting decisions, monitoring, and a capped-liquidity testnet/pilot phase.
