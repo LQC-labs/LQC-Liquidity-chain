@@ -6,6 +6,7 @@
   "scripts": {
     "compile": "node scripts/compile.mjs",
     "test": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
+    "deploy:testnet": "npm run compile && node scripts/deploy-testnet.mjs",
     "configure:app": "node scripts/configure-app.mjs"
   },
   "devDependencies": {
