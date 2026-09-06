@@ -20,7 +20,7 @@ The following documents provide an evidence-oriented review package for exchange
 
 ### Current verifiable implementation
 
-As of **September 6, 2026**, the repository contains an unaudited, testnet-oriented DEX and Router 2.0 implementation. The current branch compiles 17 Solidity source files and passes 32 local automated tests. It includes a constant-product AMM, route quoter, allowlisted external-DEX adapters, native-BNB routes, two-way ERC-20 split execution, function-level swap pausing, an off-chain route optimizer, and a wallet-connected static trading interface.
+As of **September 6, 2026**, the repository contains an unaudited, testnet-oriented DEX and Router 2.0 implementation. The current branch compiles 18 Solidity source files and passes 36 local automated tests. It includes a constant-product AMM, route quoter, allowlisted external-DEX adapters, native-BNB routes, two-way ERC-20 split execution, function-level swap pausing, a governance timelock designed for multisig administration, an off-chain route optimizer, and a wallet-connected static trading interface.
 
 No production deployment, live liquidity, independent audit, or exchange listing is claimed. Contract addresses will be published only after deployment, verification, and formal approval.
 
