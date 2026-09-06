@@ -46,6 +46,21 @@ export FACTORY_OWNER="0x..." # preferably a multisig; optional for testnet
 node scripts/deploy.mjs
 ```
 
+For a complete BSC testnet setup that deploys owner-controlled LQC/Mock USDT tokens, Router 2.0,
+creates LQC/USDT and LQC/WBNB pools, records all addresses, and configures the web interface:
+
+```bash
+export BSC_TESTNET_RPC_URL="..."
+export DEPLOYER_PRIVATE_KEY="..." # never commit this value
+export WBNB_ADDRESS="0x..."
+npm run deploy:testnet
+```
+
+The default mock supplies and pool amounts are configurable environment values for testing only;
+they do not define LQC mainnet supply, allocation, valuation, or launch liquidity.
+When `FACTORY_OWNER` differs from the deployer, the registry starts a two-step ownership transfer;
+the multisig must call `acceptOwnership()` after reviewing the deployment record.
+
 After deployment, configure the verified Router, WBNB, and LQC test-token addresses:
 
 ```bash
