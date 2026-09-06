@@ -26,7 +26,7 @@ Exit evidence: reproducible compilation, automated test results, conservative do
 - Expand boundary, differential, invariant, fuzz, and fork tests
 - Extend the implemented sampled split invariants into stateful fuzzing and fork-based execution tests
 - Refine the implemented transaction confirmation, price-impact warning, and indicative gas estimate with live transaction simulation
-- Replace deterministic demo candles with a reviewed, timestamped market-data source and explicit stale-data handling
+- Verify and configure the implemented timestamped GeckoTerminal OHLCV source against the deployed LQC pool, then add provider redundancy
 - Validate official BSC testnet WBNB and external DEX router addresses
 - Deploy contracts to BSC testnet from a controlled account
 - Verify source code on BscScan
