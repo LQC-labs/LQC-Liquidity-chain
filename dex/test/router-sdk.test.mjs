@@ -40,4 +40,13 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.routeFeeBps({ kind: "v3", pools: [{ tokenA, tokenB, fee: 500 }] }, [tokenA, tokenB]), 5);
     assert.throws(() => sdk.priceImpactBps(0n, 1n, 1n, 1n));
   });
+
+  it("summarizes only active split routes as deterministic percentages", function () {
+    const dexes = [{ name: "A" }, { name: "B" }, { name: "C" }];
+    assert.deepEqual(
+      sdk.summarizeSplit(dexes, [600n, 0n, 400n], 1000n).map(({ dex, percent }) => [dex.name, percent]),
+      [["A", 60], ["C", 40]]
+    );
+    assert.throws(() => sdk.summarizeSplit(dexes, [1n], 1n));
+  });
 });

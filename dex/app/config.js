@@ -9,6 +9,8 @@ window.LQC_FLOW_CONFIG = Object.freeze({
   quoteRouterAddress: "",
   executionRouterAddress: "",
   nativeRouterAddress: "",
+  splitOptimizerAddress: "",
+  autoRouterAddress: "",
   dexes: [],
   tokens: [
     { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },
