@@ -15,6 +15,8 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - Local compilation and integration tests
 - Deterministic stateful AMM invariant tests covering reserve accounting, non-decreasing constant
   product, router dust balances, and permanently locked minimum liquidity
+- Sampled Router 2.0 split invariants covering exact allocation/output totals, one-to-four-route caps,
+  gas-cost deductions, inactive legs, and invalid part/route bounds
 - BSC testnet deployment script
 - Static wallet-connected swap interface in `app/`
 

@@ -347,6 +347,51 @@ describe("LQC Router 2.0", function () {
     assert.equal(await tokenA.allowance(await autoRouter.getAddress(), await executionRouter.getAddress()), 0n);
   });
 
+  it("preserves capped split invariants across sampled amounts and part counts", async function () {
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    const route = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [[tokenIn, tokenOut]]);
+    for (let i = 0; i < 5; i++) {
+      await (await registry.addDex(
+        ethers.id(`SAMPLED_DEX_${i}`), await adapter.getAddress(), `Sampled DEX ${i}`, 100 - i
+      )).wait();
+    }
+    const routeData = Array(5).fill(route);
+    const routeCosts = [0n, 1n, 2n, 3n, 4n];
+    const samples = [
+      [ethers.parseEther("1"), 2],
+      [ethers.parseEther("17"), 7],
+      [ethers.parseEther("250"), 13],
+      [ethers.parseEther("1000"), 20]
+    ];
+
+    for (const [amountIn, parts] of samples) {
+      const quote = await splitOptimizer.quoteOptimalSplitCapped(
+        tokenIn, tokenOut, amountIn, routeData, routeCosts, parts, 4
+      );
+      const allocated = Array.from(quote.amountsIn);
+      const outputs = Array.from(quote.amountsOut);
+      assert.equal(allocated.reduce((sum, value) => sum + value, 0n), amountIn);
+      assert.equal(outputs.reduce((sum, value) => sum + value, 0n), quote.totalAmountOut);
+      assert(quote.totalNetAmountOut <= quote.totalAmountOut);
+      assert(allocated.filter(value => value > 0n).length <= 4);
+      allocated.forEach((value, index) => {
+        assert.equal(value === 0n, outputs[index] === 0n, `allocation/output mismatch at route ${index}`);
+      });
+    }
+
+    const single = await splitOptimizer.quoteOptimalSplitCapped(
+      tokenIn, tokenOut, ethers.parseEther("100"), routeData, routeCosts, 10, 1
+    );
+    assert.equal(Array.from(single.amountsIn).filter(value => value > 0n).length, 1);
+    await assert.rejects(splitOptimizer.quoteOptimalSplitCapped(
+      tokenIn, tokenOut, ethers.parseEther("1"), routeData, routeCosts, 1, 4
+    ));
+    await assert.rejects(splitOptimizer.quoteOptimalSplitCapped(
+      tokenIn, tokenOut, ethers.parseEther("1"), routeData, routeCosts, 2, 5
+    ));
+  });
+
   it("quotes and executes a protected PancakeSwap V3 packed path", async function () {
     const Quoter = new ethers.ContractFactory(
       artifact("MockV3Quoter", "mocks/MockV3Quoter").abi,
