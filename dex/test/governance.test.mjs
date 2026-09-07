@@ -96,4 +96,20 @@ describe("LQC Router governance controls", function () {
     await (await timelock.cancel(id)).wait();
     assert.equal(await timelock.readyAt(id), 0n);
   });
+
+  it("hands gas-oracle administration to the timelock", async function () {
+    const Oracle = new ethers.ContractFactory(
+      artifact("LQCGasCostOracle", "router-v2/LQCGasCostOracle").abi,
+      artifact("LQCGasCostOracle", "router-v2/LQCGasCostOracle").bytecode,
+      proposer
+    );
+    const oracle = await Oracle.deploy(await proposer.getAddress(), await outsider.getAddress());
+    await oracle.waitForDeployment();
+    await (await oracle.beginOwnershipTransfer(await timelock.getAddress())).wait();
+    await (await timelock.acceptRegistryOwnership(await oracle.getAddress())).wait();
+    assert.equal(await oracle.owner(), await timelock.getAddress());
+    await assert.rejects(oracle.configureFeed(
+      await outsider.getAddress(), await outsider.getAddress(), await guardian.getAddress(), 3600, 200, 18
+    ));
+  });
 });
