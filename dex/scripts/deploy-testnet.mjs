@@ -10,7 +10,9 @@ const {
   PANCAKE_V2_ROUTER_ADDRESS = "",
   PANCAKE_V3_QUOTER_ADDRESS = "",
   PANCAKE_V3_ROUTER_ADDRESS = "",
+  PANCAKE_V3_ALLOWED_FEE_TIERS = "[100,500,2500,10000]",
   PANCAKE_V3_ALLOWED_POOLS = "[]",
+  PANCAKE_V3_MAX_HOPS = "2",
   TIMELOCK_DELAY = "3600",
   TEST_LQC_MAX_TX = "10000",
   TEST_LQC_MAX_DAY = "100000",
@@ -93,10 +95,21 @@ if (PANCAKE_V3_QUOTER_ADDRESS || PANCAKE_V3_ROUTER_ADDRESS) {
   if (!ethers.isAddress(PANCAKE_V3_QUOTER_ADDRESS) || !ethers.isAddress(PANCAKE_V3_ROUTER_ADDRESS)) {
     throw new Error("Set both valid PANCAKE_V3_QUOTER_ADDRESS and PANCAKE_V3_ROUTER_ADDRESS values.");
   }
+  const maxV3Hops = Number(PANCAKE_V3_MAX_HOPS);
+  if (!Number.isInteger(maxV3Hops) || maxV3Hops < 1 || maxV3Hops > 3) {
+    throw new Error("PANCAKE_V3_MAX_HOPS must be an integer from 1 to 3.");
+  }
+  const canonicalV3FeeTiers = new Set([100, 500, 2500, 10000]);
+  const allowedV3FeeTiers = JSON.parse(PANCAKE_V3_ALLOWED_FEE_TIERS);
+  if (!Array.isArray(allowedV3FeeTiers) || allowedV3FeeTiers.length === 0 ||
+      new Set(allowedV3FeeTiers.map(Number)).size !== allowedV3FeeTiers.length ||
+      allowedV3FeeTiers.some(fee => !canonicalV3FeeTiers.has(Number(fee)))) {
+    throw new Error("PANCAKE_V3_ALLOWED_FEE_TIERS must be a unique, non-empty subset of 100, 500, 2500, and 10000.");
+  }
   pancakeV3Adapter = await deploy("router-v2/adapters/PancakeV3ExecutionAdapter", [
-    PANCAKE_V3_QUOTER_ADDRESS, PANCAKE_V3_ROUTER_ADDRESS, wallet.address
+    PANCAKE_V3_QUOTER_ADDRESS, PANCAKE_V3_ROUTER_ADDRESS, wallet.address, maxV3Hops
   ]);
-  for (const fee of [100, 500, 2500, 10000]) {
+  for (const fee of allowedV3FeeTiers.map(Number)) {
     await (await pancakeV3Adapter.setFeeTierAllowed(fee, true)).wait();
   }
   const approvedV3Pools = JSON.parse(PANCAKE_V3_ALLOWED_POOLS);
@@ -105,14 +118,18 @@ if (PANCAKE_V3_QUOTER_ADDRESS || PANCAKE_V3_ROUTER_ADDRESS) {
   }
   for (const pool of approvedV3Pools) {
     if (!ethers.isAddress(pool.tokenA) || !ethers.isAddress(pool.tokenB) ||
-        ![100, 500, 2500, 10000].includes(Number(pool.fee))) {
+        !allowedV3FeeTiers.map(Number).includes(Number(pool.fee))) {
       throw new Error("Each PancakeSwap V3 pool needs valid tokenA, tokenB, and reviewed fee tier.");
     }
     await (await pancakeV3Adapter.setPoolAllowed(pool.tokenA, pool.tokenB, Number(pool.fee), true)).wait();
   }
   const pancakeV3DexId = ethers.id("PANCAKE_V3");
   await (await registry.addDex(pancakeV3DexId, await pancakeV3Adapter.getAddress(), "PancakeSwap V3", 95)).wait();
-  dexes.push({ id: pancakeV3DexId, name: "PancakeSwap V3", kind: "v3", adapter: await pancakeV3Adapter.getAddress(), pools: approvedV3Pools, gasUnits: 260000 });
+  dexes.push({
+    id: pancakeV3DexId, name: "PancakeSwap V3", kind: "v3",
+    adapter: await pancakeV3Adapter.getAddress(), feeTiers: allowedV3FeeTiers.map(Number),
+    pools: approvedV3Pools, maxHops: maxV3Hops, gasUnits: 260000
+  });
 }
 const lqcAddressForLimits = await lqc.getAddress();
 const usdtAddressForLimits = await usdt.getAddress();
@@ -133,6 +150,8 @@ await (await registry.beginOwnershipTransfer(await timelock.getAddress())).wait(
 await (await timelock.acceptRegistryOwnership(await registry.getAddress())).wait();
 await (await riskRegistry.beginOwnershipTransfer(await timelock.getAddress())).wait();
 await (await timelock.acceptRegistryOwnership(await riskRegistry.getAddress())).wait();
+await (await gasCostOracle.beginOwnershipTransfer(await timelock.getAddress())).wait();
+await (await timelock.acceptRegistryOwnership(await gasCostOracle.getAddress())).wait();
 if (pancakeV3Adapter) {
   await (await pancakeV3Adapter.beginOwnershipTransfer(await timelock.getAddress())).wait();
   await (await timelock.acceptRegistryOwnership(await pancakeV3Adapter.getAddress())).wait();
@@ -187,7 +206,10 @@ const record = {
     nativeRouter: { address: await nativeRouter.getAddress(), deploymentTx: txHash(nativeRouter) },
     splitOptimizer: { address: await splitOptimizer.getAddress(), deploymentTx: txHash(splitOptimizer) },
     autoRouter: { address: await autoRouter.getAddress(), deploymentTx: txHash(autoRouter) },
-    gasCostOracle: { address: await gasCostOracle.getAddress(), deploymentTx: txHash(gasCostOracle), feedsConfigured: false },
+    gasCostOracle: {
+      address: await gasCostOracle.getAddress(), deploymentTx: txHash(gasCostOracle),
+      owner: await gasCostOracle.owner(), feedsConfigured: false
+    },
     flowAdapter: { address: await flowAdapter.getAddress(), deploymentTx: txHash(flowAdapter) },
     pancakeAdapter: pancakeAdapter ? { address: await pancakeAdapter.getAddress(), deploymentTx: txHash(pancakeAdapter) } : null,
     pancakeV3Adapter: pancakeV3Adapter ? { address: await pancakeV3Adapter.getAddress(), deploymentTx: txHash(pancakeV3Adapter) } : null
