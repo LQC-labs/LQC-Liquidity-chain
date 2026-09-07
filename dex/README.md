@@ -17,6 +17,8 @@ This package implements the first testable smart-contract layer for **LQC Flow D
   product, router dust balances, and permanently locked minimum liquidity
 - Sampled Router 2.0 split invariants covering exact allocation/output totals, one-to-four-route caps,
   gas-cost deductions, inactive legs, and invalid part/route bounds
+- Atomic split rollback tests proving that a later adapter failure restores user balances, pool
+  reserves, and zero Router/adapter custody even after an earlier leg was executable
 - BSC testnet deployment script
 - Static wallet-connected swap interface in `app/`
 

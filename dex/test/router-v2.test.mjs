@@ -288,6 +288,51 @@ describe("LQC Router 2.0", function () {
     assert.equal(await tokenA.balanceOf(await executionRouter.getAddress()), 0n);
   });
 
+  it("rolls back every split leg when a later adapter route fails", async function () {
+    const firstId = ethers.id("LQC_FLOW_FIRST");
+    const failingId = ethers.id("LQC_FLOW_FAILING");
+    await (await registry.addDex(firstId, await adapter.getAddress(), "LQC Flow first", 100)).wait();
+    await (await registry.addDex(failingId, await adapter.getAddress(), "LQC Flow failing", 90)).wait();
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    const coder = ethers.AbiCoder.defaultAbiCoder();
+    const validRoute = coder.encode(["address[]"], [[tokenIn, tokenOut]]);
+    const invalidRoute = coder.encode(["address[]"], [[tokenOut, tokenIn]]);
+    const half = ethers.parseEther("5");
+    const amountIn = half * 2n;
+    const expectedFirst = (await flowRouter.getAmountsOut(half, [tokenIn, tokenOut]))[1];
+    const routes = [
+      { dexId: firstId, amountIn: half, amountOutMinimum: expectedFirst, routeData: validRoute },
+      { dexId: failingId, amountIn: half, amountOutMinimum: 1n, routeData: invalidRoute }
+    ];
+    await (await tokenA.mint(await owner.getAddress(), amountIn)).wait();
+    await (await tokenA.approve(await executionRouter.getAddress(), amountIn)).wait();
+    const Factory = new ethers.Contract(
+      await flowRouter.factory(), artifact("LQCFlowFactory").abi, owner
+    );
+    const pairAddress = await Factory.getPair(tokenIn, tokenOut);
+    const pair = new ethers.Contract(pairAddress, artifact("LQCFlowPair").abi, owner);
+    const reservesBefore = await pair.getReserves();
+    const senderBefore = await tokenA.balanceOf(await owner.getAddress());
+    const recipientBefore = await tokenB.balanceOf(await other.getAddress());
+    const block = await provider.getBlock("latest");
+
+    await assert.rejects(executionRouter.swapSplitExactInput(
+      tokenIn, tokenOut, amountIn, expectedFirst, await other.getAddress(),
+      BigInt(block.timestamp + 3600), routes
+    ));
+
+    const reservesAfter = await pair.getReserves();
+    assert.equal(await tokenA.balanceOf(await owner.getAddress()), senderBefore);
+    assert.equal(await tokenB.balanceOf(await other.getAddress()), recipientBefore);
+    assert.equal(reservesAfter[0], reservesBefore[0]);
+    assert.equal(reservesAfter[1], reservesBefore[1]);
+    assert.equal(await tokenA.balanceOf(await executionRouter.getAddress()), 0n);
+    assert.equal(await tokenB.balanceOf(await executionRouter.getAddress()), 0n);
+    assert.equal(await tokenA.balanceOf(await adapter.getAddress()), 0n);
+    assert.equal(await tokenB.balanceOf(await adapter.getAddress()), 0n);
+  });
+
   it("automatically allocates parts across DEXs to reduce price impact", async function () {
     const Factory = new ethers.ContractFactory(artifact("LQCFlowFactory").abi, artifact("LQCFlowFactory").bytecode, owner);
     const secondFactory = await Factory.deploy(await owner.getAddress());
