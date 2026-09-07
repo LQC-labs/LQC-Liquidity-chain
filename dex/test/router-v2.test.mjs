@@ -457,7 +457,7 @@ describe("LQC Router 2.0", function () {
       owner
     );
     const v3Adapter = await Adapter.deploy(
-      await quoter.getAddress(), await swapRouter.getAddress(), await owner.getAddress()
+      await quoter.getAddress(), await swapRouter.getAddress(), await owner.getAddress(), 3
     );
     await v3Adapter.waitForDeployment();
 
@@ -501,5 +501,49 @@ describe("LQC Router 2.0", function () {
       [tokenIn, 2500, tokenOut, 2500, tokenIn, 2500, tokenOut, 2500, tokenOut]
     );
     await assert.rejects(v3Adapter.quoteExactInput(tokenIn, tokenOut, 1n, fourHopPath));
+  });
+
+  it("enforces the configured PancakeSwap V3 multihop ceiling", async function () {
+    const Quoter = new ethers.ContractFactory(
+      artifact("MockV3Quoter", "mocks/MockV3Quoter").abi,
+      artifact("MockV3Quoter", "mocks/MockV3Quoter").bytecode,
+      owner
+    );
+    const SwapRouter = new ethers.ContractFactory(
+      artifact("MockV3SwapRouter", "mocks/MockV3SwapRouter").abi,
+      artifact("MockV3SwapRouter", "mocks/MockV3SwapRouter").bytecode,
+      owner
+    );
+    const quoter = await Quoter.deploy(2);
+    const swapRouter = await SwapRouter.deploy(2);
+    await Promise.all([quoter.waitForDeployment(), swapRouter.waitForDeployment()]);
+    const Adapter = new ethers.ContractFactory(
+      artifact("PancakeV3ExecutionAdapter", "router-v2/adapters/PancakeV3ExecutionAdapter").abi,
+      artifact("PancakeV3ExecutionAdapter", "router-v2/adapters/PancakeV3ExecutionAdapter").bytecode,
+      owner
+    );
+    await assert.rejects(Adapter.deploy(
+      await quoter.getAddress(), await swapRouter.getAddress(), await owner.getAddress(), 0
+    ));
+    await assert.rejects(Adapter.deploy(
+      await quoter.getAddress(), await swapRouter.getAddress(), await owner.getAddress(), 4
+    ));
+    const v3Adapter = await Adapter.deploy(
+      await quoter.getAddress(), await swapRouter.getAddress(), await owner.getAddress(), 1
+    );
+    await v3Adapter.waitForDeployment();
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    await (await v3Adapter.setFeeTierAllowed(2500, true)).wait();
+    await (await v3Adapter.setPoolAllowed(tokenIn, tokenOut, 2500, true)).wait();
+    const directPath = ethers.solidityPacked(
+      ["address", "uint24", "address"], [tokenIn, 2500, tokenOut]
+    );
+    assert.equal(await v3Adapter.quoteExactInput(tokenIn, tokenOut, 100n, directPath), 200n);
+    const twoHopPath = ethers.solidityPacked(
+      ["address", "uint24", "address", "uint24", "address"],
+      [tokenIn, 2500, tokenOut, 2500, tokenOut]
+    );
+    await assert.rejects(v3Adapter.quoteExactInput(tokenIn, tokenOut, 100n, twoHopPath));
   });
 });
