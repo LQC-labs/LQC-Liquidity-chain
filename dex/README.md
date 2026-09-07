@@ -84,7 +84,9 @@ creation, Router 2.0 quoting, a capped smoke swap, and rejection when minimum-ou
 
 After deployment, run the read-only real-address validator before any smoke swap. It refuses every
 chain except BSC testnet `97`, checks deployed bytecode, verifies PancakeSwap V2/V3 Router-to-Factory
-and WBNB links, and confirms LQC timelock ownership, emergency pause authority, executor, and DEX count.
+and WBNB links, and confirms LQC timelock ownership, emergency pause authority, executor, DEX count,
+registry order, adapter addresses, active route status, Router/Emergency module linkage, and minimum
+timelock delay. A deployment record now pins each registered adapter address for this comparison.
 
 ```bash
 export BSC_TESTNET_RPC_URL="https://..."

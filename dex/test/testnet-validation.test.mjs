@@ -3,7 +3,8 @@ import {
   PANCAKE_BSC_TESTNET,
   assertBscTestnetChain,
   assertContractCode,
-  deploymentContractAddresses
+  deploymentContractAddresses,
+  validateDeploymentDexRecords
 } from "../scripts/validate-bsc-testnet.mjs";
 
 describe("BSC testnet real-address validation", function () {
@@ -28,5 +29,21 @@ describe("BSC testnet real-address validation", function () {
     assert.equal(Object.keys(deploymentContractAddresses(deployment)).length, 5);
     delete deployment.contracts.timelock;
     assert.throws(() => deploymentContractAddresses(deployment), /missing timelock/);
+  });
+
+  it("matches recorded DEX ids, order, adapters, and active status", function () {
+    const id = `0x${"11".repeat(32)}`;
+    const adapter = "0x0000000000000000000000000000000000000001";
+    const records = [{ id, name: "LQC Flow", adapter }];
+    const onchain = [{ id, adapter, enabled: true, priority: 100 }];
+    assert.doesNotThrow(() => validateDeploymentDexRecords(records, onchain));
+    assert.throws(
+      () => validateDeploymentDexRecords(records, [{ ...onchain[0], enabled: false }]),
+      /disabled in the registry/
+    );
+    assert.throws(
+      () => validateDeploymentDexRecords(records, [{ ...onchain[0], adapter: "0x0000000000000000000000000000000000000002" }]),
+      /adapter mismatch/
+    );
   });
 });

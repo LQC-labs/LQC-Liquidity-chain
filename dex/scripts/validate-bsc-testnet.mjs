@@ -31,6 +31,25 @@ export function deploymentContractAddresses(deployment) {
   }));
 }
 
+export function validateDeploymentDexRecords(records, onchainDexes) {
+  if (!Array.isArray(records) || records.length === 0) throw new Error("Deployment record has no registered DEXes.");
+  if (records.length !== onchainDexes.length) throw new Error("Registered DEX count differs from deployment record.");
+  const seen = new Set();
+  for (let i = 0; i < records.length; i++) {
+    const record = records[i];
+    const onchain = onchainDexes[i];
+    if (!ethers.isHexString(record?.id, 32)) throw new Error(`DEX record ${i} has an invalid id.`);
+    const key = record.id.toLowerCase();
+    if (seen.has(key)) throw new Error(`DEX record ${i} duplicates an id.`);
+    seen.add(key);
+    if (record.id.toLowerCase() !== onchain.id.toLowerCase()) throw new Error(`DEX record ${i} id/order mismatch.`);
+    if (!onchain.enabled) throw new Error(`${record.name || record.id} is disabled in the registry.`);
+    if (record.adapter && !same(record.adapter, onchain.adapter)) {
+      throw new Error(`${record.name || record.id} adapter mismatch.`);
+    }
+  }
+}
+
 export async function validateBscTestnet({ provider, deployment }) {
   const network = await provider.getNetwork();
   assertBscTestnetChain(network.chainId);
@@ -52,7 +71,9 @@ export async function validateBscTestnet({ provider, deployment }) {
   if (!same(v2Wbnb, v3Wbnb) || !same(v3Wbnb, quoterWbnb)) throw new Error("PancakeSwap WBNB mismatch.");
 
   const registry = new ethers.Contract(deployment.contracts.dexRegistry.address, [
-    "function owner() view returns(address)", "function pauseAdmin() view returns(address)", "function dexCount() view returns(uint256)"
+    "function owner() view returns(address)", "function pauseAdmin() view returns(address)",
+    "function dexCount() view returns(uint256)", "function dexIdAt(uint256) view returns(bytes32)",
+    "function getDex(bytes32) view returns(address adapter,bool enabled,uint32 priority)"
   ], provider);
   const risk = new ethers.Contract(deployment.contracts.riskRegistry.address, [
     "function owner() view returns(address)", "function pauseAdmin() view returns(address)", "function executor() view returns(address)", "function swapsPaused() view returns(bool)"
@@ -64,12 +85,48 @@ export async function validateBscTestnet({ provider, deployment }) {
   if (!same(registryOwner, timelock) || !same(riskOwner, timelock)) throw new Error("Registry ownership is not held by the timelock.");
   if (!same(registryPauseAdmin, emergency) || !same(riskPauseAdmin, emergency)) throw new Error("Emergency pause authority mismatch.");
   if (!same(executor, deployment.contracts.executionRouter.address)) throw new Error("Risk executor mismatch.");
-  if (dexCount !== BigInt(deployment.dexes?.length || 0)) throw new Error("Registered DEX count differs from deployment record.");
+
+  const onchainDexes = await Promise.all(Array.from({ length: Number(dexCount) }, async (_, index) => {
+    const id = await registry.dexIdAt(index);
+    const [adapter, enabled, priority] = await registry.getDex(id);
+    return { id, adapter, enabled, priority: Number(priority) };
+  }));
+  validateDeploymentDexRecords(deployment.dexes, onchainDexes);
+  await assertContractCode(provider, Object.fromEntries(onchainDexes.map((dex, index) => [
+    `lqc.dexAdapter.${deployment.dexes[index].name || index}`, dex.adapter
+  ])));
+
+  const execution = new ethers.Contract(deployment.contracts.executionRouter.address, [
+    "function registry() view returns(address)", "function riskRegistry() view returns(address)"
+  ], provider);
+  const emergencyController = new ethers.Contract(emergency, [
+    "function registry() view returns(address)", "function riskRegistry() view returns(address)"
+  ], provider);
+  const timelockContract = new ethers.Contract(timelock, [
+    "function proposer() view returns(address)", "function delay() view returns(uint256)", "function MIN_DELAY() view returns(uint256)"
+  ], provider);
+  const [executionRegistry, executionRisk, emergencyRegistry, emergencyRisk, proposer, delay, minDelay] = await Promise.all([
+    execution.registry(), execution.riskRegistry(), emergencyController.registry(), emergencyController.riskRegistry(),
+    timelockContract.proposer(), timelockContract.delay(), timelockContract.MIN_DELAY()
+  ]);
+  if (!same(executionRegistry, deployment.contracts.dexRegistry.address) ||
+      !same(executionRisk, deployment.contracts.riskRegistry.address)) throw new Error("Execution Router module linkage mismatch.");
+  if (!same(emergencyRegistry, deployment.contracts.dexRegistry.address) ||
+      !same(emergencyRisk, deployment.contracts.riskRegistry.address)) throw new Error("Emergency Controller module linkage mismatch.");
+  if (!ethers.isAddress(proposer) || proposer === ethers.ZeroAddress || delay < minDelay) {
+    throw new Error("Timelock configuration is unsafe.");
+  }
 
   return {
     chainId: Number(network.chainId),
     pancake: { ...PANCAKE_BSC_TESTNET, wbnb: v2Wbnb },
-    lqc: { contractCount: Object.keys(lqcAddresses).length, dexCount: Number(dexCount), swapsPaused },
+    lqc: {
+      contractCount: Object.keys(lqcAddresses).length,
+      dexCount: Number(dexCount),
+      activeDexCount: onchainDexes.filter(dex => dex.enabled).length,
+      swapsPaused,
+      timelockDelaySeconds: Number(delay)
+    },
     safeForSmokeTest: !swapsPaused
   };
 }
