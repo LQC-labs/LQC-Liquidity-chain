@@ -1,0 +1,15 @@
+{
+  "token": { "name": "Liquidity Chain", "symbol": "LQC", "decimals": 18, "maxSupply": "1000000000" },
+  "tgeCirculatingSupply": "120000000",
+  "tgeCirculatingPercent": 12,
+  "allocations": [
+    { "id": "community", "total": "300000000", "tgeUnlocked": "25000000", "cliffMonths": 0, "vestingMonths": 48 },
+    { "id": "liquidity", "total": "180000000", "tgeUnlocked": "75000000", "cliffMonths": 0, "vestingMonths": 36 },
+    { "id": "treasury", "total": "150000000", "tgeUnlocked": "0", "cliffMonths": 12, "vestingMonths": 48 },
+    { "id": "team", "total": "120000000", "tgeUnlocked": "0", "cliffMonths": 12, "vestingMonths": 36 },
+    { "id": "development", "total": "80000000", "tgeUnlocked": "0", "cliffMonths": 3, "vestingMonths": 36 },
+    { "id": "growth", "total": "70000000", "tgeUnlocked": "12400000", "cliffMonths": 0, "vestingMonths": 30 },
+    { "id": "partners", "total": "62000000", "tgeUnlocked": "0", "cliffMonths": 6, "vestingMonths": 24 },
+    { "id": "investors", "total": "38000000", "tgeUnlocked": "7600000", "cliffMonths": 3, "vestingMonths": 12 }
+  ]
+}

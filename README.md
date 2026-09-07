@@ -170,20 +170,22 @@ Treasury allocation, staking rewards, revenue distribution, additional buyback, 
 
 ## Approved Tokenomics Design
 
-The current approved design uses a fixed total supply of **1,000,000,000 LQC** and planned TGE circulation of **150,000,000 LQC (15%)**.
+The current implementation target uses a fixed total supply of **1,000,000,000 LQC** and planned TGE circulation of **120,000,000 LQC (12%)**. It remains subject to formal approval, legal review, and independent security audit before mainnet issuance.
 
 | Allocation | Share | LQC | TGE / Release Framework |
 |---|---:|---:|---|
-| Future Ecosystem Rewards | 35% | 350,000,000 | 0 at TGE; 7+ years, up to 50M annually |
-| Community Initial | 20% | 200,000,000 | 80M at TGE; remaining 120M activity-based over 24 months |
-| Team & Core Contributors | 20% | 200,000,000 | 0 at TGE; 12-month cliff, then 36-month monthly vesting |
-| Protocol Treasury | 10% | 100,000,000 | 10M at TGE; remaining 90M through a 5-year budget framework |
-| Liquidity & Market Making | 10% | 100,000,000 | 50M at TGE; remaining 50M linked to exchange and pool growth |
-| Grants & Strategic Ecosystem | 5% | 50,000,000 | 10M at TGE; remaining 40M milestone-based |
+| Community & Ecosystem | 30% | 300,000,000 | 25M at TGE; remaining 275M linearly over 48 months |
+| Liquidity & Market Making | 18% | 180,000,000 | 75M at TGE; remaining 105M linearly over 36 months |
+| Protocol Treasury | 15% | 150,000,000 | 0 at TGE; 12-month cliff, then 48-month linear vesting |
+| Team & Core Contributors | 12% | 120,000,000 | 0 at TGE; 12-month cliff, then 36-month linear vesting |
+| Development & Security | 8% | 80,000,000 | 0 at TGE; 3-month cliff, then 36-month linear vesting |
+| Growth & Marketing | 7% | 70,000,000 | 12.4M at TGE; remaining 57.6M linearly over 30 months |
+| Strategic Partners | 6.2% | 62,000,000 | 0 at TGE; 6-month cliff, then 24-month linear vesting |
+| Investors | 3.8% | 38,000,000 | 7.6M at TGE; 3-month cliff, then 12-month linear vesting |
 
-The planned TGE circulation consists of Community Initial 80M, Liquidity & Market Making 50M, Protocol Treasury 10M, and Grants & Strategic Ecosystem 10M.
+The planned TGE circulation consists of Community & Ecosystem 25M, Liquidity & Market Making 75M, Growth & Marketing 12.4M, and Investors 7.6M.
 
-This is the current approved project design. Contract addresses, on-chain supply controls, final vesting contracts, and verification materials will be published when implementation and review are complete. Earlier drafts using a different total supply are superseded.
+The machine-readable allocation and testnet-only issuance tools are maintained under `dex/config/`, `dex/contracts/token/`, and `dex/docs/TOKEN_ISSUANCE_RUNBOOK.md`. Contract addresses, final on-chain supply controls, and verification materials will be published only after formal approval, implementation review, legal review, and independent audit. Earlier drafts using a different supply or TGE percentage are superseded.
 
 ## Roadmap
 
