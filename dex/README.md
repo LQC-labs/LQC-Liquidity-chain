@@ -13,6 +13,8 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - Slippage bounds and transaction deadlines
 - Pair-level reentrancy lock and safe ERC-20 transfers
 - Local compilation and integration tests
+- Deterministic stateful AMM invariant tests covering reserve accounting, non-decreasing constant
+  product, router dust balances, and permanently locked minimum liquidity
 - BSC testnet deployment script
 - Static wallet-connected swap interface in `app/`
 

@@ -188,4 +188,79 @@ describe("LQC Flow DEX MVP", function () {
       trader.sendTransaction({ to: await router.getAddress(), value: 1n })
     );
   });
+
+  it("preserves reserve balances and non-decreasing product across stateful swaps", async function () {
+    const routerAddress = await router.getAddress();
+    const tokenAAddress = await tokenA.getAddress();
+    const tokenBAddress = await tokenB.getAddress();
+    await (await router.addLiquidity(
+      tokenAAddress, tokenBAddress,
+      ethers.parseEther("10000"), ethers.parseEther("10000"), 0, 0,
+      await owner.getAddress(), await deadline()
+    )).wait();
+    await (await tokenB.mint(await trader.getAddress(), ethers.parseEther("1000"))).wait();
+    await (await tokenA.connect(trader).approve(routerAddress, ethers.MaxUint256)).wait();
+    await (await tokenB.connect(trader).approve(routerAddress, ethers.MaxUint256)).wait();
+
+    const pairAddress = await factory.getPair(tokenAAddress, tokenBAddress);
+    const pair = new ethers.Contract(pairAddress, artifact("LQCFlowPair").abi, owner);
+    const token0 = await pair.token0();
+    let seed = 0x1a2b3c4d;
+    const nextAmount = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return ethers.parseEther(String((seed % 25) + 1));
+    };
+
+    for (let i = 0; i < 24; i++) {
+      const [reserve0Before, reserve1Before] = await pair.getReserves();
+      const productBefore = reserve0Before * reserve1Before;
+      const path = i % 2 === 0 ? [tokenAAddress, tokenBAddress] : [tokenBAddress, tokenAAddress];
+      const amountIn = nextAmount();
+      const amounts = await router.getAmountsOut(amountIn, path);
+      await (await router.connect(trader).swapExactTokensForTokens(
+        amountIn, amounts[1], path, await trader.getAddress(), await deadline()
+      )).wait();
+
+      const [reserve0After, reserve1After] = await pair.getReserves();
+      assert(reserve0After * reserve1After >= productBefore, `product decreased at step ${i}`);
+      const balance0 = token0 === tokenAAddress
+        ? await tokenA.balanceOf(pairAddress) : await tokenB.balanceOf(pairAddress);
+      const balance1 = token0 === tokenAAddress
+        ? await tokenB.balanceOf(pairAddress) : await tokenA.balanceOf(pairAddress);
+      assert.equal(reserve0After, balance0, `reserve0 drift at step ${i}`);
+      assert.equal(reserve1After, balance1, `reserve1 drift at step ${i}`);
+      assert.equal(await tokenA.balanceOf(routerAddress), 0n, `router retained token A at step ${i}`);
+      assert.equal(await tokenB.balanceOf(routerAddress), 0n, `router retained token B at step ${i}`);
+    }
+  });
+
+  it("keeps minimum liquidity locked through repeated proportional add/remove cycles", async function () {
+    const tokenAAddress = await tokenA.getAddress();
+    const tokenBAddress = await tokenB.getAddress();
+    const routerAddress = await router.getAddress();
+    const ownerAddress = await owner.getAddress();
+    await (await router.addLiquidity(
+      tokenAAddress, tokenBAddress,
+      ethers.parseEther("10000"), ethers.parseEther("10000"), 0, 0,
+      ownerAddress, await deadline()
+    )).wait();
+    const pairAddress = await factory.getPair(tokenAAddress, tokenBAddress);
+    const pair = new ethers.Contract(pairAddress, artifact("LQCFlowPair").abi, owner);
+
+    for (let i = 1; i <= 6; i++) {
+      const amount = ethers.parseEther(String(i * 100));
+      await (await router.addLiquidity(
+        tokenAAddress, tokenBAddress, amount, amount, 0, 0, ownerAddress, await deadline()
+      )).wait();
+      const liquidity = (await pair.balanceOf(ownerAddress)) / BigInt(12 - i);
+      await (await pair.approve(routerAddress, liquidity)).wait();
+      await (await router.removeLiquidity(
+        tokenAAddress, tokenBAddress, liquidity, 0, 0, ownerAddress, await deadline()
+      )).wait();
+      assert.equal(await pair.balanceOf(ethers.getAddress("0x0000000000000000000000000000000000000001")), 1000n);
+      assert((await pair.totalSupply()) > 1000n);
+      const [reserve0, reserve1] = await pair.getReserves();
+      assert(reserve0 > 0n && reserve1 > 0n);
+    }
+  });
 });
