@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
-  <url><loc>https://lqc-labs.github.io/LQC-Liquidity-chain/</loc><lastmod>2026-09-05</lastmod></url>
+  <url><loc>https://lqc-labs.github.io/LQC-Liquidity-chain/</loc><lastmod>2026-09-07</lastmod></url>
   <url>
     <loc>https://lqc-labs.github.io/LQC-Liquidity-chain/team/ali-isik.html</loc>
     <lastmod>2026-09-05</lastmod>
     <image:image><image:loc>https://lqc-labs.github.io/LQC-Liquidity-chain/assets/ali-isik-mint-final.jpg</image:loc><image:title>ALI ISIK, Co-Founder of LQC</image:title></image:image>
+  </url>
+  <url>
+    <loc>https://lqc-labs.github.io/LQC-Liquidity-chain/team/cheonho-kim.html</loc>
+    <lastmod>2026-09-07</lastmod>
+    <image:image><image:loc>https://lqc-labs.github.io/LQC-Liquidity-chain/assets/cheonho-kim-cofounder.png</image:loc><image:title>Cheonho Kim, Co-Founder of LQC</image:title></image:image>
   </url>
   <url>
     <loc>https://lqc-labs.github.io/LQC-Liquidity-chain/team/jeong-jae-won.html</loc>
