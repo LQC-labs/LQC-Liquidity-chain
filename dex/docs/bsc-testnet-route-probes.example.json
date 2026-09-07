@@ -1,0 +1,19 @@
+[
+  {
+    "label": "LQC Flow LQC/USDT",
+    "dexId": "REPLACE_WITH_LQC_FLOW_BYTES32_ID",
+    "tokenIn": "REPLACE_WITH_LQC_ADDRESS",
+    "tokenOut": "REPLACE_WITH_MOCK_USDT_ADDRESS",
+    "amountInRaw": "1000000000000000000",
+    "path": ["REPLACE_WITH_LQC_ADDRESS", "REPLACE_WITH_MOCK_USDT_ADDRESS"]
+  },
+  {
+    "label": "PancakeSwap V3 reviewed route",
+    "dexId": "REPLACE_WITH_PANCAKE_V3_BYTES32_ID",
+    "tokenIn": "REPLACE_WITH_TOKEN_IN_ADDRESS",
+    "tokenOut": "REPLACE_WITH_TOKEN_OUT_ADDRESS",
+    "amountInRaw": "1000000000000000",
+    "path": ["REPLACE_WITH_TOKEN_IN_ADDRESS", "REPLACE_WITH_TOKEN_OUT_ADDRESS"],
+    "fees": [500]
+  }
+]
