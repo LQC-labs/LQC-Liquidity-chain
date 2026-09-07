@@ -75,7 +75,9 @@ export DEPLOYER_PRIVATE_KEY="..." # never commit this value
 export WBNB_ADDRESS="0x..."
 export PANCAKE_V3_QUOTER_ADDRESS="0x..." # optional; set together with the V3 router
 export PANCAKE_V3_ROUTER_ADDRESS="0x..." # optional; token-to-token execution
+export PANCAKE_V3_ALLOWED_FEE_TIERS='[500,2500]' # reviewed canonical tiers only
 export PANCAKE_V3_ALLOWED_POOLS='[{"tokenA":"0x...","tokenB":"0x...","fee":2500}]'
+export PANCAKE_V3_MAX_HOPS="2" # deployment-specific ceiling; allowed range 1-3
 npm run deploy:testnet
 ```
 
@@ -92,12 +94,43 @@ After deployment, run the read-only real-address validator before any smoke swap
 chain except BSC testnet `97`, checks deployed bytecode, verifies PancakeSwap V2/V3 Router-to-Factory
 and WBNB links, and confirms LQC timelock ownership, emergency pause authority, executor, DEX count,
 registry order, adapter addresses, active route status, Router/Emergency module linkage, and minimum
-timelock delay. A deployment record now pins each registered adapter address for this comparison.
+timelock delay. For PancakeSwap V3 it also matches the recorded maximum hop count, canonical fee-tier
+subset, and every reviewed pool against the deployed adapter allowlist. A deployment record pins each
+registered adapter address and V3 policy for this comparison. The gas-cost oracle is also transferred
+to the timelock during bootstrap; validation rejects deployer-owned or wrong-WBNB oracle instances.
 
 ```bash
 export BSC_TESTNET_RPC_URL="https://..."
 export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
 npm run validate:testnet
+```
+
+To probe reviewed LQC Flow and PancakeSwap V2/V3 routes without sending a transaction, copy the
+route-probe example and replace its DEX ids, token addresses, raw input amount, path, and V3 fees.
+The script ABI-encodes V2/LQC Flow paths and packed-encodes V3 paths automatically. Before quoting,
+it confirms path endpoints and restricts V3 routes to the deployment record's fee tiers, pool
+allowlist, and maximum hop count. It then repeats the complete chain/address/governance/V3-policy
+validation and refuses non-BSC-testnet networks, disabled DEXes, adapter mismatches, malformed probes,
+duplicate probes, and zero quotes.
+
+```bash
+export BSC_TESTNET_RPC_URL="https://..."
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
+cp ./docs/bsc-testnet-route-probes.example.json ./deployments/bsc-testnet-route-probes.local.json
+export ROUTE_PROBES_FILE="./deployments/bsc-testnet-route-probes.local.json"
+npm run smoke:testnet
+```
+
+Transaction mode is opt-in. It requires a runtime-only key, caps every raw input amount, checks the
+swap with gas estimation, proves expired and impossible-minimum-output calls reject, uses an exact
+token approval, and verifies that the Router and adapter retain neither balance nor allowance.
+
+```bash
+export EXECUTE_SMOKE_SWAP="true"
+export DEPLOYER_PRIVATE_KEY="..." # never store this in a file or commit it
+export SMOKE_MAX_INPUT_RAW="1000000000000000000"
+export SMOKE_MIN_OUTPUT_BPS="9900"
+npm run smoke:testnet
 ```
 
 After deployment, configure the verified Router, WBNB, and LQC test-token addresses:
