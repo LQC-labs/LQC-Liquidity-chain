@@ -86,8 +86,13 @@ export WBNB_ADDRESS="0x..."
 export PANCAKE_V3_QUOTER_ADDRESS="0x..." # optional; set together with the V3 router
 export PANCAKE_V3_ROUTER_ADDRESS="0x..." # optional; token-to-token execution
 export PANCAKE_V3_ALLOWED_POOLS='[{"tokenA":"0x...","tokenB":"0x...","fee":2500}]'
+npm run preflight:testnet # read-only; broadcasts no transactions
 npm run deploy:testnet
 ```
+
+The preflight refuses any chain other than BSC testnet 97 and checks external contract bytecode,
+reviewed PancakeSwap endpoints, owner configuration, V3 pool-list syntax, and sufficient tBNB for
+the configured liquidity plus gas reserve. Never commit a private key or a populated `.env` file.
 
 The default mock supplies and pool amounts are configurable environment values for testing only;
 they do not define LQC mainnet supply, allocation, valuation, or launch liquidity.
