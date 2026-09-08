@@ -123,7 +123,8 @@ npm run smoke:testnet
 
 Transaction mode is opt-in. It requires a runtime-only key, caps every raw input amount, checks the
 swap with gas estimation, proves expired and impossible-minimum-output calls reject, uses an exact
-token approval, and verifies that the Router and adapter retain neither balance nor allowance.
+token approval, clears pre-existing and failure-path wallet allowances, and verifies that the Router
+and adapter retain neither input/output token balances nor execution allowance.
 
 ```bash
 export EXECUTE_SMOKE_SWAP="true"
