@@ -43,6 +43,7 @@ export function validateTestnetDeploymentConfig(env) {
     positive("LQC_BNB_LIQUIDITY_LQC", env.LQC_BNB_LIQUIDITY_LQC || "100000");
   const usdtLiquidity = positive("LQC_USDT_LIQUIDITY_USDT", env.LQC_USDT_LIQUIDITY_USDT || "100000");
   const bnbLiquidity = positive("LQC_BNB_LIQUIDITY_BNB", env.LQC_BNB_LIQUIDITY_BNB || "10");
+  const gasReserve = positive("MIN_DEPLOYER_TBNB_RESERVE", env.MIN_DEPLOYER_TBNB_RESERVE || "0.5");
   if (lqcLiquidity > lqcSupply) throw new Error("Configured LQC liquidity exceeds the test-token supply.");
   if (usdtLiquidity > usdtSupply) throw new Error("Configured USDT liquidity exceeds the test-token supply.");
 
@@ -58,7 +59,7 @@ export function validateTestnetDeploymentConfig(env) {
       ethers.getAddress(v3Quoter) !== PANCAKE_BSC_TESTNET.v3Quoter)) {
     throw new Error("PancakeSwap V3 addresses do not match the pinned BSC testnet endpoints.");
   }
-  return { walletAddress, owner: ethers.getAddress(env.FACTORY_OWNER), delay, bnbLiquidity };
+  return { walletAddress, owner: ethers.getAddress(env.FACTORY_OWNER), delay, bnbLiquidity, gasReserve };
 }
 
 export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL)) {
@@ -66,15 +67,23 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
   const network = await provider.getNetwork();
   assertBscTestnetChain(network.chainId);
   const balance = await provider.getBalance(config.walletAddress);
-  if (balance < config.bnbLiquidity) throw new Error("Deployer tBNB balance is below the configured initial BNB liquidity, excluding deployment gas.");
-  const named = { wbnb: env.WBNB_ADDRESS };
+  if (balance < config.bnbLiquidity + config.gasReserve) {
+    throw new Error("Deployer tBNB balance is below initial BNB liquidity plus the required deployment-gas reserve.");
+  }
+  const ownerCode = await provider.getCode(config.owner);
+  if (ownerCode === "0x" && env.ALLOW_EOA_OWNER !== "true") {
+    throw new Error("FACTORY_OWNER has no contract bytecode; use a deployed multisig or explicitly set ALLOW_EOA_OWNER=true for temporary testnet use.");
+  }
+  const named = { governanceOwner: config.owner, wbnb: env.WBNB_ADDRESS };
   if (env.PANCAKE_V2_ROUTER_ADDRESS) named.pancakeV2Router = env.PANCAKE_V2_ROUTER_ADDRESS;
   if (env.PANCAKE_V3_ROUTER_ADDRESS) {
     named.pancakeV3Router = env.PANCAKE_V3_ROUTER_ADDRESS;
     named.pancakeV3Quoter = env.PANCAKE_V3_QUOTER_ADDRESS;
   }
   for (const [name, address] of Object.entries(named)) {
-    if (await provider.getCode(address) === "0x") throw new Error(`${name} has no contract bytecode on BSC testnet.`);
+    if (name !== "governanceOwner" && await provider.getCode(address) === "0x") {
+      throw new Error(`${name} has no contract bytecode on BSC testnet.`);
+    }
   }
   return { chainId: Number(network.chainId), owner: config.owner, checkedContracts: Object.keys(named) };
 }
