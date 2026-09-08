@@ -94,6 +94,9 @@ Every confirmed contract deployment is immediately recorded in
 same chain, deployer, constructor arguments, and compiled bytecode verifies the recorded on-chain
 code and reuses that contract instead of paying to deploy it again. Any mismatch stops the run.
 Checkpoint files are gitignored and never contain private keys.
+Registry configuration, DEX registration, token/DEX caps, and ownership-transfer operations are also
+checkpointed. Transaction hashes are saved before confirmation; retries inspect pending receipts and
+skip only operations proven successful on-chain. Missing or reverted receipts stop the deployment.
 
 The default mock supplies and pool amounts are configurable environment values for testing only;
 they do not define LQC mainnet supply, allocation, valuation, or launch liquidity.
