@@ -84,8 +84,10 @@ npm run deploy:testnet
 `deploy:testnet` runs a non-transactional preflight first. It refuses non-chain-97 RPCs, missing or
 unsafe governance settings, timelocks outside 1 hour to 7 days, invalid daily/transaction limits,
 liquidity above minted test supply, insufficient test BNB, unpinned PancakeSwap endpoints, and
-configured addresses without BSC-testnet bytecode. A temporary deployer-owned testnet bootstrap
-requires the explicit runtime-only opt-in `ALLOW_DEPLOYER_AS_OWNER=true`.
+configured addresses without BSC-testnet bytecode. The deployer must retain at least 0.5 tBNB by
+default above initial liquidity for deployment gas, configurable through `MIN_DEPLOYER_TBNB_RESERVE`.
+The governance owner must be a deployed multisig contract by default. Temporary testnet exceptions
+require explicit runtime-only `ALLOW_DEPLOYER_AS_OWNER=true` and/or `ALLOW_EOA_OWNER=true` opt-ins.
 
 The default mock supplies and pool amounts are configurable environment values for testing only;
 they do not define LQC mainnet supply, allocation, valuation, or launch liquidity.
