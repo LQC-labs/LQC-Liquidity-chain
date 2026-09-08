@@ -42,6 +42,17 @@ describe("LQC Router risk registry", function () {
     assert.equal(limits.maxPerTransaction, 50n); assert.equal(limits.maxPerDay, 500n);
   });
 
+  it("rejects duplicate DEX legs so a split cannot bypass a per-DEX cap", async function () {
+    const input = await tokenIn.getAddress(), output = await tokenOut.getAddress();
+    await (await risk.setTokenLimits(input, true, 200n, 1000n)).wait();
+    await (await risk.setTokenLimits(output, true, 1000n, 1000n)).wait();
+    await (await risk.setDexTokenCap(dexId, input, 100n)).wait();
+
+    await assert.rejects(risk.consumeSwap(input, output, [dexId, dexId], [60n, 60n]));
+    const usage = await risk.dailyUsage(input);
+    assert.equal(usage.amount, 0n);
+  });
+
   it("resets daily usage on the next UTC day bucket", async function () {
     const input = await tokenIn.getAddress(), output = await tokenOut.getAddress();
     await (await risk.setTokenLimits(input, true, 100n, 100n)).wait();

@@ -34,6 +34,7 @@ contract LQCRiskRegistry {
     error DailyCapExceeded();
     error DexCapExceeded();
     error InvalidRoutes();
+    error DuplicateDex();
     error SwapsPaused();
 
     modifier onlyOwner() { if (msg.sender != owner) revert Forbidden(); _; }
@@ -128,6 +129,9 @@ contract LQCRiskRegistry {
         if (!inputLimits.allowed || !tokenLimits[tokenOut].allowed) revert TokenNotAllowed();
         uint256 total;
         for (uint256 i; i < dexIds.length; ++i) {
+            for (uint256 j; j < i; ++j) {
+                if (dexIds[j] == dexIds[i]) revert DuplicateDex();
+            }
             uint256 amount = amountsIn[i];
             uint256 dexCap = dexTokenCap[dexIds[i]][tokenIn];
             if (amount == 0 || dexCap == 0 || amount > dexCap) revert DexCapExceeded();

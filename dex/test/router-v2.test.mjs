@@ -269,6 +269,14 @@ describe("LQC Router 2.0", function () {
     ];
     await (await tokenA.mint(await owner.getAddress(), total)).wait();
     await (await tokenA.approve(await executionRouter.getAddress(), total)).wait();
+    const duplicateRoutes = [
+      { dexId: flowId, amountIn: half, amountOutMinimum: flowOut, routeData },
+      { dexId: flowId, amountIn: half, amountOutMinimum: flowOut, routeData }
+    ];
+    await assert.rejects(executionRouter.swapSplitExactInput(
+      tokenIn, tokenOut, total, flowOut * 2n, await other.getAddress(),
+      BigInt(block.timestamp + 3600), duplicateRoutes
+    ));
     await assert.rejects(executionRouter.swapSplitExactInput(
       tokenIn, tokenOut, total + 1n, flowOut + secondOut, await other.getAddress(),
       BigInt(block.timestamp + 3600), routes
