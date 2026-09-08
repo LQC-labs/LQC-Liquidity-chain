@@ -97,6 +97,9 @@ Checkpoint files are gitignored and never contain private keys.
 Registry configuration, DEX registration, token/DEX caps, and ownership-transfer operations are also
 checkpointed. Transaction hashes are saved before confirmation; retries inspect pending receipts and
 skip only operations proven successful on-chain. Missing or reverted receipts stop the deployment.
+Each operation is bound to a hash of its addresses, limits, amounts, and other settings, so a retry
+cannot silently reuse a successful transaction from a different deployment configuration. Test-token
+minting, exact approvals, and both initial-liquidity transactions are covered by the same recovery flow.
 
 The default mock supplies and pool amounts are configurable environment values for testing only;
 they do not define LQC mainnet supply, allocation, valuation, or launch liquidity.
