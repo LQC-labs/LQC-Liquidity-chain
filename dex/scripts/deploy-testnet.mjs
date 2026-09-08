@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ethers } from "ethers";
+import { checkpointedDeploy, loadDeploymentCheckpoint } from "./deployment-checkpoint.mjs";
 
 const {
   BSC_TESTNET_RPC_URL,
@@ -46,13 +47,21 @@ if (network.chainId !== BigInt(EXPECTED_CHAIN_ID)) {
 }
 const owner = FACTORY_OWNER || wallet.address;
 if (!ethers.isAddress(owner)) throw new Error("FACTORY_OWNER must be a valid address.");
+const checkpointFile = path.resolve(process.env.DEPLOYMENT_CHECKPOINT_FILE ||
+  path.join(root, `deployments/bsc-testnet-${network.chainId}.checkpoint.local.json`));
+const checkpoint = loadDeploymentCheckpoint(checkpointFile, network.chainId, wallet.address);
+const deploymentTxByAddress = new Map();
 const deploy = async (source, args = []) => {
   const artifact = load(source);
-  const contract = await new ethers.ContractFactory(artifact.abi, artifact.bytecode, wallet).deploy(...args);
-  await contract.waitForDeployment();
-  return contract;
+  const result = await checkpointedDeploy({
+    key: source, source, args, artifact, wallet, provider, checkpoint, checkpointFile,
+    deployContract: () => new ethers.ContractFactory(artifact.abi, artifact.bytecode, wallet).deploy(...args)
+  });
+  deploymentTxByAddress.set((await result.contract.getAddress()).toLowerCase(), result.txHash);
+  console.error(`${result.reused ? "Reused" : "Deployed"} ${source} at ${await result.contract.getAddress()}.`);
+  return result.contract;
 };
-const txHash = (contract) => contract.deploymentTransaction()?.hash || null;
+const txHash = (contract) => deploymentTxByAddress.get(contract.target.toLowerCase()) || contract.deploymentTransaction()?.hash || null;
 
 const lqc = await deploy("testnet/LQCTestToken", ["LQC Test Token", "LQC", 18, wallet.address]);
 const usdt = await deploy("testnet/LQCTestToken", ["Mock USDT", "USDT", 18, wallet.address]);
