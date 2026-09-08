@@ -34,8 +34,9 @@ describe("BSC testnet bootstrap smoke flow", function () {
     await (await lqc.mint(ownerAddress, ethers.parseEther("1000000"))).wait();
     await (await usdt.mint(ownerAddress, ethers.parseEther("1000000"))).wait();
     await (await lqc.mint(traderAddress, ethers.parseEther("100"))).wait();
-    await (await lqc.approve(await router.getAddress(), ethers.MaxUint256)).wait();
-    await (await usdt.approve(await router.getAddress(), ethers.MaxUint256)).wait();
+    const routerAddress = await router.getAddress();
+    await (await lqc.approve(routerAddress, ethers.parseEther("200000"))).wait();
+    await (await usdt.approve(routerAddress, ethers.parseEther("100000"))).wait();
     const deadline = BigInt((await provider.getBlock("latest")).timestamp + 3600);
     await (await router.addLiquidity(
       await lqc.getAddress(), await usdt.getAddress(), ethers.parseEther("100000"),
@@ -45,6 +46,8 @@ describe("BSC testnet bootstrap smoke flow", function () {
       await lqc.getAddress(), ethers.parseEther("100000"), 0, 0, ownerAddress, deadline,
       { value: ethers.parseEther("10") }
     )).wait();
+    assert.equal(await lqc.allowance(ownerAddress, routerAddress), 0n);
+    assert.equal(await usdt.allowance(ownerAddress, routerAddress), 0n);
 
     assert.notEqual(await factory.getPair(await lqc.getAddress(), await usdt.getAddress()), ethers.ZeroAddress);
     assert.notEqual(await factory.getPair(await lqc.getAddress(), await wbnb.getAddress()), ethers.ZeroAddress);
