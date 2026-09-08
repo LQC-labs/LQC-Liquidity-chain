@@ -4,6 +4,8 @@ Status: **working evidence register — not a listing, audit, or legal-approval 
 
 This checklist gives exchange reviewers a single place to distinguish repository evidence from evidence that must still be supplied by LQC's legal, security, token, and market-operations teams. A checked repository control does not replace an exchange's independent due diligence.
 
+For an actual submission, copy and complete the [`Exchange Due-Diligence Evidence Index`](CEX_EVIDENCE_INDEX_TEMPLATE.md), pin every technical item to a commit, and attach confidential legal/KYC materials only through the exchange’s secure channel.
+
 ## Status definitions
 
 | Status | Meaning |
