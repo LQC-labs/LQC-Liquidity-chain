@@ -62,7 +62,7 @@ export BSC_TESTNET_RPC_URL="..."
 export DEPLOYER_PRIVATE_KEY="..."
 export WBNB_ADDRESS="0x..." # official WBNB for the selected BSC network
 export EXPECTED_CHAIN_ID="97" # deployment safety check; defaults to BSC testnet
-export FACTORY_OWNER="0x..." # preferably a multisig; optional for testnet
+export FACTORY_OWNER="0x..." # required reviewed testnet governance/multisig address
 node scripts/deploy.mjs
 ```
 
@@ -80,6 +80,12 @@ export PANCAKE_V3_ALLOWED_POOLS='[{"tokenA":"0x...","tokenB":"0x...","fee":2500}
 export PANCAKE_V3_MAX_HOPS="2" # deployment-specific ceiling; allowed range 1-3
 npm run deploy:testnet
 ```
+
+`deploy:testnet` runs a non-transactional preflight first. It refuses non-chain-97 RPCs, missing or
+unsafe governance settings, timelocks outside 1 hour to 7 days, invalid daily/transaction limits,
+liquidity above minted test supply, insufficient test BNB, unpinned PancakeSwap endpoints, and
+configured addresses without BSC-testnet bytecode. A temporary deployer-owned testnet bootstrap
+requires the explicit runtime-only opt-in `ALLOW_DEPLOYER_AS_OWNER=true`.
 
 The default mock supplies and pool amounts are configurable environment values for testing only;
 they do not define LQC mainnet supply, allocation, valuation, or launch liquidity.
