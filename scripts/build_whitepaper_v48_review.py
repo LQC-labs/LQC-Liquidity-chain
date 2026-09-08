@@ -12,7 +12,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from pypdf import PdfReader, PdfWriter
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.1_Review_Edition.pdf"
+OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.2_Review_Edition.pdf"
 NAVY = HexColor("#102235")
 TEAL = HexColor("#0b8790")
 MINT = HexColor("#31c7ad")
@@ -46,7 +46,7 @@ def draw_header(c, number, kicker, title):
 def draw_footer(c, number):
     c.setStrokeColor(LINE); c.setLineWidth(.5); c.line(54, 38, 558, 38)
     c.setFillColor(MID); c.setFont("LQCSans", 6.8)
-    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v5.1  ·  Review Edition")
+    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v5.2  ·  Review Edition")
     c.drawRightString(558, 23, str(number))
 
 
@@ -156,7 +156,7 @@ pages = [
         "Unsupported behavior must not leave retained balances, approvals or risk-accounting residue.",
     ]),
     ("Testing", "16. Reproducible Engineering Baseline", [
-        "At the publication baseline, the repository compiles 35 Solidity source files and reports 53 passing automated tests using locked dependencies. The exact Git commit and its CI run are authoritative when the suite evolves.",
+        "At the publication baseline, the repository compiles 36 Solidity source files and reports 57 passing automated tests using locked dependencies. The exact Git commit and its CI run are authoritative when the suite evolves.",
         ("table", [["Area", "Representative evidence"], ["AMM", "Reserves, product, LP lock, liquidity and swap flows"], ["Router", "Quotes, adapters, gas, split and rollback"], ["Risk", "Allowlists, caps, model-based daily accounting"], ["Governance", "Timelock, pause-only guardian, ownership transfer"], ["Deployment", "Chain 97, bytecode, ownership and module links"]], [130,374]),
         ("callout", "Passing tests do not prove the absence of vulnerabilities or certify production economic safety."),
     ]),
@@ -199,7 +199,7 @@ pages = [
         "The planned 150M TGE circulation is Community 80M, Liquidity/MM 50M, Treasury 10M and Grants 10M. Contract and wallet evidence will be published after implementation and verification.",
     ]),
     ("Tokenomics", "25. Supply and Vesting Verification", [
-        "Before launch, the token contract cap, total supply, decimals and mint/burn powers must reconcile to the approved disclosure. Every allocation wallet and vesting contract should be labeled and independently verifiable.",
+        "The repository now includes a fixed-supply LQCToken implementation that creates exactly 1 billion LQC once for the allocation controller and exposes no owner, additional mint, pause, blacklist, fee, recovery or upgrade authority. Canonical deployment evidence is not yet claimed.",
         ("bullets", ["Canonical network and token address", "Deployment and ownership transactions", "Explorer-verified source and ABI", "Mint, pause, blacklist, upgrade and recovery powers", "Beneficiaries, cliffs and vesting schedules", "Circulating-supply methodology and excluded wallets"]),
         "No on-chain production token evidence is claimed in this edition.",
     ]),
@@ -293,7 +293,7 @@ compact_pages = [
 def build():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     c = canvas.Canvas(str(OUT), pagesize=letter)
-    c.setTitle("LQC Whitepaper v5.1 - Review Edition")
+    c.setTitle("LQC Whitepaper v5.2 - Review Edition")
     c.setAuthor("MMXlabs&LQC LLC")
     c.setSubject("Condensed official review edition for technical and exchange due diligence")
 
@@ -307,7 +307,7 @@ def build():
     c.drawString(58, 498, "Connecting Fragmented Web3 Liquidity")
     c.setFillColor(MINT); c.roundRect(58, 394, 496, 66, 7, fill=1, stroke=0)
     c.setFillColor(NAVY); c.setFont("LQCSans-Bold", 11)
-    c.drawString(76, 430, "Version 5.1  ·  September 2026  ·  27 pages")
+    c.drawString(76, 430, "Version 5.2  ·  September 2026  ·  27 pages")
     c.setFont("LQCSans", 9); c.drawString(76, 409, "Issued by MMXlabs&LQC LLC | Wyoming, United States")
     c.setFillColor(HexColor("#c8d7e1")); c.setFont("LQCSans", 8)
     c.drawString(58, 72, "Unaudited testnet MVP · No production or listing claim")
