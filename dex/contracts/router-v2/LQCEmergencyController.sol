@@ -12,6 +12,7 @@ interface ILQCPausableRiskRegistry {
 /// @notice Separate emergency role that may only disable DEX routes, never re-enable or reconfigure them.
 contract LQCEmergencyController {
     address public owner;
+    address public pendingOwner;
     address public immutable registry;
     address public immutable riskRegistry;
     mapping(address => bool) public guardians;
@@ -19,6 +20,8 @@ contract LQCEmergencyController {
     event GuardianChanged(address indexed guardian, bool enabled);
     event DexEmergencyPaused(bytes32 indexed dexId, address indexed guardian, uint256 timestamp);
     event AllSwapsEmergencyPaused(address indexed guardian, uint256 timestamp);
+    event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     error Forbidden();
     error ZeroAddress();
@@ -29,7 +32,23 @@ contract LQCEmergencyController {
         registry = registry_;
         riskRegistry = riskRegistry_;
         guardians[owner_] = true;
+        emit OwnershipTransferred(address(0), owner_);
         emit GuardianChanged(owner_, true);
+    }
+
+    function beginOwnershipTransfer(address newOwner) external {
+        if (msg.sender != owner) revert Forbidden();
+        if (newOwner == address(0)) revert ZeroAddress();
+        pendingOwner = newOwner;
+        emit OwnershipTransferStarted(owner, newOwner);
+    }
+
+    function acceptOwnership() external {
+        if (msg.sender != pendingOwner) revert Forbidden();
+        address previous = owner;
+        owner = msg.sender;
+        pendingOwner = address(0);
+        emit OwnershipTransferred(previous, msg.sender);
     }
 
     function setGuardian(address guardian, bool enabled) external {

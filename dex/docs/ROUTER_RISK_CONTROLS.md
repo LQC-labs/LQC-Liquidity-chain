@@ -2,6 +2,8 @@
 
 Status: **unaudited testnet MVP**. This document describes implemented controls; it is not an audit report or a mainnet-readiness claim.
 
+The emergency controller uses a two-step ownership transfer. The current owner nominates a pending owner, and only that address can accept control. Guardian membership remains an explicit, separately managed emergency role.
+
 ## Control model
 
 - The protocol governance proposer is intended to be a 3-of-5 multisig.

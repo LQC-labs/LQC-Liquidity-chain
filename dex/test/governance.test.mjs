@@ -96,4 +96,19 @@ describe("LQC Router governance controls", function () {
     await (await timelock.cancel(id)).wait();
     assert.equal(await timelock.readyAt(id), 0n);
   });
+
+  it("uses two-step ownership transfer for the emergency controller", async function () {
+    const nextOwner = await guardian.getAddress();
+    await assert.rejects(emergency.connect(outsider).beginOwnershipTransfer(nextOwner));
+    await assert.rejects(emergency.beginOwnershipTransfer(ethers.ZeroAddress));
+    await (await emergency.beginOwnershipTransfer(nextOwner)).wait();
+    assert.equal(await emergency.pendingOwner(), nextOwner);
+    await assert.rejects(emergency.connect(outsider).acceptOwnership());
+    await (await emergency.connect(guardian).acceptOwnership()).wait();
+    assert.equal(await emergency.owner(), nextOwner);
+    assert.equal(await emergency.pendingOwner(), ethers.ZeroAddress);
+    await assert.rejects(emergency.setGuardian(await outsider.getAddress(), true));
+    await (await emergency.connect(guardian).setGuardian(await outsider.getAddress(), true)).wait();
+    assert.equal(await emergency.guardians(await outsider.getAddress()), true);
+  });
 });
