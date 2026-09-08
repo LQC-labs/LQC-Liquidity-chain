@@ -48,6 +48,8 @@ New DEXs can be added through reviewed adapters without replacing the quote, opt
 
 Split execution rejects duplicate DEX identifiers. This prevents a caller from dividing one DEX allocation into repeated legs to bypass its configured per-DEX token cap.
 
+The risk multisig may immediately reduce an existing DEX/token cap but cannot create a new cap, raise a cap, allow a token, or resume paused trading. Expansion remains restricted to timelocked governance.
+
 Router 2.0 is intentionally protocol-neutral: every EVM DEX can be integrated through the same reviewed adapter interfaces and enabled or paused independently in the registry. A DEX is never treated as compatible until its protocol-specific quote and execution adapter, route validation, tests, and security review are complete. Non-EVM liquidity will be connected later through the cross-chain routing layer rather than unsafe direct assumptions.
 
 ## Commands

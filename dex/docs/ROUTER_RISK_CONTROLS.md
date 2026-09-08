@@ -23,7 +23,7 @@ Split orders are checked as one complete order, preventing a caller from bypassi
 
 ## Parameter policy
 
-Repository defaults are test-only examples. Final token lists and numeric caps require BSC testnet measurements and risk-committee approval based on liquidity depth, execution reliability, oracle quality, security history, audit history, and operational monitoring.
+Repository defaults are test-only examples. Final token lists and numeric caps require BSC testnet measurements and risk-committee approval based on liquidity depth, execution reliability, oracle quality, security history, audit history, and operational monitoring. The risk multisig may immediately reduce existing token or DEX/token caps, but it cannot create or expand permissions; those changes remain timelocked governance actions.
 
 ## Mainnet gates
 

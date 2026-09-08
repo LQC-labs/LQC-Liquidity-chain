@@ -53,6 +53,17 @@ describe("LQC Router risk registry", function () {
     assert.equal(usage.amount, 0n);
   });
 
+  it("allows the risk multisig to tighten but never create or expand a DEX cap", async function () {
+    const input = await tokenIn.getAddress();
+    await (await risk.setDexTokenCap(dexId, input, 100n)).wait();
+
+    await assert.rejects(risk.connect(outsider).reduceDexTokenCap(dexId, input, 50n));
+    await assert.rejects(risk.connect(riskAdmin).reduceDexTokenCap(dexId, input, 101n));
+    await assert.rejects(risk.connect(riskAdmin).reduceDexTokenCap(ethers.id("UNKNOWN"), input, 1n));
+    await (await risk.connect(riskAdmin).reduceDexTokenCap(dexId, input, 40n)).wait();
+    assert.equal(await risk.dexTokenCap(dexId, input), 40n);
+  });
+
   it("resets daily usage on the next UTC day bucket", async function () {
     const input = await tokenIn.getAddress(), output = await tokenOut.getAddress();
     await (await risk.setTokenLimits(input, true, 100n, 100n)).wait();

@@ -119,6 +119,15 @@ contract LQCRiskRegistry {
         emit TokenLimitsSet(token, true, newPerTransaction, newPerDay);
     }
 
+    /// @notice Risk multisig may immediately tighten an existing DEX/token cap, never create or expand one.
+    function reduceDexTokenCap(bytes32 dexId, address token, uint256 newCap) external {
+        if (msg.sender != riskAdmin) revert Forbidden();
+        uint256 currentCap = dexTokenCap[dexId][token];
+        if (currentCap == 0 || newCap == 0 || newCap > currentCap) revert InvalidLimits();
+        dexTokenCap[dexId][token] = newCap;
+        emit DexTokenCapSet(dexId, token, newCap);
+    }
+
     function consumeSwap(address tokenIn, address tokenOut, bytes32[] calldata dexIds, uint256[] calldata amountsIn)
         external
     {
