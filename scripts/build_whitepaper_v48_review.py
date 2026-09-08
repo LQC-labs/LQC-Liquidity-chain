@@ -12,7 +12,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from pypdf import PdfReader, PdfWriter
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "output/pdf/LQC_Whitepaper_v4.9_Review_Edition.pdf"
+OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.0_Review_Edition.pdf"
 NAVY = HexColor("#102235")
 TEAL = HexColor("#0b8790")
 MINT = HexColor("#31c7ad")
@@ -46,7 +46,7 @@ def draw_header(c, number, kicker, title):
 def draw_footer(c, number):
     c.setStrokeColor(LINE); c.setLineWidth(.5); c.line(54, 38, 558, 38)
     c.setFillColor(MID); c.setFont("LQCSans", 6.8)
-    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v4.9  ·  Review Edition")
+    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v5.0  ·  Review Edition")
     c.drawRightString(558, 23, str(number))
 
 
@@ -237,11 +237,51 @@ pages = [
     ]),
 ]
 
+# Consolidated reviewer edition: closely related subjects share a page so the
+# document remains dense without reducing type size or removing risk disclosures.
+compact_pages = [
+    pages[0],
+    pages[1],
+    pages[2],
+    ("Design and architecture", "3. Principles and Modular Architecture", [
+        ("table", [["Principle", "Engineering application"], ["Liquidity first", "Executable depth and measurable routing quality"], ["Modularity", "Separate quote, execution, risk and integration responsibilities"], ["Least privilege", "Divide governance, emergency and risk authority"], ["Evidence", "Pin code, settings, addresses and on-chain state"], ["Phased launch", "Testnet, caps and independent review before expansion"]], [135,369]),
+        ("table", [["Layer", "Current status"], ["LQC Flow AMM", "Implemented testnet MVP"], ["Registry / quote / optimizer", "Implemented"], ["Execution / native BNB", "Implemented"], ["Risk and emergency controls", "Implemented foundation"], ["Lending / bridge / perpetuals", "Planned as separate scope"]], [235,269]),
+        "Production configuration, audits, external integrations and live liquidity are separate gates from repository implementation.",
+    ]),
+    pages[5], pages[6],
+    ("Smart routing", "6. Quote Discovery and Gas-Aware Selection", pages[7][2] + pages[8][2]),
+    pages[9],
+    ("Execution", "8. Protected Execution and Native BNB", pages[10][2] + pages[11][2]),
+    ("Risk management", "9. Risk, Governance and Emergency Controls", pages[12][2] + pages[13][2]),
+    pages[14],
+    pages[15],
+    pages[16],
+    pages[17],
+    ("Future module", "13. Lending, Oracle and Liquidation Direction", pages[18][2] + pages[19][2]),
+    pages[20],
+    ("Token utility", "15. Utility, Fees, Treasury and Burn", pages[21][2] + pages[25][2]),
+    ("Tokenomics", "16. Tokenomics and Release Framework", pages[22][2] + pages[23][2]),
+    pages[24],
+    ("Roadmap", "18. Development Status and Delivery Plan", [
+        ("table", [["Workstream", "Current status / next gate"], ["LQC Flow AMM", "Implemented testnet MVP"], ["Router 2.0 and adapters", "Implemented; production integration review required"], ["Risk / governance", "Implemented foundation; finalize production roles"], ["BSC testnet tooling", "Implemented; publish real deployment evidence"], ["Independent review", "Audit, remediation and retest required"], ["Future modules", "Separate design, implementation, testing and audits"]], [190,314]),
+        ("table", [["Phase", "Gate"], ["Controlled testnet", "Addresses, verified source, smoke tests and capped routes"], ["Independent review", "Audit, remediation, retest and known-issues disclosure"], ["Capped pilot", "Multisig, oracle, monitoring, legal and liquidity approval"], ["Expansion", "Measured reliability, depth and incident-free operation"]], [135,369]),
+    ]),
+    pages[28],
+    pages[29],
+    ("Legal and conclusion", "20. Legal, Compliance and Immediate Priorities", [
+        "The disclosed project entity is MMXlabs&LQC LLC, a Wyoming limited liability company. Formation, good standing, managers, beneficial ownership, authorized signatory, KYB and legal-opinion materials must be supplied through the reviewer's secure process.",
+        "LQC has progressed from architecture into a testable EVM routing stack with a native AMM, external DEX adapters, gas-aware comparison, atomic split execution and staged risk controls.",
+        ("table", [["Priority", "Next evidence milestone"], ["1", "Controlled BSC testnet deployment and explorer-verified source"], ["2", "Final multisig, roles, oracle, allowlists and operational limits"], ["3", "Independent audit, remediation and retest"], ["4", "Token, vesting, circulation, legal and CEX evidence packages"], ["5", "Monitored capped-liquidity pilot before expansion"]], [60,444]),
+        "This document is technical and informational. It is not investment, legal, financial or tax advice; an offer or solicitation; or a guarantee of launch, listing, liquidity, revenue or return.",
+        ("callout", "Digital assets and DeFi involve smart-contract, oracle, bridge, liquidity, market, operational, cybersecurity and regulatory risks."),
+    ]),
+]
+
 
 def build():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     c = canvas.Canvas(str(OUT), pagesize=letter)
-    c.setTitle("LQC Whitepaper v4.9 - Review Edition")
+    c.setTitle("LQC Whitepaper v5.0 - Review Edition")
     c.setAuthor("MMXlabs&LQC LLC")
     c.setSubject("Condensed official review edition for technical and exchange due diligence")
 
@@ -255,7 +295,7 @@ def build():
     c.drawString(58, 498, "Connecting Fragmented Web3 Liquidity")
     c.setFillColor(MINT); c.roundRect(58, 394, 496, 66, 7, fill=1, stroke=0)
     c.setFillColor(NAVY); c.setFont("LQCSans-Bold", 11)
-    c.drawString(76, 430, "Version 4.9  ·  September 2026  ·  32 pages")
+    c.drawString(76, 430, "Version 5.0  ·  September 2026  ·  25 pages")
     c.setFont("LQCSans", 9); c.drawString(76, 409, "Issued by MMXlabs&LQC LLC | Wyoming, United States")
     c.setFillColor(HexColor("#c8d7e1")); c.setFont("LQCSans", 8)
     c.drawString(58, 72, "Unaudited testnet MVP · No production or listing claim")
@@ -263,13 +303,11 @@ def build():
 
     # Contents
     y = draw_header(c, 2, "Review edition", "Contents and Status Legend")
-    toc = [["Pages", "Section"], ["3-5", "Executive summary, problem and response"], ["6-8", "Principles and modular architecture"], ["9-14", "Smart routing, execution and native BNB"], ["15-18", "Risk, governance, testing and deployment"], ["19-22", "Future lending/cross-chain and token utility"], ["23-26", "Tokenomics, vesting, fees and treasury"], ["27-29", "Development roadmap, security and incident readiness"], ["30-31", "CEX due diligence, legal and compliance"], ["32", "Conclusion and immediate priorities"]]
+    toc = [["Pages", "Section"], ["3-6", "Executive summary, problem, response and architecture"], ["7-11", "DEX adapters, routing, execution and risk"], ["12-16", "Compatibility, testing, deployment and future lending"], ["17-19", "Cross-chain, utility and tokenomics"], ["20-24", "Supply, roadmap, audit, CEX evidence and compliance"], ["25", "Conclusion and immediate priorities"]]
     draw_blocks(c, y, [("table", toc, [80,424]), ("callout", "Status legend: Implemented means public repository code/test evidence. In development means active implementation or configuration work. Subject to review means independent, legal, governance or deployment verification is required. Planned means no completed production module is claimed.")])
     draw_footer(c, 2); c.showPage()
 
-    # The compact edition folds the response and principles summaries into adjacent overview pages.
-    selected_pages = pages[:2] + pages[4:]
-    for section_number, (kicker, title, blocks) in enumerate(selected_pages, start=1):
+    for section_number, (kicker, title, blocks) in enumerate(compact_pages, start=1):
         pdf_number = section_number + 2
         title = re.sub(r"^\d+\.", f"{section_number}.", title)
         y = draw_header(c, pdf_number, kicker, title)
@@ -278,8 +316,8 @@ def build():
 
     c.save()
     reader = PdfReader(str(OUT))
-    if len(reader.pages) != 32:
-        raise RuntimeError(f"Expected 32 pages, created {len(reader.pages)}")
+    if len(reader.pages) != 25:
+        raise RuntimeError(f"Expected 25 pages, created {len(reader.pages)}")
 
 
 if __name__ == "__main__":
