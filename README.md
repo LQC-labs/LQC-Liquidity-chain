@@ -174,6 +174,8 @@ Treasury allocation, staking rewards, revenue distribution, additional buyback, 
 
 The current approved design uses a fixed total supply of **1,000,000,000 LQC** and planned TGE circulation of **150,000,000 LQC (15%)**.
 
+The repository includes [`LQCToken.sol`](dex/contracts/token/LQCToken.sol), a fixed-supply ERC-20 implementation that creates the full 1 billion LQC supply once for an allocation-controller address. It exposes no post-deployment mint, owner, pause, blacklist, fee, recovery, or upgrade authority. A canonical network address is not claimed until deployment and explorer verification are complete.
+
 | Allocation | Share | LQC | TGE / Release Framework |
 |---|---:|---:|---|
 | Future Ecosystem Rewards | 35% | 350,000,000 | 0 at TGE; 7+ years, up to 50M annually |
