@@ -6,6 +6,8 @@
   "scripts": {
     "compile": "node scripts/compile.mjs",
     "test": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
+    "tokenomics:check": "node scripts/check-tokenomics.mjs",
+    "deploy:token:testnet": "npm run compile && npm run tokenomics:check && node scripts/deploy-token-testnet.mjs",
     "deploy:testnet": "npm run compile && node scripts/deploy-testnet.mjs",
     "validate:testnet": "node scripts/validate-bsc-testnet.mjs",
     "configure:app": "node scripts/configure-app.mjs"
