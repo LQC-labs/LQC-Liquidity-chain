@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { checkpointedDeploy, checkpointedTransaction, deploymentConfigHash, loadDeploymentCheckpoint } from "../scripts/deployment-checkpoint.mjs";
+import { checkpointedDeploy, checkpointedTransaction, deploymentConfigHash, loadDeploymentCheckpoint, operationConfigHash } from "../scripts/deployment-checkpoint.mjs";
 
 describe("BSC deployment checkpoints", function () {
   const deployer = "0x0000000000000000000000000000000000000001";
@@ -75,7 +75,7 @@ describe("BSC deployment checkpoints", function () {
   it("recovers a confirmed pending operation and rejects missing or reverted receipts", async function () {
     const txHash = `0x${"44".repeat(32)}`;
     const makeCheckpoint = () => ({ version: 1, chainId: 97, deployer, contracts: {}, operations: {
-      configure: { status: "pending", txHash, sentAt: new Date(0).toISOString() }
+      configure: { status: "pending", txHash, configHash: operationConfigHash("configure", []), sentAt: new Date(0).toISOString() }
     } });
     const directory = fs.mkdtempSync(path.join(os.tmpdir(), "lqc-checkpoint-"));
     const file = path.join(directory, "checkpoint.local.json");
@@ -89,5 +89,13 @@ describe("BSC deployment checkpoints", function () {
       await assert.rejects(() => checkpointedTransaction({ key: "configure", checkpoint: makeCheckpoint(), checkpointFile: file,
         provider: { getTransactionReceipt: async () => ({ status: 0 }) }, sendTransaction: async () => {} }), /reverted/);
     } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+  });
+
+  it("never reuses a transaction checkpoint with different settings", async function () {
+    const checkpoint = { version: 1, chainId: 97, deployer, contracts: {}, operations: {
+      limits: { status: "confirmed", txHash: `0x${"55".repeat(32)}`, configHash: operationConfigHash("limits", [100n]) }
+    } };
+    await assert.rejects(() => checkpointedTransaction({ key: "limits", config: [200n], checkpoint,
+      checkpointFile: "unused", provider: {}, sendTransaction: async () => {} }), /current configuration/);
   });
 });
