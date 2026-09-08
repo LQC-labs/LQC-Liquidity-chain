@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { checkpointedDeploy, deploymentConfigHash, loadDeploymentCheckpoint } from "../scripts/deployment-checkpoint.mjs";
+import { checkpointedDeploy, checkpointedTransaction, deploymentConfigHash, loadDeploymentCheckpoint } from "../scripts/deployment-checkpoint.mjs";
 
 describe("BSC deployment checkpoints", function () {
   const deployer = "0x0000000000000000000000000000000000000001";
@@ -51,6 +51,43 @@ describe("BSC deployment checkpoints", function () {
         checkpointFile: file, deployContract: async () => { throw new Error("must not deploy"); } };
       await assert.rejects(() => checkpointedDeploy({ ...common, args: [2n], provider: { getCode: async () => "0x6000" } }), /mismatch/);
       await assert.rejects(() => checkpointedDeploy({ ...common, args: [1n], provider: { getCode: async () => "0x" } }), /no on-chain bytecode/);
+    } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+  });
+
+  it("records pending transaction hashes before confirmation and skips confirmed operations", async function () {
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "lqc-checkpoint-"));
+    const file = path.join(directory, "checkpoint.local.json");
+    try {
+      const checkpoint = loadDeploymentCheckpoint(file, 97, deployer);
+      let sends = 0;
+      const txHash = `0x${"33".repeat(32)}`;
+      const first = await checkpointedTransaction({ key: "registry.configure", checkpoint, checkpointFile: file,
+        provider: {}, sendTransaction: async () => { sends++; return { hash: txHash, wait: async () => ({ status: 1 }) }; } });
+      assert.equal(first.reused, false);
+      assert.equal(loadDeploymentCheckpoint(file, 97, deployer).operations["registry.configure"].status, "confirmed");
+      const second = await checkpointedTransaction({ key: "registry.configure", checkpoint, checkpointFile: file,
+        provider: {}, sendTransaction: async () => { sends++; } });
+      assert.equal(second.reused, true);
+      assert.equal(sends, 1);
+    } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+  });
+
+  it("recovers a confirmed pending operation and rejects missing or reverted receipts", async function () {
+    const txHash = `0x${"44".repeat(32)}`;
+    const makeCheckpoint = () => ({ version: 1, chainId: 97, deployer, contracts: {}, operations: {
+      configure: { status: "pending", txHash, sentAt: new Date(0).toISOString() }
+    } });
+    const directory = fs.mkdtempSync(path.join(os.tmpdir(), "lqc-checkpoint-"));
+    const file = path.join(directory, "checkpoint.local.json");
+    try {
+      const confirmed = makeCheckpoint();
+      const result = await checkpointedTransaction({ key: "configure", checkpoint: confirmed, checkpointFile: file,
+        provider: { getTransactionReceipt: async () => ({ status: 1 }) }, sendTransaction: async () => {} });
+      assert.equal(result.reused, true);
+      await assert.rejects(() => checkpointedTransaction({ key: "configure", checkpoint: makeCheckpoint(), checkpointFile: file,
+        provider: { getTransactionReceipt: async () => null }, sendTransaction: async () => {} }), /still pending/);
+      await assert.rejects(() => checkpointedTransaction({ key: "configure", checkpoint: makeCheckpoint(), checkpointFile: file,
+        provider: { getTransactionReceipt: async () => ({ status: 0 }) }, sendTransaction: async () => {} }), /reverted/);
     } finally { fs.rmSync(directory, { recursive: true, force: true }); }
   });
 });
