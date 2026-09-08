@@ -46,10 +46,6 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 
 New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap V2 or V3 when their reviewed addresses are supplied. Exact-input token and native BNB execution, oracle-validated gas-cost conversion, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, atomic optimized execution, timelocked registry ownership, disable-only emergency control, token allowlisting, and staged transaction limits are now available. Live production feed configuration, final risk-committee parameter approval, multisig assignment, and production integrations remain pending.
 
-## LQC fixed-supply token
-
-[`contracts/token/LQCToken.sol`](contracts/token/LQCToken.sol) implements the approved 1 billion LQC maximum supply. The entire supply is created once for the allocation-controller address at deployment. The contract has no owner, additional mint, pause, blacklist, transfer fee, recovery, or upgrade function. Deployment, allocation, vesting, wallet labeling, and explorer verification remain separate launch gates.
-
 Split execution rejects duplicate DEX identifiers. This prevents a caller from dividing one DEX allocation into repeated legs to bypass its configured per-DEX token cap.
 
 The risk multisig may immediately reduce an existing DEX/token cap but cannot create a new cap, raise a cap, allow a token, or resume paused trading. Expansion remains restricted to timelocked governance.

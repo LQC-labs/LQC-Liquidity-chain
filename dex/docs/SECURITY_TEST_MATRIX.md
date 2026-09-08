@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-At the current repository baseline, the suite compiles **36 Solidity sources** and reports **57 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+At the commit introducing this matrix, the suite compiles **35 Solidity sources** and reports **53 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -19,7 +19,6 @@ At the current repository baseline, the suite compiles **36 Solidity sources** a
 | Exact-input, exact-output, multi-hop, and native BNB flows | `test/amm.test.mjs`, `test/native-router.test.mjs` | Covered for supported standard ERC-20 behavior. |
 | Deadline, minimum-output, slippage, and invalid-path rejection | `test/amm.test.mjs`, `test/router-v2.test.mjs`, `test/native-router.test.mjs` | Covered. |
 | Pair/router reentrancy resistance | `test/amm.test.mjs`, `test/router-v2.test.mjs` | Lock and adversarial callback behavior covered; independent review pending. |
-| Fixed LQC supply and authority surface | `test/lqc-token.test.mjs` | Exactly 1 billion LQC at construction; absence of owner, mint, pause, blacklist, fee, recovery and upgrade functions checked from the ABI. |
 | Exact temporary approvals and zero router/adapter custody | `test/router-v2.test.mjs`, `test/native-router.test.mjs` | Success and revert residue checks covered. |
 | Atomic split rollback | `test/router-v2.test.mjs` | A failed later leg must revert balances, pool reserves, custody, and usage accounting. |
 | Duplicate DEX leg rejection | `test/router-v2.test.mjs`, `test/risk-registry.test.mjs` | Covered to prevent per-DEX cap bypass. |

@@ -32,8 +32,7 @@ For an actual submission, copy and complete the [`Exchange Due-Diligence Evidenc
 | Review item | Status | Required evidence / current reference |
 |---|---|---|
 | Current disclosed tokenomics | Repository disclosure | Fixed total supply: **1,000,000,000 LQC**; planned TGE circulation: **150,000,000 LQC (15%)**. The allocation table in the root [`README.md`](../README.md) is the current repository disclosure. |
-| Token contract implementation | Implemented / repository evidence | [`LQCToken.sol`](../dex/contracts/token/LQCToken.sol) fixes supply at 1 billion LQC with 18 decimals and exposes no owner or additional mint function. Automated ABI and behavior tests are in `dex/test/lqc-token.test.mjs`. |
-| Canonical token deployment | Pending external evidence | Final network, canonical contract address, deployment transaction, allocation controller, creation bytecode, ABI, and explorer-verified source. |
+| Token contract and decimals | Pending external evidence | Final network, canonical contract address, decimals, deployment transaction, deployer, creation bytecode, ABI, and explorer-verified source. |
 | Supply matches contract state | Pending external evidence | `totalSupply`, mint/burn permissions, holder distribution, circulating-supply method, and timestamped explorer/API evidence. |
 | Allocation and TGE reconciliation | Pending external evidence | Signed allocation register whose percentages, token amounts, TGE unlocks, and totals reconcile exactly to the disclosed supply. |
 | Vesting enforcement | Pending external evidence | Vesting contract addresses, beneficiaries/categories, cliffs, schedules, revocation rights, deployment transactions, and verified source. |
