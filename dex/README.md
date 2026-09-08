@@ -88,7 +88,8 @@ proposer and should be a reviewed multisig address. Emergency guardians may disa
 but only a timelocked governance operation can re-enable or structurally change it.
 
 The automated test suite also reproduces the complete bootstrap locally and verifies both pool
-creation, Router 2.0 quoting, a capped smoke swap, and rejection when minimum-output protection fails.
+creation, exact initial-liquidity approvals with no residual Router allowance, Router 2.0 quoting,
+a capped smoke swap, and rejection when minimum-output protection fails.
 
 After deployment, run the read-only real-address validator before any smoke swap. It refuses every
 chain except BSC testnet `97`, checks deployed bytecode, verifies PancakeSwap V2/V3 Router-to-Factory
