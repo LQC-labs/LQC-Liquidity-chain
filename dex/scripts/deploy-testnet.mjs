@@ -166,6 +166,14 @@ const record = {
   network: { name: "BSC Testnet", chainId: Number(network.chainId), explorer: "https://testnet.bscscan.com" },
   deployer: wallet.address,
   owner,
+  sourceRevision: process.env.SOURCE_COMMIT || null,
+  compiler: { version: "0.8.30", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
+  externalContracts: {
+    wbnb: WBNB_ADDRESS,
+    pancakeV2Router: PANCAKE_V2_ROUTER_ADDRESS || null,
+    pancakeV3Quoter: PANCAKE_V3_QUOTER_ADDRESS || null,
+    pancakeV3Router: PANCAKE_V3_ROUTER_ADDRESS || null
+  },
   dexRegistryOwnership: {
     currentOwner: await timelock.getAddress(),
     governanceProposer: owner,
