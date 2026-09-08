@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ethers } from "ethers";
 import { checkpointedDeploy, checkpointedTransaction, loadDeploymentCheckpoint } from "./deployment-checkpoint.mjs";
+import { buildAppConfig } from "./app-config.mjs";
 
 const {
   BSC_TESTNET_RPC_URL,
@@ -250,28 +251,7 @@ const record = {
 fs.mkdirSync(path.join(root, "deployments"), { recursive: true });
 const recordPath = path.join(root, "deployments", `bsc-testnet-${network.chainId}.json`);
 fs.writeFileSync(recordPath, `${JSON.stringify(record, null, 2)}\n`);
-const appConfig = `window.LQC_FLOW_CONFIG = Object.freeze(${JSON.stringify({
-  chainId: 97,
-  chainIdHex: "0x61",
-  chainName: "BSC Testnet",
-  rpcUrls: ["https://data-seed-prebsc-1-s1.bnbchain.org:8545"],
-  blockExplorerUrls: ["https://testnet.bscscan.com"],
-  nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 },
-  routerAddress: await router.getAddress(),
-  quoteRouterAddress: await quoteRouter.getAddress(),
-  executionRouterAddress: await executionRouter.getAddress(),
-  nativeRouterAddress: await nativeRouter.getAddress(),
-  splitOptimizerAddress: await splitOptimizer.getAddress(),
-  autoRouterAddress: await autoRouter.getAddress(),
-  gasCostOracleAddress: await gasCostOracle.getAddress(),
-  dexes,
-  tokens: [
-    { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },
-    { symbol: "WBNB", name: "Wrapped BNB", address: WBNB_ADDRESS, decimals: 18 },
-    { symbol: "LQC", name: "LQC Test Token", address: lqcAddress, decimals: 18 },
-    { symbol: "USDT", name: "Mock USDT", address: usdtAddress, decimals: 18 }
-  ]
-}, null, 2)});\n`;
+const appConfig = `window.LQC_FLOW_CONFIG = Object.freeze(${JSON.stringify(buildAppConfig(record), null, 2)});\n`;
 fs.writeFileSync(path.join(root, "app/config.js"), appConfig);
 console.log(JSON.stringify(record, null, 2));
 console.log(`Saved deployment record to ${recordPath} and configured app/config.js.`);
