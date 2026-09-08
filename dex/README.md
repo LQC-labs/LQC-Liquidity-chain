@@ -50,6 +50,8 @@ Split execution rejects duplicate DEX identifiers. This prevents a caller from d
 
 The risk multisig may immediately reduce an existing DEX/token cap but cannot create a new cap, raise a cap, allow a token, or resume paused trading. Expansion remains restricted to timelocked governance.
 
+Deterministic model-based fuzz tests compare on-chain daily usage against an independent accounting model across valid and rejected multi-route transactions. Failed transactions must leave the usage counter unchanged.
+
 Router 2.0 is intentionally protocol-neutral: every EVM DEX can be integrated through the same reviewed adapter interfaces and enabled or paused independently in the registry. A DEX is never treated as compatible until its protocol-specific quote and execution adapter, route validation, tests, and security review are complete. Non-EVM liquidity will be connected later through the cross-chain routing layer rather than unsafe direct assumptions.
 
 ## Commands
