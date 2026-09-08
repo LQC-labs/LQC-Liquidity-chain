@@ -58,6 +58,8 @@ Router 2.0 is intentionally protocol-neutral: every EVM DEX can be integrated th
 
 ## Commands
 
+The GitHub Actions workflow at `.github/workflows/dex-ci.yml` performs a locked dependency install, compiles every Solidity source, and runs the complete DEX test suite for relevant pull requests and `main` branch changes. See [`docs/AUDIT_SCOPE.md`](docs/AUDIT_SCOPE.md) for the pre-audit contract and security-property scope.
+
 ```bash
 npm install
 npm test

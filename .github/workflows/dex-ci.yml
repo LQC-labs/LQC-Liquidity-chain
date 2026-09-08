@@ -1,0 +1,41 @@
+name: LQC DEX CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dex/**"
+      - ".github/workflows/dex-ci.yml"
+  pull_request:
+    paths:
+      - "dex/**"
+      - ".github/workflows/dex-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lqc-dex-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  compile-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Compile and run complete DEX test suite
+        run: npm test
