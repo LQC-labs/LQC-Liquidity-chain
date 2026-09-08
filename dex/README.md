@@ -155,21 +155,16 @@ export SMOKE_MIN_OUTPUT_BPS="9900"
 npm run smoke:testnet
 ```
 
-After deployment, configure the verified Router, WBNB, and LQC test-token addresses:
+After deployment, generate the UI configuration directly from the verified deployment record:
 
 ```bash
-export ROUTER_ADDRESS="0x..."
-export QUOTE_ROUTER_ADDRESS="0x..."
-export EXECUTION_ROUTER_ADDRESS="0x..."
-export NATIVE_ROUTER_ADDRESS="0x..."
-export SPLIT_OPTIMIZER_ADDRESS="0x..."
-export AUTO_ROUTER_ADDRESS="0x..."
-export GAS_COST_ORACLE_ADDRESS="0x..."
-export WBNB_ADDRESS="0x..."
-export LQC_ADDRESS="0x..."
-export REGISTERED_DEXES='[{"id":"0x...","name":"LQC Flow"},{"id":"0x...","name":"PancakeSwap V2"}]'
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
 npm run configure:app
 ```
+
+The generated configuration derives every Router, token, DEX id, and adapter from that single record
+and includes a deterministic deployment fingerprint. Any optional legacy address override must match
+the record exactly or generation fails, preventing mixed-deployment addresses from reaching the UI.
 
 The interface remains visibly disabled until all required Router 2.0 addresses are configured.
 
