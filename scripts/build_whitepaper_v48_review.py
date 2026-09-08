@@ -12,7 +12,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from pypdf import PdfReader, PdfWriter
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "output/pdf/LQC_Whitepaper_v4.8_Review_Edition.pdf"
+OUT = ROOT / "output/pdf/LQC_Whitepaper_v4.9_Review_Edition.pdf"
 NAVY = HexColor("#102235")
 TEAL = HexColor("#0b8790")
 MINT = HexColor("#31c7ad")
@@ -46,7 +46,7 @@ def draw_header(c, number, kicker, title):
 def draw_footer(c, number):
     c.setStrokeColor(LINE); c.setLineWidth(.5); c.line(54, 38, 558, 38)
     c.setFillColor(MID); c.setFont("LQCSans", 6.8)
-    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v4.8  ·  Review Edition")
+    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v4.9  ·  Review Edition")
     c.drawRightString(558, 23, str(number))
 
 
@@ -148,11 +148,11 @@ pages = [
     ("Risk management", "14. Governance and Emergency Roles", [
         "Structural expansion is reserved for timelocked governance. Guardians may disable a DEX or pause new swaps immediately, but they cannot resume service, move user funds, add adapters or increase limits.",
         "A designated risk role may reduce existing limits but cannot create a new permission or expand exposure. Emergency-controller ownership uses nomination and explicit acceptance.",
-        ("callout", "Final production multisig addresses, signer threshold, timelock delay and operating procedures remain pending external evidence."),
+        ("callout", "Production governance configuration is in development. Final multisig addresses, signer threshold, timelock delay and operating procedures require formal approval and verifiable disclosure."),
     ]),
     ("Security", "15. Token Compatibility Boundaries", [
         "The current execution design supports standard ERC-20 accounting assumptions. Fee-on-transfer inputs are explicitly rejected when the received balance differs from the requested input.",
-        ("bullets", ["Fee-on-transfer execution: unsupported and rejected", "Rebasing token execution: unsupported", "Permit signatures: deferred", "Non-standard approval behavior: integration review required", "Token and pool allowlists: production decision pending"]),
+        ("bullets", ["Fee-on-transfer execution: unsupported and rejected", "Rebasing token execution: unsupported", "Permit signatures: planned for later review", "Non-standard approval behavior: integration review required", "Token and pool allowlists: subject to production approval"]),
         "Unsupported behavior must not leave retained balances, approvals or risk-accounting residue.",
     ]),
     ("Testing", "16. Reproducible Engineering Baseline", [
@@ -162,13 +162,13 @@ pages = [
     ]),
     ("Deployment", "17. BSC Testnet Deployment", [
         "Deployment tooling targets BSC testnet chain ID 97. It deploys test tokens, LQC Flow and Router 2.0 modules, establishes ownership and registers the native adapter. Reviewed PancakeSwap endpoints may be supplied separately.",
-        ("bullets", ["Reject unexpected chain IDs", "Record deployed contracts and external dependencies", "Record compiler and optimizer settings", "Record governance and adapter configuration", "Never commit deployer private keys"]),
+        ("bullets", ["Read-only preflight checks chain ID, contract bytecode, reviewed endpoints and deployer tBNB balance", "Reject unexpected chain IDs before deployment", "Record deployed contracts and external dependencies", "Record compiler and optimizer settings", "Record governance and adapter configuration", "Never commit deployer private keys"]),
         "A generated deployment record is evidence only when its addresses and transactions are independently checked on the explorer.",
     ]),
     ("Deployment", "18. Address and Explorer Verification", [
         "The read-only validator checks deployed bytecode, Router-to-Factory and WBNB relationships, registry order, adapter status, module linkage, ownership and minimum timelock delay.",
         "The verification-package generator produces Solidity Standard JSON input, compiler settings, constructor arguments, deployed addresses and the recorded source revision for BscScan submission.",
-        ("callout", "Explorer verification remains pending until a real deployment record is validated and published against the exact reviewed commit."),
+        ("callout", "Explorer verification is the next deployment evidence gate. It becomes complete only after a real deployment record is validated and published against the exact reviewed commit."),
     ]),
     ("Future module", "19. Lending Design Direction", [
         "Lending is a future module and is not part of the current production claim. The design direction covers approved collateral deposits, borrowing, repayment, health-factor monitoring and controlled liquidation.",
@@ -196,7 +196,7 @@ pages = [
     ]),
     ("Tokenomics", "24. TGE and Release Framework", [
         ("table", [["Allocation", "TGE / release framework"], ["Ecosystem rewards", "0 at TGE; 7+ years, up to 50M annually"], ["Community initial", "80M at TGE; remaining 120M activity-based over 24 months"], ["Team / contributors", "0 at TGE; 12-month cliff, then 36-month monthly vesting"], ["Protocol treasury", "10M at TGE; remaining 90M under 5-year budget framework"], ["Liquidity / MM", "50M at TGE; remaining 50M linked to exchange and pool growth"], ["Grants / strategic", "10M at TGE; remaining 40M milestone-based"]], [150,354]),
-        "The planned 150M TGE circulation is Community 80M, Liquidity/MM 50M, Treasury 10M and Grants 10M. Contract and wallet evidence remains pending.",
+        "The planned 150M TGE circulation is Community 80M, Liquidity/MM 50M, Treasury 10M and Grants 10M. Contract and wallet evidence will be published after implementation and verification.",
     ]),
     ("Tokenomics", "25. Supply and Vesting Verification", [
         "Before launch, the token contract cap, total supply, decimals and mint/burn powers must reconcile to the approved disclosure. Every allocation wallet and vesting contract should be labeled and independently verifiable.",
@@ -209,7 +209,7 @@ pages = [
         ("callout", "No yield, revenue, token-price appreciation or investment return is promised."),
     ]),
     ("Roadmap", "27. Development Status", [
-        ("table", [["Workstream", "Current status"], ["LQC Flow AMM", "Implemented testnet MVP"], ["Router 2.0", "Implemented testnet MVP"], ["Pancake V2/V3 adapters", "Implemented; production review pending"], ["Risk/governance foundation", "Implemented; final roles pending"], ["BSC testnet tooling", "Implemented; real evidence pending"], ["Lending, bridge, perpetuals", "Future separate scope"], ["Independent audit", "Not completed"]], [190,314]),
+        ("table", [["Workstream", "Current status"], ["LQC Flow AMM", "Implemented testnet MVP"], ["Router 2.0", "Implemented testnet MVP"], ["Pancake V2/V3 adapters", "Implemented; subject to production review"], ["Risk/governance foundation", "Implemented; production roles in development"], ["BSC testnet tooling", "Implemented; deployment evidence is next"], ["Lending, bridge, perpetuals", "Planned as separate scope"], ["Independent audit", "Required before production"]], [190,314]),
         "Repository implementation is not equivalent to production launch or commercial adoption.",
     ]),
     ("Roadmap", "28. Phased Delivery Plan", [
@@ -223,7 +223,7 @@ pages = [
     ]),
     ("Due diligence", "30. CEX Listing Evidence", [
         ("table", [["Evidence group", "Required before submission"], ["Technical", "Pinned build, tests, audit, verified source and addresses"], ["Token", "Supply, decimals, powers, vesting and circulation proof"], ["Market", "Timestamped liquidity, holders, volume and methodology"], ["Operations", "Deposits, withdrawals, confirmations, monitoring and contacts"], ["Legal", "Entity, KYB/KYC, legal analysis, sanctions and AML controls"], ["Integrity", "Market-making policy and wash-trading prohibition"]], [135,369]),
-        "Pending evidence must be completed, marked not applicable with accepted reasoning, or disclosed as unresolved risk. No exchange approval is claimed.",
+        "Evidence not yet available must be completed, marked not applicable with accepted reasoning, or disclosed as an unresolved risk. No exchange approval is claimed.",
     ]),
     ("Legal", "31. Entity, Compliance and Disclaimer", [
         "The disclosed project entity is MMXlabs&LQC LLC, a Wyoming limited liability company. Formation, good standing, managers, beneficial ownership, authorized signatory, KYB and legal-opinion materials must be supplied through the reviewer's secure process.",
@@ -241,7 +241,7 @@ pages = [
 def build():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     c = canvas.Canvas(str(OUT), pagesize=letter)
-    c.setTitle("LQC Whitepaper v4.8 - Review Edition")
+    c.setTitle("LQC Whitepaper v4.9 - Review Edition")
     c.setAuthor("MMXlabs&LQC LLC")
     c.setSubject("Condensed official review edition for technical and exchange due diligence")
 
@@ -255,7 +255,7 @@ def build():
     c.drawString(58, 498, "Connecting Fragmented Web3 Liquidity")
     c.setFillColor(MINT); c.roundRect(58, 394, 496, 66, 7, fill=1, stroke=0)
     c.setFillColor(NAVY); c.setFont("LQCSans-Bold", 11)
-    c.drawString(76, 430, "Version 4.8  ·  September 2026  ·  32 pages")
+    c.drawString(76, 430, "Version 4.9  ·  September 2026  ·  32 pages")
     c.setFont("LQCSans", 9); c.drawString(76, 409, "Issued by MMXlabs&LQC LLC | Wyoming, United States")
     c.setFillColor(HexColor("#c8d7e1")); c.setFont("LQCSans", 8)
     c.drawString(58, 72, "Unaudited testnet MVP · No production or listing claim")
@@ -264,7 +264,7 @@ def build():
     # Contents
     y = draw_header(c, 2, "Review edition", "Contents and Status Legend")
     toc = [["Pages", "Section"], ["3-5", "Executive summary, problem and response"], ["6-8", "Principles and modular architecture"], ["9-14", "Smart routing, execution and native BNB"], ["15-18", "Risk, governance, testing and deployment"], ["19-22", "Future lending/cross-chain and token utility"], ["23-26", "Tokenomics, vesting, fees and treasury"], ["27-29", "Development roadmap, security and incident readiness"], ["30-31", "CEX due diligence, legal and compliance"], ["32", "Conclusion and immediate priorities"]]
-    draw_blocks(c, y, [("table", toc, [80,424]), ("callout", "Status legend: Implemented means public repository code/test evidence. Pending means external, deployment-specific or governance evidence is still required. Planned means no completed production module is claimed.")])
+    draw_blocks(c, y, [("table", toc, [80,424]), ("callout", "Status legend: Implemented means public repository code/test evidence. In development means active implementation or configuration work. Subject to review means independent, legal, governance or deployment verification is required. Planned means no completed production module is claimed.")])
     draw_footer(c, 2); c.showPage()
 
     # The compact edition folds the response and principles summaries into adjacent overview pages.
