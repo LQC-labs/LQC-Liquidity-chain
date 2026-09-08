@@ -12,7 +12,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from pypdf import PdfReader, PdfWriter
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.0_Review_Edition.pdf"
+OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.1_Review_Edition.pdf"
 NAVY = HexColor("#102235")
 TEAL = HexColor("#0b8790")
 MINT = HexColor("#31c7ad")
@@ -46,7 +46,7 @@ def draw_header(c, number, kicker, title):
 def draw_footer(c, number):
     c.setStrokeColor(LINE); c.setLineWidth(.5); c.line(54, 38, 558, 38)
     c.setFillColor(MID); c.setFont("LQCSans", 6.8)
-    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v5.0  ·  Review Edition")
+    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v5.1  ·  Review Edition")
     c.drawRightString(558, 23, str(number))
 
 
@@ -243,6 +243,12 @@ compact_pages = [
     pages[0],
     pages[1],
     pages[2],
+    ("Market position", "4. Purpose, Users and Differentiation", [
+        "LQC is designed as liquidity infrastructure rather than a single isolated exchange. Its purpose is to connect fragmented DEX liquidity, compare executable outcomes and provide a controlled foundation for liquidity deployment and later DeFi services.",
+        ("table", [["Stakeholder", "Intended value"], ["Traders and wallets", "Better route discovery with gas, slippage and price-impact awareness"], ["Liquidity providers", "Infrastructure for measured allocation across approved pools"], ["DEX ecosystems", "Adapter-based access without replacing the shared routing stack"], ["Projects and market makers", "Transparent execution controls and auditable route policy"]], [145,359]),
+        ("table", [["LQC distinction", "Reviewer evidence"], ["Protocol-neutral adapters", "Separate V2, V3 and LQC Flow integration modules"], ["Risk before execution", "Token, transaction, daily and DEX-specific caps"], ["Atomic route protection", "Deadline, minimum output, exact approval and rollback tests"], ["Evidence-led launch", "Pinned tests, deployment records, validation and verification tooling"]], [145,359]),
+        ("callout", "The commercial objective is sustainable infrastructure usage. The whitepaper does not rely on token-price appreciation or guaranteed exchange listing as a value proposition."),
+    ]),
     ("Design and architecture", "3. Principles and Modular Architecture", [
         ("table", [["Principle", "Engineering application"], ["Liquidity first", "Executable depth and measurable routing quality"], ["Modularity", "Separate quote, execution, risk and integration responsibilities"], ["Least privilege", "Divide governance, emergency and risk authority"], ["Evidence", "Pin code, settings, addresses and on-chain state"], ["Phased launch", "Testnet, caps and independent review before expansion"]], [135,369]),
         ("table", [["Layer", "Current status"], ["LQC Flow AMM", "Implemented testnet MVP"], ["Registry / quote / optimizer", "Implemented"], ["Execution / native BNB", "Implemented"], ["Risk and emergency controls", "Implemented foundation"], ["Lending / bridge / perpetuals", "Planned as separate scope"]], [235,269]),
@@ -268,6 +274,12 @@ compact_pages = [
     ]),
     pages[28],
     pages[29],
+    ("Organization", "23. Team and Corporate Accountability", [
+        "LQC is organized through MMXlabs&LQC LLC, a Wyoming limited liability company filed on April 30, 2026. The public website identifies the project's leadership, marketing and advisory structure; exchange KYB and beneficial-ownership evidence must be delivered through the reviewer's secure process.",
+        ("table", [["Role", "Publicly disclosed member"], ["Co-Founder", "ALI ISIK"], ["Co-Founder", "CHEONHO KIM"], ["Chief Marketing Officer", "AHMET DIZLEK"], ["Advisor", "JEONG JAE-WON"], ["Engineering", "Four-member technical function disclosed on the project website"]], [190,314]),
+        ("bullets", ["Corporate authority and authorized signatory must match the exchange application", "Engineering, security, treasury and market-operation responsibilities must have named owners before submission", "Team identity evidence should be shared securely and reconciled with public profiles", "No private personal documents should be committed to the public repository"]),
+        ("callout", "Public team pages support transparency but do not replace exchange KYC/KYB, background review or signed authority records."),
+    ]),
     ("Legal and conclusion", "20. Legal, Compliance and Immediate Priorities", [
         "The disclosed project entity is MMXlabs&LQC LLC, a Wyoming limited liability company. Formation, good standing, managers, beneficial ownership, authorized signatory, KYB and legal-opinion materials must be supplied through the reviewer's secure process.",
         "LQC has progressed from architecture into a testable EVM routing stack with a native AMM, external DEX adapters, gas-aware comparison, atomic split execution and staged risk controls.",
@@ -281,7 +293,7 @@ compact_pages = [
 def build():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     c = canvas.Canvas(str(OUT), pagesize=letter)
-    c.setTitle("LQC Whitepaper v5.0 - Review Edition")
+    c.setTitle("LQC Whitepaper v5.1 - Review Edition")
     c.setAuthor("MMXlabs&LQC LLC")
     c.setSubject("Condensed official review edition for technical and exchange due diligence")
 
@@ -295,7 +307,7 @@ def build():
     c.drawString(58, 498, "Connecting Fragmented Web3 Liquidity")
     c.setFillColor(MINT); c.roundRect(58, 394, 496, 66, 7, fill=1, stroke=0)
     c.setFillColor(NAVY); c.setFont("LQCSans-Bold", 11)
-    c.drawString(76, 430, "Version 5.0  ·  September 2026  ·  25 pages")
+    c.drawString(76, 430, "Version 5.1  ·  September 2026  ·  27 pages")
     c.setFont("LQCSans", 9); c.drawString(76, 409, "Issued by MMXlabs&LQC LLC | Wyoming, United States")
     c.setFillColor(HexColor("#c8d7e1")); c.setFont("LQCSans", 8)
     c.drawString(58, 72, "Unaudited testnet MVP · No production or listing claim")
@@ -303,7 +315,7 @@ def build():
 
     # Contents
     y = draw_header(c, 2, "Review edition", "Contents and Status Legend")
-    toc = [["Pages", "Section"], ["3-6", "Executive summary, problem, response and architecture"], ["7-11", "DEX adapters, routing, execution and risk"], ["12-16", "Compatibility, testing, deployment and future lending"], ["17-19", "Cross-chain, utility and tokenomics"], ["20-24", "Supply, roadmap, audit, CEX evidence and compliance"], ["25", "Conclusion and immediate priorities"]]
+    toc = [["Pages", "Section"], ["3-7", "Executive summary, purpose, differentiation and architecture"], ["8-12", "DEX adapters, routing, execution and risk"], ["13-17", "Compatibility, testing, deployment and future lending"], ["18-20", "Cross-chain, utility and tokenomics"], ["21-26", "Supply, roadmap, audit, CEX evidence, team and compliance"], ["27", "Immediate priorities and conclusion"]]
     draw_blocks(c, y, [("table", toc, [80,424]), ("callout", "Status legend: Implemented means public repository code/test evidence. In development means active implementation or configuration work. Subject to review means independent, legal, governance or deployment verification is required. Planned means no completed production module is claimed.")])
     draw_footer(c, 2); c.showPage()
 
@@ -316,8 +328,8 @@ def build():
 
     c.save()
     reader = PdfReader(str(OUT))
-    if len(reader.pages) != 25:
-        raise RuntimeError(f"Expected 25 pages, created {len(reader.pages)}")
+    if len(reader.pages) != 27:
+        raise RuntimeError(f"Expected 27 pages, created {len(reader.pages)}")
 
 
 if __name__ == "__main__":
