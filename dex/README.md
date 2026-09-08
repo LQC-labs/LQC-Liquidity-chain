@@ -89,6 +89,12 @@ default above initial liquidity for deployment gas, configurable through `MIN_DE
 The governance owner must be a deployed multisig contract by default. Temporary testnet exceptions
 require explicit runtime-only `ALLOW_DEPLOYER_AS_OWNER=true` and/or `ALLOW_EOA_OWNER=true` opt-ins.
 
+Every confirmed contract deployment is immediately recorded in
+`deployments/bsc-testnet-97.checkpoint.local.json` (or `DEPLOYMENT_CHECKPOINT_FILE`). A retry with the
+same chain, deployer, constructor arguments, and compiled bytecode verifies the recorded on-chain
+code and reuses that contract instead of paying to deploy it again. Any mismatch stops the run.
+Checkpoint files are gitignored and never contain private keys.
+
 The default mock supplies and pool amounts are configurable environment values for testing only;
 they do not define LQC mainnet supply, allocation, valuation, or launch liquidity.
 The deployment transfers registry ownership to the timelock. `FACTORY_OWNER` becomes the governance
