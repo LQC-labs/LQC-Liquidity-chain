@@ -11,13 +11,14 @@ export function deploymentConfigHash(source, args, bytecode) {
 }
 
 export function loadDeploymentCheckpoint(file, chainId, deployer) {
-  if (!fs.existsSync(file)) return { version: 1, chainId: Number(chainId), deployer: ethers.getAddress(deployer), contracts: {} };
+  if (!fs.existsSync(file)) return { version: 1, chainId: Number(chainId), deployer: ethers.getAddress(deployer), contracts: {}, operations: {} };
   const checkpoint = JSON.parse(fs.readFileSync(file, "utf8"));
   if (checkpoint.version !== 1 || checkpoint.chainId !== Number(chainId) ||
       ethers.getAddress(checkpoint.deployer) !== ethers.getAddress(deployer) ||
       !checkpoint.contracts || typeof checkpoint.contracts !== "object") {
     throw new Error("Deployment checkpoint does not match this chain or deployer.");
   }
+  checkpoint.operations ||= {};
   return checkpoint;
 }
 
@@ -45,4 +46,26 @@ export async function checkpointedDeploy({ key, source, args, artifact, wallet, 
   checkpoint.contracts[key] = { source, address, txHash, configHash, savedAt: new Date().toISOString() };
   saveDeploymentCheckpoint(checkpointFile, checkpoint);
   return { contract, txHash, reused: false };
+}
+
+export async function checkpointedTransaction({ key, checkpoint, checkpointFile, provider, sendTransaction }) {
+  checkpoint.operations ||= {};
+  const saved = checkpoint.operations[key];
+  if (saved?.status === "confirmed") return { txHash: saved.txHash, reused: true };
+  if (saved?.status === "pending") {
+    const receipt = await provider.getTransactionReceipt(saved.txHash);
+    if (!receipt) throw new Error(`Checkpoint operation ${key} is still pending or unavailable.`);
+    if (Number(receipt.status) !== 1) throw new Error(`Checkpoint operation ${key} reverted on-chain.`);
+    checkpoint.operations[key] = { ...saved, status: "confirmed", confirmedAt: new Date().toISOString() };
+    saveDeploymentCheckpoint(checkpointFile, checkpoint);
+    return { txHash: saved.txHash, reused: true };
+  }
+  const transaction = await sendTransaction();
+  checkpoint.operations[key] = { status: "pending", txHash: transaction.hash, sentAt: new Date().toISOString() };
+  saveDeploymentCheckpoint(checkpointFile, checkpoint);
+  const receipt = await transaction.wait();
+  if (!receipt || Number(receipt.status) !== 1) throw new Error(`Operation ${key} did not confirm successfully.`);
+  checkpoint.operations[key] = { ...checkpoint.operations[key], status: "confirmed", confirmedAt: new Date().toISOString() };
+  saveDeploymentCheckpoint(checkpointFile, checkpoint);
+  return { txHash: transaction.hash, reused: false };
 }
