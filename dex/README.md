@@ -58,7 +58,7 @@ Router 2.0 is intentionally protocol-neutral: every EVM DEX can be integrated th
 
 ## Commands
 
-The GitHub Actions workflow at `.github/workflows/dex-ci.yml` performs a locked dependency install, compiles every Solidity source, and runs the complete DEX test suite for relevant pull requests and `main` branch changes. See [`docs/AUDIT_SCOPE.md`](docs/AUDIT_SCOPE.md) for the pre-audit contract and security-property scope.
+The GitHub Actions workflow at `.github/workflows/dex-ci.yml` performs a locked dependency install, compiles every Solidity source, and runs the complete DEX test suite for relevant pull requests and `main` branch changes. Reviewers should use the [`security test matrix`](docs/SECURITY_TEST_MATRIX.md), [`audit scope`](docs/AUDIT_SCOPE.md), and [`audit handoff`](docs/AUDIT_HANDOFF.md) together. These documents organize evidence; they are not an audit claim.
 
 ```bash
 npm install
@@ -109,6 +109,16 @@ export BSC_TESTNET_RPC_URL="https://..."
 export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
 npm run validate:testnet
 ```
+
+Generate a reproducible BscScan verification package from the validated deployment record:
+
+```bash
+npm run prepare:verification -- ./deployments/bsc-testnet-97.json
+```
+
+The generated package pins the recorded source revision, compiler settings, standard JSON input,
+constructor data, and deployed addresses. Confirm it matches the exact reviewed commit before explorer
+publication.
 
 After deployment, configure the verified Router, WBNB, and LQC test-token addresses:
 
