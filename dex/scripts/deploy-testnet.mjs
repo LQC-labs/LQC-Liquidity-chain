@@ -161,18 +161,26 @@ const lqcSupply = ethers.parseUnits(TEST_LQC_SUPPLY, 18);
 const usdtSupply = ethers.parseUnits(TEST_USDT_SUPPLY, 18);
 await (await lqc.mint(wallet.address, lqcSupply)).wait();
 await (await usdt.mint(wallet.address, usdtSupply)).wait();
-await (await lqc.approve(await router.getAddress(), ethers.MaxUint256)).wait();
-await (await usdt.approve(await router.getAddress(), ethers.MaxUint256)).wait();
+const routerAddress = await router.getAddress();
+const lqcUsdtLiquidity = ethers.parseUnits(LQC_USDT_LIQUIDITY_LQC, 18);
+const usdtLiquidity = ethers.parseUnits(LQC_USDT_LIQUIDITY_USDT, 18);
+const lqcBnbLiquidity = ethers.parseUnits(LQC_BNB_LIQUIDITY_LQC, 18);
+await (await lqc.approve(routerAddress, lqcUsdtLiquidity + lqcBnbLiquidity)).wait();
+await (await usdt.approve(routerAddress, usdtLiquidity)).wait();
 const deadline = Math.floor(Date.now() / 1000) + 1800;
 await (await router.addLiquidity(
   await lqc.getAddress(), await usdt.getAddress(),
-  ethers.parseUnits(LQC_USDT_LIQUIDITY_LQC, 18), ethers.parseUnits(LQC_USDT_LIQUIDITY_USDT, 18),
+  lqcUsdtLiquidity, usdtLiquidity,
   0, 0, wallet.address, deadline
 )).wait();
 await (await router.addLiquidityBNB(
-  await lqc.getAddress(), ethers.parseUnits(LQC_BNB_LIQUIDITY_LQC, 18), 0, 0, wallet.address, deadline,
+  await lqc.getAddress(), lqcBnbLiquidity, 0, 0, wallet.address, deadline,
   { value: ethers.parseEther(LQC_BNB_LIQUIDITY_BNB) }
 )).wait();
+if (await lqc.allowance(wallet.address, routerAddress) !== 0n ||
+    await usdt.allowance(wallet.address, routerAddress) !== 0n) {
+  throw new Error("Initial liquidity provisioning left an unexpected Router allowance.");
+}
 
 const lqcAddress = await lqc.getAddress();
 const usdtAddress = await usdt.getAddress();
