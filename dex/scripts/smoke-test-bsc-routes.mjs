@@ -140,32 +140,42 @@ async function executeProbe({ wallet, deployment, probe, quote, minimumOutputBps
   if (minOut <= 0n) throw new Error(`${quote.dexName} minimum output rounded to zero.`);
   const deadline = BigInt(Math.floor(Date.now() / 1000) + 600);
 
+  const existingAllowance = await tokenIn.allowance(wallet.address, executionAddress);
+  if (existingAllowance !== 0n) await (await tokenIn.approve(executionAddress, 0)).wait();
   await (await tokenIn.approve(executionAddress, amountIn)).wait();
-  await execution.swapExactInput.estimateGas(
-    probe.dexId, probe.tokenIn, probe.tokenOut, amountIn, minOut, recipient, deadline, quote.routeData
-  );
-  await assertRejected(() => execution.swapExactInput.estimateGas(
-    probe.dexId, probe.tokenIn, probe.tokenOut, amountIn, minOut, recipient, deadline - 3600n, quote.routeData
-  ), `${quote.dexName} expired-swap recovery check unexpectedly succeeded.`);
-  await assertRejected(() => execution.swapExactInput.estimateGas(
-    probe.dexId, probe.tokenIn, probe.tokenOut, amountIn, ethers.MaxUint256, recipient, deadline, quote.routeData
-  ), `${quote.dexName} minimum-output recovery check unexpectedly succeeded.`);
+  try {
+    await execution.swapExactInput.estimateGas(
+      probe.dexId, probe.tokenIn, probe.tokenOut, amountIn, minOut, recipient, deadline, quote.routeData
+    );
+    await assertRejected(() => execution.swapExactInput.estimateGas(
+      probe.dexId, probe.tokenIn, probe.tokenOut, amountIn, minOut, recipient, deadline - 3600n, quote.routeData
+    ), `${quote.dexName} expired-swap recovery check unexpectedly succeeded.`);
+    await assertRejected(() => execution.swapExactInput.estimateGas(
+      probe.dexId, probe.tokenIn, probe.tokenOut, amountIn, ethers.MaxUint256, recipient, deadline, quote.routeData
+    ), `${quote.dexName} minimum-output recovery check unexpectedly succeeded.`);
 
-  const before = await tokenOut.balanceOf(recipient);
-  const tx = await execution.swapExactInput(
-    probe.dexId, probe.tokenIn, probe.tokenOut, amountIn, minOut, recipient, deadline, quote.routeData
-  );
-  await tx.wait();
-  const received = (await tokenOut.balanceOf(recipient)) - before;
-  const adapter = quote.adapter;
-  if (received < minOut) throw new Error(`${quote.dexName} received less than the protected minimum.`);
-  if (await tokenIn.balanceOf(executionAddress) !== 0n || await tokenIn.balanceOf(adapter) !== 0n) {
-    throw new Error(`${quote.dexName} left input-token custody behind.`);
+    const before = await tokenOut.balanceOf(recipient);
+    const tx = await execution.swapExactInput(
+      probe.dexId, probe.tokenIn, probe.tokenOut, amountIn, minOut, recipient, deadline, quote.routeData
+    );
+    await tx.wait();
+    const received = (await tokenOut.balanceOf(recipient)) - before;
+    const adapter = quote.adapter;
+    if (received < minOut) throw new Error(`${quote.dexName} received less than the protected minimum.`);
+    for (const token of [tokenIn, tokenOut]) {
+      if (await token.balanceOf(executionAddress) !== 0n || await token.balanceOf(adapter) !== 0n) {
+        throw new Error(`${quote.dexName} left token custody behind.`);
+      }
+    }
+    if (await tokenIn.allowance(executionAddress, adapter) !== 0n) {
+      throw new Error(`${quote.dexName} left an adapter allowance behind.`);
+    }
+    return { dexId: probe.dexId, dexName: quote.dexName, txHash: tx.hash, amountInRaw: amountIn.toString(), amountOutRaw: received.toString() };
+  } finally {
+    if (await tokenIn.allowance(wallet.address, executionAddress) !== 0n) {
+      await (await tokenIn.approve(executionAddress, 0)).wait();
+    }
   }
-  if (await tokenIn.allowance(executionAddress, adapter) !== 0n) {
-    throw new Error(`${quote.dexName} left an adapter allowance behind.`);
-  }
-  return { dexId: probe.dexId, dexName: quote.dexName, txHash: tx.hash, amountInRaw: amountIn.toString(), amountOutRaw: received.toString() };
 }
 
 async function assertRejected(action, message) {
