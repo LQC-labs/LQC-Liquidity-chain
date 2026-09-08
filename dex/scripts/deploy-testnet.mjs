@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ethers } from "ethers";
-import { checkpointedDeploy, loadDeploymentCheckpoint } from "./deployment-checkpoint.mjs";
+import { checkpointedDeploy, checkpointedTransaction, loadDeploymentCheckpoint } from "./deployment-checkpoint.mjs";
 
 const {
   BSC_TESTNET_RPC_URL,
@@ -62,6 +62,10 @@ const deploy = async (source, args = []) => {
   return result.contract;
 };
 const txHash = (contract) => deploymentTxByAddress.get(contract.target.toLowerCase()) || contract.deploymentTransaction()?.hash || null;
+const transact = async (key, sendTransaction) => {
+  const result = await checkpointedTransaction({ key, checkpoint, checkpointFile, provider, sendTransaction });
+  console.error(`${result.reused ? "Reused" : "Confirmed"} operation ${key} (${result.txHash}).`);
+};
 
 const lqc = await deploy("testnet/LQCTestToken", ["LQC Test Token", "LQC", 18, wallet.address]);
 const usdt = await deploy("testnet/LQCTestToken", ["Mock USDT", "USDT", 18, wallet.address]);
@@ -73,14 +77,14 @@ const riskRegistry = await deploy("router-v2/LQCRiskRegistry", [wallet.address, 
 const emergencyController = await deploy("router-v2/LQCEmergencyController", [
   owner, await registry.getAddress(), await riskRegistry.getAddress()
 ]);
-await (await registry.setPauseAdmin(await emergencyController.getAddress())).wait();
-await (await riskRegistry.setPauseAdmin(await emergencyController.getAddress())).wait();
+await transact("registry.setPauseAdmin", () => registry.setPauseAdmin(emergencyController.target));
+await transact("riskRegistry.setPauseAdmin", () => riskRegistry.setPauseAdmin(emergencyController.target));
 const quoteRouter = await deploy("router-v2/LQCQuoteRouter", [await registry.getAddress()]);
 const executionRouter = await deploy("router-v2/LQCExecutionRouter", [
   await registry.getAddress(), await riskRegistry.getAddress()
 ]);
 const nativeRouter = await deploy("router-v2/LQCNativeRouter", [WBNB_ADDRESS, await executionRouter.getAddress()]);
-await (await riskRegistry.setExecutor(await executionRouter.getAddress())).wait();
+await transact("riskRegistry.setExecutor", () => riskRegistry.setExecutor(executionRouter.target));
 const splitOptimizer = await deploy("router-v2/LQCSplitOptimizer", [await registry.getAddress()]);
 const autoRouter = await deploy("router-v2/LQCAutoRouter", [
   await splitOptimizer.getAddress(), await executionRouter.getAddress()
@@ -89,14 +93,14 @@ const gasCostOracle = await deploy("router-v2/LQCGasCostOracle", [wallet.address
 const flowAdapter = await deploy("router-v2/adapters/LQCFlowAdapter", [await router.getAddress()]);
 
 const flowDexId = ethers.id("LQC_FLOW");
-await (await registry.addDex(flowDexId, await flowAdapter.getAddress(), "LQC Flow", 100)).wait();
+await transact("registry.addDex.LQC_FLOW", () => registry.addDex(flowDexId, flowAdapter.target, "LQC Flow", 100));
 const dexes = [{ id: flowDexId, name: "LQC Flow", kind: "v2", adapter: await flowAdapter.getAddress(), feeBps: 30, gasUnits: 220000 }];
 let pancakeAdapter = null;
 if (PANCAKE_V2_ROUTER_ADDRESS) {
   if (!ethers.isAddress(PANCAKE_V2_ROUTER_ADDRESS)) throw new Error("PANCAKE_V2_ROUTER_ADDRESS must be valid.");
   pancakeAdapter = await deploy("router-v2/adapters/PancakeV2Adapter", [PANCAKE_V2_ROUTER_ADDRESS]);
   const pancakeDexId = ethers.id("PANCAKE_V2");
-  await (await registry.addDex(pancakeDexId, await pancakeAdapter.getAddress(), "PancakeSwap V2", 90)).wait();
+  await transact("registry.addDex.PANCAKE_V2", () => registry.addDex(pancakeDexId, pancakeAdapter.target, "PancakeSwap V2", 90));
   dexes.push({ id: pancakeDexId, name: "PancakeSwap V2", kind: "v2", adapter: await pancakeAdapter.getAddress(), feeBps: 25, gasUnits: 230000 });
 }
 let pancakeV3Adapter = null;
@@ -119,7 +123,7 @@ if (PANCAKE_V3_QUOTER_ADDRESS || PANCAKE_V3_ROUTER_ADDRESS) {
     PANCAKE_V3_QUOTER_ADDRESS, PANCAKE_V3_ROUTER_ADDRESS, wallet.address, maxV3Hops
   ]);
   for (const fee of allowedV3FeeTiers.map(Number)) {
-    await (await pancakeV3Adapter.setFeeTierAllowed(fee, true)).wait();
+    await transact(`pancakeV3.feeTier.${fee}`, () => pancakeV3Adapter.setFeeTierAllowed(fee, true));
   }
   const approvedV3Pools = JSON.parse(PANCAKE_V3_ALLOWED_POOLS);
   if (!Array.isArray(approvedV3Pools) || approvedV3Pools.length === 0) {
@@ -130,10 +134,11 @@ if (PANCAKE_V3_QUOTER_ADDRESS || PANCAKE_V3_ROUTER_ADDRESS) {
         !allowedV3FeeTiers.map(Number).includes(Number(pool.fee))) {
       throw new Error("Each PancakeSwap V3 pool needs valid tokenA, tokenB, and reviewed fee tier.");
     }
-    await (await pancakeV3Adapter.setPoolAllowed(pool.tokenA, pool.tokenB, Number(pool.fee), true)).wait();
+    await transact(`pancakeV3.pool.${pool.tokenA.toLowerCase()}.${pool.tokenB.toLowerCase()}.${Number(pool.fee)}`,
+      () => pancakeV3Adapter.setPoolAllowed(pool.tokenA, pool.tokenB, Number(pool.fee), true));
   }
   const pancakeV3DexId = ethers.id("PANCAKE_V3");
-  await (await registry.addDex(pancakeV3DexId, await pancakeV3Adapter.getAddress(), "PancakeSwap V3", 95)).wait();
+  await transact("registry.addDex.PANCAKE_V3", () => registry.addDex(pancakeV3DexId, pancakeV3Adapter.target, "PancakeSwap V3", 95));
   dexes.push({
     id: pancakeV3DexId, name: "PancakeSwap V3", kind: "v3",
     adapter: await pancakeV3Adapter.getAddress(), feeTiers: allowedV3FeeTiers.map(Number),
@@ -148,22 +153,23 @@ const limits = [
   [WBNB_ADDRESS, TEST_WBNB_MAX_TX, TEST_WBNB_MAX_DAY]
 ];
 for (const [token, perTx, perDay] of limits) {
-  await (await riskRegistry.setTokenLimits(
+  await transact(`risk.tokenLimits.${token.toLowerCase()}`, () => riskRegistry.setTokenLimits(
     token, true, ethers.parseUnits(perTx, 18), ethers.parseUnits(perDay, 18)
-  )).wait();
+  ));
   for (const dex of dexes) {
-    await (await riskRegistry.setDexTokenCap(dex.id, token, ethers.parseUnits(perTx, 18))).wait();
+    await transact(`risk.dexCap.${dex.id}.${token.toLowerCase()}`,
+      () => riskRegistry.setDexTokenCap(dex.id, token, ethers.parseUnits(perTx, 18)));
   }
 }
-await (await registry.beginOwnershipTransfer(await timelock.getAddress())).wait();
-await (await timelock.acceptRegistryOwnership(await registry.getAddress())).wait();
-await (await riskRegistry.beginOwnershipTransfer(await timelock.getAddress())).wait();
-await (await timelock.acceptRegistryOwnership(await riskRegistry.getAddress())).wait();
-await (await gasCostOracle.beginOwnershipTransfer(await timelock.getAddress())).wait();
-await (await timelock.acceptRegistryOwnership(await gasCostOracle.getAddress())).wait();
+await transact("registry.beginOwnershipTransfer", () => registry.beginOwnershipTransfer(timelock.target));
+await transact("registry.acceptOwnership", () => timelock.acceptRegistryOwnership(registry.target));
+await transact("riskRegistry.beginOwnershipTransfer", () => riskRegistry.beginOwnershipTransfer(timelock.target));
+await transact("riskRegistry.acceptOwnership", () => timelock.acceptRegistryOwnership(riskRegistry.target));
+await transact("gasCostOracle.beginOwnershipTransfer", () => gasCostOracle.beginOwnershipTransfer(timelock.target));
+await transact("gasCostOracle.acceptOwnership", () => timelock.acceptRegistryOwnership(gasCostOracle.target));
 if (pancakeV3Adapter) {
-  await (await pancakeV3Adapter.beginOwnershipTransfer(await timelock.getAddress())).wait();
-  await (await timelock.acceptRegistryOwnership(await pancakeV3Adapter.getAddress())).wait();
+  await transact("pancakeV3.beginOwnershipTransfer", () => pancakeV3Adapter.beginOwnershipTransfer(timelock.target));
+  await transact("pancakeV3.acceptOwnership", () => timelock.acceptRegistryOwnership(pancakeV3Adapter.target));
 }
 
 const lqcSupply = ethers.parseUnits(TEST_LQC_SUPPLY, 18);
