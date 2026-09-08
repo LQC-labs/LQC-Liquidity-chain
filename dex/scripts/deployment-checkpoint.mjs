@@ -10,6 +10,10 @@ export function deploymentConfigHash(source, args, bytecode) {
   return ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify({ source, args: normalize(args), bytecodeHash: ethers.keccak256(bytecode) })));
 }
 
+export function operationConfigHash(key, config) {
+  return ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify({ key, config: normalize(config) })));
+}
+
 export function loadDeploymentCheckpoint(file, chainId, deployer) {
   if (!fs.existsSync(file)) return { version: 1, chainId: Number(chainId), deployer: ethers.getAddress(deployer), contracts: {}, operations: {} };
   const checkpoint = JSON.parse(fs.readFileSync(file, "utf8"));
@@ -48,9 +52,13 @@ export async function checkpointedDeploy({ key, source, args, artifact, wallet, 
   return { contract, txHash, reused: false };
 }
 
-export async function checkpointedTransaction({ key, checkpoint, checkpointFile, provider, sendTransaction }) {
+export async function checkpointedTransaction({ key, config = [], checkpoint, checkpointFile, provider, sendTransaction }) {
   checkpoint.operations ||= {};
   const saved = checkpoint.operations[key];
+  const configHash = operationConfigHash(key, config);
+  if (saved && saved.configHash !== configHash) {
+    throw new Error(`Checkpoint operation ${key} does not match the current configuration.`);
+  }
   if (saved?.status === "confirmed") return { txHash: saved.txHash, reused: true };
   if (saved?.status === "pending") {
     const receipt = await provider.getTransactionReceipt(saved.txHash);
@@ -61,7 +69,7 @@ export async function checkpointedTransaction({ key, checkpoint, checkpointFile,
     return { txHash: saved.txHash, reused: true };
   }
   const transaction = await sendTransaction();
-  checkpoint.operations[key] = { status: "pending", txHash: transaction.hash, sentAt: new Date().toISOString() };
+  checkpoint.operations[key] = { status: "pending", txHash: transaction.hash, configHash, sentAt: new Date().toISOString() };
   saveDeploymentCheckpoint(checkpointFile, checkpoint);
   const receipt = await transaction.wait();
   if (!receipt || Number(receipt.status) !== 1) throw new Error(`Operation ${key} did not confirm successfully.`);
