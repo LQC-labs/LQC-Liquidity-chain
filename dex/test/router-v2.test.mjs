@@ -152,6 +152,47 @@ describe("LQC Router 2.0", function () {
     assert.equal(await tokenA.allowance(await executionRouter.getAddress(), await adapter.getAddress()), 0n);
   });
 
+  it("rejects fee-on-transfer input tokens without retaining balances or consuming approval", async function () {
+    const FeeToken = new ethers.ContractFactory(
+      artifact("MockFeeOnTransferToken", "mocks/MockFeeOnTransferToken").abi,
+      artifact("MockFeeOnTransferToken", "mocks/MockFeeOnTransferToken").bytecode,
+      owner
+    );
+    const feeToken = await FeeToken.deploy("Fee Token", "FEE");
+    await feeToken.waitForDeployment();
+    const feeAddress = await feeToken.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    const liquidity = ethers.parseEther("10000");
+    await (await feeToken.mint(await owner.getAddress(), liquidity)).wait();
+    await (await feeToken.approve(await flowRouter.getAddress(), liquidity)).wait();
+    await (await tokenB.mint(await owner.getAddress(), liquidity)).wait();
+    await (await tokenB.approve(await flowRouter.getAddress(), liquidity)).wait();
+    const block = await provider.getBlock("latest");
+    await (await flowRouter.addLiquidity(
+      feeAddress, tokenOut, liquidity, liquidity, 0, 0,
+      await owner.getAddress(), BigInt(block.timestamp + 3600)
+    )).wait();
+
+    const dexId = ethers.id("LQC_FLOW_FEE_TOKEN_TEST");
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow fee-token test", 100)).wait();
+    const amountIn = ethers.parseEther("10");
+    await (await feeToken.setFeeBps(100)).wait();
+    await (await feeToken.mint(await owner.getAddress(), amountIn)).wait();
+    await (await feeToken.approve(await executionRouter.getAddress(), amountIn)).wait();
+    const ownerBefore = await feeToken.balanceOf(await owner.getAddress());
+    const allowanceBefore = await feeToken.allowance(await owner.getAddress(), await executionRouter.getAddress());
+    const routeData = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [[feeAddress, tokenOut]]);
+
+    await assert.rejects(executionRouter.swapExactInput(
+      dexId, feeAddress, tokenOut, amountIn, 1n, await other.getAddress(),
+      BigInt(block.timestamp + 3600), routeData
+    ));
+    assert.equal(await feeToken.balanceOf(await owner.getAddress()), ownerBefore);
+    assert.equal(await feeToken.allowance(await owner.getAddress(), await executionRouter.getAddress()), allowanceBefore);
+    assert.equal(await feeToken.balanceOf(await executionRouter.getAddress()), 0n);
+    assert.equal(await feeToken.balanceOf(await adapter.getAddress()), 0n);
+  });
+
   it("rejects disabled DEXes, expired swaps, and impossible minimum output", async function () {
     const dexId = ethers.id("LQC_FLOW");
     await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
