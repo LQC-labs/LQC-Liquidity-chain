@@ -21,7 +21,7 @@ concurrency:
 
 jobs:
   test:
-    name: Compile and test
+    name: Compile, test, and audit
     runs-on: ubuntu-latest
     timeout-minutes: 15
     defaults:
@@ -44,3 +44,8 @@ jobs:
 
       - name: Compile and run tests
         run: npm test
+
+      - name: Classify dependency advisories
+        run: |
+          npm audit --json > npm-audit.json || true
+          node -e 'const a=require("./npm-audit.json"); const rows=Object.entries(a.vulnerabilities||{}).map(([name,v])=>({name,severity:v.severity,direct:v.isDirect,via:(v.via||[]).map(x=>typeof x==="string"?x:x.name).join(","),fix:JSON.stringify(v.fixAvailable)})); console.log(JSON.stringify({metadata:a.metadata,packages:rows},null,2))'
