@@ -43,4 +43,13 @@ describe("BSC testnet deployment preflight", function () {
     await assert.rejects(() => runTestnetPreflight(base, { ...provider, getBalance: async () => 0n }), /balance/);
     await assert.rejects(() => runTestnetPreflight(base, { ...provider, getCode: async () => "0x" }), /bytecode/);
   });
+
+  it("reserves deployment gas and requires a deployed multisig by default", async function () {
+    const funded = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("10.49"), getCode: async () => "0x6000" };
+    await assert.rejects(() => runTestnetPreflight(base, funded), /gas reserve/);
+    const eoaOwner = { ...funded, getBalance: async () => ethers.parseEther("11"),
+      getCode: async address => ethers.getAddress(address) === owner ? "0x" : "0x6000" };
+    await assert.rejects(() => runTestnetPreflight(base, eoaOwner), /multisig/);
+    await assert.doesNotReject(() => runTestnetPreflight({ ...base, ALLOW_EOA_OWNER: "true" }, eoaOwner));
+  });
 });
