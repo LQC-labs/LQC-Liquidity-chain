@@ -45,7 +45,10 @@ jobs:
       - name: Compile and run tests
         run: npm test
 
-      - name: Classify dependency advisories
+      - name: Reject production dependency vulnerabilities
+        run: npm audit --omit=dev --audit-level=low
+
+      - name: Classify development-tool advisories
         run: |
           npm audit --json > npm-audit.json || true
           node -e 'const a=require("./npm-audit.json"); const rows=Object.entries(a.vulnerabilities||{}).map(([name,v])=>({name,severity:v.severity,direct:v.isDirect,via:(v.via||[]).map(x=>typeof x==="string"?x:x.name).join(","),fix:JSON.stringify(v.fixAvailable)})); console.log(JSON.stringify({metadata:a.metadata,packages:rows},null,2))'
