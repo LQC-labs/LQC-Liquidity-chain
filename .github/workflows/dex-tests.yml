@@ -1,0 +1,46 @@
+name: DEX tests
+
+on:
+  pull_request:
+    paths:
+      - "dex/**"
+      - ".github/workflows/dex-tests.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "dex/**"
+      - ".github/workflows/dex-tests.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dex-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Compile and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: dex
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Compile and run tests
+        run: npm test
