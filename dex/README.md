@@ -60,6 +60,8 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - Adversarial integration tests prove malicious adapters and unauthorized callers cannot bypass critical Router, Risk, or Vault boundaries
 - Malicious Strategy callback tests prove Vault allocation and recall remain atomic under reentrancy attempts
 - Dishonest Strategy tests reject false deployment, withdrawal, token-balance, managed-asset, and debt reports
+- Rebasing-token tests prove positive balance changes cannot inflate shares and negative idle-backing
+  deficits halt deposits and withdrawals before first-mover extraction
 
 New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap V2 or V3 when their reviewed addresses are supplied. Exact-input token and native BNB execution, oracle-validated gas-cost conversion, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, atomic optimized execution, timelocked registry ownership, disable-only emergency control, token allowlisting, and staged transaction limits are now available. Live production feed configuration, final risk-committee parameter approval, multisig assignment, and production integrations remain pending.
 
