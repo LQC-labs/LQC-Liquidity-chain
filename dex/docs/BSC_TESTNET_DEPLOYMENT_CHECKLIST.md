@@ -17,6 +17,9 @@ authorize mainnet deployment or use of real user funds.
 The deployment script assigns protocol ownership and the timelock proposer to `FACTORY_OWNER`, while
 `RISK_ADMIN` receives only limit-reduction and pause authority. Preflight rejects a shared address by
 default so the role separation is established at deployment rather than deferred.
+For the first testnet deployment, the Risk Safe is also recorded as the Vault pause and strategy
+administrator. Vault ownership is transferred to the timelock, and the strategy allocation cap
+defaults to zero until governance explicitly approves a bounded exercise.
 
 ## 2. Network and external-contract verification
 
@@ -46,6 +49,9 @@ These are testnet starting points, not production risk approvals.
 | Test LQC | 10,000 | 100,000 |
 | Mock USDT | 10,000 | 100,000 |
 | WBNB | 10 | 100 |
+
+Initial Vault safety defaults: Mock USDT asset, 100,000 deposit cap, zero strategy allocation cap,
+and 1% normal-recall loss tolerance. These are testnet configuration limits, not production terms.
 
 - [ ] Risk reviewers approve or reduce every limit before deployment.
 - [ ] Every enabled DEX/token route has a non-zero cap no higher than the token transaction cap.
@@ -80,8 +86,9 @@ npm run prepare:verification -- ./deployments/bsc-testnet-97.json
 npm run configure:app
 ```
 
-- [ ] Validator confirms contract bytecode, ownership, module linkage, DEX order, adapters, and V3 policy.
-- [ ] Monitor reports a fresh block and no unexplained Router custody.
+- [ ] Validator confirms contract bytecode, ownership, module linkage, DEX order, adapters, V3 policy,
+      Vault roles, Vault limits, and Vault/Strategy linkage.
+- [ ] Monitor reports a fresh block, no unexplained Router custody, and fully backed Vault accounting.
 - [ ] BscScan verification bundle matches `SOURCE_COMMIT` and compiler settings.
 - [ ] Publish verified source for every deployed LQC contract.
 - [ ] Generated UI fingerprint matches the deployment record.
@@ -105,5 +112,5 @@ npm run configure:app
 - [ ] Independent reviewer signs off on addresses, limits, and evidence.
 - [ ] Open Critical/High findings: zero.
 
-Only after these items pass should LQC proceed to the Liquidity Vault implementation and later
-oracle, lending, liquidation, and cross-chain work.
+Only after these items pass should LQC proceed to approved DEX liquidity validation and the later
+Gasless, audit, lending, liquidation, cross-chain, and mainnet stages in the official sequence.

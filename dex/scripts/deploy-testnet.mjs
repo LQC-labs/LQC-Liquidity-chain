@@ -29,6 +29,9 @@ const {
   LQC_USDT_LIQUIDITY_USDT = "100000",
   LQC_BNB_LIQUIDITY_LQC = "100000",
   LQC_BNB_LIQUIDITY_BNB = "10",
+  TEST_VAULT_DEPOSIT_CAP = "100000",
+  TEST_VAULT_STRATEGY_CAP = "0",
+  TEST_VAULT_MAX_LOSS_BPS = "100",
   EXPECTED_CHAIN_ID = "97"
 } = process.env;
 
@@ -73,6 +76,20 @@ const transact = async (key, config, sendTransaction) => {
 
 const lqc = await deploy("testnet/LQCTestToken", ["LQC Test Token", "LQC", 18, wallet.address]);
 const usdt = await deploy("testnet/LQCTestToken", ["Mock USDT", "USDT", 18, wallet.address]);
+const vaultDepositCap = ethers.parseUnits(TEST_VAULT_DEPOSIT_CAP, 18);
+const vaultStrategyCap = ethers.parseUnits(TEST_VAULT_STRATEGY_CAP, 18);
+const vaultMaxLossBps = BigInt(TEST_VAULT_MAX_LOSS_BPS);
+const liquidityVault = await deploy("vault/LQCLiquidityVault", [
+  await usdt.getAddress(), wallet.address, vaultDepositCap, "LQC Testnet Vault Share", "lvUSDT"
+]);
+const idleStrategyAdapter = await deploy("vault/adapters/LQCIdleStrategyAdapter", [
+  await usdt.getAddress(), await liquidityVault.getAddress()
+]);
+await transact("vault.setStrategy", [idleStrategyAdapter.target], () => liquidityVault.setStrategy(idleStrategyAdapter.target));
+await transact("vault.setStrategyLimits", [vaultStrategyCap, vaultMaxLossBps],
+  () => liquidityVault.setStrategyLimits(vaultStrategyCap, vaultMaxLossBps));
+await transact("vault.setPauseAdmin", [riskAdmin], () => liquidityVault.setPauseAdmin(riskAdmin));
+await transact("vault.setStrategyAdmin", [riskAdmin], () => liquidityVault.setStrategyAdmin(riskAdmin));
 const factory = await deploy("LQCFlowFactory", [owner]);
 const router = await deploy("LQCFlowRouter", [await factory.getAddress(), WBNB_ADDRESS]);
 const registry = await deploy("router-v2/LQCDexRegistry", [wallet.address]);
@@ -176,6 +193,10 @@ if (pancakeV3Adapter) {
   await transact("pancakeV3.beginOwnershipTransfer", [timelock.target], () => pancakeV3Adapter.beginOwnershipTransfer(timelock.target));
   await transact("pancakeV3.acceptOwnership", [pancakeV3Adapter.target], () => timelock.acceptRegistryOwnership(pancakeV3Adapter.target));
 }
+await transact("liquidityVault.beginOwnershipTransfer", [timelock.target],
+  () => liquidityVault.beginOwnershipTransfer(timelock.target));
+await transact("liquidityVault.acceptOwnership", [liquidityVault.target],
+  () => timelock.acceptRegistryOwnership(liquidityVault.target));
 
 const lqcSupply = ethers.parseUnits(TEST_LQC_SUPPLY, 18);
 const usdtSupply = ethers.parseUnits(TEST_USDT_SUPPLY, 18);
@@ -235,6 +256,11 @@ const record = {
     pauseAdmin: await emergencyController.getAddress(),
     executor: await executionRouter.getAddress()
   },
+  liquidityVaultRoles: {
+    owner: await timelock.getAddress(),
+    pauseAdmin: await liquidityVault.pauseAdmin(),
+    strategyAdmin: await liquidityVault.strategyAdmin()
+  },
   contracts: {
     lqc: { address: lqcAddress, decimals: 18, deploymentTx: txHash(lqc) },
     mockUsdt: { address: usdtAddress, decimals: 18, deploymentTx: txHash(usdt) },
@@ -256,7 +282,16 @@ const record = {
     },
     flowAdapter: { address: await flowAdapter.getAddress(), deploymentTx: txHash(flowAdapter) },
     pancakeAdapter: pancakeAdapter ? { address: await pancakeAdapter.getAddress(), deploymentTx: txHash(pancakeAdapter) } : null,
-    pancakeV3Adapter: pancakeV3Adapter ? { address: await pancakeV3Adapter.getAddress(), deploymentTx: txHash(pancakeV3Adapter) } : null
+    pancakeV3Adapter: pancakeV3Adapter ? { address: await pancakeV3Adapter.getAddress(), deploymentTx: txHash(pancakeV3Adapter) } : null,
+    liquidityVault: {
+      address: await liquidityVault.getAddress(), deploymentTx: txHash(liquidityVault),
+      asset: usdtAddress, depositCap: vaultDepositCap.toString(),
+      strategyCap: vaultStrategyCap.toString(), maxLossBps: Number(vaultMaxLossBps)
+    },
+    idleStrategyAdapter: {
+      address: await idleStrategyAdapter.getAddress(), deploymentTx: txHash(idleStrategyAdapter),
+      asset: usdtAddress, vault: await liquidityVault.getAddress()
+    }
   },
   pools: [
     { pair: "LQC/Mock USDT", address: addresses.lqcUsdt, lqc: LQC_USDT_LIQUIDITY_LQC, quote: LQC_USDT_LIQUIDITY_USDT },

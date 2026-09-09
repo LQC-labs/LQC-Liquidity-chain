@@ -26,6 +26,8 @@ describe("BSC testnet deployment preflight", function () {
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, TIMELOCK_DELAY: "3599" }), /TIMELOCK_DELAY/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, TEST_LQC_MAX_TX: "2", TEST_LQC_MAX_DAY: "1" }), /MAX_DAY/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, TEST_LQC_SUPPLY: "1" }), /exceeds/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, TEST_VAULT_DEPOSIT_CAP: "100", TEST_VAULT_STRATEGY_CAP: "101" }), /cannot exceed/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, TEST_VAULT_MAX_LOSS_BPS: "2001" }), /between 0 and 2000/);
   });
 
   it("requires an explicit override when the temporary deployer owns governance", function () {

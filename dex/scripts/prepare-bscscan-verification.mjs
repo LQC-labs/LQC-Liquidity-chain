@@ -34,7 +34,7 @@ const specs = [
   ["router", "contracts/LQCFlowRouter.sol:LQCFlowRouter", ["address", "address"], [deployment.contracts.factory.address, deployment.contracts.wbnb.address]],
   ["dexRegistry", "contracts/router-v2/LQCDexRegistry.sol:LQCDexRegistry", ["address"], [deployment.deployer]],
   ["timelock", "contracts/router-v2/LQCTimelockController.sol:LQCTimelockController", ["address", "uint256"], [deployment.owner, deployment.dexRegistryOwnership.timelockDelaySeconds]],
-  ["riskRegistry", "contracts/router-v2/LQCRiskRegistry.sol:LQCRiskRegistry", ["address", "address"], [deployment.deployer, deployment.owner]],
+  ["riskRegistry", "contracts/router-v2/LQCRiskRegistry.sol:LQCRiskRegistry", ["address", "address"], [deployment.deployer, deployment.riskAdmin]],
   ["emergencyController", "contracts/router-v2/LQCEmergencyController.sol:LQCEmergencyController", ["address", "address", "address"], [deployment.owner, deployment.contracts.dexRegistry.address, deployment.contracts.riskRegistry.address]],
   ["quoteRouter", "contracts/router-v2/LQCQuoteRouter.sol:LQCQuoteRouter", ["address"], [deployment.contracts.dexRegistry.address]],
   ["executionRouter", "contracts/router-v2/LQCExecutionRouter.sol:LQCExecutionRouter", ["address", "address"], [deployment.contracts.dexRegistry.address, deployment.contracts.riskRegistry.address]],
@@ -42,7 +42,13 @@ const specs = [
   ["splitOptimizer", "contracts/router-v2/LQCSplitOptimizer.sol:LQCSplitOptimizer", ["address"], [deployment.contracts.dexRegistry.address]],
   ["autoRouter", "contracts/router-v2/LQCAutoRouter.sol:LQCAutoRouter", ["address", "address"], [deployment.contracts.splitOptimizer.address, deployment.contracts.executionRouter.address]],
   ["gasCostOracle", "contracts/router-v2/LQCGasCostOracle.sol:LQCGasCostOracle", ["address", "address"], [deployment.deployer, deployment.contracts.wbnb.address]],
-  ["flowAdapter", "contracts/router-v2/adapters/LQCFlowAdapter.sol:LQCFlowAdapter", ["address"], [deployment.contracts.router.address]]
+  ["flowAdapter", "contracts/router-v2/adapters/LQCFlowAdapter.sol:LQCFlowAdapter", ["address"], [deployment.contracts.router.address]],
+  ["liquidityVault", "contracts/vault/LQCLiquidityVault.sol:LQCLiquidityVault",
+    ["address", "address", "uint256", "string", "string"],
+    [deployment.contracts.liquidityVault.asset, deployment.deployer, deployment.contracts.liquidityVault.depositCap,
+      "LQC Testnet Vault Share", "lvUSDT"]],
+  ["idleStrategyAdapter", "contracts/vault/adapters/LQCIdleStrategyAdapter.sol:LQCIdleStrategyAdapter",
+    ["address", "address"], [deployment.contracts.idleStrategyAdapter.asset, deployment.contracts.idleStrategyAdapter.vault]]
 ];
 
 const contracts = specs.map(([key, contract, types, args]) => {

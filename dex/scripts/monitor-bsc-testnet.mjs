@@ -8,7 +8,7 @@ const BALANCE_ABI = ["function balanceOf(address) view returns(uint256)"];
 const OWNABLE_ABI = ["function owner() view returns(address)", "function pendingOwner() view returns(address)"];
 
 export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, validation, validationError,
-  custody, ownership }) {
+  custody, ownership, vaultState = null }) {
   const checks = [];
   const add = (id, status, detail) => checks.push({ id, status, detail });
   const age = Math.max(0, Math.floor(new Date(checkedAt).getTime() / 1000) - Number(block.timestamp));
@@ -23,6 +23,23 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
   for (const item of ownership) add(`ownership.${item.contract}.pending`,
     item.pendingOwner === ethers.ZeroAddress ? "PASS" : "WARNING",
     item.pendingOwner === ethers.ZeroAddress ? "no pending ownership transfer" : `pending owner ${item.pendingOwner}`);
+  if (vaultState) {
+    const accounted = BigInt(vaultState.accountedAssets), debt = BigInt(vaultState.strategyDebt);
+    const cap = BigInt(vaultState.strategyCap), idle = BigInt(vaultState.idleBalance);
+    const managed = BigInt(vaultState.adapterManagedAssets), adapterBalance = BigInt(vaultState.adapterBalance);
+    const solventAccounting = debt <= accounted;
+    add("vault.solvency", vaultState.insolvent || !solventAccounting ? "CRITICAL" : "PASS",
+      vaultState.insolvent ? "vault reports insolvency" : solventAccounting ? "vault accounting is solvent" : "strategy debt exceeds accounted assets");
+    add("vault.strategy_exposure", debt <= cap ? "PASS" : "CRITICAL", `${debt} strategy debt (cap ${cap})`);
+    add("vault.idle_backing", solventAccounting && idle >= accounted - debt ? "PASS" : "CRITICAL",
+      `${idle} idle base units backing ${solventAccounting ? accounted - debt : 0n} accounted idle units`);
+    add("vault.adapter_backing", managed === debt && adapterBalance >= managed ? "PASS" : "CRITICAL",
+      `${adapterBalance} adapter base units backing ${managed} managed units and ${debt} vault debt`);
+    add("vault.deposit_status", vaultState.depositsPaused ? "WARNING" : "PASS",
+      vaultState.depositsPaused ? "vault deposits are paused" : "vault deposits are enabled");
+    add("vault.allocation_status", vaultState.allocationsPaused ? "WARNING" : "PASS",
+      vaultState.allocationsPaused ? "vault allocations are paused" : "vault allocations are enabled");
+  }
   const counts = Object.fromEntries(["PASS", "WARNING", "CRITICAL"].map(status =>
     [status.toLowerCase(), checks.filter(check => check.status === status).length]));
   return { schemaVersion: 1, checkedAt, network: { chainId: 97, latestBlock: Number(block.number), blockAgeSeconds: age },
@@ -51,13 +68,35 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
     }
   }
   const ownership = [];
-  for (const contract of ["dexRegistry", "riskRegistry", "gasCostOracle"]) {
+  for (const contract of ["dexRegistry", "riskRegistry", "gasCostOracle", "liquidityVault"]) {
     const address = deployment?.contracts?.[contract]?.address;
     if (!ethers.isAddress(address)) continue;
     const owned = new ethers.Contract(address, OWNABLE_ABI, provider);
     ownership.push({ contract, owner: await owned.owner(), pendingOwner: await owned.pendingOwner() });
   }
-  return buildMonitoringReport({ checkedAt, block: latest, maxBlockAgeSeconds, validation, validationError, custody, ownership });
+  let vaultState = null;
+  const vaultAddress = deployment?.contracts?.liquidityVault?.address;
+  const adapterAddress = deployment?.contracts?.idleStrategyAdapter?.address;
+  const assetAddress = deployment?.contracts?.liquidityVault?.asset;
+  if (ethers.isAddress(vaultAddress) && ethers.isAddress(adapterAddress) && ethers.isAddress(assetAddress)) {
+    const vault = new ethers.Contract(vaultAddress, [
+      "function accountedAssets() view returns(uint256)", "function strategyDebt() view returns(uint256)",
+      "function strategyCap() view returns(uint256)", "function depositsPaused() view returns(bool)",
+      "function allocationsPaused() view returns(bool)", "function isInsolvent() view returns(bool)"
+    ], provider);
+    const adapter = new ethers.Contract(adapterAddress, ["function totalManagedAssets() view returns(uint256)"], provider);
+    const asset = new ethers.Contract(assetAddress, BALANCE_ABI, provider);
+    const values = await Promise.all([
+      vault.accountedAssets(), vault.strategyDebt(), vault.strategyCap(), vault.depositsPaused(),
+      vault.allocationsPaused(), vault.isInsolvent(), adapter.totalManagedAssets(),
+      asset.balanceOf(vaultAddress), asset.balanceOf(adapterAddress)
+    ]);
+    vaultState = { accountedAssets: values[0], strategyDebt: values[1], strategyCap: values[2],
+      depositsPaused: values[3], allocationsPaused: values[4], insolvent: values[5],
+      adapterManagedAssets: values[6], idleBalance: values[7], adapterBalance: values[8] };
+  }
+  return buildMonitoringReport({ checkedAt, block: latest, maxBlockAgeSeconds, validation, validationError,
+    custody, ownership, vaultState });
 }
 
 async function main() {

@@ -7,6 +7,7 @@ import {
   deploymentContractAddresses,
   validateDeploymentDexRecords,
   validateRiskAdministrator,
+  validateVaultDeploymentRecord,
   validateV3DeploymentRecord
 } from "../scripts/validate-bsc-testnet.mjs";
 
@@ -27,12 +28,37 @@ describe("BSC testnet real-address validation", function () {
   it("requires every safety-critical LQC contract in a chain-97 deployment record", function () {
     const address = "0x0000000000000000000000000000000000000001";
     const deployment = { network: { chainId: 97 }, contracts: Object.fromEntries(
-      ["dexRegistry", "riskRegistry", "emergencyController", "executionRouter", "timelock", "gasCostOracle"]
+      ["dexRegistry", "riskRegistry", "emergencyController", "executionRouter", "timelock", "gasCostOracle", "liquidityVault", "idleStrategyAdapter"]
         .map(name => [name, { address }])
     ) };
-    assert.equal(Object.keys(deploymentContractAddresses(deployment)).length, 6);
+    assert.equal(Object.keys(deploymentContractAddresses(deployment)).length, 8);
     delete deployment.contracts.timelock;
     assert.throws(() => deploymentContractAddresses(deployment), /missing timelock/);
+  });
+
+  it("validates fresh Vault roles, limits, accounting, and adapter linkage", function () {
+    const addresses = Array.from({ length: 6 }, (_, i) => `0x${String(i + 1).padStart(40, "0")}`);
+    const [vaultAddress, asset, adapterAddress, ownerAddress, pauseAdmin, strategyAdmin] = addresses;
+    const deployment = {
+      contracts: {
+        liquidityVault: { address: vaultAddress, asset, depositCap: "1000", strategyCap: "100", maxLossBps: 100 },
+        idleStrategyAdapter: { address: adapterAddress, asset, vault: vaultAddress }
+      },
+      liquidityVaultRoles: { owner: ownerAddress, pauseAdmin, strategyAdmin }
+    };
+    const onchain = { owner: ownerAddress, pauseAdmin, strategyAdmin, asset, strategy: adapterAddress,
+      adapterAsset: asset, adapterVault: vaultAddress, depositCap: 1000n, strategyCap: 100n, maxLossBps: 100n,
+      strategyDebt: 0n, accountedAssets: 0n, adapterManagedAssets: 0n,
+      depositsPaused: false, allocationsPaused: false, insolvent: false };
+    assert.equal(validateVaultDeploymentRecord(deployment, onchain), true);
+    assert.equal(validateVaultDeploymentRecord(deployment, { ...onchain, depositsPaused: true, allocationsPaused: true }), true);
+    assert.throws(() => validateVaultDeploymentRecord(deployment, { ...onchain, strategyDebt: 1n }), /unexpected accounting/);
+    assert.throws(() => validateVaultDeploymentRecord(deployment, { ...onchain, insolvent: true }), /insolvent/);
+    assert.throws(() => validateVaultDeploymentRecord(deployment, { ...onchain, adapterVault: asset }), /linkage mismatch/);
+    assert.throws(() => validateVaultDeploymentRecord(deployment, { ...onchain, strategyCap: 101n }), /limit configuration/);
+    assert.throws(() => validateVaultDeploymentRecord({
+      ...deployment, liquidityVaultRoles: { ...deployment.liquidityVaultRoles, pauseAdmin: ownerAddress }
+    }, { ...onchain, pauseAdmin: ownerAddress }), /not separated/);
   });
 
   it("matches recorded DEX ids, order, adapters, and active status", function () {

@@ -6,7 +6,9 @@ const healthyInput = () => ({
   checkedAt: "2026-09-09T00:02:00.000Z", block: { number: 123, timestamp: 1788912060 }, maxBlockAgeSeconds: 180,
   validation: { lqc: { contractCount: 6, dexCount: 3, swapsPaused: false } }, validationError: null,
   custody: [{ contract: "executionRouter", asset: "BNB", balance: "0" }, { contract: "executionRouter", asset: "lqc", balance: "0" }],
-  ownership: [{ contract: "dexRegistry", owner: "0x0000000000000000000000000000000000000001", pendingOwner: ethers.ZeroAddress }]
+  ownership: [{ contract: "dexRegistry", owner: "0x0000000000000000000000000000000000000001", pendingOwner: ethers.ZeroAddress }],
+  vaultState: { accountedAssets: "1000", strategyDebt: "100", strategyCap: "200", idleBalance: "900",
+    adapterManagedAssets: "100", adapterBalance: "100", depositsPaused: false, allocationsPaused: false, insolvent: false }
 });
 
 describe("LQC BSC testnet monitoring report", function () {
@@ -28,6 +30,23 @@ describe("LQC BSC testnet monitoring report", function () {
   it("surfaces emergency pauses and pending ownership transfers as warnings", function () {
     const input = healthyInput(); input.validation.lqc.swapsPaused = true;
     input.ownership[0].pendingOwner = "0x0000000000000000000000000000000000000002";
+    const report = buildMonitoringReport(input);
+    assert.equal(report.status, "WARNING");
+    assert.equal(report.counts.warning, 2);
+  });
+
+  it("fails closed for Vault insolvency, cap breaches, or backing mismatches", function () {
+    const input = healthyInput();
+    input.vaultState = { ...input.vaultState, strategyDebt: "300", idleBalance: "1", adapterManagedAssets: "299", insolvent: true };
+    const report = buildMonitoringReport(input);
+    assert.equal(report.status, "CRITICAL");
+    assert.equal(report.checks.filter(check => check.id.startsWith("vault.") && check.status === "CRITICAL").length, 4);
+  });
+
+  it("reports Vault emergency pauses as warnings without treating expected custody as Router residue", function () {
+    const input = healthyInput();
+    input.vaultState.depositsPaused = true;
+    input.vaultState.allocationsPaused = true;
     const report = buildMonitoringReport(input);
     assert.equal(report.status, "WARNING");
     assert.equal(report.counts.warning, 2);
