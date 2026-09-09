@@ -92,6 +92,8 @@ unsafe governance settings, timelocks outside 1 hour to 7 days, invalid daily/tr
 liquidity above minted test supply, insufficient test BNB, unpinned PancakeSwap endpoints, and
 configured addresses without BSC-testnet bytecode. The deployer must retain at least 0.5 tBNB by
 default above initial liquidity for deployment gas, configurable through `MIN_DEPLOYER_TBNB_RESERVE`.
+`SOURCE_COMMIT` must be the full reviewed commit SHA, must equal the checked-out Git commit, and the
+worktree must be clean. Both preflight and the transaction-producing script enforce this binding.
 The governance owner must be a deployed multisig contract by default. Temporary testnet exceptions
 require explicit runtime-only `ALLOW_DEPLOYER_AS_OWNER=true` and/or `ALLOW_EOA_OWNER=true` opt-ins.
 

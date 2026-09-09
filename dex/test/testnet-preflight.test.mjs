@@ -1,14 +1,15 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
 import { PANCAKE_BSC_TESTNET } from "../scripts/validate-bsc-testnet.mjs";
-import { runTestnetPreflight, validateTestnetDeploymentConfig } from "../scripts/preflight-testnet-deploy.mjs";
+import { assertReviewedSourceCommit, runTestnetPreflight, validateTestnetDeploymentConfig } from "../scripts/preflight-testnet-deploy.mjs";
 
 const key = `0x${"11".repeat(32)}`;
 const owner = "0x0000000000000000000000000000000000000001";
 const riskAdmin = "0x0000000000000000000000000000000000000003";
 const base = { BSC_TESTNET_RPC_URL: "https://example.invalid", DEPLOYER_PRIVATE_KEY: key,
   FACTORY_OWNER: owner, RISK_ADMIN: riskAdmin,
-  WBNB_ADDRESS: "0x0000000000000000000000000000000000000002", EXPECTED_CHAIN_ID: "97" };
+  WBNB_ADDRESS: "0x0000000000000000000000000000000000000002", EXPECTED_CHAIN_ID: "97",
+  SOURCE_COMMIT: "a".repeat(40) };
 
 describe("BSC testnet deployment preflight", function () {
   it("accepts bounded defaults and a separate governance owner", function () {
@@ -18,8 +19,18 @@ describe("BSC testnet deployment preflight", function () {
     assert.equal(result.delay, 3600n);
   });
 
+  it("binds deployment to the reviewed clean source commit", async function () {
+    assert.equal(assertReviewedSourceCommit("A".repeat(40), "a".repeat(40)), "a".repeat(40));
+    assert.throws(() => assertReviewedSourceCommit("short", "a".repeat(40)), /40-character/);
+    assert.throws(() => assertReviewedSourceCommit("a".repeat(40), "b".repeat(40)), /does not match/);
+    assert.throws(() => assertReviewedSourceCommit("a".repeat(40), "a".repeat(40), true), /dirty Git worktree/);
+    const provider = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("11"), getCode: async () => "0x6000" };
+    await assert.rejects(() => runTestnetPreflight(base, provider, { commit: "b".repeat(40), dirty: false }), /does not match/);
+  });
+
   it("rejects missing governance, wrong chains, weak limits, and excess liquidity", function () {
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, FACTORY_OWNER: "" }), /FACTORY_OWNER/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, SOURCE_COMMIT: "" }), /SOURCE_COMMIT/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, RISK_ADMIN: "" }), /RISK_ADMIN/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, RISK_ADMIN: owner }), /role separation/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, EXPECTED_CHAIN_ID: "56" }), /expected BSC testnet/);

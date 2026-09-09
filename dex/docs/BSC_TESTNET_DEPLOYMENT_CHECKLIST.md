@@ -39,6 +39,7 @@ defaults to zero until governance explicitly approves a bounded exercise.
 - [ ] Supply `DEPLOYER_PRIVATE_KEY` only in the runtime environment.
 - [ ] Confirm `.env`, `*.local.json`, and checkpoint files remain ignored by Git.
 - [ ] Set `SOURCE_COMMIT` to the exact reviewed `main` commit being deployed.
+- [ ] Confirm the deployment checkout is clean; preflight and deployment reject unreviewed worktree changes.
 
 ## 4. Proposed first-pilot limits
 

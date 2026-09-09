@@ -1,4 +1,6 @@
 import { pathToFileURL } from "node:url";
+import { execFileSync } from "node:child_process";
+import path from "node:path";
 import { ethers } from "ethers";
 import { PANCAKE_BSC_TESTNET, assertBscTestnetChain } from "./validate-bsc-testnet.mjs";
 
@@ -15,10 +17,30 @@ const nonNegative = (name, value) => {
   return parsed;
 };
 
+export function assertReviewedSourceCommit(sourceCommit, currentCommit, dirty = false) {
+  if (!/^[0-9a-fA-F]{40}$/.test(sourceCommit || "")) {
+    throw new Error("SOURCE_COMMIT must be the full 40-character reviewed Git commit SHA.");
+  }
+  if (!/^[0-9a-fA-F]{40}$/.test(currentCommit || "") || sourceCommit.toLowerCase() !== currentCommit.toLowerCase()) {
+    throw new Error("SOURCE_COMMIT does not match the currently checked-out Git commit.");
+  }
+  if (dirty) throw new Error("Refusing deployment from a dirty Git worktree; commit and review every source change first.");
+  return sourceCommit.toLowerCase();
+}
+
+export function readGitSourceState(cwd = path.resolve(import.meta.dirname, "../..")) {
+  const commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd, encoding: "utf8" }).trim();
+  const status = execFileSync("git", ["status", "--porcelain", "--untracked-files=normal"], { cwd, encoding: "utf8" });
+  return { commit, dirty: status.trim().length > 0 };
+}
+
 export function validateTestnetDeploymentConfig(env) {
   if (!env.BSC_TESTNET_RPC_URL) throw new Error("BSC_TESTNET_RPC_URL is required.");
   if (!/^0x[0-9a-fA-F]{64}$/.test(env.DEPLOYER_PRIVATE_KEY || "")) {
     throw new Error("DEPLOYER_PRIVATE_KEY must be a 32-byte hex key supplied only at runtime.");
+  }
+  if (!/^[0-9a-fA-F]{40}$/.test(env.SOURCE_COMMIT || "")) {
+    throw new Error("SOURCE_COMMIT must be the full 40-character reviewed Git commit SHA.");
   }
   assertBscTestnetChain(BigInt(env.EXPECTED_CHAIN_ID || "97"));
   if (!ethers.isAddress(env.WBNB_ADDRESS)) throw new Error("WBNB_ADDRESS must be a valid address.");
@@ -89,12 +111,13 @@ export function validateTestnetDeploymentConfig(env) {
       ethers.getAddress(v3Quoter) !== PANCAKE_BSC_TESTNET.v3Quoter)) {
     throw new Error("PancakeSwap V3 addresses do not match the pinned BSC testnet endpoints.");
   }
-  return { walletAddress, owner, riskAdmin, delay, bnbLiquidity, gasReserve,
+  return { walletAddress, owner, riskAdmin, sourceCommit: env.SOURCE_COMMIT.toLowerCase(), delay, bnbLiquidity, gasReserve,
     vaultDepositCap, vaultStrategyCap, vaultMaxLossBps };
 }
 
-export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL)) {
+export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL), gitState = null) {
   const config = validateTestnetDeploymentConfig(env);
+  if (gitState) assertReviewedSourceCommit(config.sourceCommit, gitState.commit, gitState.dirty);
   const network = await provider.getNetwork();
   assertBscTestnetChain(network.chainId);
   const balance = await provider.getBalance(config.walletAddress);
@@ -120,11 +143,11 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
       throw new Error(`${name} has no contract bytecode on BSC testnet.`);
     }
   }
-  return { chainId: Number(network.chainId), owner: config.owner, riskAdmin: config.riskAdmin, checkedContracts: Object.keys(named) };
+  return { chainId: Number(network.chainId), sourceCommit: config.sourceCommit, owner: config.owner, riskAdmin: config.riskAdmin, checkedContracts: Object.keys(named) };
 }
 
 async function main() {
-  const result = await runTestnetPreflight(process.env);
+  const result = await runTestnetPreflight(process.env, undefined, readGitSourceState());
   console.log(JSON.stringify({ status: "ready", ...result }, null, 2));
 }
 
