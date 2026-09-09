@@ -35,6 +35,7 @@ contract MockLossyStrategyAdapter is ILQCStrategyAdapter {
     function simulateReportedLoss(uint256 assets) external {
         if (assets > totalManagedAssets) revert InsufficientAssets();
         totalManagedAssets -= assets;
+        asset.safeTransfer(address(0), assets);
     }
 
     function deploy(uint256 assets) external onlyVault returns (uint256) {
