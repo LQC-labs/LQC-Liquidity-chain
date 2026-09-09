@@ -133,18 +133,22 @@ describe("LQC Router browser SDK", function () {
   });
 
   it("detects execution-route changes while a token approval is pending", function () {
-    const single = { kind: "single", single: { best: { dexId: "0xA1" }, routeData: "0x1234" } };
-    assert.equal(sdk.executionPlanFingerprint(single), "single:0xa1:0x1234");
+    const single = { kind: "single", single: { best: { dexId: "0xA1", adapter: tokenA }, routeData: "0x1234" } };
+    assert.equal(sdk.executionPlanFingerprint(single), `single:0xa1:${tokenA}:0x1234`);
     assert.notEqual(
       sdk.executionPlanFingerprint(single),
-      sdk.executionPlanFingerprint({ kind: "single", single: { best: { dexId: "0xB2" }, routeData: "0x1234" } })
+      sdk.executionPlanFingerprint({ kind: "single", single: { best: { dexId: "0xB2", adapter: tokenA }, routeData: "0x1234" } })
     );
     const split = {
       kind: "split",
-      split: { dexIds: ["0xA1", "0xB2", "0xC3"], amountsIn: [60n, 0n, 40n] },
+      split: { dexIds: ["0xA1", "0xB2", "0xC3"], adapters: [tokenA, tokenB, tokenC], amountsIn: [60n, 0n, 40n] },
       routes: ["0x11", "0x22", "0x33"]
     };
-    assert.equal(sdk.executionPlanFingerprint(split), "split:0xa1:60:0x11|0xc3:40:0x33");
+    assert.equal(sdk.executionPlanFingerprint(split), `split:0xa1:${tokenA}:60:0x11|0xc3:${tokenC}:40:0x33`);
+    assert.notEqual(
+      sdk.executionPlanFingerprint(split),
+      sdk.executionPlanFingerprint({ ...split, split: { ...split.split, adapters: [tokenB, tokenB, tokenC] } })
+    );
     assert.equal(sdk.executionPlanFingerprint({ kind: "split", split: {}, routes: [] }), "");
     assert.throws(() => sdk.executionPlanFingerprint({ kind: "unknown" }));
   });
