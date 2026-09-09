@@ -45,6 +45,29 @@ describe("LQC Router 2.0", function () {
     await (await flowRouter.addLiquidity(await tokenA.getAddress(), await tokenB.getAddress(), amount, amount, 0, 0, await owner.getAddress(), BigInt(block.timestamp + 3600))).wait();
   });
 
+  it("rejects undeployed downstream Router and Quoter endpoints", async function () {
+    const eoa = await other.getAddress();
+    const FlowAdapter = new ethers.ContractFactory(
+      artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").abi,
+      artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").bytecode,
+      owner
+    );
+    const V2Adapter = new ethers.ContractFactory(
+      artifact("PancakeV2Adapter", "router-v2/adapters/PancakeV2Adapter").abi,
+      artifact("PancakeV2Adapter", "router-v2/adapters/PancakeV2Adapter").bytecode,
+      owner
+    );
+    const V3Adapter = new ethers.ContractFactory(
+      artifact("PancakeV3ExecutionAdapter", "router-v2/adapters/PancakeV3ExecutionAdapter").abi,
+      artifact("PancakeV3ExecutionAdapter", "router-v2/adapters/PancakeV3ExecutionAdapter").bytecode,
+      owner
+    );
+
+    await assert.rejects(FlowAdapter.deploy(eoa));
+    await assert.rejects(V2Adapter.deploy(eoa));
+    await assert.rejects(V3Adapter.deploy(eoa, eoa, await owner.getAddress(), 1));
+  });
+
   it("registers LQC Flow and returns its live pool quote", async function () {
     const dexId = ethers.id("LQC_FLOW");
     await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
