@@ -165,6 +165,16 @@ The generator requires the complete eight-step pause-and-recovery sequence, chai
 source revision, chronological timestamps, transaction hashes or read-only revert evidence, and the
 full configured timelock delay. It emits a SHA-256 digest and refuses incomplete or failed drills.
 
+Combine the deployment, latest monitoring result, and drill report into one review manifest:
+
+```bash
+npm run package:review-evidence -- <deployment.json> <monitoring.json> <drill.json> [external-evidence.json]
+```
+
+The package refuses mixed networks, commits, or deployment fingerprints and requires HEALTHY
+monitoring. Missing explorer verification, independent audit, or secure legal/KYB references remain
+explicit pending gates; repository evidence alone is never reported as full listing approval.
+
 The JSON report verifies block freshness and the strict deployment configuration, reports emergency
 pause and pending-ownership states, and checks that execution, native, and automatic routers retain
 no BNB, LQC, mock-USDT, or WBNB custody. It also compares both Safe owner sets and thresholds with
