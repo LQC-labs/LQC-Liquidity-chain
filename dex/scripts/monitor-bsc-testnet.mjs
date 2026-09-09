@@ -8,6 +8,33 @@ const BALANCE_ABI = ["function balanceOf(address) view returns(uint256)"];
 const OWNABLE_ABI = ["function owner() view returns(address)", "function pendingOwner() view returns(address)"];
 const SAFE_ABI = ["function getOwners() view returns(address[])", "function getThreshold() view returns(uint256)"];
 
+export function buildIncidentResponse(checks) {
+  const safeChecks = checks.filter(check => check.id.startsWith("multisig."));
+  const critical = safeChecks.filter(check => check.status === "CRITICAL");
+  const warnings = safeChecks.filter(check => check.status === "WARNING");
+  if (critical.length) return {
+    code: "SAFE_POLICY_BREACH", severity: "CRITICAL", automaticTransactions: false,
+    triggers: critical.map(check => check.id),
+    actions: [
+      { order: 1, gate: "GUARDIAN_MULTISIG", action: "Approve and submit EmergencyController.pauseAllSwaps; never use a single EOA." },
+      { order: 2, gate: "EVIDENCE_REVIEW", action: "Pin the detection block, Safe owners, threshold, transactions, and deployment record before remediation." },
+      { order: 3, gate: "SAFE_MULTISIG", action: "Restore the reviewed signer set and threshold; rotate any suspected signer credentials." },
+      { order: 4, gate: "TIMELOCK", action: "Schedule protocol recovery only after the Safe policy and every deployment validation pass." },
+      { order: 5, gate: "POST_CHECK", action: "Execute recovery after the timelock, rerun monitoring, and publish the incident disposition." }
+    ]
+  };
+  if (warnings.length) return {
+    code: "SAFE_POLICY_REVIEW", severity: "WARNING", automaticTransactions: false,
+    triggers: warnings.map(check => check.id),
+    actions: [
+      { order: 1, gate: "EVIDENCE_REVIEW", action: "Verify the Safe change against an approved governance proposal and record its transaction hash." },
+      { order: 2, gate: "GOVERNANCE_MULTISIG", action: "Reject or approve the new baseline; do not update the deployment record from an unverified change." },
+      { order: 3, gate: "POST_CHECK", action: "Rerun validation and monitoring before closing the review." }
+    ]
+  };
+  return null;
+}
+
 export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, validation, validationError,
   custody, ownership, vaultState = null, safeState = [] }) {
   const checks = [];
@@ -65,8 +92,9 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
   }
   const counts = Object.fromEntries(["PASS", "WARNING", "CRITICAL"].map(status =>
     [status.toLowerCase(), checks.filter(check => check.status === status).length]));
-  return { schemaVersion: 1, checkedAt, network: { chainId: 97, latestBlock: Number(block.number), blockAgeSeconds: age },
-    status: counts.critical ? "CRITICAL" : counts.warning ? "WARNING" : "HEALTHY", counts, checks };
+  const incident = buildIncidentResponse(checks);
+  return { schemaVersion: 2, checkedAt, network: { chainId: 97, latestBlock: Number(block.number), blockAgeSeconds: age },
+    status: counts.critical ? "CRITICAL" : counts.warning ? "WARNING" : "HEALTHY", counts, checks, incident };
 }
 
 export async function monitorBscTestnet({ provider, deployment, checkedAt = new Date().toISOString(), maxBlockAgeSeconds = 180 }) {
