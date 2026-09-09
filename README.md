@@ -189,6 +189,9 @@ This is the current approved project design. Contract addresses, on-chain supply
 
 ## Roadmap
 
+The dependency-ordered implementation plan is maintained in [`LQC Development Sequence`](docs/DEVELOPMENT_SEQUENCE.md). It defines the evidence gate required before each later module begins.
+
+
 1. **Foundation** — Router architecture, pool registry, vault, treasury, and access controls
 2. **Router MVP** — Multi-DEX quotes, route optimization, split routing, and SDK/API
 3. **Controlled Integration** — Selected DEX and liquidity-pool integrations with testing and transaction limits
