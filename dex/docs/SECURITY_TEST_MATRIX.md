@@ -34,7 +34,7 @@ The current suite compiles **41 Solidity sources** and reports **122 passing tes
 | BSC testnet chain ID 97, bytecode, and module/link ownership checks | `test/testnet-validation.test.mjs`, `test/testnet-bootstrap.test.mjs` | Validator behavior covered; each real deployment must still be validated. |
 | Test token ownership and supply behavior | `test/testnet-token.test.mjs` | Test infrastructure only; not evidence for a final production LQC token. |
 | Browser route encoding and execution-plan SDK | `test/router-sdk.test.mjs` | Covered for supported routing formats. |
-| Approval-time execution-route integrity | `test/router-sdk.test.mjs` | A changed DEX, route payload, split allocation, spender, or materially worse output after approval requires explicit user review instead of immediate swap submission. |
+| Approval-time execution-route integrity | `test/router-sdk.test.mjs` | A changed DEX ID, adapter address, route payload, split allocation, spender, or materially worse output after approval requires explicit user review instead of immediate swap submission. |
 | Wallet execution-context integrity | `test/router-sdk.test.mjs` | A changed account, disconnected wallet, or unexpected chain before submission aborts the stale transaction flow. |
 | Wallet input-balance preflight | `test/router-sdk.test.mjs` | A swap exceeding the connected wallet's current input-token balance is rejected before approval or execution. |
 | Native gas-reserve preflight | `test/router-sdk.test.mjs` | BNB value, estimated route gas, and reset/exact approval overhead are reserved before prompting the wallet; refreshed routes are checked again after approval. |
