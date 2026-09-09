@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 
 const source = fs.readFileSync(new URL("../app/router-sdk.js", import.meta.url), "utf8");
 const context = { globalThis: {} };
-vm.runInNewContext(source, context);
+vm.runInNewContext(source, context, { filename: "lqc-router-sdk.js" });
 const sdk = context.globalThis.LQCRouterSDK;
 
 describe("LQC Router browser SDK", function () {
@@ -23,6 +23,11 @@ describe("LQC Router browser SDK", function () {
       sdk.encodeRoute(dex, [tokenA, tokenB, tokenC], ethers),
       ethers.solidityPacked(["address", "uint24", "address", "uint24", "address"], [tokenA, 500, tokenB, 2500, tokenC])
     );
+  });
+
+  it("encodes the same reviewed path across multiple DEX adapters", function () {
+    const expected = sdk.encodeRoute({ kind: "v2" }, [tokenA, tokenB], ethers);
+    assert.deepEqual(sdk.encodeRoutes([{ kind: "v2" }, { kind: "v2" }], [tokenA, tokenB], ethers), [expected, expected]);
   });
 
   it("rejects unapproved V3 pools, excessive hops, and excessive slippage", function () {
