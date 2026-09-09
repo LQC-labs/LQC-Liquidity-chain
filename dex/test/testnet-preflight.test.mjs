@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
 import { PANCAKE_BSC_TESTNET } from "../scripts/validate-bsc-testnet.mjs";
-import { assertReviewedSourceCommit, runTestnetPreflight, validateTestnetDeploymentConfig } from "../scripts/preflight-testnet-deploy.mjs";
+import { assertReviewedSourceCommit, assertSafeMultisig, runTestnetPreflight, validateTestnetDeploymentConfig } from "../scripts/preflight-testnet-deploy.mjs";
 
 const key = `0x${"11".repeat(32)}`;
 const owner = "0x0000000000000000000000000000000000000001";
@@ -11,6 +11,23 @@ const base = { BSC_TESTNET_RPC_URL: "https://example.invalid", DEPLOYER_PRIVATE_
   FACTORY_OWNER: owner, RISK_ADMIN: riskAdmin,
   WBNB_ADDRESS: "0x0000000000000000000000000000000000000002", EXPECTED_CHAIN_ID: "97",
   SOURCE_COMMIT: "a".repeat(40) };
+const safeInterface = new ethers.Interface([
+  "function getOwners() view returns (address[])",
+  "function getThreshold() view returns (uint256)"
+]);
+const governanceOwners = Array.from({ length: 7 }, (_, index) => ethers.getAddress(`0x${(index + 10).toString(16).padStart(40, "0")}`));
+const riskOwners = Array.from({ length: 5 }, (_, index) => ethers.getAddress(`0x${(index + 30).toString(16).padStart(40, "0")}`));
+const safeCall = async ({ to, data }) => {
+  const selector = data.slice(0, 10);
+  const owners = ethers.getAddress(to) === owner ? governanceOwners : riskOwners;
+  if (selector === safeInterface.getFunction("getOwners").selector) {
+    return safeInterface.encodeFunctionResult("getOwners", [owners]);
+  }
+  if (selector === safeInterface.getFunction("getThreshold").selector) {
+    return safeInterface.encodeFunctionResult("getThreshold", [owners.length === 7 ? 4n : 3n]);
+  }
+  throw new Error("unsupported call");
+};
 
 describe("BSC testnet deployment preflight", function () {
   it("accepts bounded defaults and a separate governance owner", function () {
@@ -66,7 +83,7 @@ describe("BSC testnet deployment preflight", function () {
   });
 
   it("checks the live chain, deployer balance, and configured bytecode", async function () {
-    const provider = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("11"), getCode: async () => "0x6000" };
+    const provider = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("11"), getCode: async () => "0x6000", call: safeCall };
     const result = await runTestnetPreflight(base, provider);
     assert.equal(result.chainId, 97);
     assert.equal(result.riskAdmin, riskAdmin);
@@ -75,7 +92,7 @@ describe("BSC testnet deployment preflight", function () {
   });
 
   it("reserves deployment gas and requires a deployed multisig by default", async function () {
-    const funded = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("10.49"), getCode: async () => "0x6000" };
+    const funded = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("10.49"), getCode: async () => "0x6000", call: safeCall };
     await assert.rejects(() => runTestnetPreflight(base, funded), /gas reserve/);
     const eoaOwner = { ...funded, getBalance: async () => ethers.parseEther("11"),
       getCode: async address => ethers.getAddress(address) === owner ? "0x" : "0x6000" };
@@ -85,5 +102,21 @@ describe("BSC testnet deployment preflight", function () {
       getCode: async address => ethers.getAddress(address) === riskAdmin ? "0x" : "0x6000" };
     await assert.rejects(() => runTestnetPreflight(base, eoaRisk), /risk multisig/);
     await assert.doesNotReject(() => runTestnetPreflight({ ...base, ALLOW_EOA_RISK_ADMIN: "true" }, eoaRisk));
+  });
+
+  it("requires the reviewed 4-of-7 governance and 3-of-5 risk Safe policies", async function () {
+    const provider = { call: safeCall };
+    const governance = await assertSafeMultisig(provider, owner, "FACTORY_OWNER", 7n, 4n);
+    const risk = await assertSafeMultisig(provider, riskAdmin, "RISK_ADMIN", 5n, 3n);
+    assert.equal(governance.owners.length, 7);
+    assert.equal(governance.threshold, 4n);
+    assert.equal(risk.owners.length, 5);
+    assert.equal(risk.threshold, 3n);
+
+    const weak = { call: async ({ data }) => data.slice(0, 10) === safeInterface.getFunction("getOwners").selector
+      ? safeInterface.encodeFunctionResult("getOwners", [riskOwners])
+      : safeInterface.encodeFunctionResult("getThreshold", [2n]) };
+    await assert.rejects(() => assertSafeMultisig(weak, riskAdmin, "RISK_ADMIN", 5n, 3n), /3-of-5/);
+    await assert.rejects(() => assertSafeMultisig({ call: async () => "0x" }, owner, "FACTORY_OWNER", 7n, 4n), /Safe/);
   });
 });
