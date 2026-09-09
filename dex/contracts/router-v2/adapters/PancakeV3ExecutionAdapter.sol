@@ -30,6 +30,7 @@ contract PancakeV3ExecutionAdapter is ILQCExecutionAdapter {
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     error ZeroAddress();
+    error InvalidEndpoint();
     error InvalidRoute();
     error RouteEndpointMismatch();
     error QuoteFailed();
@@ -49,6 +50,7 @@ contract PancakeV3ExecutionAdapter is ILQCExecutionAdapter {
 
     constructor(address quoterV2_, address swapRouter_, address owner_, uint256 maxHops_) {
         if (quoterV2_ == address(0) || swapRouter_ == address(0) || owner_ == address(0)) revert ZeroAddress();
+        if (quoterV2_.code.length == 0 || swapRouter_.code.length == 0) revert InvalidEndpoint();
         if (maxHops_ == 0 || maxHops_ > 3) revert InvalidMaxHops();
         quoterV2 = quoterV2_;
         swapRouter = IPancakeV3SwapRouter(swapRouter_);
