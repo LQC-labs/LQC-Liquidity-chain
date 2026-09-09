@@ -1,0 +1,109 @@
+# LQC DEX BSC Testnet Deployment Checklist
+
+Status: pre-deployment review. This checklist is for BSC testnet chain `97` only. It does not
+authorize mainnet deployment or use of real user funds.
+
+## 1. Required roles and wallets
+
+- [ ] Create a Protocol Governance Safe with a 3-of-5 signing threshold.
+- [ ] Create a Risk Safe with a 2-of-3 signing threshold.
+- [ ] Record signer names and wallet addresses in the private governance register.
+- [ ] Verify every signer can access, review, and sign a test Safe transaction.
+- [ ] Use the deployed Protocol Governance Safe address as `FACTORY_OWNER`.
+- [ ] Keep the deployer separate from `FACTORY_OWNER`.
+- [ ] Never paste, commit, email, or include the deployer private key in screenshots or documents.
+
+The current deployment script assigns protocol ownership and the timelock proposer to
+`FACTORY_OWNER`. The separate Risk Safe role must be wired in a follow-up reviewed configuration
+transaction before a public pilot; do not represent the initial deployment as final governance until
+that assignment is complete.
+
+## 2. Network and external-contract verification
+
+- [ ] RPC returns BSC testnet chain id `97`.
+- [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.
+- [ ] Pin PancakeSwap V2 Router to `0xD99D1c33F9fC3444f8101754aBC46c52416550D1`.
+- [ ] Pin PancakeSwap V3 Router to `0x1b81D678ffb9C0263b24A97847620C99d213eB14`.
+- [ ] Pin PancakeSwap V3 Quoter to `0xbC203d7f83677c7ed3F7acEc959963E7F4ECC5C2`.
+- [ ] Review each V3 token pair and fee tier before adding it to `PANCAKE_V3_ALLOWED_POOLS`.
+- [ ] Keep `PANCAKE_V3_MAX_HOPS=2` for the first capped pilot.
+
+## 3. Deployer funding and runtime secrets
+
+- [ ] Fund the deployer with testnet tBNB only.
+- [ ] Hold at least configured initial BNB liquidity plus `0.5` tBNB gas reserve.
+- [ ] Reduce the default `10` tBNB initial-liquidity setting if faucet funding is insufficient.
+- [ ] Supply `DEPLOYER_PRIVATE_KEY` only in the runtime environment.
+- [ ] Confirm `.env`, `*.local.json`, and checkpoint files remain ignored by Git.
+- [ ] Set `SOURCE_COMMIT` to the exact reviewed `main` commit being deployed.
+
+## 4. Proposed first-pilot limits
+
+These are testnet starting points, not production risk approvals.
+
+| Asset | Maximum per transaction | Maximum per UTC day |
+|---|---:|---:|
+| Test LQC | 10,000 | 100,000 |
+| Mock USDT | 10,000 | 100,000 |
+| WBNB | 10 | 100 |
+
+- [ ] Risk reviewers approve or reduce every limit before deployment.
+- [ ] Every enabled DEX/token route has a non-zero cap no higher than the token transaction cap.
+- [ ] The initial LQC/USDT and LQC/WBNB pool amounts are explicitly approved.
+- [ ] No production token, treasury asset, or user fund is used.
+
+## 5. Preflight and deployment
+
+Run from `dex/`:
+
+```bash
+npm ci --ignore-scripts
+npm test
+npm audit --omit=dev
+npm run preflight:testnet
+npm run deploy:testnet
+```
+
+- [ ] Both GitHub DEX workflows pass on the selected source commit.
+- [ ] Local compilation and all automated tests pass.
+- [ ] Production dependency audit reports zero vulnerabilities.
+- [ ] Preflight reports `status: ready` and chain id `97`.
+- [ ] Save the generated deployment record and checkpoint without secrets.
+- [ ] Do not rerun with changed settings against an existing checkpoint.
+
+## 6. Post-deployment verification
+
+```bash
+npm run validate:testnet
+npm run monitor:testnet
+npm run prepare:verification -- ./deployments/bsc-testnet-97.json
+npm run configure:app
+```
+
+- [ ] Validator confirms contract bytecode, ownership, module linkage, DEX order, adapters, and V3 policy.
+- [ ] Monitor reports a fresh block and no unexplained Router custody.
+- [ ] BscScan verification bundle matches `SOURCE_COMMIT` and compiler settings.
+- [ ] Publish verified source for every deployed LQC contract.
+- [ ] Generated UI fingerprint matches the deployment record.
+- [ ] Archive contract addresses and deployment transaction hashes in the CEX evidence index.
+
+## 7. Capped route tests
+
+- [ ] Run read-only LQC Flow, PancakeSwap V2, and approved PancakeSwap V3 probes.
+- [ ] Confirm disabled, malformed, expired, and impossible-minimum-output routes fail closed.
+- [ ] Execute only small opt-in testnet smoke swaps after read-only probes pass.
+- [ ] Confirm input/output token balances and approvals remain zero on Router and adapters.
+- [ ] Test global pause and one-DEX pause with guardians.
+- [ ] Resume only through governance and the configured timelock.
+- [ ] Record transaction hashes and monitoring reports as test evidence.
+
+## 8. Exit criteria before the next phase
+
+- [ ] Two consecutive clean deployment validations.
+- [ ] No Critical monitoring result and all Warning results explained.
+- [ ] Governance and emergency pause drill completed.
+- [ ] Independent reviewer signs off on addresses, limits, and evidence.
+- [ ] Open Critical/High findings: zero.
+
+Only after these items pass should LQC proceed to the Liquidity Vault implementation and later
+oracle, lending, liquidation, and cross-chain work.
