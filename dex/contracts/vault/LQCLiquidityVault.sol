@@ -197,6 +197,7 @@ contract LQCLiquidityVault {
         if (allocationsPaused) revert AllocationsPaused();
         if (strategy == address(0)) revert InvalidStrategy();
         if (assets == 0) revert ZeroAmount();
+        if (idleAssets() < accountedIdleAssets()) revert UnsupportedTokenBehavior();
         if (strategyDebt + assets > strategyCap) revert StrategyCapExceeded();
         if (assets > accountedIdleAssets() || assets > idleAssets()) revert InsufficientIdleLiquidity();
 
