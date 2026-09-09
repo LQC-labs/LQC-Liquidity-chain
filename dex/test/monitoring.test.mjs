@@ -7,6 +7,10 @@ const healthyInput = () => ({
   validation: { lqc: { contractCount: 6, dexCount: 3, swapsPaused: false } }, validationError: null,
   custody: [{ contract: "executionRouter", asset: "BNB", balance: "0" }, { contract: "executionRouter", asset: "lqc", balance: "0" }],
   ownership: [{ contract: "dexRegistry", owner: "0x0000000000000000000000000000000000000001", pendingOwner: ethers.ZeroAddress }],
+  safeState: [{ name: "governance",
+    owners: Array.from({ length: 7 }, (_, index) => `0x${(index + 10).toString(16).padStart(40, "0")}`),
+    expectedOwners: Array.from({ length: 7 }, (_, index) => `0x${(index + 10).toString(16).padStart(40, "0")}`),
+    threshold: 4, expectedThreshold: 4, minimumOwners: 7, minimumThreshold: 4 }],
   vaultState: { accountedAssets: "1000", strategyDebt: "100", strategyCap: "200", idleBalance: "900",
     adapterManagedAssets: "100", adapterBalance: "100", depositsPaused: false, allocationsPaused: false, insolvent: false }
 });
@@ -50,5 +54,23 @@ describe("LQC BSC testnet monitoring report", function () {
     const report = buildMonitoringReport(input);
     assert.equal(report.status, "WARNING");
     assert.equal(report.counts.warning, 2);
+  });
+
+  it("fails closed when a Safe threshold or signer count drops below policy", function () {
+    const input = healthyInput();
+    input.safeState[0].owners = input.safeState[0].owners.slice(0, 5);
+    input.safeState[0].threshold = 2;
+    const report = buildMonitoringReport(input);
+    assert.equal(report.status, "CRITICAL");
+    assert.equal(report.checks.find(check => check.id === "multisig.governance.policy").status, "CRITICAL");
+    assert.equal(report.checks.find(check => check.id === "multisig.governance.threshold").status, "CRITICAL");
+  });
+
+  it("warns when Safe signers change without weakening the approved policy", function () {
+    const input = healthyInput();
+    input.safeState[0].owners[0] = "0x0000000000000000000000000000000000000063";
+    const report = buildMonitoringReport(input);
+    assert.equal(report.status, "WARNING");
+    assert.equal(report.checks.find(check => check.id === "multisig.governance.signers").status, "WARNING");
   });
 });
