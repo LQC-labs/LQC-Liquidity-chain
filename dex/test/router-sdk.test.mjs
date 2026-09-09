@@ -56,4 +56,14 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.isSplitNetBetter(10n, 20n, 1n), true);
     assert.throws(() => sdk.isSplitNetBetter(1n, -1n, 1n));
   });
+  it("turns wallet, liquidity, slippage, and risk failures into actionable Korean guidance", function () {
+    assert.deepEqual(
+      { ...sdk.explainSwapError({ code: "ACTION_REJECTED" }) },
+      { code: "USER_REJECTED", message: "지갑에서 거래가 취소되었습니다.", action: "원하시면 견적을 다시 확인한 뒤 재시도하세요.", retryable: true }
+    );
+    assert.equal(sdk.explainSwapError({ message: "execution reverted: NoValidQuote()" }).code, "NO_ROUTE");
+    assert.equal(sdk.explainSwapError({ message: "execution reverted: InsufficientOutput()" }).code, "PRICE_MOVED");
+    assert.equal(sdk.explainSwapError({ message: "daily cap exceeded" }).retryable, false);
+  });
+
 });
