@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **41 Solidity sources** and reports **155 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **41 Solidity sources** and reports **156 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -40,6 +40,7 @@ The current suite compiles **41 Solidity sources** and reports **155 passing tes
 | Canonical native BNB settlement verification | `test/router-sdk.test.mjs` | Requires one event from the reviewed Native Router and reconciles recipient, input token, direction, input amount, and actual BNB output after canonical block and finality checks. Spoofed, duplicate, or inconsistent events fail closed. |
 | Execution-proof deterministic fuzz invariants | `test/settlement-proof-invariants.test.mjs` | Exercises 250 varied best-route settlements plus 250 proof-bound receipt mutations. Valid outputs remain above the committed minimum and every mutated settlement field fails verification. Deterministic fuzzing is reproducible but does not replace formal verification. |
 | Router SDK coverage gate | `scripts/check-router-sdk-coverage.mjs` | Uses dependency-free V8 precise coverage and fails below 100% function or 90% executed-range coverage. The reviewed baseline is 35/35 functions and 217/241 ranges; neither metric is mislabeled as branch or Solidity coverage. |
+| Critical Solidity audit-surface drift | `test/critical-audit-surface.test.mjs`, `audit/critical-surface.json` | Maps all 35 state-changing ABI entry points across Execution Router, Risk Registry, and Liquidity Vault to explicit authority, critical/high risk, and existing automated evidence. Any unclassified ABI change fails the suite. |
 | Reproducible BscScan verification bundle generation | `test/verification-bundle.test.mjs` | Bundle structure and source revision covered; explorer publication is deployment-specific. |
 | Vault donation-resistant share and idle-asset accounting | `test/liquidity-vault.test.mjs` | Covered for direct donations before deposits and strategy allocation. |
 | Vault strategy approval, role separation, and exposure cap | `test/liquidity-vault.test.mjs` | Covered with a vault-specific reference adapter; production strategies remain pending. |
