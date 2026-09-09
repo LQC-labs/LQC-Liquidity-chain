@@ -3,9 +3,10 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "../interfaces/IERC20.sol";
 import {SafeTransferLib} from "../libraries/SafeTransferLib.sol";
+import {ILQCStrategyAdapter} from "./interfaces/ILQCStrategyAdapter.sol";
 
-/// @notice Single-asset, idle-liquidity vault foundation for the LQC testnet MVP.
-/// @dev Strategy deployment is intentionally excluded until a separately reviewed adapter layer exists.
+/// @notice Single-asset vault with a capped, separately approved strategy boundary.
+/// @dev Strategy accounting is explicit so unsolicited token donations cannot inflate share value.
 contract LQCLiquidityVault {
     using SafeTransferLib for address;
 
@@ -13,15 +14,23 @@ contract LQCLiquidityVault {
     string public symbol;
     uint8 public constant decimals = 18;
     uint256 public constant MINIMUM_SHARES = 1_000;
+    uint256 public constant BPS = 10_000;
+    uint256 public constant MAX_CONFIGURED_LOSS_BPS = 2_000;
 
     address public immutable asset;
     address public owner;
     address public pendingOwner;
     address public pauseAdmin;
+    address public strategyAdmin;
+    address public strategy;
     uint256 public depositCap;
     uint256 public accountedAssets;
+    uint256 public strategyDebt;
+    uint256 public strategyCap;
+    uint256 public maxLossBps;
     uint256 public totalSupply;
     bool public depositsPaused;
+    bool public allocationsPaused;
 
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
@@ -34,6 +43,13 @@ contract LQCLiquidityVault {
     event DepositCapChanged(uint256 previousCap, uint256 newCap);
     event DepositPauseChanged(bool paused, address indexed caller);
     event PauseAdminChanged(address indexed previousAdmin, address indexed newAdmin);
+    event StrategyAdminChanged(address indexed previousAdmin, address indexed newAdmin);
+    event StrategyChanged(address indexed previousStrategy, address indexed newStrategy);
+    event StrategyLimitsChanged(uint256 strategyCap, uint256 maxLossBps);
+    event AllocationPauseChanged(bool paused, address indexed caller);
+    event StrategyAllocation(address indexed strategy, uint256 assets, uint256 strategyDebt);
+    event StrategyRecall(address indexed strategy, uint256 debtRepaid, uint256 assetsReceived, uint256 loss);
+    event EmergencyStrategyRecall(address indexed strategy, uint256 debtRepaid, uint256 assetsReceived, uint256 loss);
     event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -45,6 +61,15 @@ contract LQCLiquidityVault {
     error InsufficientShares();
     error UnsupportedTokenBehavior();
     error Reentrancy();
+    error InvalidStrategy();
+    error StrategyHasDebt();
+    error RecallExceedsDebt();
+    error StrategyCapExceeded();
+    error AllocationsPaused();
+    error InsufficientIdleLiquidity();
+    error LossLimitExceeded();
+    error InvalidLossLimit();
+    error EmergencyModeRequired();
 
     modifier onlyOwner() { if (msg.sender != owner) revert Forbidden(); _; }
     modifier nonReentrant() { if (unlocked != 1) revert Reentrancy(); unlocked = 2; _; unlocked = 1; }
@@ -55,15 +80,25 @@ contract LQCLiquidityVault {
         asset = asset_;
         owner = owner_;
         pauseAdmin = owner_;
+        strategyAdmin = owner_;
         depositCap = depositCap_;
         name = name_;
         symbol = symbol_;
         emit OwnershipTransferred(address(0), owner_);
         emit PauseAdminChanged(address(0), owner_);
+        emit StrategyAdminChanged(address(0), owner_);
         emit DepositCapChanged(0, depositCap_);
     }
 
     function totalAssets() external view returns (uint256) { return accountedAssets; }
+
+    function idleAssets() public view returns (uint256) {
+        return IERC20(asset).balanceOf(address(this));
+    }
+
+    function accountedIdleAssets() public view returns (uint256) {
+        return accountedAssets - strategyDebt;
+    }
 
     function convertToShares(uint256 assets) public view returns (uint256) {
         return totalSupply == 0 ? assets : assets * totalSupply / accountedAssets;
@@ -129,10 +164,101 @@ contract LQCLiquidityVault {
         emit DepositCapChanged(previous, newCap);
     }
 
+    function setStrategy(address newStrategy) external onlyOwner {
+        if (strategyDebt != 0) revert StrategyHasDebt();
+        if (newStrategy != address(0)) {
+            if (newStrategy.code.length == 0) revert InvalidStrategy();
+            if (ILQCStrategyAdapter(newStrategy).asset() != asset ||
+                ILQCStrategyAdapter(newStrategy).vault() != address(this)) revert InvalidStrategy();
+        }
+        address previous = strategy;
+        strategy = newStrategy;
+        emit StrategyChanged(previous, newStrategy);
+    }
+
+    function setStrategyLimits(uint256 newStrategyCap, uint256 newMaxLossBps) external onlyOwner {
+        if (newStrategyCap < strategyDebt) revert StrategyCapExceeded();
+        if (newMaxLossBps > MAX_CONFIGURED_LOSS_BPS) revert InvalidLossLimit();
+        strategyCap = newStrategyCap;
+        maxLossBps = newMaxLossBps;
+        emit StrategyLimitsChanged(newStrategyCap, newMaxLossBps);
+    }
+
+    function allocateToStrategy(uint256 assets) external nonReentrant {
+        if (msg.sender != owner && msg.sender != strategyAdmin) revert Forbidden();
+        if (allocationsPaused) revert AllocationsPaused();
+        if (strategy == address(0)) revert InvalidStrategy();
+        if (assets == 0) revert ZeroAmount();
+        if (strategyDebt + assets > strategyCap) revert StrategyCapExceeded();
+        if (assets > accountedIdleAssets() || assets > idleAssets()) revert InsufficientIdleLiquidity();
+
+        uint256 managedBefore = ILQCStrategyAdapter(strategy).totalManagedAssets();
+        uint256 vaultBefore = idleAssets();
+        asset.safeTransfer(strategy, assets);
+        uint256 deployed = ILQCStrategyAdapter(strategy).deploy(assets);
+        uint256 managedAfter = ILQCStrategyAdapter(strategy).totalManagedAssets();
+        if (vaultBefore - idleAssets() != assets || deployed != assets || managedAfter - managedBefore != assets) {
+            revert UnsupportedTokenBehavior();
+        }
+        strategyDebt += assets;
+        emit StrategyAllocation(strategy, assets, strategyDebt);
+    }
+
+    function recallFromStrategy(uint256 assets) external nonReentrant returns (uint256 received, uint256 loss) {
+        if (msg.sender != owner && msg.sender != strategyAdmin && msg.sender != pauseAdmin) revert Forbidden();
+        return _recallFromStrategy(assets, maxLossBps, false);
+    }
+
+    /// @notice Recovers strategy assets after governance has stopped both deposits and new allocations.
+    /// @dev The explicit loss bound prevents an unlimited-loss rescue transaction from being signed accidentally.
+    function emergencyRecallFromStrategy(uint256 assets, uint256 emergencyMaxLossBps)
+        external onlyOwner nonReentrant returns (uint256 received, uint256 loss)
+    {
+        if (!depositsPaused || !allocationsPaused) revert EmergencyModeRequired();
+        if (emergencyMaxLossBps > BPS) revert InvalidLossLimit();
+        return _recallFromStrategy(assets, emergencyMaxLossBps, true);
+    }
+
+    function _recallFromStrategy(uint256 assets, uint256 lossLimitBps, bool emergency)
+        private returns (uint256 received, uint256 loss)
+    {
+        if (strategy == address(0)) revert InvalidStrategy();
+        if (assets == 0) revert ZeroAmount();
+        if (assets > strategyDebt) revert RecallExceedsDebt();
+        uint256 managedBefore = ILQCStrategyAdapter(strategy).totalManagedAssets();
+        uint256 vaultBefore = idleAssets();
+        received = ILQCStrategyAdapter(strategy).withdraw(assets, address(this));
+        uint256 managedAfter = ILQCStrategyAdapter(strategy).totalManagedAssets();
+        uint256 debtRepaid = managedBefore - managedAfter;
+        uint256 balanceReceived = idleAssets() - vaultBefore;
+        if (debtRepaid != assets || debtRepaid > strategyDebt ||
+            received != balanceReceived || received > debtRepaid) {
+            revert UnsupportedTokenBehavior();
+        }
+        loss = debtRepaid - received;
+        if (loss * BPS > debtRepaid * lossLimitBps) revert LossLimitExceeded();
+
+        strategyDebt -= debtRepaid;
+        accountedAssets -= loss;
+        emit StrategyRecall(strategy, debtRepaid, received, loss);
+        if (emergency) emit EmergencyStrategyRecall(strategy, debtRepaid, received, loss);
+    }
+
     function pauseDeposits() external {
         if (msg.sender != owner && msg.sender != pauseAdmin) revert Forbidden();
         depositsPaused = true;
         emit DepositPauseChanged(true, msg.sender);
+    }
+
+    function pauseAllocations() external {
+        if (msg.sender != owner && msg.sender != pauseAdmin) revert Forbidden();
+        allocationsPaused = true;
+        emit AllocationPauseChanged(true, msg.sender);
+    }
+
+    function resumeAllocations() external onlyOwner {
+        allocationsPaused = false;
+        emit AllocationPauseChanged(false, msg.sender);
     }
 
     function resumeDeposits() external onlyOwner {
@@ -145,6 +271,13 @@ contract LQCLiquidityVault {
         address previous = pauseAdmin;
         pauseAdmin = newPauseAdmin;
         emit PauseAdminChanged(previous, newPauseAdmin);
+    }
+
+    function setStrategyAdmin(address newStrategyAdmin) external onlyOwner {
+        if (newStrategyAdmin == address(0)) revert ZeroAddress();
+        address previous = strategyAdmin;
+        strategyAdmin = newStrategyAdmin;
+        emit StrategyAdminChanged(previous, newStrategyAdmin);
     }
 
     function beginOwnershipTransfer(address newOwner) external onlyOwner {
@@ -163,6 +296,7 @@ contract LQCLiquidityVault {
 
     function _withdraw(uint256 assets, uint256 shares, address receiver, address shareOwner) private {
         if (receiver == address(0) || receiver == address(this)) revert ZeroAddress();
+        if (assets > accountedIdleAssets() || assets > idleAssets()) revert InsufficientIdleLiquidity();
         if (msg.sender != shareOwner) _spendAllowance(shareOwner, shares);
         _burn(shareOwner, shares);
         accountedAssets -= assets;

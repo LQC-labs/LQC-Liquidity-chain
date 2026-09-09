@@ -23,6 +23,9 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - Static wallet-connected swap interface in `app/`
 - `LQCLiquidityVault` V1 with exact-asset accounting, permanently locked initial shares,
   donation-resistant share pricing, deposit caps, guardian deposit pause, and two-step ownership
+- Strategy Adapter V1 with vault/asset binding, separate strategy administration, absolute exposure
+  caps, bounded loss recognition, donation-resistant allocation accounting, pause controls, and a
+  shutdown-only governance emergency recall
 
 ## Router 2.0 extensibility foundation
 
