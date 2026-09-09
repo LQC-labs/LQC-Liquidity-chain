@@ -6,6 +6,7 @@
   "scripts": {
     "compile": "node scripts/compile.mjs",
     "test": "npm run check:app && npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
+    "coverage:router-sdk": "node scripts/check-router-sdk-coverage.mjs",
     "preflight:testnet": "node scripts/preflight-testnet-deploy.mjs",
     "deploy:testnet": "npm run preflight:testnet && npm run compile && node scripts/deploy-testnet.mjs",
     "prepare:verification": "npm run compile && node scripts/prepare-bscscan-verification.mjs",
@@ -13,6 +14,10 @@
     "monitor:testnet": "node scripts/monitor-bsc-testnet.mjs",
     "smoke:testnet": "node scripts/smoke-test-bsc-routes.mjs",
     "configure:app": "node scripts/configure-app.mjs",
+    "report:emergency-drill": "node scripts/emergency-drill-report.mjs",
+    "package:review-evidence": "node scripts/build-review-evidence-package.mjs",
+    "render:review-summary": "node scripts/render-review-evidence-markdown.mjs",
+    "build:review-bundle": "node scripts/build-review-bundle.mjs",
     "check:app": "node --check app/config.js && node --check app/router-sdk.js && node --check app/app.js"
   },
   "devDependencies": {
