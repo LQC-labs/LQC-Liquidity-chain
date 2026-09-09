@@ -9,7 +9,7 @@ describe("LQC Router 2.0", function () {
   let provider, owner, other, tokenA, tokenB, flowRouter, registry, quoteRouter, executionRouter, splitOptimizer, autoRouter, adapter;
 
   const addAndEnableDex = async (...args) => {
-    await addAndEnableDex(...args);
+    await (await registry.addDex(...args)).wait();
     await (await registry.setDexEnabled(args[0], true)).wait();
   };
 
