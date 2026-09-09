@@ -35,10 +35,13 @@ describe("LQC Router browser SDK", function () {
   it("calculates price impact and configured gas cost without floating-point loss", function () {
     assert.equal(sdk.priceImpactBps(1000n, 970n, 10n, 10n), 300);
     assert.equal(sdk.priceImpactBps(1000n, 1010n, 10n, 10n), 0);
+    assert.equal(sdk.priceImpactFromExpected(950n, 1000n), 500);
+    assert.equal(sdk.priceImpactFromExpected(1001n, 1000n), 0);
     assert.equal(sdk.estimatedGasWei({ gasUnits: 250000 }, 3_000_000_000n), 750_000_000_000_000n);
     assert.equal(sdk.routeFeeBps({ kind: "v2", feeBps: 30 }, [tokenA, tokenB]), 30);
     assert.equal(sdk.routeFeeBps({ kind: "v3", pools: [{ tokenA, tokenB, fee: 500 }] }, [tokenA, tokenB]), 5);
     assert.throws(() => sdk.priceImpactBps(0n, 1n, 1n, 1n));
+    assert.throws(() => sdk.priceImpactFromExpected(1n, 0n));
   });
 
   it("summarizes only active split routes as deterministic percentages", function () {
