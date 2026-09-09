@@ -108,4 +108,11 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.requiresTokenApproval(100n, 0n));
   });
 
+  it("accepts only the newest asynchronous quote response", function () {
+    assert.equal(sdk.isLatestQuote(7, 7), true);
+    assert.equal(sdk.isLatestQuote(6, 7), false);
+    assert.throws(() => sdk.isLatestQuote(-1, 0));
+    assert.throws(() => sdk.isLatestQuote(1.5, 2));
+  });
+
 });
