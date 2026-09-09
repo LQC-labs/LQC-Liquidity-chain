@@ -6,10 +6,17 @@ The emergency controller uses a two-step ownership transfer. The current owner n
 
 ## Control model
 
-- The protocol governance proposer is intended to be a 3-of-5 multisig.
+- The protocol governance proposer is intended to be a 4-of-7 Safe multisig.
 - Registry and risk-parameter expansions execute only through `LQCTimelockController` after the configured delay. The target production policy remains 48 hours; the bootstrap default is one hour for testnet exercises.
-- The risk administrator is intended to be a separate 2-of-3 multisig. It can only reduce active token limits.
+- The risk administrator is intended to be a separate 3-of-5 Safe multisig. It can only reduce active token limits.
 - Emergency guardians can disable a DEX route or pause all new swaps immediately. They cannot resume swaps, re-enable routes, change adapters, move user funds, mint tokens, or expand limits.
+
+## Safe incident response
+
+Monitoring never submits a transaction automatically. A Safe policy breach produces an ordered
+response plan: guardian-multisig pause, evidence preservation, Safe remediation, timelocked recovery,
+and post-recovery validation. A signer change that does not weaken the threshold produces a review
+workflow and cannot become the new deployment baseline without a verified governance approval.
 
 ## Enforced swap checks
 
