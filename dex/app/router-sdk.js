@@ -111,6 +111,7 @@
     if(message.includes('novalidquote')||message.includes('noexecutableroute')||message.includes('no approved')||message.includes('liquidity'))return{code:'NO_ROUTE',message:'현재 실행 가능한 유동성 경로가 없습니다.',action:'수량을 줄이거나 다른 거래쌍을 선택하세요.',retryable:true};
     if(message.includes('paused')||message.includes('limit')||message.includes('cap')||message.includes('unsupportedtoken'))return{code:'RISK_BLOCKED',message:'LQC 위험관리 정책이 이 거래를 차단했습니다.',action:'거래 한도와 토큰·DEX 활성 상태를 확인하세요.',retryable:false};
     if(message.includes('approvalincomplete'))return{code:'APPROVAL_INCOMPLETE',message:'승인 거래 후에도 필요한 토큰 허용량이 확인되지 않았습니다.',action:'토큰 상태를 확인하고 승인부터 다시 시도하세요.',retryable:true};
+    if(message.includes('simulationfailed'))return{code:'SIMULATION_FAILED',message:'거래 사전 시뮬레이션이 실패했습니다.',action:'최신 견적·유동성·거래 한도를 확인한 뒤 다시 시도하세요.',retryable:true};
     if(message.includes('allowance')||message.includes('approve'))return{code:'APPROVAL_REQUIRED',message:'토큰 사용 승인이 완료되지 않았습니다.',action:'승인 거래를 완료한 뒤 Swap을 다시 실행하세요.',retryable:true};
     if(message.includes('routechangedduringapproval'))return{code:'ROUTE_CHANGED',message:'승인 중 최적 거래 경로가 다시 변경되었습니다.',action:'최신 견적을 확인한 뒤 Swap을 다시 실행하세요.',retryable:true};
     if(message.includes('quoteworsenedduringapproval'))return{code:'QUOTE_WORSENED',message:'승인 중 예상 수령액이 허용 범위보다 낮아졌습니다.',action:'새 견적과 가격영향을 확인한 뒤 Swap을 다시 실행하세요.',retryable:true};
