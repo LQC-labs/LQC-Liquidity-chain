@@ -22,6 +22,7 @@ The current suite compiles **41 Solidity sources** and reports **118 passing tes
 | Exact temporary approvals and zero router/adapter custody | `test/router-v2.test.mjs`, `test/native-router.test.mjs` | Success, revert residue, and adversarial partial-spend rollback checks covered across Router and Adapter boundaries. |
 | Registry adapter bytecode and interface validation | `test/router-v2.test.mjs` | EOA and incompatible-contract registration or replacement is rejected without mutating an approved DEX entry. |
 | Disable-before-change DEX lifecycle | `test/router-v2.test.mjs` | Adapter replacement and DEX removal revert while enabled; changes succeed only after governance-visible disablement. |
+| Staged DEX activation after risk configuration | `test/router-v2.test.mjs`, `test/testnet-bootstrap.test.mjs`, `test/vault-router-risk-integration.test.mjs` | New DEX entries default to disabled and require an explicit governance activation after route and limit setup. |
 | Adapter downstream endpoint bytecode validation | `test/router-v2.test.mjs` | LQC Flow and Pancake V2/V3 adapters reject undeployed Router or Quoter endpoints at construction. |
 | Atomic split rollback | `test/router-v2.test.mjs` | A failed later leg must revert balances, pool reserves, custody, and usage accounting. |
 | Duplicate DEX leg rejection | `test/router-v2.test.mjs`, `test/risk-registry.test.mjs` | Covered to prevent per-DEX cap bypass. |
