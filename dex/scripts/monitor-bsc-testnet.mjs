@@ -6,9 +6,10 @@ import { validateBscTestnet } from "./validate-bsc-testnet.mjs";
 
 const BALANCE_ABI = ["function balanceOf(address) view returns(uint256)"];
 const OWNABLE_ABI = ["function owner() view returns(address)", "function pendingOwner() view returns(address)"];
+const SAFE_ABI = ["function getOwners() view returns(address[])", "function getThreshold() view returns(uint256)"];
 
 export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, validation, validationError,
-  custody, ownership, vaultState = null }) {
+  custody, ownership, vaultState = null, safeState = [] }) {
   const checks = [];
   const add = (id, status, detail) => checks.push({ id, status, detail });
   const age = Math.max(0, Math.floor(new Date(checkedAt).getTime() / 1000) - Number(block.timestamp));
@@ -23,6 +24,28 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
   for (const item of ownership) add(`ownership.${item.contract}.pending`,
     item.pendingOwner === ethers.ZeroAddress ? "PASS" : "WARNING",
     item.pendingOwner === ethers.ZeroAddress ? "no pending ownership transfer" : `pending owner ${item.pendingOwner}`);
+  for (const safe of safeState) {
+    if (safe.error) {
+      add(`multisig.${safe.name}.readability`, "CRITICAL", safe.error);
+      continue;
+    }
+    const owners = safe.owners.map(owner => ethers.getAddress(owner));
+    const expected = safe.expectedOwners.map(owner => ethers.getAddress(owner));
+    const unique = new Set(owners.map(owner => owner.toLowerCase()));
+    const validOwners = owners.length >= safe.minimumOwners && unique.size === owners.length &&
+      !owners.some(owner => owner === ethers.ZeroAddress);
+    add(`multisig.${safe.name}.policy`, validOwners && safe.threshold >= safe.minimumThreshold && safe.threshold <= owners.length
+      ? "PASS" : "CRITICAL", `${safe.threshold}-of-${owners.length}; required minimum ${safe.minimumThreshold}-of-${safe.minimumOwners}`);
+    const sameOwners = owners.length === expected.length &&
+      [...unique].sort().every((owner, index) => owner === expected.map(item => item.toLowerCase()).sort()[index]);
+    add(`multisig.${safe.name}.signers`, sameOwners ? "PASS" : "WARNING",
+      sameOwners ? "signer set matches deployment record" : "signer set changed since deployment; governance review required");
+    const thresholdStatus = safe.threshold < safe.expectedThreshold ? "CRITICAL" :
+      safe.threshold === safe.expectedThreshold ? "PASS" : "WARNING";
+    add(`multisig.${safe.name}.threshold`, thresholdStatus,
+      safe.threshold === safe.expectedThreshold ? "threshold matches deployment record" :
+        `threshold changed from ${safe.expectedThreshold} to ${safe.threshold}`);
+  }
   if (vaultState) {
     const accounted = BigInt(vaultState.accountedAssets), debt = BigInt(vaultState.strategyDebt);
     const cap = BigInt(vaultState.strategyCap), idle = BigInt(vaultState.idleBalance);
@@ -74,6 +97,20 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
     const owned = new ethers.Contract(address, OWNABLE_ABI, provider);
     ownership.push({ contract, owner: await owned.owner(), pendingOwner: await owned.pendingOwner() });
   }
+  const safeState = [];
+  for (const name of ["governance", "risk"]) {
+    const policy = deployment?.multisigPolicies?.[name];
+    if (!policy) continue;
+    try {
+      const safe = new ethers.Contract(policy.address, SAFE_ABI, provider);
+      const [owners, threshold] = await Promise.all([safe.getOwners(), safe.getThreshold()]);
+      safeState.push({ name, owners, threshold: Number(threshold), expectedOwners: policy.owners,
+        expectedThreshold: Number(policy.threshold), minimumOwners: Number(policy.minimumOwners),
+        minimumThreshold: Number(policy.minimumThreshold) });
+    } catch (error) {
+      safeState.push({ name, error: `cannot read Safe policy at ${policy.address}: ${error.message}` });
+    }
+  }
   let vaultState = null;
   const vaultAddress = deployment?.contracts?.liquidityVault?.address;
   const adapterAddress = deployment?.contracts?.idleStrategyAdapter?.address;
@@ -96,7 +133,7 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
       adapterManagedAssets: values[6], idleBalance: values[7], adapterBalance: values[8] };
   }
   return buildMonitoringReport({ checkedAt, block: latest, maxBlockAgeSeconds, validation, validationError,
-    custody, ownership, vaultState });
+    custody, ownership, vaultState, safeState });
 }
 
 async function main() {
