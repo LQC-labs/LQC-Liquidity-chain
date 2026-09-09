@@ -104,6 +104,10 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.requiresTokenApproval(99n, 100n), true);
     assert.equal(sdk.requiresTokenApproval(100n, 100n), false);
     assert.equal(sdk.requiresTokenApproval(101n, 100n), false);
+    assert.deepEqual(Array.from(sdk.tokenApprovalSequence(0n, 100n)), [100n]);
+    assert.deepEqual(Array.from(sdk.tokenApprovalSequence(40n, 100n)), [0n, 100n]);
+    assert.deepEqual(Array.from(sdk.tokenApprovalSequence(100n, 100n)), []);
+    assert.throws(() => sdk.tokenApprovalSequence(-1n, 100n));
     assert.throws(() => sdk.requiresTokenApproval(-1n, 100n));
     assert.throws(() => sdk.requiresTokenApproval(100n, 0n));
   });
