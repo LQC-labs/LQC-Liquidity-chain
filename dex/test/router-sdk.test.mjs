@@ -56,4 +56,36 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.isSplitNetBetter(10n, 20n, 1n), true);
     assert.throws(() => sdk.isSplitNetBetter(1n, -1n, 1n));
   });
+
+  it("reports honest net receipt and savings against the baseline route", function () {
+    assert.deepEqual(
+      { ...sdk.netQuoteSummary(1100n, 40n, 1050n, 30n) },
+      { netAmountOut: 1060n, baselineNetAmountOut: 1020n, savings: 40n }
+    );
+    assert.equal(sdk.netQuoteSummary(100n, 200n, 50n, 0n).netAmountOut, 0n);
+    assert.throws(() => sdk.netQuoteSummary(1n, -1n, 1n, 0n));
+  });
+
+  it("blocks unsafe trades and distinguishes non-blocking warnings", function () {
+    const ready = sdk.tradeReadiness({ connected: true, deployed: true, hasRoute: true, amountIn: 10n, balanceIn: 20n, priceImpactBps: 20 });
+    assert.equal(ready.ready, true);
+    assert.deepEqual(Array.from(ready.blockers), []);
+    assert.deepEqual(Array.from(ready.warnings), []);
+    const warning = sdk.tradeReadiness({ connected: true, deployed: true, hasRoute: true, amountIn: 10n, balanceIn: 20n, priceImpactBps: 300, quoteAgeMs: 16000 });
+    assert.equal(warning.ready, true);
+    assert.deepEqual(Array.from(warning.warnings), ["HIGH_PRICE_IMPACT", "QUOTE_AGING"]);
+    const blocked = sdk.tradeReadiness({ connected: false, deployed: true, hasRoute: true, amountIn: 21n, balanceIn: 20n, priceImpactBps: 500 });
+    assert.equal(blocked.ready, false);
+    assert.deepEqual(Array.from(blocked.blockers), ["WALLET_NOT_CONNECTED", "INSUFFICIENT_BALANCE", "PRICE_IMPACT_TOO_HIGH"]);
+  });
+
+  it("enables gas sponsorship only inside a complete bounded Paymaster policy", function () {
+    const policy = { enabled: true, paymasterAddress: tokenA, bundlerUrl: "https://bundler.test", sponsoredSymbols: ["LQC"], maxInputRaw: "1000", maxSponsoredGasWei: "100" };
+    assert.equal(sdk.gaslessEligibility(policy, "LQC", 500n, 50n).eligible, true);
+    assert.equal(sdk.gaslessEligibility(policy, "USDT", 500n, 50n).reason, "TOKEN_NOT_SPONSORED");
+    assert.equal(sdk.gaslessEligibility(policy, "LQC", 1001n, 50n).reason, "SPONSOR_INPUT_LIMIT");
+    assert.equal(sdk.gaslessEligibility(policy, "LQC", 500n, 101n).reason, "SPONSOR_GAS_LIMIT");
+    assert.equal(sdk.gaslessEligibility({ ...policy, paymasterAddress: "" }, "LQC", 1n, 1n).reason, "PAYMASTER_UNAVAILABLE");
+    assert.equal(sdk.gaslessEligibility({ enabled: false }, "LQC", 1n, 1n).reason, "GASLESS_DISABLED");
+  });
 });

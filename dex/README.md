@@ -21,6 +21,10 @@ This package implements the first testable smart-contract layer for **LQC Flow D
   reserves, and zero Router/adapter custody even after an earlier leg was executable
 - BSC testnet deployment script
 - Static wallet-connected swap interface in `app/`
+- User-facing all-in quote summary with gas-adjusted receipt, route savings, and pre-trade checks
+- Disabled-by-default Gasless eligibility policy for a future bounded testnet Paymaster; the UI must
+  never claim sponsorship until a valid Paymaster, bundler, sponsored-token list, input cap, and gas
+  cap are all configured
 - `LQCLiquidityVault` V1 with exact-asset accounting, permanently locked initial shares,
   donation-resistant share pricing, deposit caps, guardian deposit pause, and two-step ownership
 - Strategy Adapter V1 with vault/asset binding, separate strategy administration, absolute exposure
@@ -202,6 +206,6 @@ Never commit private keys or `.env` files.
 
 ## Current limitations
 
-This is an unaudited testnet MVP, not production-ready software. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, production oracle feeds, and audited production integrations are intentionally deferred.
+This is an unaudited testnet MVP, not production-ready software. Paymaster execution, fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, production oracle feeds, and audited production integrations are intentionally deferred. The current Gasless code is an eligibility and truthful-display boundary only; it does not relay or sponsor a transaction.
 
 Before any mainnet use, complete independent audits, invariant/fuzz testing, economic simulations, legal review, multisig/timelock setup, token and pool allowlisting decisions, monitoring, and a capped-liquidity testnet/pilot phase.

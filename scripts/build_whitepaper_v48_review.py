@@ -12,7 +12,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from pypdf import PdfReader, PdfWriter
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.1_Review_Edition.pdf"
+OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.2_Review_Edition.pdf"
 NAVY = HexColor("#102235")
 TEAL = HexColor("#0b8790")
 MINT = HexColor("#31c7ad")
@@ -46,7 +46,7 @@ def draw_header(c, number, kicker, title):
 def draw_footer(c, number):
     c.setStrokeColor(LINE); c.setLineWidth(.5); c.line(54, 38, 558, 38)
     c.setFillColor(MID); c.setFont("LQCSans", 6.8)
-    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v5.1  ·  Review Edition")
+    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v5.2  ·  Review Edition")
     c.drawRightString(558, 23, str(number))
 
 
@@ -84,7 +84,7 @@ def draw_blocks(c, y, blocks):
 pages = [
     ("Executive summary", "1. Executive Summary", [
         "Liquidity Chain (LQC) is a modular infrastructure project for connecting fragmented liquidity across decentralized exchanges and, in later phases, across blockchain ecosystems. The initial engineering focus is an EVM routing stack and LQC Flow automated market maker for controlled BNB Smart Chain testnet validation.",
-        "The public repository includes protocol-neutral adapter registration, failure-isolated quotes, gas-aware route comparison, one-to-four-route split optimization, atomic protected execution, native BNB handling, risk limits, emergency controls and testnet deployment validation.",
+        "The public repository includes protocol-neutral adapter registration, failure-isolated quotes, gas-aware route comparison, one-to-four-route split optimization, atomic protected execution, native BNB handling, risk limits, emergency controls, a guarded Liquidity Vault foundation and testnet deployment validation.",
         ("callout", "Current status: unaudited testnet MVP. No production deployment, live liquidity, exchange listing, audit approval or guaranteed commercial outcome is claimed."),
         ("bullets", ["Liquidity first - utility second - revenue third - scale last.", "Security gates precede unrestricted deployment.", "Every material claim should be independently verifiable."]),
     ]),
@@ -156,8 +156,8 @@ pages = [
         "Unsupported behavior must not leave retained balances, approvals or risk-accounting residue.",
     ]),
     ("Testing", "16. Reproducible Engineering Baseline", [
-        "At the publication baseline, the repository compiles 35 Solidity source files and reports 53 passing automated tests using locked dependencies. The exact Git commit and its CI run are authoritative when the suite evolves.",
-        ("table", [["Area", "Representative evidence"], ["AMM", "Reserves, product, LP lock, liquidity and swap flows"], ["Router", "Quotes, adapters, gas, split and rollback"], ["Risk", "Allowlists, caps, model-based daily accounting"], ["Governance", "Timelock, pause-only guardian, ownership transfer"], ["Deployment", "Chain 97, bytecode, ownership and module links"]], [130,374]),
+        "At the publication baseline, the repository compiles 39 Solidity source files and reports 98 passing automated tests using locked dependencies. The exact Git commit and its CI run are authoritative when the suite evolves.",
+        ("table", [["Area", "Representative evidence"], ["AMM", "Reserves, product, LP lock, liquidity and swap flows"], ["Router", "Quotes, adapters, gas, split and rollback"], ["Vault", "Share accounting, caps, strategy limits and bounded loss"], ["Risk", "Allowlists, caps, model-based daily accounting"], ["Deployment / UX", "Chain 97 validation, net quotes and pre-trade checks"]], [130,374]),
         ("callout", "Passing tests do not prove the absence of vulnerabilities or certify production economic safety."),
     ]),
     ("Deployment", "17. BSC Testnet Deployment", [
@@ -187,7 +187,7 @@ pages = [
     ]),
     ("Token utility", "22. LQC Utility Boundaries", [
         "The approved design direction associates LQC with future loan-origination and repayment fee settlement and permanent burning of those fees. This does not mean the lending or burn contracts are currently live.",
-        "Routing and AMM development does not by itself activate staking, governance, fee benefits, gas support, treasury distributions or other proposed utilities.",
+        "Routing and AMM development does not by itself activate staking, governance, fee benefits, gas support, treasury distributions or other proposed utilities. The interface now contains a disabled-by-default Gasless eligibility boundary, but no Paymaster transaction is relayed or sponsored in the current release.",
         ("callout", "Utility activates only after contract completion, audit, parameters, legal review, formal approval and on-chain disclosure."),
     ]),
     ("Tokenomics", "23. Approved Tokenomics Overview", [
@@ -245,9 +245,9 @@ compact_pages = [
     pages[2],
     ("Market position", "4. Purpose, Users and Differentiation", [
         "LQC is designed as liquidity infrastructure rather than a single isolated exchange. Its purpose is to connect fragmented DEX liquidity, compare executable outcomes and provide a controlled foundation for liquidity deployment and later DeFi services.",
-        ("table", [["Stakeholder", "Intended value"], ["Traders and wallets", "Better route discovery with gas, slippage and price-impact awareness"], ["Liquidity providers", "Infrastructure for measured allocation across approved pools"], ["DEX ecosystems", "Adapter-based access without replacing the shared routing stack"], ["Projects and market makers", "Transparent execution controls and auditable route policy"]], [145,359]),
+        ("table", [["Stakeholder", "Intended value"], ["Traders and wallets", "One-screen execution with net receipt, route savings, pre-trade safety and future bounded Gasless support"], ["Liquidity providers", "Infrastructure for measured allocation across approved pools"], ["DEX ecosystems", "Adapter-based access without replacing the shared routing stack"], ["Projects and market makers", "Transparent execution controls and auditable route policy"]], [145,359]),
         ("table", [["LQC distinction", "Reviewer evidence"], ["Protocol-neutral adapters", "Separate V2, V3 and LQC Flow integration modules"], ["Risk before execution", "Token, transaction, daily and DEX-specific caps"], ["Atomic route protection", "Deadline, minimum output, exact approval and rollback tests"], ["Evidence-led launch", "Pinned tests, deployment records, validation and verification tooling"]], [145,359]),
-        ("callout", "The commercial objective is sustainable infrastructure usage. The whitepaper does not rely on token-price appreciation or guaranteed exchange listing as a value proposition."),
+        ("callout", "LQC's convenience objective is to hide route complexity without hiding cost or risk. Gas sponsorship may be shown only after a configured Paymaster and Bundler pass token, input and gas caps."),
     ]),
     ("Design and architecture", "3. Principles and Modular Architecture", [
         ("table", [["Principle", "Engineering application"], ["Liquidity first", "Executable depth and measurable routing quality"], ["Modularity", "Separate quote, execution, risk and integration responsibilities"], ["Least privilege", "Divide governance, emergency and risk authority"], ["Evidence", "Pin code, settings, addresses and on-chain state"], ["Phased launch", "Testnet, caps and independent review before expansion"]], [135,369]),
@@ -269,7 +269,7 @@ compact_pages = [
     ("Tokenomics", "16. Tokenomics and Release Framework", pages[22][2] + pages[23][2]),
     pages[24],
     ("Roadmap", "18. Development Status and Delivery Plan", [
-        ("table", [["Workstream", "Current status / next gate"], ["LQC Flow AMM", "Implemented testnet MVP"], ["Router 2.0 and adapters", "Implemented; production integration review required"], ["Risk / governance", "Implemented foundation; finalize production roles"], ["BSC testnet tooling", "Implemented; publish real deployment evidence"], ["Independent review", "Audit, remediation and retest required"], ["Future modules", "Separate design, implementation, testing and audits"]], [190,314]),
+        ("table", [["Workstream", "Current status / next gate"], ["LQC Flow AMM", "Implemented testnet MVP"], ["Router 2.0 and adapters", "Implemented; production integration review required"], ["Vault / strategy", "Implemented guarded V1 foundation"], ["Pre-trade UX", "Net receipt, route savings and safety checks implemented"], ["Gasless", "Eligibility boundary implemented; Paymaster execution pending"], ["Independent review", "Audit, remediation and retest required"]], [190,314]),
         ("table", [["Phase", "Gate"], ["Controlled testnet", "Addresses, verified source, smoke tests and capped routes"], ["Independent review", "Audit, remediation, retest and known-issues disclosure"], ["Capped pilot", "Multisig, oracle, monitoring, legal and liquidity approval"], ["Expansion", "Measured reliability, depth and incident-free operation"]], [135,369]),
     ]),
     pages[28],
@@ -293,7 +293,7 @@ compact_pages = [
 def build():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     c = canvas.Canvas(str(OUT), pagesize=letter)
-    c.setTitle("LQC Whitepaper v5.1 - Review Edition")
+    c.setTitle("LQC Whitepaper v5.2 - Review Edition")
     c.setAuthor("MMXlabs&LQC LLC")
     c.setSubject("Condensed official review edition for technical and exchange due diligence")
 
@@ -307,7 +307,7 @@ def build():
     c.drawString(58, 498, "Connecting Fragmented Web3 Liquidity")
     c.setFillColor(MINT); c.roundRect(58, 394, 496, 66, 7, fill=1, stroke=0)
     c.setFillColor(NAVY); c.setFont("LQCSans-Bold", 11)
-    c.drawString(76, 430, "Version 5.1  ·  September 2026  ·  27 pages")
+    c.drawString(76, 430, "Version 5.2  ·  September 2026  ·  27 pages")
     c.setFont("LQCSans", 9); c.drawString(76, 409, "Issued by MMXlabs&LQC LLC | Wyoming, United States")
     c.setFillColor(HexColor("#c8d7e1")); c.setFont("LQCSans", 8)
     c.drawString(58, 72, "Unaudited testnet MVP · No production or listing claim")

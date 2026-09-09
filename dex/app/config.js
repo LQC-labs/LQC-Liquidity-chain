@@ -12,6 +12,7 @@ window.LQC_FLOW_CONFIG = Object.freeze({
   splitOptimizerAddress: "",
   autoRouterAddress: "",
   gasCostOracleAddress: "",
+  gasless: { enabled: false, paymasterAddress: "", bundlerUrl: "", sponsoredSymbols: ["LQC", "USDT"], maxInputRaw: "0", maxSponsoredGasWei: "0" },
   dexes: [],
   tokens: [
     { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },

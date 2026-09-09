@@ -35,6 +35,7 @@ export function buildAppConfig(deployment) {
     nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 }, routerAddress: mapped.router,
     quoteRouterAddress: mapped.quoteRouter, executionRouterAddress: mapped.executionRouter, nativeRouterAddress: mapped.nativeRouter,
     splitOptimizerAddress: mapped.splitOptimizer, autoRouterAddress: mapped.autoRouter, gasCostOracleAddress: mapped.gasCostOracle,
+    gasless: { enabled: false, paymasterAddress: "", bundlerUrl: "", sponsoredSymbols: ["LQC", "USDT"], maxInputRaw: "0", maxSponsoredGasWei: "0" },
     dexes, tokens, deploymentFingerprint: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(fingerprintPayload))) };
 }
 

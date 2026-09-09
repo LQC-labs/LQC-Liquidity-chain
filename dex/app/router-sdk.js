@@ -42,5 +42,36 @@
     const singleNet=singleAmountOut>singleCost?singleAmountOut-singleCost:0n;
     return splitNetAmountOut>singleNet;
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  function netQuoteSummary(selectedAmountOut,selectedCost,baselineAmountOut,baselineCost){
+    for(const value of [selectedAmountOut,selectedCost,baselineAmountOut,baselineCost])if(typeof value!=='bigint'||value<0n)throw new Error('Invalid net quote');
+    const net=value=>value[0]>value[1]?value[0]-value[1]:0n;
+    const netAmountOut=net([selectedAmountOut,selectedCost]),baselineNetAmountOut=net([baselineAmountOut,baselineCost]);
+    return{netAmountOut,baselineNetAmountOut,savings:netAmountOut>baselineNetAmountOut?netAmountOut-baselineNetAmountOut:0n};
+  }
+  function tradeReadiness({connected,deployed,hasRoute,amountIn,balanceIn,priceImpactBps:impact,quoteAgeMs=0}){
+    const blockers=[],warnings=[];
+    if(!deployed)blockers.push('TESTNET_CONTRACTS_UNAVAILABLE');
+    if(!connected)blockers.push('WALLET_NOT_CONNECTED');
+    if(!hasRoute)blockers.push('NO_VALID_ROUTE');
+    if(typeof amountIn!=='bigint'||amountIn<=0n)blockers.push('INVALID_AMOUNT');
+    if(typeof balanceIn==='bigint'&&typeof amountIn==='bigint'&&amountIn>balanceIn)blockers.push('INSUFFICIENT_BALANCE');
+    if(!Number.isInteger(impact)||impact<0)blockers.push('INVALID_PRICE_IMPACT');
+    else if(impact>=500)blockers.push('PRICE_IMPACT_TOO_HIGH');
+    else if(impact>=300)warnings.push('HIGH_PRICE_IMPACT');
+    if(!Number.isFinite(quoteAgeMs)||quoteAgeMs<0||quoteAgeMs>30000)blockers.push('STALE_QUOTE');
+    else if(quoteAgeMs>15000)warnings.push('QUOTE_AGING');
+    return{ready:blockers.length===0,blockers,warnings};
+  }
+  function gaslessEligibility(policy,tokenSymbol,amountIn,estimatedGas){
+    if(!policy?.enabled)return{eligible:false,reason:'GASLESS_DISABLED'};
+    if(typeof policy.paymasterAddress!=='string'||!/^0x[0-9a-fA-F]{40}$/.test(policy.paymasterAddress)||!policy.bundlerUrl)return{eligible:false,reason:'PAYMASTER_UNAVAILABLE'};
+    if(!Array.isArray(policy.sponsoredSymbols)||!policy.sponsoredSymbols.includes(tokenSymbol))return{eligible:false,reason:'TOKEN_NOT_SPONSORED'};
+    if(typeof amountIn!=='bigint'||amountIn<=0n||typeof estimatedGas!=='bigint'||estimatedGas<0n)return{eligible:false,reason:'INVALID_GASLESS_QUOTE'};
+    let maxInput,maxGas;try{maxInput=BigInt(policy.maxInputRaw);maxGas=BigInt(policy.maxSponsoredGasWei)}catch{return{eligible:false,reason:'INVALID_GASLESS_POLICY'}}
+    if(maxInput<=0n||maxGas<=0n)return{eligible:false,reason:'INVALID_GASLESS_POLICY'};
+    if(amountIn>maxInput)return{eligible:false,reason:'SPONSOR_INPUT_LIMIT'};
+    if(estimatedGas>maxGas)return{eligible:false,reason:'SPONSOR_GAS_LIMIT'};
+    return{eligible:true,reason:'SPONSORED'};
+  }
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,netQuoteSummary,tradeReadiness,gaslessEligibility,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
