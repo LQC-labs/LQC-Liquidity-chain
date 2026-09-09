@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **41 Solidity sources** and reports **111 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **41 Solidity sources** and reports **112 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -21,6 +21,7 @@ The current suite compiles **41 Solidity sources** and reports **111 passing tes
 | Pair/router reentrancy resistance | `test/amm.test.mjs`, `test/router-v2.test.mjs` | Lock and adversarial callback behavior covered; independent review pending. |
 | Exact temporary approvals and zero router/adapter custody | `test/router-v2.test.mjs`, `test/native-router.test.mjs` | Success, revert residue, and adversarial partial-spend rollback checks covered across Router and Adapter boundaries. |
 | Registry adapter bytecode and interface validation | `test/router-v2.test.mjs` | EOA and incompatible-contract registration or replacement is rejected without mutating an approved DEX entry. |
+| Disable-before-change DEX lifecycle | `test/router-v2.test.mjs` | Adapter replacement and DEX removal revert while enabled; changes succeed only after governance-visible disablement. |
 | Adapter downstream endpoint bytecode validation | `test/router-v2.test.mjs` | LQC Flow and Pancake V2/V3 adapters reject undeployed Router or Quoter endpoints at construction. |
 | Atomic split rollback | `test/router-v2.test.mjs` | A failed later leg must revert balances, pool reserves, custody, and usage accounting. |
 | Duplicate DEX leg rejection | `test/router-v2.test.mjs`, `test/risk-registry.test.mjs` | Covered to prevent per-DEX cap bypass. |
