@@ -19,3 +19,15 @@ This proves consistency of the quoted decision data. It does not prove that off-
 honest, guarantee settlement, prevent MEV, replace on-chain minimum-output protection, or constitute
 an audit. Production use requires trusted quote collection, block freshness, execution-receipt
 binding, monitoring, and independent review.
+
+## Proof-to-Settlement binding
+
+After a successful transaction, `buildSettlementReceipt` binds the original `proofHash` to the
+BSC testnet transaction hash, canonical block hash and number, settlement time, recipient, output
+asset, expected output, minimum output, and actual received output. It rejects reverted transactions,
+wrong-chain evidence, blocks older than the quote, expired execution, and output below the committed
+minimum. The resulting Keccak-256 `settlementHash` makes later changes detectable.
+
+This SDK receipt expects independently decoded and canonically confirmed transaction evidence. It
+does not itself query an RPC, decode token transfers, establish block finality, or prevent chain
+reorganizations. Those checks must be performed by the execution service before receipt creation.
