@@ -127,4 +127,52 @@ describe("LQC Vault-Router-Risk-Adapter isolation", function () {
     assert.equal(await tokenA.allowance(await vault.getAddress(), await executionRouter.getAddress()), 0n);
     assert.equal(await tokenA.allowance(await vault.getAddress(), await adapter.getAddress()), 0n);
   });
+
+  it("keeps actively deployed strategy assets isolated from successful and rejected swaps", async function () {
+    const IdleStrategy = new ethers.ContractFactory(
+      artifact("LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter").abi,
+      artifact("LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter").bytecode,
+      owner
+    );
+    const strategy = await IdleStrategy.deploy(await tokenA.getAddress(), await vault.getAddress());
+    await strategy.waitForDeployment();
+
+    const allocated = ethers.parseEther("60");
+    await (await vault.setStrategy(await strategy.getAddress())).wait();
+    await (await vault.setStrategyLimits(allocated, 0)).wait();
+    await (await vault.allocateToStrategy(allocated)).wait();
+
+    const strategySnapshot = async () => ({
+      vault: await snapshotVault(),
+      debt: await vault.strategyDebt(),
+      managed: await strategy.totalManagedAssets(),
+      strategyBalance: await tokenA.balanceOf(await strategy.getAddress())
+    });
+    const before = await strategySnapshot();
+    assert.equal(before.debt, allocated);
+    assert.equal(before.managed, allocated);
+    assert.equal(before.strategyBalance, allocated);
+
+    const amountIn = ethers.parseEther("5");
+    await (await tokenA.connect(user).approve(await executionRouter.getAddress(), amountIn * 2n)).wait();
+    let block = await provider.getBlock("latest");
+    await (await executionRouter.connect(user).swapExactInput(
+      dexId, await tokenA.getAddress(), await tokenB.getAddress(), amountIn, 1n,
+      await recipient.getAddress(), BigInt(block.timestamp + 3600), routeData
+    )).wait();
+    assert.deepEqual(await strategySnapshot(), before);
+
+    await (await registry.setDexEnabled(dexId, false)).wait();
+    block = await provider.getBlock("latest");
+    const rejected = await executionRouter.connect(user).swapExactInput(
+      dexId, await tokenA.getAddress(), await tokenB.getAddress(), amountIn, 1n,
+      await recipient.getAddress(), BigInt(block.timestamp + 3600), routeData, { gasLimit: 1000000n }
+    );
+    await assert.rejects(rejected.wait());
+
+    assert.deepEqual(await strategySnapshot(), before);
+    assert.equal((await risk.dailyUsage(await tokenA.getAddress())).amount, amountIn);
+    assert.equal(await tokenA.balanceOf(await executionRouter.getAddress()), 0n);
+    assert.equal(await tokenA.balanceOf(await adapter.getAddress()), 0n);
+  });
 });
