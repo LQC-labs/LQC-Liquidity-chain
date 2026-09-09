@@ -328,6 +328,14 @@ contract LQCLiquidityVault {
         address previous = owner;
         owner = msg.sender;
         pendingOwner = address(0);
+        if (pauseAdmin == previous) {
+            pauseAdmin = msg.sender;
+            emit PauseAdminChanged(previous, msg.sender);
+        }
+        if (strategyAdmin == previous) {
+            strategyAdmin = msg.sender;
+            emit StrategyAdminChanged(previous, msg.sender);
+        }
         emit OwnershipTransferred(previous, msg.sender);
     }
 

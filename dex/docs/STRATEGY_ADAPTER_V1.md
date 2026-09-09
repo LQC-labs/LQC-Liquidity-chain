@@ -14,6 +14,7 @@ Strategy Adapter V1 creates a narrow boundary between `LQCLiquidityVault` and a 
 - Unsolicited token donations are excluded from accounted idle assets and cannot be allocated as depositor capital.
 - The strategy administrator may allocate and recall, but cannot approve adapters or expand limits.
 - The pause administrator may stop allocations immediately and recall capital, but cannot resume allocations.
+- When ownership changes, default administrators that still equal the previous owner follow the new owner automatically; explicitly separated pause and strategy administrators remain unchanged.
 - Governance may perform an emergency recall with an explicit loss bound only after deposits and allocations are both paused.
 - A strategy cannot be replaced while any recorded debt remains.
 

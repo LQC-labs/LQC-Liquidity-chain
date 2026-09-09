@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **48 Solidity sources** and reports **173 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **48 Solidity sources** and reports **174 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -51,6 +51,7 @@ The current suite compiles **48 Solidity sources** and reports **173 passing tes
 | Vault donation-resistant share and idle-asset accounting | `test/liquidity-vault.test.mjs` | Covered for direct donations before deposits and strategy allocation. |
 | Vault strategy approval, role separation, and exposure cap | `test/liquidity-vault.test.mjs` | Covered with a vault-specific reference adapter; production strategies remain pending. |
 | Paused-by-default Strategy staging | `test/liquidity-vault.test.mjs`, `test/testnet-bootstrap.test.mjs` | New Vaults cannot allocate until governance explicitly resumes, and Strategy replacement is rejected unless allocations are paused and debt is zero. |
+| Vault ownership and administrator continuity | `test/liquidity-vault.test.mjs` | Two-step ownership acceptance automatically transfers only default owner-held pause and strategy roles; explicitly separated administrators remain unchanged and the former owner retains no implicit authority. |
 | Strategy recall loss bound and shutdown-only emergency override | `test/liquidity-vault.test.mjs` | Covered with a deterministic lossy mock; economic safety and live protocol behavior remain unaudited. |
 | Reported Strategy loss isolation and reconciliation | `test/liquidity-vault.test.mjs` | A managed-asset report below Strategy debt blocks deposits, withdrawals, further allocations, and operational reopening. Only governance under full shutdown can recognize a bounded loss before recalling the remaining assets. Strategy valuation integrity remains adapter-dependent and unaudited. |
 | Vault isolation from Router, Risk, and DEX adapters | `test/vault-router-risk-integration.test.mjs` | Successful swaps and rejected cap/disabled-route paths must leave Vault principal, shares, accounting, approvals, active strategy debt, and deployed strategy assets unchanged. A reported Strategy loss fails Vault entry points closed; shutdown-only reconciliation, full recall, and withdrawal recovery complete without contaminating reviewed Router settlement, Risk usage, or Router/adapter custody. |

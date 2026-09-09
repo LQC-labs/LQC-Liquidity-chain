@@ -93,7 +93,24 @@ describe("LQC Liquidity Vault V1", function () {
     await assert.rejects(vault.connect(user).acceptOwnership());
     await (await vault.connect(other).acceptOwnership()).wait();
     assert.equal(await vault.owner(), await other.getAddress());
+    assert.equal(await vault.pauseAdmin(), await other.getAddress());
+    assert.equal(await vault.strategyAdmin(), await other.getAddress());
     await assert.rejects(vault.setDepositCap(1));
+    await assert.rejects(vault.pauseDeposits());
+    await (await vault.connect(other).pauseDeposits()).wait();
+  });
+
+  it("preserves explicitly separated administrators across ownership transfer", async function () {
+    await (await vault.setPauseAdmin(await guardian.getAddress())).wait();
+    await (await vault.setStrategyAdmin(await user.getAddress())).wait();
+    await (await vault.beginOwnershipTransfer(await other.getAddress())).wait();
+    await (await vault.connect(other).acceptOwnership()).wait();
+
+    assert.equal(await vault.owner(), await other.getAddress());
+    assert.equal(await vault.pauseAdmin(), await guardian.getAddress());
+    assert.equal(await vault.strategyAdmin(), await user.getAddress());
+    await assert.rejects(vault.pauseDeposits());
+    await (await vault.connect(guardian).pauseDeposits()).wait();
   });
 
   it("stages every Strategy change behind an allocation pause", async function () {
