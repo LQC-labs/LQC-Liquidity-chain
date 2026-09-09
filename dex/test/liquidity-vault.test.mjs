@@ -203,6 +203,31 @@ describe("LQC Liquidity Vault V1", function () {
     assert.equal(await vault.totalAssets(), ethers.parseEther("850"));
   });
 
+  it("fails closed after a total strategy loss makes the vault insolvent", async function () {
+    const Adapter = new ethers.ContractFactory(artifact("MockLossyStrategyAdapter", "mocks/MockLossyStrategyAdapter").abi,
+      artifact("MockLossyStrategyAdapter", "mocks/MockLossyStrategyAdapter").bytecode, owner);
+    const adapter = await Adapter.deploy(await token.getAddress(), await vault.getAddress());
+    await adapter.waitForDeployment();
+    const deposit = ethers.parseEther("1000");
+
+    await (await vault.connect(user).deposit(deposit, await user.getAddress())).wait();
+    await (await vault.setStrategy(await adapter.getAddress())).wait();
+    await (await vault.setStrategyLimits(deposit, 0)).wait();
+    await (await vault.allocateToStrategy(deposit)).wait();
+    await (await adapter.setLossBps(10_000)).wait();
+    await (await vault.pauseDeposits()).wait();
+    await (await vault.pauseAllocations()).wait();
+    await (await vault.emergencyRecallFromStrategy(deposit, 10_000)).wait();
+
+    assert.equal(await vault.strategyDebt(), 0n);
+    assert.equal(await vault.totalAssets(), 0n);
+    assert.equal(await vault.isInsolvent(), true);
+    await assert.rejects(vault.convertToShares(1));
+    await assert.rejects(vault.resumeDeposits());
+    await assert.rejects(vault.connect(user).deposit(ethers.parseEther("1"), await user.getAddress()));
+    assert.equal(await vault.depositsPaused(), true);
+  });
+
   it("never allocates unsolicited donations as accounted strategy exposure", async function () {
     const Adapter = new ethers.ContractFactory(artifact("LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter").abi,
       artifact("LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter").bytecode, owner);

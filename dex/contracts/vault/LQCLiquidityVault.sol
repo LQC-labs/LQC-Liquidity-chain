@@ -70,6 +70,7 @@ contract LQCLiquidityVault {
     error LossLimitExceeded();
     error InvalidLossLimit();
     error EmergencyModeRequired();
+    error Insolvent();
 
     modifier onlyOwner() { if (msg.sender != owner) revert Forbidden(); _; }
     modifier nonReentrant() { if (unlocked != 1) revert Reentrancy(); unlocked = 2; _; unlocked = 1; }
@@ -100,7 +101,12 @@ contract LQCLiquidityVault {
         return accountedAssets - strategyDebt;
     }
 
+    function isInsolvent() public view returns (bool) {
+        return totalSupply != 0 && accountedAssets == 0;
+    }
+
     function convertToShares(uint256 assets) public view returns (uint256) {
+        if (isInsolvent()) revert Insolvent();
         return totalSupply == 0 ? assets : assets * totalSupply / accountedAssets;
     }
 
@@ -112,6 +118,7 @@ contract LQCLiquidityVault {
         if (receiver == address(0)) revert ZeroAddress();
         if (assets == 0) revert ZeroAmount();
         if (depositsPaused) revert DepositsPaused();
+        if (isInsolvent()) revert Insolvent();
         if (accountedAssets + assets > depositCap) revert DepositCapExceeded();
         uint256 supply = totalSupply;
         if (supply == 0) {
@@ -262,6 +269,7 @@ contract LQCLiquidityVault {
     }
 
     function resumeDeposits() external onlyOwner {
+        if (isInsolvent()) revert Insolvent();
         depositsPaused = false;
         emit DepositPauseChanged(false, msg.sender);
     }
