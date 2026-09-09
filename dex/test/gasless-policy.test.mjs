@@ -43,7 +43,8 @@ describe("LQC Gasless policy foundation", function () {
 
   it("enforces the five-transaction wallet daily quota and resets by UTC day", async function () {
     for (let i = 0; i < 5; i++) await (await policy.authorizeSponsorship(zeroBalanceUser, target, token, minimum, 1n)).wait();
-    await assert.rejects(policy.authorizeSponsorship(zeroBalanceUser, target, token, minimum, 1n));
+    const quotaTx = await policy.authorizeSponsorship(zeroBalanceUser, target, token, minimum, 1n, { gasLimit: 500000n });
+    await assert.rejects(quotaTx.wait());
     await eip1193.request({ method: "evm_increaseTime", params: [86401] });
     await eip1193.request({ method: "evm_mine", params: [] });
     await (await policy.authorizeSponsorship(zeroBalanceUser, target, token, minimum, 1n)).wait();
@@ -62,7 +63,7 @@ describe("LQC Gasless policy foundation", function () {
     await assert.rejects(policy.authorizeSponsorship(zeroBalanceUser, target, token, minimum, 1n));
     await assert.rejects(policy.connect(guardian).resume());
     await (await policy.resume()).wait();
-    await (await policy.authorizeSponsorship(zeroBalanceUser, target, token, minimum, 1n)).wait();
+    await (await policy.authorizeSponsorship(zeroBalanceUser, target, token, minimum, 1n, { gasLimit: 500000n })).wait();
   });
 
   it("blocks use on an unexpected chain and prevents quotas above five", async function () {
