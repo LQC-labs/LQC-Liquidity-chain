@@ -131,12 +131,12 @@ describe("LQC Router 2.0", function () {
     assert.equal((await registry.getDex(dexId)).enabled, true);
 
     await (await registry.setDexEnabled(dexId, false)).wait();
-    await (await registry.updateDex(dexId, await adapter.getAddress(), 200)).wait();
+    await (await registry.updateDex(dexId, await adapter.getAddress(), 200, { gasLimit: 500_000 })).wait();
     const updated = await registry.getDex(dexId);
     assert.equal(updated.enabled, false);
     assert.equal(updated.priority, 200n);
 
-    await (await registry.removeDex(dexId)).wait();
+    await (await registry.removeDex(dexId, { gasLimit: 500_000 })).wait();
     assert.equal(await registry.dexCount(), 0n);
     await assert.rejects(registry.getDex(dexId));
   });
