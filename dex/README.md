@@ -200,6 +200,20 @@ The interface remains visibly disabled until all required Router 2.0 addresses a
 
 Never commit private keys or `.env` files.
 
+## Gasless policy foundation
+
+The first Gasless safety boundary is available in `contracts/gasless/LQCGaslessPolicy.sol`. It
+records eligibility and consumes sponsorship quotas for a future BSC testnet paymaster or signed
+relay. It enforces an expected chain, approved targets and tokens, a minimum oracle-derived notional,
+insufficient user native gas, a per-transaction gas cap, a maximum of five sponsored transactions
+per wallet per UTC day, a protocol-wide daily budget, and guardian pause with governance-only
+recovery.
+
+This policy does not relay a transaction, verify a user operation, reimburse a bundler, custody
+assets, or provide sponsorship funds. Those components, stablecoin cost recovery, oracle integration,
+abuse controls, monitoring, deployment, and an independent audit remain pending. See
+[`GASLESS_POLICY.md`](docs/GASLESS_POLICY.md).
+
 ## Current limitations
 
 This is an unaudited testnet MVP, not production-ready software. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, production oracle feeds, and audited production integrations are intentionally deferred.
