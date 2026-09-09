@@ -40,6 +40,9 @@ and recorded block, re-reads the block to detect a reorganization, enforces a co
 confirmation threshold, and sums matching `Transfer` logs from the committed output token to the
 committed recipient. The decoded total must exactly match the settlement receipt's actual output.
 
-Native BNB output requires separate balance-delta or protocol-event verification and is not claimed
-by this ERC-20 log verifier. The RPC must be independently trusted and production confirmation
-depth remains a governance risk parameter.
+Native BNB output is verified separately by `verifyCanonicalNativeSettlement`. It requires exactly
+one `NativeSwapExecuted` event from the explicitly reviewed `LQCNativeRouter`, matches its indexed
+recipient and input token, requires `nativeIn == false`, and reconciles both input and actual BNB
+output amounts. A spoofed emitter, duplicate event, wrong direction, or inconsistent amount fails
+closed. The RPC must be independently trusted and production confirmation depth remains a
+governance risk parameter.
