@@ -249,4 +249,45 @@ describe("LQC critical attack paths", function () {
       assert.equal(await token.allowance(await harness.getAddress(), spender), 20n);
     }
   });
+
+  it("fails Vault deposits closed on reverting or short balanceOf responses", async function () {
+    const token = await deploy(owner, "MockAdversarialERC20", "mocks/MockAdversarialERC20");
+    const vault = await deploy(owner, "LQCLiquidityVault", "vault/LQCLiquidityVault",
+      [await token.getAddress(), await owner.getAddress(), ethers.parseEther("1000"), "Share", "SHARE"]);
+    const amount = ethers.parseEther("10"), userAddress = await user.getAddress();
+    await (await token.mint(userAddress, amount)).wait();
+    await (await token.connect(user).approve(await vault.getAddress(), amount)).wait();
+    for (const mode of [1, 2]) {
+      await (await token.setBalanceMode(mode)).wait();
+      await assert.rejects(vault.connect(user).deposit(amount, userAddress));
+      assert.equal(await vault.totalAssets(), 0n);
+      assert.equal(await vault.totalSupply(), 0n);
+      assert.equal(await token.rawBalanceOf(userAddress), amount);
+      assert.equal(await token.rawBalanceOf(await vault.getAddress()), 0n);
+    }
+  });
+
+  it("rolls back token callback reentrancy during Vault deposit and withdrawal", async function () {
+    const token = await deploy(owner, "MockAdversarialERC20", "mocks/MockAdversarialERC20");
+    const vault = await deploy(owner, "LQCLiquidityVault", "vault/LQCLiquidityVault",
+      [await token.getAddress(), await owner.getAddress(), ethers.parseEther("1000"), "Share", "SHARE"]);
+    const amount = ethers.parseEther("100"), userAddress = await user.getAddress(), vaultAddress = await vault.getAddress();
+    await (await token.mint(userAddress, amount)).wait();
+    await (await token.connect(user).approve(vaultAddress, amount)).wait();
+    const depositAttack = vault.interface.encodeFunctionData("deposit", [1n, userAddress]);
+    await (await token.setCallback(vaultAddress, depositAttack)).wait();
+    await assert.rejects(vault.connect(user).deposit(amount, userAddress));
+    assert.equal(await vault.totalAssets(), 0n);
+    assert.equal(await token.rawBalanceOf(userAddress), amount);
+    await (await token.setCallback(ethers.ZeroAddress, "0x")).wait();
+    await (await vault.connect(user).deposit(amount, userAddress, { gasLimit: 1_000_000 })).wait();
+    const shares = await vault.balanceOf(userAddress), supply = await vault.totalSupply();
+    const withdrawAttack = vault.interface.encodeFunctionData("withdraw", [1n, userAddress, userAddress]);
+    await (await token.setCallback(vaultAddress, withdrawAttack)).wait();
+    await assert.rejects(vault.connect(user).withdraw(ethers.parseEther("1"), userAddress, userAddress));
+    assert.equal(await vault.totalAssets(), amount);
+    assert.equal(await vault.totalSupply(), supply);
+    assert.equal(await vault.balanceOf(userAddress), shares);
+    assert.equal(await token.rawBalanceOf(vaultAddress), amount);
+  });
 });
