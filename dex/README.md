@@ -64,6 +64,8 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
   deficits halt deposits and withdrawals before first-mover extraction
 - Strict ERC-20 return-data validation rejects false, short, and oversized responses atomically while
   retaining compatibility with empty-return and zero-first-approval tokens
+- Hostile token tests fail closed on invalid balance responses and roll back transfer-callback
+  reentrancy without changing Vault assets, shares, supply, or backing
 
 New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap V2 or V3 when their reviewed addresses are supplied. Exact-input token and native BNB execution, oracle-validated gas-cost conversion, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, atomic optimized execution, timelocked registry ownership, disable-only emergency control, token allowlisting, and staged transaction limits are now available. Live production feed configuration, final risk-committee parameter approval, multisig assignment, and production integrations remain pending.
 
