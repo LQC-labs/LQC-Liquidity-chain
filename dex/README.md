@@ -155,6 +155,16 @@ export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
 npm run monitor:testnet
 ```
 
+Convert a completed emergency exercise record into a deterministic audit-evidence report:
+
+```bash
+npm run report:emergency-drill -- ./deployments/emergency-drill-input.local.json
+```
+
+The generator requires the complete eight-step pause-and-recovery sequence, chain 97, the reviewed
+source revision, chronological timestamps, transaction hashes or read-only revert evidence, and the
+full configured timelock delay. It emits a SHA-256 digest and refuses incomplete or failed drills.
+
 The JSON report verifies block freshness and the strict deployment configuration, reports emergency
 pause and pending-ownership states, and checks that execution, native, and automatic routers retain
 no BNB, LQC, mock-USDT, or WBNB custody. It also compares both Safe owner sets and thresholds with
