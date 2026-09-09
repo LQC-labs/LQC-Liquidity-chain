@@ -26,12 +26,14 @@ contract PancakeV2Adapter is ILQCExecutionAdapter {
     IPancakeV2Router public immutable pancakeRouter;
 
     error ZeroAddress();
+    error InvalidEndpoint();
     error InvalidRoute();
     error RouteEndpointMismatch();
     error UnsupportedTokenBehavior();
 
     constructor(address pancakeRouter_) {
         if (pancakeRouter_ == address(0)) revert ZeroAddress();
+        if (pancakeRouter_.code.length == 0) revert InvalidEndpoint();
         pancakeRouter = IPancakeV2Router(pancakeRouter_);
     }
 
