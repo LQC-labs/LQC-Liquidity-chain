@@ -156,4 +156,49 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.buildBestExecutionProof(inconsistent, ethers), /allocation/);
   });
 
+  function singleRouteProof() {
+    const dexA = ethers.id("DEX_A");
+    return sdk.buildBestExecutionProof({ chainId: 97, quoteBlock: 12345, expiresAt: 1789000000,
+      tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n, slippageBps: 100,
+      candidates: [{ dexId: dexA, name: "A", amountOut: 1000n, cost: 10n, routeDataHash: ethers.id("route-a") }],
+      plan: { kind: "single", cost: 10n, legs: [{ dexId: dexA, amountIn: 1000n, expectedOut: 1000n, minimumOut: 990n }] }
+    }, ethers);
+  }
+
+  it("binds a valid best-execution proof to its successful settlement", function () {
+    const proof = singleRouteProof();
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: ethers.id("tx"),
+      blockHash: ethers.id("block"), blockNumber: 12350, settledAt: 1788999999,
+      recipient: tokenA, actualAmountOut: 995n, status: 1 }, ethers);
+    assert.equal(receipt.proofHash, proof.proofHash.toLowerCase());
+    assert.equal(receipt.minimumSatisfied, true);
+    assert.equal(receipt.executionDeltaBps, -50);
+    assert.equal(sdk.verifySettlementReceipt(receipt, proof, ethers), true);
+  });
+
+  it("rejects failed, expired, cross-chain, and below-minimum settlements", function () {
+    const proof = singleRouteProof();
+    const base = { chainId: 97, transactionHash: ethers.id("tx"), blockHash: ethers.id("block"),
+      blockNumber: 12350, settledAt: 1788999999, recipient: tokenA, actualAmountOut: 995n, status: 1 };
+    assert.throws(() => sdk.buildSettlementReceipt(proof, { ...base, status: 0 }, ethers), /result/);
+    assert.throws(() => sdk.buildSettlementReceipt(proof, { ...base, chainId: 56 }, ethers), /context/);
+    assert.throws(() => sdk.buildSettlementReceipt(proof, { ...base, settledAt: 1789000001 }, ethers), /validity/);
+    assert.throws(() => sdk.buildSettlementReceipt(proof, { ...base, actualAmountOut: 989n }, ethers), /minimum output/);
+  });
+
+  it("detects settlement tampering and proof substitution", function () {
+    const proof = singleRouteProof();
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: ethers.id("tx"),
+      blockHash: ethers.id("block"), blockNumber: 12350, settledAt: 1788999999,
+      recipient: tokenA, actualAmountOut: 995n, status: 1 }, ethers);
+    const tampered = structuredClone(receipt); tampered.actualAmountOut = "999";
+    assert.equal(sdk.verifySettlementReceipt(tampered, proof, ethers), false);
+    const inconsistent = structuredClone(receipt); inconsistent.actualAmountOut = "999";
+    const { settlementHash, ...payload } = inconsistent;
+    inconsistent.settlementHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload)));
+    assert.equal(sdk.verifySettlementReceipt(inconsistent, proof, ethers), false);
+    const otherProof = structuredClone(proof); otherProof.proofHash = ethers.id("other-proof");
+    assert.equal(sdk.verifySettlementReceipt(receipt, otherProof, ethers), false);
+  });
+
 });
