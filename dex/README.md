@@ -126,6 +126,19 @@ export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
 npm run validate:testnet
 ```
 
+Generate a read-only operational health report after deployment:
+
+```bash
+export BSC_TESTNET_RPC_URL="https://..."
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
+npm run monitor:testnet
+```
+
+The JSON report verifies block freshness and the strict deployment configuration, reports emergency
+pause and pending-ownership states, and checks that execution, native, and automatic routers retain
+no BNB, LQC, mock-USDT, or WBNB custody. A critical result exits with status `2` for CI/monitoring
+integration. This operational evidence does not replace an independent audit.
+
 To probe reviewed LQC Flow and PancakeSwap V2/V3 routes without sending a transaction, copy the
 route-probe example and replace its DEX ids, token addresses, raw input amount, path, and V3 fees.
 The script ABI-encodes V2/LQC Flow paths and packed-encodes V3 paths automatically. Before quoting,
