@@ -3,6 +3,7 @@ import path from "node:path";
 import { ethers } from "ethers";
 import { checkpointedDeploy, checkpointedTransaction, loadDeploymentCheckpoint } from "./deployment-checkpoint.mjs";
 import { buildAppConfig } from "./app-config.mjs";
+import { assertReviewedSourceCommit, readGitSourceState } from "./preflight-testnet-deploy.mjs";
 
 const {
   BSC_TESTNET_RPC_URL,
@@ -38,6 +39,8 @@ const {
 if (!BSC_TESTNET_RPC_URL || !DEPLOYER_PRIVATE_KEY || !ethers.isAddress(WBNB_ADDRESS)) {
   throw new Error("Set BSC_TESTNET_RPC_URL, DEPLOYER_PRIVATE_KEY, and a valid WBNB_ADDRESS.");
 }
+const gitSourceState = readGitSourceState();
+const sourceRevision = assertReviewedSourceCommit(process.env.SOURCE_COMMIT, gitSourceState.commit, gitSourceState.dirty);
 
 const root = path.resolve(import.meta.dirname, "..");
 const load = (source) => {
@@ -236,7 +239,7 @@ const record = {
   deployer: wallet.address,
   owner,
   riskAdmin,
-  sourceRevision: process.env.SOURCE_COMMIT || null,
+  sourceRevision,
   compiler: { version: "0.8.30", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
   externalContracts: {
     wbnb: WBNB_ADDRESS,
