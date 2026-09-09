@@ -75,7 +75,18 @@ describe("LQC Router browser SDK", function () {
     ]);
     assert.deepEqual(ranked.map(item => item.name), ["C", "B", "A"]);
     assert.equal(ranked[0].netAmountOut, 980n);
+    assert.equal(ranked[0].amountOut, 980n);
     assert.deepEqual(sdk.rankRouteQuotes([{ name: "zero", amountOut: 0n }]), []);
+  });
+
+  it("prefers a lower gross quote when it delivers more after route gas", function () {
+    const expensive = { name: "High output", dexId: "0x01", routeData: "0xaa", amountOut: 1_010n, cost: 50n, priority: 10 };
+    const efficient = { name: "Efficient", dexId: "0x02", routeData: "0xbb", amountOut: 1_000n, cost: 10n, priority: 1 };
+    const ranked = sdk.rankRouteQuotes([expensive, efficient]);
+    assert.equal(ranked[0].name, "Efficient");
+    assert.equal(ranked[0].dexId, "0x02");
+    assert.equal(ranked[0].routeData, "0xbb");
+    assert.equal(ranked[0].netAmountOut, 990n);
   });
 
   it("restores a remembered wallet only when an account and the expected chain are present", function () {
