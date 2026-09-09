@@ -54,3 +54,5 @@ body{font-family:Roboto,Arial,"Noto Sans KR",sans-serif;letter-spacing:-.012em}.
 
 /* LQC Optimal Path surface */
 .route-card{margin:12px 0 4px;padding:13px;border:1px solid #dfeceb;border-radius:14px;background:#f7fbfa}.route-card-head,.route-source{display:flex;align-items:center;justify-content:space-between;gap:12px}.route-card-head{padding-bottom:9px;border-bottom:1px solid #e3ecea;color:#087e70;font-size:10px;font-weight:800;letter-spacing:.1em}.route-card-head b{padding:3px 7px;border-radius:999px;background:#e6f7f3;font-size:9px}.route-source{padding-top:9px;font-size:11px}.route-source span{color:#657378}.route-source strong{color:#203136}.muted-route{opacity:.65}
+
+.alternative-ready{color:#087e70!important}.preflight-warning{color:#b36b00!important}.preflight-safe{color:#087e70!important}

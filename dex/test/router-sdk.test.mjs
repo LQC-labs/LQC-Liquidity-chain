@@ -66,4 +66,16 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.explainSwapError({ message: "daily cap exceeded" }).retryable, false);
   });
 
+  it("ranks executable primary and fallback routes by net output and priority", function () {
+    const ranked = sdk.rankRouteQuotes([
+      { name: "A", amountOut: 1000n, cost: 30n, priority: 2 },
+      { name: "B", amountOut: 990n, cost: 10n, priority: 1 },
+      { name: "C", amountOut: 980n, cost: 0n, priority: 3 },
+      null
+    ]);
+    assert.deepEqual(ranked.map(item => item.name), ["C", "B", "A"]);
+    assert.equal(ranked[0].netAmountOut, 980n);
+    assert.deepEqual(sdk.rankRouteQuotes([{ name: "zero", amountOut: 0n }]), []);
+  });
+
 });
