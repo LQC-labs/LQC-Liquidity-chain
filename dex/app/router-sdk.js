@@ -79,17 +79,19 @@
   function executionPlanFingerprint(plan){
     if(!plan||!['single','split'].includes(plan.kind))throw new Error('Invalid execution plan');
     if(plan.kind==='single'){
-      const dexId=String(plan.single?.best?.dexId||'').toLowerCase(),routeData=String(plan.single?.routeData||'').toLowerCase();
-      if(!dexId||!routeData)return'';
-      return`single:${dexId}:${routeData}`;
+      const dexId=String(plan.single?.best?.dexId||'').toLowerCase(),adapter=String(plan.single?.best?.adapter||plan.single?.dex?.adapter||'').toLowerCase(),routeData=String(plan.single?.routeData||'').toLowerCase();
+      if(!dexId||!adapter||!routeData)return'';
+      return`single:${dexId}:${adapter}:${routeData}`;
     }
-    const dexIds=Array.from(plan.split?.dexIds||[]),amounts=Array.from(plan.split?.amountsIn||[]),routes=Array.from(plan.routes||[]);
-    if(dexIds.length===0||dexIds.length!==amounts.length||dexIds.length!==routes.length)return'';
+    const dexIds=Array.from(plan.split?.dexIds||[]),adapters=Array.from(plan.split?.adapters||[]),amounts=Array.from(plan.split?.amountsIn||[]),routes=Array.from(plan.routes||[]);
+    if(dexIds.length===0||dexIds.length!==adapters.length||dexIds.length!==amounts.length||dexIds.length!==routes.length)return'';
     const legs=[];
     for(let i=0;i<dexIds.length;i++){
       if(typeof amounts[i]!=='bigint'||amounts[i]<0n)return'';
       if(amounts[i]===0n)continue;
-      legs.push(`${String(dexIds[i]).toLowerCase()}:${amounts[i]}:${String(routes[i]).toLowerCase()}`);
+      const adapter=String(adapters[i]||'').toLowerCase();
+      if(!adapter)return'';
+      legs.push(`${String(dexIds[i]).toLowerCase()}:${adapter}:${amounts[i]}:${String(routes[i]).toLowerCase()}`);
     }
     return legs.length?`split:${legs.join('|')}`:'';
   }
