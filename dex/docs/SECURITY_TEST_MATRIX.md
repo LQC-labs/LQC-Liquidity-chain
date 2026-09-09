@@ -38,6 +38,7 @@ The current suite compiles **41 Solidity sources** and reports **122 passing tes
 | Wallet execution-context integrity | `test/router-sdk.test.mjs` | A changed account, disconnected wallet, or unexpected chain before submission aborts the stale transaction flow. |
 | Wallet input-balance preflight | `test/router-sdk.test.mjs` | A swap exceeding the connected wallet's current input-token balance is rejected before approval or execution. |
 | Native gas-reserve preflight | `test/router-sdk.test.mjs` | BNB value, estimated route gas, and reset/exact approval overhead are reserved before prompting the wallet; refreshed routes are checked again after approval. |
+| Browser swap simulation preflight | `test/router-sdk.test.mjs` | Every native, token-to-native, single-route, and split-route submission performs a read-only static call first; error guidance is covered, while connected-wallet integration remains pending. |
 | Exact token approval compatibility | `test/router-sdk.test.mjs` | Existing insufficient allowances are reset to zero before an exact-amount approval; sufficient allowances create no additional approval transaction; the resulting on-chain allowance is verified before Swap. |
 | Reproducible BscScan verification bundle generation | `test/verification-bundle.test.mjs` | Bundle structure and source revision covered; explorer publication is deployment-specific. |
 | Vault donation-resistant share and idle-asset accounting | `test/liquidity-vault.test.mjs` | Covered for direct donations before deposits and strategy allocation. |
