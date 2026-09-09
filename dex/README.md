@@ -175,6 +175,16 @@ The package refuses mixed networks, commits, or deployment fingerprints and requ
 monitoring. Missing explorer verification, independent audit, or secure legal/KYB references remain
 explicit pending gates; repository evidence alone is never reported as full listing approval.
 
+Render the verified package as a reviewer-readable Markdown summary:
+
+```bash
+npm run render:review-summary -- <review-evidence-package.json>
+```
+
+The renderer verifies the package digest before showing its baseline, evidence status, drill
+reference, and outstanding external gates. It does not convert an incomplete package into an
+approval claim.
+
 The JSON report verifies block freshness and the strict deployment configuration, reports emergency
 pause and pending-ownership states, and checks that execution, native, and automatic routers retain
 no BNB, LQC, mock-USDT, or WBNB custody. It also compares both Safe owner sets and thresholds with
