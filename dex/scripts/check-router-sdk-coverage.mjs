@@ -35,12 +35,16 @@ try {
   const functionCoverage = coveredFunctions * 100 / functions.size;
   const rangeCoverage = coveredRanges * 100 / ranges.size;
   const threshold = Number(process.env.LQC_ROUTER_FUNCTION_COVERAGE_MIN || 100);
+  const rangeThreshold = Number(process.env.LQC_ROUTER_RANGE_COVERAGE_MIN || 90);
   console.log(JSON.stringify({ target: "dex/app/router-sdk.js", engine: "Node V8 precise coverage",
     functionCoveragePercent: Number(functionCoverage.toFixed(2)), functions: `${coveredFunctions}/${functions.size}`,
     executedRangePercent: Number(rangeCoverage.toFixed(2)), ranges: `${coveredRanges}/${ranges.size}`,
-    functionThresholdPercent: threshold }, null, 2));
+    functionThresholdPercent: threshold, executedRangeThresholdPercent: rangeThreshold }, null, 2));
   if (!Number.isFinite(threshold) || threshold < 0 || threshold > 100 || functionCoverage < threshold) {
     throw new Error(`Router SDK function coverage ${functionCoverage.toFixed(2)}% is below ${threshold}%`);
+  }
+  if (!Number.isFinite(rangeThreshold) || rangeThreshold < 0 || rangeThreshold > 100 || rangeCoverage < rangeThreshold) {
+    throw new Error(`Router SDK executed-range coverage ${rangeCoverage.toFixed(2)}% is below ${rangeThreshold}%`);
   }
 } finally {
   fs.rmSync(coverageDirectory, { recursive: true, force: true });
