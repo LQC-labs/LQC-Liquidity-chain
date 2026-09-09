@@ -6,13 +6,18 @@
   "scripts": {
     "compile": "node scripts/compile.mjs",
     "test": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
+    "coverage:router-sdk": "node scripts/check-router-sdk-coverage.mjs",
     "preflight:testnet": "node scripts/preflight-testnet-deploy.mjs",
     "deploy:testnet": "npm run preflight:testnet && npm run compile && node scripts/deploy-testnet.mjs",
     "prepare:verification": "npm run compile && node scripts/prepare-bscscan-verification.mjs",
     "validate:testnet": "node scripts/validate-bsc-testnet.mjs",
     "monitor:testnet": "node scripts/monitor-bsc-testnet.mjs",
     "smoke:testnet": "node scripts/smoke-test-bsc-routes.mjs",
-    "configure:app": "node scripts/configure-app.mjs"
+    "configure:app": "node scripts/configure-app.mjs",
+    "report:emergency-drill": "node scripts/emergency-drill-report.mjs",
+    "package:review-evidence": "node scripts/build-review-evidence-package.mjs",
+    "render:review-summary": "node scripts/render-review-evidence-markdown.mjs",
+    "build:review-bundle": "node scripts/build-review-bundle.mjs"
   },
   "devDependencies": {
     "ethers": "^6.15.0",

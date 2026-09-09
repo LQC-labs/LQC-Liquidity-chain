@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 
 const source = fs.readFileSync(new URL("../app/router-sdk.js", import.meta.url), "utf8");
 const context = { globalThis: {} };
-vm.runInNewContext(source, context);
+vm.runInNewContext(source, context, { filename: "lqc-router-sdk.js" });
 const sdk = context.globalThis.LQCRouterSDK;
 
 describe("LQC Router browser SDK", function () {
@@ -23,6 +23,11 @@ describe("LQC Router browser SDK", function () {
       sdk.encodeRoute(dex, [tokenA, tokenB, tokenC], ethers),
       ethers.solidityPacked(["address", "uint24", "address", "uint24", "address"], [tokenA, 500, tokenB, 2500, tokenC])
     );
+  });
+
+  it("encodes the same reviewed path across multiple DEX adapters", function () {
+    const expected = sdk.encodeRoute({ kind: "v2" }, [tokenA, tokenB], ethers);
+    assert.deepEqual(sdk.encodeRoutes([{ kind: "v2" }, { kind: "v2" }], [tokenA, tokenB], ethers), [expected, expected]);
   });
 
   it("rejects unapproved V3 pools, excessive hops, and excessive slippage", function () {
@@ -106,6 +111,253 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.requiresTokenApproval(101n, 100n), false);
     assert.throws(() => sdk.requiresTokenApproval(-1n, 100n));
     assert.throws(() => sdk.requiresTokenApproval(100n, 0n));
+  });
+
+  it("creates a verifiable proof that a single route has the highest gas-adjusted output", function () {
+    const dexA = ethers.id("DEX_A"), dexB = ethers.id("DEX_B");
+    const proof = sdk.buildBestExecutionProof({ chainId: 97, quoteBlock: 12345, expiresAt: 1789000000,
+      tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n, slippageBps: 50,
+      candidates: [
+        { dexId: dexA, name: "A", amountOut: 1010n, cost: 30n, priceImpactBps: 12, routeDataHash: ethers.id("route-a") },
+        { dexId: dexB, name: "B", amountOut: 1000n, cost: 10n, priceImpactBps: 8, routeDataHash: ethers.id("route-b") }
+      ], plan: { kind: "single", cost: 10n, legs: [{ dexId: dexB, amountIn: 1000n, expectedOut: 1000n, minimumOut: 995n }] }
+    }, ethers);
+    assert.equal(proof.bestSingle.dexId, dexB.toLowerCase());
+    assert.equal(proof.plan.netAmountOut, "990");
+    assert.equal(sdk.verifyBestExecutionProof(proof, ethers), true);
+    assert.equal("routeData" in proof.candidates[0], false);
+  });
+
+  it("proves a split route only when it beats the best single route after gas", function () {
+    const dexA = ethers.id("DEX_A"), dexB = ethers.id("DEX_B");
+    const input = { chainId: 97, quoteBlock: 12345, expiresAt: 1789000000,
+      tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n, slippageBps: 50,
+      candidates: [
+        { dexId: dexA, name: "A", amountOut: 1000n, cost: 20n, routeDataHash: ethers.id("route-a") },
+        { dexId: dexB, name: "B", amountOut: 990n, cost: 20n, routeDataHash: ethers.id("route-b") }
+      ], plan: { kind: "split", cost: 30n, legs: [
+        { dexId: dexA, amountIn: 600n, expectedOut: 620n, minimumOut: 610n },
+        { dexId: dexB, amountIn: 400n, expectedOut: 410n, minimumOut: 400n }
+      ] } };
+    const proof = sdk.buildBestExecutionProof(input, ethers);
+    assert.equal(proof.plan.netAmountOut, "1000");
+    assert.equal(proof.improvementBps, 204);
+    const weak = structuredClone(input); weak.plan.legs[1].expectedOut = 380n; weak.plan.legs[1].minimumOut = 370n;
+    assert.throws(() => sdk.buildBestExecutionProof(weak, ethers), /does not improve/);
+  });
+
+  it("detects proof tampering and rejects unreviewed or inconsistent routes", function () {
+    const dexA = ethers.id("DEX_A");
+    const input = { chainId: 97, quoteBlock: 12345, expiresAt: 1789000000,
+      tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n, slippageBps: 50,
+      candidates: [{ dexId: dexA, name: "A", amountOut: 1000n, cost: 10n, routeDataHash: ethers.id("route-a") }],
+      plan: { kind: "single", cost: 10n, legs: [{ dexId: dexA, amountIn: 1000n, expectedOut: 1000n, minimumOut: 990n }] } };
+    const proof = sdk.buildBestExecutionProof(input, ethers);
+    proof.plan.minimumOut = "1";
+    assert.equal(sdk.verifyBestExecutionProof(proof, ethers), false);
+    const unknown = structuredClone(input); unknown.plan.legs[0].dexId = ethers.id("UNKNOWN");
+    assert.throws(() => sdk.buildBestExecutionProof(unknown, ethers), /Invalid proof leg/);
+    const inconsistent = structuredClone(input); inconsistent.plan.legs[0].amountIn = 999n;
+    assert.throws(() => sdk.buildBestExecutionProof(inconsistent, ethers), /allocation/);
+  });
+
+  function singleRouteProof() {
+    const dexA = ethers.id("DEX_A");
+    return sdk.buildBestExecutionProof({ chainId: 97, quoteBlock: 12345, expiresAt: 1789000000,
+      tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n, slippageBps: 100,
+      candidates: [{ dexId: dexA, name: "A", amountOut: 1000n, cost: 10n, routeDataHash: ethers.id("route-a") }],
+      plan: { kind: "single", cost: 10n, legs: [{ dexId: dexA, amountIn: 1000n, expectedOut: 1000n, minimumOut: 990n }] }
+    }, ethers);
+  }
+
+  it("binds a valid best-execution proof to its successful settlement", function () {
+    const proof = singleRouteProof();
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: ethers.id("tx"),
+      blockHash: ethers.id("block"), blockNumber: 12350, settledAt: 1788999999,
+      recipient: tokenA, actualAmountOut: 995n, status: 1 }, ethers);
+    assert.equal(receipt.proofHash, proof.proofHash.toLowerCase());
+    assert.equal(receipt.minimumSatisfied, true);
+    assert.equal(receipt.executionDeltaBps, -50);
+    assert.equal(sdk.verifySettlementReceipt(receipt, proof, ethers), true);
+  });
+
+  it("rejects failed, expired, cross-chain, and below-minimum settlements", function () {
+    const proof = singleRouteProof();
+    const base = { chainId: 97, transactionHash: ethers.id("tx"), blockHash: ethers.id("block"),
+      blockNumber: 12350, settledAt: 1788999999, recipient: tokenA, actualAmountOut: 995n, status: 1 };
+    assert.throws(() => sdk.buildSettlementReceipt(proof, { ...base, status: 0 }, ethers), /result/);
+    assert.throws(() => sdk.buildSettlementReceipt(proof, { ...base, chainId: 56 }, ethers), /context/);
+    assert.throws(() => sdk.buildSettlementReceipt(proof, { ...base, settledAt: 1789000001 }, ethers), /validity/);
+    assert.throws(() => sdk.buildSettlementReceipt(proof, { ...base, actualAmountOut: 989n }, ethers), /minimum output/);
+  });
+
+  it("detects settlement tampering and proof substitution", function () {
+    const proof = singleRouteProof();
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: ethers.id("tx"),
+      blockHash: ethers.id("block"), blockNumber: 12350, settledAt: 1788999999,
+      recipient: tokenA, actualAmountOut: 995n, status: 1 }, ethers);
+    const tampered = structuredClone(receipt); tampered.actualAmountOut = "999";
+    assert.equal(sdk.verifySettlementReceipt(tampered, proof, ethers), false);
+    const inconsistent = structuredClone(receipt); inconsistent.actualAmountOut = "999";
+    const { settlementHash, ...payload } = inconsistent;
+    inconsistent.settlementHash = ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload)));
+    assert.equal(sdk.verifySettlementReceipt(inconsistent, proof, ethers), false);
+    const otherProof = structuredClone(proof); otherProof.proofHash = ethers.id("other-proof");
+    assert.equal(sdk.verifySettlementReceipt(receipt, otherProof, ethers), false);
+  });
+
+  it("verifies canonical confirmations and decoded output transfer logs", async function () {
+    const proof = singleRouteProof(), txHash = ethers.id("tx"), blockHash = ethers.id("block");
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: txHash,
+      blockHash, blockNumber: 12350, settledAt: 1788999999, recipient: tokenA,
+      actualAmountOut: 995n, status: 1 }, ethers);
+    const transfer = { address: tokenB, topics: [ethers.id("Transfer(address,address,uint256)"),
+      ethers.zeroPadValue(tokenB, 32), ethers.zeroPadValue(tokenA, 32)], data: ethers.toBeHex(995n, 32) };
+    const provider = { getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash,
+      blockNumber: 12350, logs: [transfer] }), getBlock: async () => ({ hash: blockHash }),
+      getBlockNumber: async () => 12352 };
+    const result = await sdk.verifyCanonicalSettlement(receipt, proof, provider, ethers, 3);
+    assert.equal(result.valid, true);
+    assert.equal(result.confirmations, 3);
+    assert.equal(result.decodedAmountOut, "995");
+  });
+
+  it("fails closed on reorgs, weak finality, or mismatched output logs", async function () {
+    const proof = singleRouteProof(), txHash = ethers.id("tx"), blockHash = ethers.id("block");
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: txHash,
+      blockHash, blockNumber: 12350, settledAt: 1788999999, recipient: tokenA,
+      actualAmountOut: 995n, status: 1 }, ethers);
+    const transfer = { address: tokenB, topics: [ethers.id("Transfer(address,address,uint256)"),
+      ethers.zeroPadValue(tokenB, 32), ethers.zeroPadValue(tokenA, 32)], data: ethers.toBeHex(994n, 32) };
+    const base = { getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash,
+      blockNumber: 12350, logs: [transfer] }), getBlock: async () => ({ hash: blockHash }),
+      getBlockNumber: async () => 12352 };
+    await assert.rejects(sdk.verifyCanonicalSettlement(receipt, proof, base, ethers, 3), /output log mismatch/);
+    await assert.rejects(sdk.verifyCanonicalSettlement(receipt, proof, { ...base,
+      getBlock: async () => ({ hash: ethers.id("reorg") }) }, ethers, 3), /not canonical/);
+    await assert.rejects(sdk.verifyCanonicalSettlement(receipt, proof, { ...base,
+      getBlockNumber: async () => 12351 }, ethers, 3), /lacks confirmations/);
+  });
+
+  it("verifies native BNB settlement from the reviewed Native Router event", async function () {
+    const proof = singleRouteProof(), txHash = ethers.id("native-tx"), blockHash = ethers.id("native-block"), nativeRouter = "0x00000000000000000000000000000000000000c1";
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: txHash,
+      blockHash, blockNumber: 12350, settledAt: 1788999999, recipient: tokenA,
+      actualAmountOut: 995n, status: 1 }, ethers);
+    const event = { address: nativeRouter, topics: [ethers.id("NativeSwapExecuted(address,address,address,bool,uint256,uint256)"),
+      ethers.zeroPadValue(tokenB, 32), ethers.zeroPadValue(tokenA, 32), ethers.zeroPadValue(tokenA, 32)],
+      data: ethers.AbiCoder.defaultAbiCoder().encode(["bool", "uint256", "uint256"], [false, 1000n, 995n]) };
+    const provider = { getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash,
+      blockNumber: 12350, logs: [event] }), getBlock: async () => ({ hash: blockHash }),
+      getBlockNumber: async () => 12354 };
+    const result = await sdk.verifyCanonicalNativeSettlement(receipt, proof, provider, nativeRouter, ethers, 3);
+    assert.equal(result.valid, true);
+    assert.equal(result.kind, "native-bnb");
+    assert.equal(result.decodedAmountOut, "995");
+  });
+
+  it("rejects spoofed, duplicate, or inconsistent native settlement events", async function () {
+    const proof = singleRouteProof(), txHash = ethers.id("native-tx"), blockHash = ethers.id("native-block"), nativeRouter = "0x00000000000000000000000000000000000000c1";
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: txHash,
+      blockHash, blockNumber: 12350, settledAt: 1788999999, recipient: tokenA,
+      actualAmountOut: 995n, status: 1 }, ethers);
+    const event = { address: nativeRouter, topics: [ethers.id("NativeSwapExecuted(address,address,address,bool,uint256,uint256)"),
+      ethers.zeroPadValue(tokenB, 32), ethers.zeroPadValue(tokenA, 32), ethers.zeroPadValue(tokenA, 32)],
+      data: ethers.AbiCoder.defaultAbiCoder().encode(["bool", "uint256", "uint256"], [false, 1000n, 994n]) };
+    const provider = { getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash,
+      blockNumber: 12350, logs: [event] }), getBlock: async () => ({ hash: blockHash }),
+      getBlockNumber: async () => 12354 };
+    await assert.rejects(sdk.verifyCanonicalNativeSettlement(receipt, proof, provider, nativeRouter, ethers), /amount mismatch/);
+    await assert.rejects(sdk.verifyCanonicalNativeSettlement(receipt, proof, { ...provider,
+      getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash, blockNumber: 12350, logs: [event, event] })
+    }, nativeRouter, ethers), /event mismatch/);
+    await assert.rejects(sdk.verifyCanonicalNativeSettlement(receipt, proof, provider,
+      "0x00000000000000000000000000000000000000c2", ethers), /event mismatch/);
+  });
+
+  it("covers helper and best-execution fail-closed boundaries", function () {
+    assert.throws(() => sdk.estimatedGasWei({}, -1n), /gas price/);
+    assert.throws(() => sdk.routeFeeBps({ kind: "v3", pools: [] }, [tokenA, tokenB]), /approved V3 pool/);
+    assert.throws(() => sdk.rankRouteQuotes(null), /route quotes/);
+    assert.deepEqual(sdk.rankRouteQuotes([{ amountOut: 1n, cost: 2n }]), []);
+    assert.equal(sdk.estimatedGasWei({}, 2n, true), 520000n);
+    const dex = ethers.id("DEX"), base = { chainId: 97, quoteBlock: 10, expiresAt: 100,
+      tokenIn: tokenA, tokenOut: tokenB, amountIn: 100n, slippageBps: 100,
+      candidates: [{ dexId: dex, amountOut: 110n, cost: 1n, routeDataHash: ethers.id("route") }],
+      plan: { kind: "single", cost: 1n, legs: [{ dexId: dex, amountIn: 100n, expectedOut: 110n, minimumOut: 108n }] } };
+    assert.throws(() => sdk.buildBestExecutionProof({ ...base, chainId: 56 }, ethers), /context/);
+    assert.throws(() => sdk.buildBestExecutionProof({ ...base, tokenOut: tokenA }, ethers), /trade/);
+    assert.throws(() => sdk.buildBestExecutionProof({ ...base, candidates: [] }, ethers), /routes/);
+    assert.throws(() => sdk.buildBestExecutionProof({ ...base, candidates: [{ ...base.candidates[0], cost: 111n }] }, ethers), /No executable/);
+    assert.throws(() => sdk.buildBestExecutionProof({ ...base, plan: { ...base.plan,
+      legs: [{ ...base.plan.legs[0], expectedOut: 111n }] } }, ethers), /not best execution/);
+    assert.throws(() => sdk.buildBestExecutionProof({ ...base, slippageBps: 2001 }, ethers), /policy/);
+    assert.equal(sdk.verifyBestExecutionProof(null, ethers), false);
+  });
+
+  it("covers canonical verifier transport and receipt failure boundaries", async function () {
+    const proof = singleRouteProof(), txHash = ethers.id("tx"), blockHash = ethers.id("block");
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: txHash,
+      blockHash, blockNumber: 12350, settledAt: 1788999999, recipient: tokenA,
+      actualAmountOut: 1000n, status: 1 }, ethers);
+    assert.equal(receipt.executionDeltaBps, 0);
+    await assert.rejects(sdk.verifyCanonicalSettlement(receipt, proof, {}, ethers), /canonical verifier/);
+    const base = { getTransactionReceipt: async () => null, getBlock: async () => ({ hash: blockHash }),
+      getBlockNumber: async () => 12352 };
+    await assert.rejects(sdk.verifyCanonicalSettlement(receipt, proof, base, ethers), /not successful/);
+    await assert.rejects(sdk.verifyCanonicalSettlement(receipt, proof, { ...base,
+      getTransactionReceipt: async () => ({ status: 1, hash: ethers.id("wrong"), blockHash, blockNumber: 12350 })
+    }, ethers), /receipt mismatch/);
+    await assert.rejects(sdk.verifyCanonicalNativeSettlement(receipt, proof, {}, tokenA, ethers), /native verifier/);
+    await assert.rejects(sdk.verifyCanonicalNativeSettlement(receipt, proof, base, tokenA, ethers), /not successful/);
+    const invalid = structuredClone(receipt); invalid.settlementHash = ethers.id("invalid");
+    await assert.rejects(sdk.verifyCanonicalSettlement(invalid, proof, base, ethers), /Invalid settlement receipt/);
+  });
+
+  it("maps remaining wallet execution failures to explicit user guidance", function () {
+    assert.equal(sdk.explainSwapError({ code: "INSUFFICIENT_FUNDS" }).code, "INSUFFICIENT_GAS");
+    assert.equal(sdk.explainSwapError({ message: "allowance too low" }).code, "APPROVAL_REQUIRED");
+    assert.equal(sdk.explainSwapError({ message: "RouteChangedDuringApproval" }).code, "ROUTE_CHANGED");
+    assert.equal(sdk.explainSwapError({ code: "NETWORK_ERROR" }).code, "NETWORK_ERROR");
+    assert.equal(sdk.explainSwapError({ message: "unexpected provider failure" }).code, "UNKNOWN");
+  });
+
+  it("rejects malformed proof payloads and degraded canonical evidence", async function () {
+    const dex = ethers.id("DEX"), invalidCandidate = { chainId: 97, quoteBlock: 1, expiresAt: 100,
+      tokenIn: tokenA, tokenOut: tokenB, amountIn: 100n, slippageBps: 100,
+      candidates: [{ dexId: dex, amountOut: 110n, cost: -1n, routeDataHash: ethers.id("route") }],
+      plan: { kind: "single", cost: 1n, legs: [{ dexId: dex, amountIn: 100n, expectedOut: 110n, minimumOut: 108n }] } };
+    assert.throws(() => sdk.buildBestExecutionProof(invalidCandidate, ethers), /candidate/);
+    assert.throws(() => sdk.buildSettlementReceipt({ proofHash: ethers.id("bad") }, {}, ethers), /best execution proof/);
+
+    const proof = singleRouteProof(), txHash = ethers.id("tx"), blockHash = ethers.id("block");
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: txHash,
+      blockHash, blockNumber: 12350, settledAt: 1788999999, recipient: tokenA,
+      actualAmountOut: 995n, status: 1 }, ethers);
+    const rehash = value => { const copy = structuredClone(value); delete copy.settlementHash;
+      return { ...copy, settlementHash: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(copy))) }; };
+    assert.equal(sdk.verifySettlementReceipt(rehash({ ...receipt, tokenOut: tokenA }), proof, ethers), false);
+    assert.equal(sdk.verifySettlementReceipt(rehash({ ...receipt, blockNumber: 1 }), proof, ethers), false);
+    assert.equal(sdk.verifySettlementReceipt(rehash({ ...receipt, actualAmountOut: "1" }), proof, ethers), false);
+    assert.equal(sdk.verifySettlementReceipt(rehash({ ...receipt, actualAmountOut: "bad" }), proof, ethers), false);
+
+    const transfer = { address: tokenB, topics: [ethers.id("Transfer(address,address,uint256)"),
+      ethers.zeroPadValue(tokenB, 32), ethers.zeroPadValue(tokenA, 32)], data: ethers.toBeHex(995n, 32) };
+    const canonical = { getTransactionReceipt: async () => ({ status: 1, transactionHash: txHash,
+      blockHash, blockNumber: 12350, logs: [{ address: tokenA, topics: [], data: "0x" }, transfer] }),
+      getBlock: async () => ({ hash: blockHash }), getBlockNumber: async () => 12352 };
+    assert.equal((await sdk.verifyCanonicalSettlement(receipt, proof, canonical, ethers)).valid, true);
+    await assert.rejects(sdk.verifyCanonicalSettlement(receipt, proof, { ...canonical,
+      getBlock: async () => null }, ethers), /not canonical/);
+    await assert.rejects(sdk.verifyCanonicalNativeSettlement(receipt, proof, { ...canonical,
+      getTransactionReceipt: async () => ({ status: 1, hash: ethers.id("wrong"), blockHash, blockNumber: 12350 })
+    }, tokenA, ethers), /receipt mismatch/);
+    await assert.rejects(sdk.verifyCanonicalNativeSettlement(receipt, proof, { ...canonical,
+      getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash, blockNumber: 12350 }),
+      getBlock: async () => null }, tokenA, ethers), /not canonical/);
+    await assert.rejects(sdk.verifyCanonicalNativeSettlement(receipt, proof, { ...canonical,
+      getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash, blockNumber: 12350 }),
+      getBlockNumber: async () => 12350 }, tokenA, ethers, 2), /lacks confirmations/);
   });
 
 });

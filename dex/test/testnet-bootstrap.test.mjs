@@ -38,7 +38,6 @@ describe("BSC testnet bootstrap smoke flow", function () {
     const quoteRouter = await deploy("LQCQuoteRouter", "router-v2/LQCQuoteRouter", [await registry.getAddress()]);
     const adapter = await deploy("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter", [await router.getAddress()]);
     await (await registry.addDex(ethers.id("LQC_FLOW"), await adapter.getAddress(), "LQC Flow", 100)).wait();
-    await (await registry.setDexEnabled(ethers.id("LQC_FLOW"), true)).wait();
 
     await (await lqc.mint(ownerAddress, ethers.parseEther("1000000"))).wait();
     await (await usdt.mint(ownerAddress, ethers.parseEther("1000000"))).wait();

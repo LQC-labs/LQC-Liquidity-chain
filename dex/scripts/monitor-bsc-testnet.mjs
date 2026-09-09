@@ -6,9 +6,37 @@ import { validateBscTestnet } from "./validate-bsc-testnet.mjs";
 
 const BALANCE_ABI = ["function balanceOf(address) view returns(uint256)"];
 const OWNABLE_ABI = ["function owner() view returns(address)", "function pendingOwner() view returns(address)"];
+const SAFE_ABI = ["function getOwners() view returns(address[])", "function getThreshold() view returns(uint256)"];
+
+export function buildIncidentResponse(checks) {
+  const safeChecks = checks.filter(check => check.id.startsWith("multisig."));
+  const critical = safeChecks.filter(check => check.status === "CRITICAL");
+  const warnings = safeChecks.filter(check => check.status === "WARNING");
+  if (critical.length) return {
+    code: "SAFE_POLICY_BREACH", severity: "CRITICAL", automaticTransactions: false,
+    triggers: critical.map(check => check.id),
+    actions: [
+      { order: 1, gate: "GUARDIAN_MULTISIG", action: "Approve and submit EmergencyController.pauseAllSwaps; never use a single EOA." },
+      { order: 2, gate: "EVIDENCE_REVIEW", action: "Pin the detection block, Safe owners, threshold, transactions, and deployment record before remediation." },
+      { order: 3, gate: "SAFE_MULTISIG", action: "Restore the reviewed signer set and threshold; rotate any suspected signer credentials." },
+      { order: 4, gate: "TIMELOCK", action: "Schedule protocol recovery only after the Safe policy and every deployment validation pass." },
+      { order: 5, gate: "POST_CHECK", action: "Execute recovery after the timelock, rerun monitoring, and publish the incident disposition." }
+    ]
+  };
+  if (warnings.length) return {
+    code: "SAFE_POLICY_REVIEW", severity: "WARNING", automaticTransactions: false,
+    triggers: warnings.map(check => check.id),
+    actions: [
+      { order: 1, gate: "EVIDENCE_REVIEW", action: "Verify the Safe change against an approved governance proposal and record its transaction hash." },
+      { order: 2, gate: "GOVERNANCE_MULTISIG", action: "Reject or approve the new baseline; do not update the deployment record from an unverified change." },
+      { order: 3, gate: "POST_CHECK", action: "Rerun validation and monitoring before closing the review." }
+    ]
+  };
+  return null;
+}
 
 export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, validation, validationError,
-  custody, ownership, vaultState = null }) {
+  custody, ownership, vaultState = null, safeState = [] }) {
   const checks = [];
   const add = (id, status, detail) => checks.push({ id, status, detail });
   const age = Math.max(0, Math.floor(new Date(checkedAt).getTime() / 1000) - Number(block.timestamp));
@@ -23,6 +51,28 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
   for (const item of ownership) add(`ownership.${item.contract}.pending`,
     item.pendingOwner === ethers.ZeroAddress ? "PASS" : "WARNING",
     item.pendingOwner === ethers.ZeroAddress ? "no pending ownership transfer" : `pending owner ${item.pendingOwner}`);
+  for (const safe of safeState) {
+    if (safe.error) {
+      add(`multisig.${safe.name}.readability`, "CRITICAL", safe.error);
+      continue;
+    }
+    const owners = safe.owners.map(owner => ethers.getAddress(owner));
+    const expected = safe.expectedOwners.map(owner => ethers.getAddress(owner));
+    const unique = new Set(owners.map(owner => owner.toLowerCase()));
+    const validOwners = owners.length >= safe.minimumOwners && unique.size === owners.length &&
+      !owners.some(owner => owner === ethers.ZeroAddress);
+    add(`multisig.${safe.name}.policy`, validOwners && safe.threshold >= safe.minimumThreshold && safe.threshold <= owners.length
+      ? "PASS" : "CRITICAL", `${safe.threshold}-of-${owners.length}; required minimum ${safe.minimumThreshold}-of-${safe.minimumOwners}`);
+    const sameOwners = owners.length === expected.length &&
+      [...unique].sort().every((owner, index) => owner === expected.map(item => item.toLowerCase()).sort()[index]);
+    add(`multisig.${safe.name}.signers`, sameOwners ? "PASS" : "WARNING",
+      sameOwners ? "signer set matches deployment record" : "signer set changed since deployment; governance review required");
+    const thresholdStatus = safe.threshold < safe.expectedThreshold ? "CRITICAL" :
+      safe.threshold === safe.expectedThreshold ? "PASS" : "WARNING";
+    add(`multisig.${safe.name}.threshold`, thresholdStatus,
+      safe.threshold === safe.expectedThreshold ? "threshold matches deployment record" :
+        `threshold changed from ${safe.expectedThreshold} to ${safe.threshold}`);
+  }
   if (vaultState) {
     const accounted = BigInt(vaultState.accountedAssets), debt = BigInt(vaultState.strategyDebt);
     const cap = BigInt(vaultState.strategyCap), idle = BigInt(vaultState.idleBalance);
@@ -42,8 +92,9 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
   }
   const counts = Object.fromEntries(["PASS", "WARNING", "CRITICAL"].map(status =>
     [status.toLowerCase(), checks.filter(check => check.status === status).length]));
-  return { schemaVersion: 1, checkedAt, network: { chainId: 97, latestBlock: Number(block.number), blockAgeSeconds: age },
-    status: counts.critical ? "CRITICAL" : counts.warning ? "WARNING" : "HEALTHY", counts, checks };
+  const incident = buildIncidentResponse(checks);
+  return { schemaVersion: 2, checkedAt, network: { chainId: 97, latestBlock: Number(block.number), blockAgeSeconds: age },
+    status: counts.critical ? "CRITICAL" : counts.warning ? "WARNING" : "HEALTHY", counts, checks, incident };
 }
 
 export async function monitorBscTestnet({ provider, deployment, checkedAt = new Date().toISOString(), maxBlockAgeSeconds = 180 }) {
@@ -74,6 +125,20 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
     const owned = new ethers.Contract(address, OWNABLE_ABI, provider);
     ownership.push({ contract, owner: await owned.owner(), pendingOwner: await owned.pendingOwner() });
   }
+  const safeState = [];
+  for (const name of ["governance", "risk"]) {
+    const policy = deployment?.multisigPolicies?.[name];
+    if (!policy) continue;
+    try {
+      const safe = new ethers.Contract(policy.address, SAFE_ABI, provider);
+      const [owners, threshold] = await Promise.all([safe.getOwners(), safe.getThreshold()]);
+      safeState.push({ name, owners, threshold: Number(threshold), expectedOwners: policy.owners,
+        expectedThreshold: Number(policy.threshold), minimumOwners: Number(policy.minimumOwners),
+        minimumThreshold: Number(policy.minimumThreshold) });
+    } catch (error) {
+      safeState.push({ name, error: `cannot read Safe policy at ${policy.address}: ${error.message}` });
+    }
+  }
   let vaultState = null;
   const vaultAddress = deployment?.contracts?.liquidityVault?.address;
   const adapterAddress = deployment?.contracts?.idleStrategyAdapter?.address;
@@ -96,7 +161,7 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
       adapterManagedAssets: values[6], idleBalance: values[7], adapterBalance: values[8] };
   }
   return buildMonitoringReport({ checkedAt, block: latest, maxBlockAgeSeconds, validation, validationError,
-    custody, ownership, vaultState });
+    custody, ownership, vaultState, safeState });
 }
 
 async function main() {

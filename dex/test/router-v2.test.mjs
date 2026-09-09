@@ -8,11 +8,6 @@ const artifact = (name, source = name) => JSON.parse(fs.readFileSync(new URL(`..
 describe("LQC Router 2.0", function () {
   let provider, owner, other, tokenA, tokenB, flowRouter, registry, quoteRouter, executionRouter, splitOptimizer, autoRouter, adapter;
 
-  const addAndEnableDex = async (...args) => {
-    await (await registry.addDex(...args)).wait();
-    await (await registry.setDexEnabled(args[0], true)).wait();
-  };
-
   beforeEach(async function () {
     provider = new ethers.BrowserProvider(ganache.provider({ logging: { quiet: true } }));
     owner = await provider.getSigner(0);
@@ -73,22 +68,9 @@ describe("LQC Router 2.0", function () {
     await assert.rejects(V3Adapter.deploy(eoa, eoa, await owner.getAddress(), 1));
   });
 
-  it("stages every newly registered DEX as disabled until explicit activation", async function () {
-    const dexId = ethers.id("STAGED_DEX");
-    await (await registry.addDex(dexId, await adapter.getAddress(), "Staged DEX", 50)).wait();
-    assert.equal((await registry.getDex(dexId)).enabled, false);
-
-    const path = [await tokenA.getAddress(), await tokenB.getAddress()];
-    const data = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [path]);
-    await assert.rejects(quoteRouter.quoteBest(path[0], path[1], 1n, [data]));
-
-    await (await registry.setDexEnabled(dexId, true)).wait();
-    assert.equal((await registry.getDex(dexId)).enabled, true);
-  });
-
   it("registers LQC Flow and returns its live pool quote", async function () {
     const dexId = ethers.id("LQC_FLOW");
-    await addAndEnableDex(dexId, await adapter.getAddress(), "LQC Flow", 100);
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
     const path = [await tokenA.getAddress(), await tokenB.getAddress()];
     const amountIn = ethers.parseEther("10");
     const expected = await flowRouter.getAmountsOut(amountIn, path);
@@ -102,8 +84,8 @@ describe("LQC Router 2.0", function () {
   it("isolates a failing route while another registered DEX can quote", async function () {
     const badId = ethers.id("BAD_ROUTE");
     const flowId = ethers.id("LQC_FLOW");
-    await addAndEnableDex(badId, await adapter.getAddress(), "Bad route", 200);
-    await addAndEnableDex(flowId, await adapter.getAddress(), "LQC Flow", 100);
+    await (await registry.addDex(badId, await adapter.getAddress(), "Bad route", 200)).wait();
+    await (await registry.addDex(flowId, await adapter.getAddress(), "LQC Flow", 100)).wait();
     const path = [await tokenA.getAddress(), await tokenB.getAddress()];
     const coder = ethers.AbiCoder.defaultAbiCoder();
     const best = await quoteRouter.quoteBest(path[0], path[1], ethers.parseEther("10"), [coder.encode(["address[]"], [[path[1], path[0]]]), coder.encode(["address[]"], [path])]);
@@ -113,7 +95,7 @@ describe("LQC Router 2.0", function () {
   it("restricts registry changes and supports emergency disabling", async function () {
     const dexId = ethers.id("LQC_FLOW");
     await assert.rejects(registry.connect(other).addDex(dexId, await adapter.getAddress(), "LQC Flow", 100));
-    await addAndEnableDex(dexId, await adapter.getAddress(), "LQC Flow", 100);
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
     await (await registry.setDexEnabled(dexId, false)).wait();
     const path = [await tokenA.getAddress(), await tokenB.getAddress()];
     const data = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [path]);
@@ -129,7 +111,7 @@ describe("LQC Router 2.0", function () {
       ethers.id("TOKEN_ADAPTER"), await tokenA.getAddress(), "Token", 1
     ));
 
-    await addAndEnableDex(dexId, await adapter.getAddress(), "LQC Flow", 100);
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
     const before = await registry.getDex(dexId);
     await assert.rejects(registry.updateDex(dexId, await other.getAddress(), 999));
     await assert.rejects(registry.updateDex(dexId, await tokenA.getAddress(), 999));
@@ -142,7 +124,7 @@ describe("LQC Router 2.0", function () {
 
   it("requires a DEX to be disabled before adapter updates or removal", async function () {
     const dexId = ethers.id("LQC_FLOW");
-    await addAndEnableDex(dexId, await adapter.getAddress(), "LQC Flow", 100);
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
 
     await assert.rejects(registry.updateDex(dexId, await adapter.getAddress(), 200));
     await assert.rejects(registry.removeDex(dexId));
@@ -183,8 +165,8 @@ describe("LQC Router 2.0", function () {
 
     const flowId = ethers.id("LQC_FLOW");
     const pancakeId = ethers.id("PANCAKE_V2");
-    await addAndEnableDex(flowId, await adapter.getAddress(), "LQC Flow", 100);
-    await addAndEnableDex(pancakeId, await pancakeAdapter.getAddress(), "PancakeSwap V2", 90);
+    await (await registry.addDex(flowId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    await (await registry.addDex(pancakeId, await pancakeAdapter.getAddress(), "PancakeSwap V2", 90)).wait();
     const path = [await tokenA.getAddress(), await tokenB.getAddress()];
     const data = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [path]);
     const best = await quoteRouter.quoteBest(path[0], path[1], ethers.parseEther("10"), [data, data]);
@@ -210,7 +192,7 @@ describe("LQC Router 2.0", function () {
 
   it("executes an approved exact-input route with minimum-output and deadline protection", async function () {
     const dexId = ethers.id("LQC_FLOW");
-    await addAndEnableDex(dexId, await adapter.getAddress(), "LQC Flow", 100);
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
     const tokenIn = await tokenA.getAddress();
     const tokenOut = await tokenB.getAddress();
     const path = [tokenIn, tokenOut];
@@ -252,7 +234,7 @@ describe("LQC Router 2.0", function () {
     const amountIn = ethers.parseEther("10");
     const tokenIn = await tokenA.getAddress();
     const tokenOut = await tokenB.getAddress();
-    await addAndEnableDex(dexId, await partialAdapter.getAddress(), "Partial spend test", 1);
+    await (await registry.addDex(dexId, await partialAdapter.getAddress(), "Partial spend test", 1)).wait();
     await (await tokenA.mint(await owner.getAddress(), amountIn)).wait();
     await (await tokenB.mint(await partialRouter.getAddress(), amountIn)).wait();
     await (await tokenA.approve(await executionRouter.getAddress(), amountIn)).wait();
@@ -298,7 +280,7 @@ describe("LQC Router 2.0", function () {
     )).wait();
 
     const dexId = ethers.id("LQC_FLOW_FEE_TOKEN_TEST");
-    await addAndEnableDex(dexId, await adapter.getAddress(), "LQC Flow fee-token test", 100);
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow fee-token test", 100)).wait();
     const amountIn = ethers.parseEther("10");
     await (await feeToken.setFeeBps(100)).wait();
     await (await feeToken.mint(await owner.getAddress(), amountIn)).wait();
@@ -319,7 +301,7 @@ describe("LQC Router 2.0", function () {
 
   it("rejects disabled DEXes, expired swaps, and impossible minimum output", async function () {
     const dexId = ethers.id("LQC_FLOW");
-    await addAndEnableDex(dexId, await adapter.getAddress(), "LQC Flow", 100);
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
     const tokenIn = await tokenA.getAddress();
     const tokenOut = await tokenB.getAddress();
     const amountIn = ethers.parseEther("10");
@@ -367,8 +349,8 @@ describe("LQC Router 2.0", function () {
 
     const flowId = ethers.id("LQC_FLOW");
     const pancakeId = ethers.id("PANCAKE_V2");
-    await addAndEnableDex(flowId, await adapter.getAddress(), "LQC Flow", 100);
-    await addAndEnableDex(pancakeId, await pancakeAdapter.getAddress(), "PancakeSwap V2", 90);
+    await (await registry.addDex(flowId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    await (await registry.addDex(pancakeId, await pancakeAdapter.getAddress(), "PancakeSwap V2", 90)).wait();
     const tokenIn = await tokenA.getAddress();
     const tokenOut = await tokenB.getAddress();
     const path = [tokenIn, tokenOut];
@@ -418,8 +400,8 @@ describe("LQC Router 2.0", function () {
 
     const flowId = ethers.id("LQC_FLOW");
     const secondId = ethers.id("PANCAKE_V2");
-    await addAndEnableDex(flowId, await adapter.getAddress(), "LQC Flow", 100);
-    await addAndEnableDex(secondId, await secondAdapter.getAddress(), "PancakeSwap V2", 90);
+    await (await registry.addDex(flowId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    await (await registry.addDex(secondId, await secondAdapter.getAddress(), "PancakeSwap V2", 90)).wait();
     const tokenIn = await tokenA.getAddress();
     const tokenOut = await tokenB.getAddress();
     const path = [tokenIn, tokenOut];
@@ -464,8 +446,8 @@ describe("LQC Router 2.0", function () {
   it("rolls back every split leg when a later adapter route fails", async function () {
     const firstId = ethers.id("LQC_FLOW_FIRST");
     const failingId = ethers.id("LQC_FLOW_FAILING");
-    await addAndEnableDex(firstId, await adapter.getAddress(), "LQC Flow first", 100);
-    await addAndEnableDex(failingId, await adapter.getAddress(), "LQC Flow failing", 90);
+    await (await registry.addDex(firstId, await adapter.getAddress(), "LQC Flow first", 100)).wait();
+    await (await registry.addDex(failingId, await adapter.getAddress(), "LQC Flow failing", 90)).wait();
     const tokenIn = await tokenA.getAddress();
     const tokenOut = await tokenB.getAddress();
     const coder = ethers.AbiCoder.defaultAbiCoder();
@@ -530,8 +512,8 @@ describe("LQC Router 2.0", function () {
       0, 0, await owner.getAddress(), BigInt(block.timestamp + 3600)
     )).wait();
 
-    await addAndEnableDex(ethers.id("LQC_FLOW"), await adapter.getAddress(), "LQC Flow", 100);
-    await addAndEnableDex(ethers.id("PANCAKE_V2"), await secondAdapter.getAddress(), "PancakeSwap V2", 90);
+    await (await registry.addDex(ethers.id("LQC_FLOW"), await adapter.getAddress(), "LQC Flow", 100)).wait();
+    await (await registry.addDex(ethers.id("PANCAKE_V2"), await secondAdapter.getAddress(), "PancakeSwap V2", 90)).wait();
     const tokenIn = await tokenA.getAddress();
     const tokenOut = await tokenB.getAddress();
     const path = [tokenIn, tokenOut];
@@ -570,9 +552,9 @@ describe("LQC Router 2.0", function () {
     const tokenOut = await tokenB.getAddress();
     const route = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [[tokenIn, tokenOut]]);
     for (let i = 0; i < 5; i++) {
-      await addAndEnableDex(
+      await (await registry.addDex(
         ethers.id(`SAMPLED_DEX_${i}`), await adapter.getAddress(), `Sampled DEX ${i}`, 100 - i
-      );
+      )).wait();
     }
     const routeData = Array(5).fill(route);
     const routeCosts = [0n, 1n, 2n, 3n, 4n];
@@ -635,7 +617,7 @@ describe("LQC Router 2.0", function () {
     await v3Adapter.waitForDeployment();
 
     const dexId = ethers.id("PANCAKE_V3");
-    await addAndEnableDex(dexId, await v3Adapter.getAddress(), "PancakeSwap V3", 95);
+    await (await registry.addDex(dexId, await v3Adapter.getAddress(), "PancakeSwap V3", 95)).wait();
     const tokenIn = await tokenA.getAddress();
     const tokenOut = await tokenB.getAddress();
     const packedPath = ethers.solidityPacked(["address", "uint24", "address"], [tokenIn, 2500, tokenOut]);

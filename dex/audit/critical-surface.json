@@ -1,0 +1,56 @@
+{
+  "version": 1,
+  "status": "UNAUDITED_TESTNET_MVP",
+  "contracts": {
+    "LQCExecutionRouter": {
+      "source": "router-v2/LQCExecutionRouter",
+      "entries": [
+        { "signature": "swapBestExactInput(address,address,uint256,uint256,address,uint256,bytes[],uint256[])", "authority": "public-user", "risk": "critical", "evidence": ["test/router-v2.test.mjs"] },
+        { "signature": "swapExactInput(bytes32,address,address,uint256,uint256,address,uint256,bytes)", "authority": "public-user", "risk": "critical", "evidence": ["test/router-v2.test.mjs", "test/vault-router-risk-integration.test.mjs"] },
+        { "signature": "swapSplitExactInput(address,address,uint256,uint256,address,uint256,tuple[])", "authority": "public-user", "risk": "critical", "evidence": ["test/router-v2.test.mjs"] }
+      ]
+    },
+    "LQCRiskRegistry": {
+      "source": "router-v2/LQCRiskRegistry",
+      "entries": [
+        { "signature": "acceptOwnership()", "authority": "pending-owner", "risk": "high", "evidence": ["test/risk-registry.test.mjs"] },
+        { "signature": "beginOwnershipTransfer(address)", "authority": "governance", "risk": "high", "evidence": ["test/risk-registry.test.mjs"] },
+        { "signature": "consumeSwap(address,address,bytes32[],uint256[])", "authority": "execution-router", "risk": "critical", "evidence": ["test/risk-registry.test.mjs", "test/vault-router-risk-integration.test.mjs"] },
+        { "signature": "pauseSwaps()", "authority": "pause-admin", "risk": "high", "evidence": ["test/risk-registry.test.mjs", "test/emergency-drill.test.mjs"] },
+        { "signature": "reduceDexTokenCap(bytes32,address,uint256)", "authority": "risk-admin", "risk": "high", "evidence": ["test/risk-registry.test.mjs"] },
+        { "signature": "reduceLimits(address,uint256,uint256)", "authority": "risk-admin", "risk": "high", "evidence": ["test/risk-registry.test.mjs"] },
+        { "signature": "resumeSwaps()", "authority": "governance", "risk": "critical", "evidence": ["test/risk-registry.test.mjs", "test/emergency-drill.test.mjs"] },
+        { "signature": "setDexTokenCap(bytes32,address,uint256)", "authority": "governance", "risk": "high", "evidence": ["test/risk-registry.test.mjs"] },
+        { "signature": "setExecutor(address)", "authority": "governance", "risk": "critical", "evidence": ["test/risk-registry.test.mjs"] },
+        { "signature": "setPauseAdmin(address)", "authority": "governance", "risk": "high", "evidence": ["test/risk-registry.test.mjs"] },
+        { "signature": "setRiskAdmin(address)", "authority": "governance", "risk": "high", "evidence": ["test/risk-registry.test.mjs"] },
+        { "signature": "setTokenLimits(address,bool,uint256,uint256)", "authority": "governance", "risk": "critical", "evidence": ["test/risk-registry.test.mjs"] }
+      ]
+    },
+    "LQCLiquidityVault": {
+      "source": "vault/LQCLiquidityVault",
+      "entries": [
+        { "signature": "acceptOwnership()", "authority": "pending-owner", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "allocateToStrategy(uint256)", "authority": "strategy-admin", "risk": "critical", "evidence": ["test/liquidity-vault.test.mjs", "test/vault-router-risk-integration.test.mjs"] },
+        { "signature": "approve(address,uint256)", "authority": "share-holder", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "beginOwnershipTransfer(address)", "authority": "governance", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "deposit(uint256,address)", "authority": "public-user", "risk": "critical", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "emergencyRecallFromStrategy(uint256,uint256)", "authority": "governance", "risk": "critical", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "pauseAllocations()", "authority": "pause-admin", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "pauseDeposits()", "authority": "pause-admin", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "recallFromStrategy(uint256)", "authority": "strategy-admin", "risk": "critical", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "redeem(uint256,address,address)", "authority": "share-holder-or-approved", "risk": "critical", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "resumeAllocations()", "authority": "governance", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "resumeDeposits()", "authority": "governance", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "setDepositCap(uint256)", "authority": "governance", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "setPauseAdmin(address)", "authority": "governance", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "setStrategy(address)", "authority": "governance", "risk": "critical", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "setStrategyAdmin(address)", "authority": "governance", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "setStrategyLimits(uint256,uint256)", "authority": "governance", "risk": "critical", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "transfer(address,uint256)", "authority": "share-holder", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "transferFrom(address,address,uint256)", "authority": "approved-spender", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "withdraw(uint256,address,address)", "authority": "share-holder-or-approved", "risk": "critical", "evidence": ["test/liquidity-vault.test.mjs"] }
+      ]
+    }
+  }
+}

@@ -46,8 +46,22 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - \`LQCGasCostOracle\`: converts estimated BNB gas into output-token units only after primary/secondary price freshness and deviation checks
 - \`LQCTimelockController\`: delays structural registry changes behind a governance proposer and review window
 - \`LQCEmergencyController\`: gives guardians immediate DEX-specific or all-swap pause authority while every recovery remains governance-only
+- End-to-end emergency drill coverage proves swaps stop immediately and cannot resume until both
+  the Risk Registry and reviewed DEX route are restored through the configured timelock
 - \`LQCRiskRegistry\`: enforces token allowlisting plus per-DEX, per-transaction, and UTC-day input caps; the risk multisig can only reduce limits
 - \`LQCNativeRouter\`: safely wraps and unwraps BNB around protected Router 2.0 token execution without retaining user balances
+- Proof of Best Execution receipts record and hash why a gas-adjusted single or split route was selected
+- Proof-to-Settlement receipts bind that route decision to successful transaction, block, recipient, and actual-output evidence
+- Canonical settlement verification rechecks RPC receipts, block finality, reorg safety, and ERC-20 output transfer totals
+- Native BNB settlement verification authenticates the reviewed Native Router event and reconciles its exact execution amounts
+- Deterministic execution-proof fuzzing exercises varied route economics and tamper attempts reproducibly
+- Dependency-free V8 coverage gate requires 100% Router SDK function coverage and reports executed ranges honestly
+- Audit-surface drift gate classifies every state-changing entry point in the three critical Solidity contracts
+- Adversarial integration tests prove malicious adapters and unauthorized callers cannot bypass critical Router, Risk, or Vault boundaries
+- Malicious Strategy callback tests prove Vault allocation and recall remain atomic under reentrancy attempts
+- Dishonest Strategy tests reject false deployment, withdrawal, token-balance, managed-asset, and debt reports
+- Rebasing-token tests prove positive balance changes cannot inflate shares and negative idle-backing
+  deficits halt deposits and withdrawals before first-mover extraction
 
 New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap V2 or V3 when their reviewed addresses are supplied. Exact-input token and native BNB execution, oracle-validated gas-cost conversion, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, atomic optimized execution, timelocked registry ownership, disable-only emergency control, token allowlisting, and staged transaction limits are now available. Live production feed configuration, final risk-committee parameter approval, multisig assignment, and production integrations remain pending.
 
@@ -69,6 +83,10 @@ export WBNB_ADDRESS="0x..." # official WBNB for the selected BSC network
 export EXPECTED_CHAIN_ID="97" # deployment safety check; defaults to BSC testnet
 export FACTORY_OWNER="0x..." # required reviewed testnet governance/multisig address
 export RISK_ADMIN="0x..." # separate reviewed testnet risk multisig address
+export GOVERNANCE_MIN_OWNERS="7"
+export GOVERNANCE_MIN_THRESHOLD="4"
+export RISK_MIN_OWNERS="5"
+export RISK_MIN_THRESHOLD="3"
 node scripts/deploy.mjs
 ```
 
@@ -94,7 +112,10 @@ configured addresses without BSC-testnet bytecode. The deployer must retain at l
 default above initial liquidity for deployment gas, configurable through `MIN_DEPLOYER_TBNB_RESERVE`.
 `SOURCE_COMMIT` must be the full reviewed commit SHA, must equal the checked-out Git commit, and the
 worktree must be clean. Both preflight and the transaction-producing script enforce this binding.
-The governance owner must be a deployed multisig contract by default. Temporary testnet exceptions
+The governance owner must expose the Safe multisig interface and satisfy a 4-of-7 minimum by default;
+the separate risk administrator must satisfy a 3-of-5 minimum. The preflight reads both owner lists
+and thresholds on-chain, rejects duplicate or zero signers, and records the verified policy in its
+result. Temporary testnet exceptions
 require explicit runtime-only `ALLOW_DEPLOYER_AS_OWNER=true` and/or `ALLOW_EOA_OWNER=true` opt-ins.
 
 Every confirmed contract deployment is immediately recorded in
@@ -146,9 +167,52 @@ export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
 npm run monitor:testnet
 ```
 
+Convert a completed emergency exercise record into a deterministic audit-evidence report:
+
+```bash
+npm run report:emergency-drill -- ./deployments/emergency-drill-input.local.json
+```
+
+The generator requires the complete eight-step pause-and-recovery sequence, chain 97, the reviewed
+source revision, chronological timestamps, transaction hashes or read-only revert evidence, and the
+full configured timelock delay. It emits a SHA-256 digest and refuses incomplete or failed drills.
+
+Combine the deployment, latest monitoring result, and drill report into one review manifest:
+
+```bash
+npm run package:review-evidence -- <deployment.json> <monitoring.json> <drill.json> [external-evidence.json]
+```
+
+The package refuses mixed networks, commits, or deployment fingerprints and requires HEALTHY
+monitoring. Missing explorer verification, independent audit, or secure legal/KYB references remain
+explicit pending gates; repository evidence alone is never reported as full listing approval.
+
+Render the verified package as a reviewer-readable Markdown summary:
+
+```bash
+npm run render:review-summary -- <review-evidence-package.json>
+```
+
+The renderer verifies the package digest before showing its baseline, evidence status, drill
+reference, and outstanding external gates. It does not convert an incomplete package into an
+approval claim.
+
+Generate the JSON package, Markdown summary, and cross-file digest manifest in one operation:
+
+```bash
+npm run build:review-bundle -- <deployment.json> <monitoring.json> <drill.json> <empty-output-dir> [external-evidence.json]
+```
+
+The command writes all three outputs only after validation succeeds. It refuses to overwrite an
+existing evidence bundle, preserving the original review record.
+
 The JSON report verifies block freshness and the strict deployment configuration, reports emergency
 pause and pending-ownership states, and checks that execution, native, and automatic routers retain
-no BNB, LQC, mock-USDT, or WBNB custody. A critical result exits with status `2` for CI/monitoring
+no BNB, LQC, mock-USDT, or WBNB custody. It also compares both Safe owner sets and thresholds with
+the deployment record: a weakened policy is critical, while any other signer or threshold change
+requires governance review. The report emits a deterministic incident-response sequence for Safe
+policy findings, but never signs or sends a pause, signer-change, or recovery transaction. Emergency
+pause requires the guardian multisig; recovery remains governance-approved and timelocked. A critical result exits with status `2` for CI/monitoring
 integration. This operational evidence does not replace an independent audit.
 
 Generate a reproducible BscScan source-verification package from the validated deployment record:

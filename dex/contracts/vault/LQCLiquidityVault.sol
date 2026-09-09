@@ -119,6 +119,7 @@ contract LQCLiquidityVault {
         if (assets == 0) revert ZeroAmount();
         if (depositsPaused) revert DepositsPaused();
         if (isInsolvent()) revert Insolvent();
+        if (idleAssets() < accountedIdleAssets()) revert UnsupportedTokenBehavior();
         if (accountedAssets + assets > depositCap) revert DepositCapExceeded();
         uint256 supply = totalSupply;
         if (supply == 0) {
@@ -304,6 +305,7 @@ contract LQCLiquidityVault {
 
     function _withdraw(uint256 assets, uint256 shares, address receiver, address shareOwner) private {
         if (receiver == address(0) || receiver == address(this)) revert ZeroAddress();
+        if (idleAssets() < accountedIdleAssets()) revert UnsupportedTokenBehavior();
         if (assets > accountedIdleAssets() || assets > idleAssets()) revert InsufficientIdleLiquidity();
         if (msg.sender != shareOwner) _spendAllowance(shareOwner, shares);
         _burn(shareOwner, shares);

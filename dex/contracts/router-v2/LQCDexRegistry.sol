@@ -54,7 +54,7 @@ contract LQCDexRegistry is ILQCDexRegistry {
         if (dexId == bytes32(0)) revert InvalidDexId();
         _validateAdapter(adapter);
         if (indexPlusOne[dexId] != 0) revert DexExists();
-        dexes[dexId] = Dex(adapter, false, priority, uint64(block.timestamp), name);
+        dexes[dexId] = Dex(adapter, true, priority, uint64(block.timestamp), name);
         dexIds.push(dexId);
         indexPlusOne[dexId] = dexIds.length;
         emit DexAdded(dexId, adapter, name, priority);
