@@ -28,7 +28,7 @@ defaults to zero until governance explicitly approves a bounded exercise.
 - [ ] Pin PancakeSwap V2 Router to `0xD99D1c33F9fC3444f8101754aBC46c52416550D1`.
 - [ ] Pin PancakeSwap V3 Router to `0x1b81D678ffb9C0263b24A97847620C99d213eB14`.
 - [ ] Pin PancakeSwap V3 Quoter to `0xbC203d7f83677c7ed3F7acEc959963E7F4ECC5C2`.
-- [ ] Review each V3 token pair and fee tier before adding it to `PANCAKE_V3_ALLOWED_POOLS`.
+- [ ] Review each V3 token pair and fee tier before adding it to `PANCAKE_V3_ALLOWED_POOLS`; preflight and post-deployment validation must resolve every entry through the canonical V3 Factory and confirm deployed pool bytecode.
 - [ ] Keep `PANCAKE_V3_MAX_HOPS=2` for the first capped pilot.
 
 ## 3. Deployer funding and runtime secrets
