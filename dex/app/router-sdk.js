@@ -55,6 +55,10 @@
     if(typeof balance!=='bigint'||balance<0n||typeof amountIn!=='bigint'||amountIn<=0n)throw new Error('Invalid balance state');
     return balance>=amountIn;
   }
+  function hasSufficientNativeBalance(balance,nativeValue,estimatedGas){
+    if(typeof balance!=='bigint'||balance<0n||typeof nativeValue!=='bigint'||nativeValue<0n||typeof estimatedGas!=='bigint'||estimatedGas<0n)throw new Error('Invalid native balance state');
+    return balance>=nativeValue+estimatedGas;
+  }
   function requiresTokenApproval(allowance,amountIn){
     if(typeof allowance!=='bigint'||allowance<0n||typeof amountIn!=='bigint'||amountIn<=0n)throw new Error('Invalid approval state');
     return allowance<amountIn;
@@ -102,6 +106,7 @@
     if(code==='ACTION_REJECTED'||message.includes('user rejected')||message.includes('user denied'))return{code:'USER_REJECTED',message:'지갑에서 거래가 취소되었습니다.',action:'원하시면 견적을 다시 확인한 뒤 재시도하세요.',retryable:true};
     if(code==='INSUFFICIENT_FUNDS'||message.includes('insufficient funds'))return{code:'INSUFFICIENT_GAS',message:'거래를 실행할 BNB 가스비가 부족합니다.',action:'소량의 tBNB를 준비한 뒤 다시 시도하세요.',retryable:true};
     if(message.includes('insufficientinputbalance'))return{code:'INSUFFICIENT_BALANCE',message:'입력한 거래 수량이 지갑 잔액보다 많습니다.',action:'수량을 줄이거나 토큰 잔액을 확인하세요.',retryable:true};
+    if(message.includes('insufficientgasreserve'))return{code:'INSUFFICIENT_GAS_RESERVE',message:'거래와 승인에 필요한 BNB 가스비 여유분이 부족합니다.',action:'tBNB를 추가하거나 거래 수량을 줄여주세요.',retryable:true};
     if(message.includes('insufficientoutput')||message.includes('too little received')||message.includes('slippage'))return{code:'PRICE_MOVED',message:'가격이 변해 최소 수령 조건을 충족하지 못했습니다.',action:'새 견적을 받은 뒤 슬리피지를 확인하고 재시도하세요.',retryable:true};
     if(message.includes('novalidquote')||message.includes('noexecutableroute')||message.includes('no approved')||message.includes('liquidity'))return{code:'NO_ROUTE',message:'현재 실행 가능한 유동성 경로가 없습니다.',action:'수량을 줄이거나 다른 거래쌍을 선택하세요.',retryable:true};
     if(message.includes('paused')||message.includes('limit')||message.includes('cap')||message.includes('unsupportedtoken'))return{code:'RISK_BLOCKED',message:'LQC 위험관리 정책이 이 거래를 차단했습니다.',action:'거래 한도와 토큰·DEX 활성 상태를 확인하세요.',retryable:false};
@@ -112,5 +117,5 @@
     if(code==='NETWORK_ERROR'||message.includes('network')||message.includes('chain'))return{code:'NETWORK_ERROR',message:'BSC 테스트넷 연결을 확인할 수 없습니다.',action:'지갑 네트워크를 BSC Testnet으로 전환하세요.',retryable:true};
     return{code:'UNKNOWN',message:'거래를 실행하지 못했습니다.',action:'최신 견적과 지갑 상태를 확인한 뒤 다시 시도하세요.',retryable:true};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,hasSufficientInputBalance,requiresTokenApproval,tokenApprovalSequence,isRefreshedOutputAcceptable,executionContextMatches,executionPlanFingerprint,rankRouteQuotes,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,hasSufficientInputBalance,hasSufficientNativeBalance,requiresTokenApproval,tokenApprovalSequence,isRefreshedOutputAcceptable,executionContextMatches,executionPlanFingerprint,rankRouteQuotes,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
