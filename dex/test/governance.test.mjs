@@ -67,6 +67,7 @@ describe("LQC Router governance controls", function () {
   it("lets guardians pause immediately but only governance re-enable", async function () {
     const dexId = ethers.id("LQC_FLOW");
     await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    await (await registry.setDexEnabled(dexId, true)).wait();
     await (await registry.setPauseAdmin(await emergency.getAddress())).wait();
     await (await emergency.setGuardian(await guardian.getAddress(), true)).wait();
     await assert.rejects(emergency.connect(outsider).pauseDex(dexId));
@@ -92,7 +93,7 @@ describe("LQC Router governance controls", function () {
     await eip1193.request({ method: "evm_increaseTime", params: [3601] });
     await eip1193.request({ method: "evm_mine", params: [] });
     await (await timelock.connect(outsider).execute(await registry.getAddress(), 0, data, salt)).wait();
-    assert.equal((await registry.getDex(dexId)).enabled, true);
+    assert.equal((await registry.getDex(dexId)).enabled, false);
     assert.equal(await timelock.readyAt(id), 0n);
     await assert.rejects(timelock.execute(await registry.getAddress(), 0, data, salt));
   });
