@@ -82,7 +82,7 @@
     });
     if(allocated!==input.amountIn||typeof input.plan.cost!=='bigint'||input.plan.cost<0n)throw new Error('Invalid proof allocation');
     const planNet=expected>input.plan.cost?expected-input.plan.cost:0n,bestSingle=ranked[0];
-    if(input.plan.kind==='single'&&(legs.length!==1||legs[0].dexId!==bestSingle.dexId))throw new Error('Single route is not best execution');
+    if(input.plan.kind==='single'&&(legs.length!==1||legs[0].dexId!==bestSingle.dexId||legs[0].expectedOut!==bestSingle.amountOut.toString()||input.plan.cost!==bestSingle.cost))throw new Error('Single route is not best execution');
     if(input.plan.kind==='split'&&(legs.length<2||planNet<=bestSingle.netAmountOut))throw new Error('Split route does not improve best execution');
     if(!['single','split'].includes(input.plan.kind)||!Number.isInteger(input.slippageBps)||input.slippageBps<0||input.slippageBps>2000)throw new Error('Invalid proof policy');
     const improvementBps=planNet>bestSingle.netAmountOut?Number((planNet-bestSingle.netAmountOut)*10000n/bestSingle.netAmountOut):0;
