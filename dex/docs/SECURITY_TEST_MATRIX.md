@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **41 Solidity sources** and reports **117 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **41 Solidity sources** and reports **118 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -44,6 +44,7 @@ The current suite compiles **41 Solidity sources** and reports **117 passing tes
 | Testnet Vault solvency and backing monitoring | `test/monitoring.test.mjs` | Strategy debt/cap, idle backing, adapter backing, insolvency, and pause states produce fail-closed monitoring results. |
 | Reproducible deployment evidence completeness | `test/testnet-validation.test.mjs`, `test/verification-bundle.test.mjs` | Full source SHA, exact compiler settings, separated governance/risk roles, and every required deployment transaction hash are mandatory. |
 | Reviewed-source deployment binding | `test/testnet-preflight.test.mjs` | Preflight and deployment reject missing/mismatched source SHAs and any dirty worktree before a transaction can be sent. |
+| Canonical checkpoint receipt recovery | `test/deployment-checkpoint.test.mjs` | Every reused confirmed operation must retain a successful receipt at its recorded block; missing, mismatched, reverted, or reorganized evidence fails closed. |
 
 ## Evidence limits
 

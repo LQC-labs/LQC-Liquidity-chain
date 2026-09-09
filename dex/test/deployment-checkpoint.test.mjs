@@ -66,9 +66,11 @@ describe("BSC deployment checkpoints", function () {
       assert.equal(first.reused, false);
       assert.equal(loadDeploymentCheckpoint(file, 97, deployer).operations["registry.configure"].status, "confirmed");
       const second = await checkpointedTransaction({ key: "registry.configure", checkpoint, checkpointFile: file,
-        provider: {}, sendTransaction: async () => { sends++; } });
+        provider: { getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash: `0x${"66".repeat(32)}`, blockNumber: 12 }) },
+        sendTransaction: async () => { sends++; } });
       assert.equal(second.reused, true);
       assert.equal(sends, 1);
+      assert.equal(loadDeploymentCheckpoint(file, 97, deployer).operations["registry.configure"].blockNumber, 12);
     } finally { fs.rmSync(directory, { recursive: true, force: true }); }
   });
 
@@ -97,5 +99,20 @@ describe("BSC deployment checkpoints", function () {
     } };
     await assert.rejects(() => checkpointedTransaction({ key: "limits", config: [200n], checkpoint,
       checkpointFile: "unused", provider: {}, sendTransaction: async () => {} }), /current configuration/);
+  });
+
+  it("revalidates confirmed operations against the canonical chain", async function () {
+    const txHash = `0x${"77".repeat(32)}`;
+    const blockHash = `0x${"88".repeat(32)}`;
+    const operation = { status: "confirmed", txHash, blockHash, blockNumber: 42,
+      configHash: operationConfigHash("configure", []) };
+    const checkpoint = { version: 1, chainId: 97, deployer, contracts: {}, operations: { configure: operation } };
+    const common = { key: "configure", checkpoint, checkpointFile: "unused", sendTransaction: async () => {} };
+    await assert.rejects(() => checkpointedTransaction({ ...common,
+      provider: { getTransactionReceipt: async () => null } }), /canonical chain/);
+    await assert.rejects(() => checkpointedTransaction({ ...common,
+      provider: { getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash: `0x${"99".repeat(32)}`, blockNumber: 43 }) } }), /chain reorganization/);
+    await assert.rejects(() => checkpointedTransaction({ ...common,
+      provider: { getTransactionReceipt: async () => ({ status: 1, hash: `0x${"aa".repeat(32)}`, blockHash, blockNumber: 42 }) } }), /mismatched transaction receipt/);
   });
 });
