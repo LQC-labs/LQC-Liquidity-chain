@@ -133,6 +133,24 @@
     if(matchedTransfers===0||decodedAmountOut!==BigInt(receipt.actualAmountOut))throw new Error('Settlement output log mismatch');
     return{valid:true,chainId:receipt.chainId,proofHash:receipt.proofHash,settlementHash:receipt.settlementHash,transactionHash:receipt.transactionHash,blockHash:receipt.blockHash,blockNumber:receipt.blockNumber,confirmations,requiredConfirmations,matchedTransfers,decodedAmountOut:decodedAmountOut.toString()};
   }
+  async function verifyCanonicalNativeSettlement(receipt,proof,provider,nativeRouter,ethers,requiredConfirmations=3){
+    if(!verifySettlementReceipt(receipt,proof,ethers))throw new Error('Invalid settlement receipt');
+    if(!provider||typeof provider.getTransactionReceipt!=='function'||typeof provider.getBlock!=='function'||typeof provider.getBlockNumber!=='function'||!ethers.isAddress(nativeRouter)||!Number.isInteger(requiredConfirmations)||requiredConfirmations<1||requiredConfirmations>100)throw new Error('Invalid native verifier');
+    const chainReceipt=await provider.getTransactionReceipt(receipt.transactionHash);
+    if(!chainReceipt||Number(chainReceipt.status)!==1)throw new Error('Settlement transaction not successful');
+    const chainTxHash=String(chainReceipt.hash||chainReceipt.transactionHash||'').toLowerCase();
+    if(chainTxHash!==receipt.transactionHash||Number(chainReceipt.blockNumber)!==receipt.blockNumber||String(chainReceipt.blockHash||'').toLowerCase()!==receipt.blockHash)throw new Error('Settlement receipt mismatch');
+    const canonicalBlock=await provider.getBlock(receipt.blockNumber);
+    if(!canonicalBlock||String(canonicalBlock.hash||'').toLowerCase()!==receipt.blockHash)throw new Error('Settlement block is not canonical');
+    const latestBlock=Number(await provider.getBlockNumber()),confirmations=latestBlock-receipt.blockNumber+1;
+    if(!Number.isSafeInteger(latestBlock)||confirmations<requiredConfirmations)throw new Error('Settlement lacks confirmations');
+    const eventTopic=ethers.id('NativeSwapExecuted(address,address,address,bool,uint256,uint256)').toLowerCase(),recipientTopic=ethers.zeroPadValue(receipt.recipient,32).toLowerCase(),tokenTopic=ethers.zeroPadValue(proof.tokenIn,32).toLowerCase();
+    const matches=(chainReceipt.logs||[]).filter(log=>String(log.address||'').toLowerCase()===nativeRouter.toLowerCase()&&String(log.topics?.[0]||'').toLowerCase()===eventTopic&&String(log.topics?.[2]||'').toLowerCase()===recipientTopic&&String(log.topics?.[3]||'').toLowerCase()===tokenTopic&&ethers.isHexString(log.data,96));
+    if(matches.length!==1)throw new Error('Native settlement event mismatch');
+    const[nativeIn,amountIn,amountOut]=ethers.AbiCoder.defaultAbiCoder().decode(['bool','uint256','uint256'],matches[0].data);
+    if(nativeIn!==false||amountIn!==BigInt(proof.amountIn)||amountOut!==BigInt(receipt.actualAmountOut))throw new Error('Native settlement amount mismatch');
+    return{valid:true,kind:'native-bnb',chainId:receipt.chainId,proofHash:receipt.proofHash,settlementHash:receipt.settlementHash,transactionHash:receipt.transactionHash,blockHash:receipt.blockHash,blockNumber:receipt.blockNumber,confirmations,requiredConfirmations,nativeRouter:nativeRouter.toLowerCase(),decodedAmountOut:amountOut.toString()};
+  }
   function explainSwapError(error){
     const code=String(error?.code||error?.info?.error?.code||'').toUpperCase();
     const message=String(error?.shortMessage||error?.reason||error?.message||'').toLowerCase();
@@ -146,5 +164,5 @@
     if(code==='NETWORK_ERROR'||message.includes('network')||message.includes('chain'))return{code:'NETWORK_ERROR',message:'BSC 테스트넷 연결을 확인할 수 없습니다.',action:'지갑 네트워크를 BSC Testnet으로 전환하세요.',retryable:true};
     return{code:'UNKNOWN',message:'거래를 실행하지 못했습니다.',action:'최신 견적과 지갑 상태를 확인한 뒤 다시 시도하세요.',retryable:true};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
