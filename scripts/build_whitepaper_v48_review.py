@@ -12,7 +12,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from pypdf import PdfReader, PdfWriter
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.1_Review_Edition.pdf"
+OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.2_Review_Edition.pdf"
 NAVY = HexColor("#102235")
 TEAL = HexColor("#0b8790")
 MINT = HexColor("#31c7ad")
@@ -46,7 +46,7 @@ def draw_header(c, number, kicker, title):
 def draw_footer(c, number):
     c.setStrokeColor(LINE); c.setLineWidth(.5); c.line(54, 38, 558, 38)
     c.setFillColor(MID); c.setFont("LQCSans", 6.8)
-    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v5.1  ·  Review Edition")
+    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v5.2  ·  Review Edition")
     c.drawRightString(558, 23, str(number))
 
 
@@ -265,6 +265,22 @@ compact_pages = [
     pages[17],
     ("Future module", "13. Lending, Oracle and Liquidation Direction", pages[18][2] + pages[19][2]),
     pages[20],
+    ("Future module", "15. Gasless Transaction Design and Eligibility", [
+        "Gasless is a planned user-experience module intended to let an eligible user authorize a transaction without separately holding BNB for network gas. It does not remove the user's signature requirement. A reviewed paymaster or signed relay design would pay network gas while the user retains control of the wallet and assets.",
+        ("callout", "Current status: adopted design conditions only. No LQC Gasless paymaster, relayer, sponsorship balance or production service is deployed or claimed in this edition."),
+        ("table", [["No.", "Adopted condition", "No.", "Adopted condition"],
+            ["1", "Begin on BSC testnet only", "11", "Require a valid route and sufficient liquidity"],
+            ["2", "Use only when the user's BNB is insufficient", "12", "Keep slippage and price impact within limits"],
+            ["3", "Require explicit user signature", "13", "Exclude fee-on-transfer, rebasing and unapproved tokens"],
+            ["4", "Limit to approved Router swaps and transfers", "14", "Show eligibility and cost before signature"],
+            ["5", "Use only risk-registry-approved assets", "15", "Disclose stablecoin cost recovery after free quota"],
+            ["6", "Require at least 10 USDT equivalent", "16", "Apply anti-bot, replay and abuse controls"],
+            ["7", "Start at five sponsored transactions per wallet/day", "17", "Use pause, paymaster balance caps and rate limits"],
+            ["8", "Cap sponsored gas per transaction", "18", "No mainnet use before independent audit"],
+            ["9", "Cap the protocol-wide daily sponsorship budget", "19", "Expand only after controlled BSC validation"],
+            ["10", "Require healthy, fresh oracle data", "20", "Remain non-custodial; never store private keys"]], [27,225,27,225]),
+        "Final sponsorship funding, stablecoin settlement, smart-account or relay architecture, oracle thresholds and abuse controls require implementation, testing, economic review, legal review, governance approval and independent security audit.",
+    ]),
     ("Token utility", "15. Utility, Fees, Treasury and Burn", pages[21][2] + pages[25][2]),
     ("Tokenomics", "16. Tokenomics and Release Framework", pages[22][2] + pages[23][2]),
     pages[24],
@@ -293,7 +309,7 @@ compact_pages = [
 def build():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     c = canvas.Canvas(str(OUT), pagesize=letter)
-    c.setTitle("LQC Whitepaper v5.1 - Review Edition")
+    c.setTitle("LQC Whitepaper v5.2 - Review Edition")
     c.setAuthor("MMXlabs&LQC LLC")
     c.setSubject("Condensed official review edition for technical and exchange due diligence")
 
@@ -307,7 +323,7 @@ def build():
     c.drawString(58, 498, "Connecting Fragmented Web3 Liquidity")
     c.setFillColor(MINT); c.roundRect(58, 394, 496, 66, 7, fill=1, stroke=0)
     c.setFillColor(NAVY); c.setFont("LQCSans-Bold", 11)
-    c.drawString(76, 430, "Version 5.1  ·  September 2026  ·  27 pages")
+    c.drawString(76, 430, "Version 5.2  ·  September 2026  ·  28 pages")
     c.setFont("LQCSans", 9); c.drawString(76, 409, "Issued by MMXlabs&LQC LLC | Wyoming, United States")
     c.setFillColor(HexColor("#c8d7e1")); c.setFont("LQCSans", 8)
     c.drawString(58, 72, "Unaudited testnet MVP · No production or listing claim")
@@ -315,7 +331,7 @@ def build():
 
     # Contents
     y = draw_header(c, 2, "Review edition", "Contents and Status Legend")
-    toc = [["Pages", "Section"], ["3-7", "Executive summary, purpose, differentiation and architecture"], ["8-12", "DEX adapters, routing, execution and risk"], ["13-17", "Compatibility, testing, deployment and future lending"], ["18-20", "Cross-chain, utility and tokenomics"], ["21-26", "Supply, roadmap, audit, CEX evidence, team and compliance"], ["27", "Immediate priorities and conclusion"]]
+    toc = [["Pages", "Section"], ["3-7", "Executive summary, purpose, differentiation and architecture"], ["8-12", "DEX adapters, routing, execution and risk"], ["13-17", "Compatibility, testing, deployment and future lending"], ["18-21", "Cross-chain, Gasless design, utility and tokenomics"], ["22-27", "Supply, roadmap, audit, CEX evidence, team and compliance"], ["28", "Immediate priorities and conclusion"]]
     draw_blocks(c, y, [("table", toc, [80,424]), ("callout", "Status legend: Implemented means public repository code/test evidence. In development means active implementation or configuration work. Subject to review means independent, legal, governance or deployment verification is required. Planned means no completed production module is claimed.")])
     draw_footer(c, 2); c.showPage()
 
@@ -328,8 +344,8 @@ def build():
 
     c.save()
     reader = PdfReader(str(OUT))
-    if len(reader.pages) != 27:
-        raise RuntimeError(f"Expected 27 pages, created {len(reader.pages)}")
+    if len(reader.pages) != 28:
+        raise RuntimeError(f"Expected 28 pages, created {len(reader.pages)}")
 
 
 if __name__ == "__main__":
