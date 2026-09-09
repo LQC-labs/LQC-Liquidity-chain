@@ -5,7 +5,7 @@ import { ethers } from "ethers";
 
 const source = fs.readFileSync(new URL("../app/router-sdk.js", import.meta.url), "utf8");
 const context = vm.createContext({ console });
-vm.runInContext(source, context);
+vm.runInContext(source, context, { filename: "lqc-router-sdk.js" });
 const sdk = context.LQCRouterSDK;
 const tokenIn = "0x00000000000000000000000000000000000000a1";
 const tokenOut = "0x00000000000000000000000000000000000000b1";
