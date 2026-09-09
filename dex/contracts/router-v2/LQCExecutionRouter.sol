@@ -42,6 +42,7 @@ contract LQCExecutionRouter {
     error NoExecutableRoute();
     error InvalidRouteData();
     error InvalidSplit();
+    error DuplicateDex();
 
     struct SplitRoute {
         bytes32 dexId;
@@ -149,6 +150,9 @@ contract LQCExecutionRouter {
         for (uint256 i; i < length; ++i) {
             SplitRoute calldata route = routes[i];
             if (route.amountIn == 0 || route.amountOutMinimum == 0) revert InvalidSplit();
+            for (uint256 j; j < i; ++j) {
+                if (routes[j].dexId == route.dexId) revert DuplicateDex();
+            }
             allocated += route.amountIn;
         }
         if (allocated != totalAmountIn) revert InvalidSplit();

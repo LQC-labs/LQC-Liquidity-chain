@@ -139,6 +139,15 @@ pause and pending-ownership states, and checks that execution, native, and autom
 no BNB, LQC, mock-USDT, or WBNB custody. A critical result exits with status `2` for CI/monitoring
 integration. This operational evidence does not replace an independent audit.
 
+Generate a reproducible BscScan source-verification package from the validated deployment record:
+
+```bash
+npm run prepare:verification -- ./deployments/bsc-testnet-97.json
+```
+
+The package pins the recorded source revision, compiler settings, standard JSON input, constructor
+data, and deployed addresses. Confirm that it matches the reviewed commit before explorer publication.
+
 To probe reviewed LQC Flow and PancakeSwap V2/V3 routes without sending a transaction, copy the
 route-probe example and replace its DEX ids, token addresses, raw input amount, path, and V3 fees.
 The script ABI-encodes V2/LQC Flow paths and packed-encodes V3 paths automatically. Before quoting,

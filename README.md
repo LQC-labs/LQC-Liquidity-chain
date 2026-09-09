@@ -38,6 +38,8 @@ LQC is not limited to three DEXs. The long-term objective is to connect and supp
 
 The repository defines the intended architecture and scope. Production deployment, live liquidity, completed integrations, security audits, partnerships, listings, and mainnet operation are recognized only when separately announced with verifiable evidence.
 
+Exchange and due-diligence reviewers can use the [`CEX Listing Readiness`](docs/CEX_LISTING_READINESS.md) register to distinguish reproducible repository evidence from outstanding on-chain, audit, market, legal, and operational submissions.
+
 ## Smart Router
 
 The planned LQC Router analyzes liquidity distributed across multiple DEX pools and identifies efficient execution routes.
@@ -215,6 +217,8 @@ The target security framework includes:
 - Regular protocol-performance reporting
 
 No single private key should control token supply, treasury, oracle, bridge, burn, and emergency privileges.
+
+The DEX repository also provides a reproducible [`security test matrix`](dex/docs/SECURITY_TEST_MATRIX.md), [`audit scope`](dex/docs/AUDIT_SCOPE.md), and [`audit handoff`](dex/docs/AUDIT_HANDOFF.md). These are preparation materials and do not claim that an independent audit has been completed.
 
 ## Project Scope
 

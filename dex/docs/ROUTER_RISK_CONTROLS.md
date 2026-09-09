@@ -2,6 +2,8 @@
 
 Status: **unaudited testnet MVP**. This document describes implemented controls; it is not an audit report or a mainnet-readiness claim.
 
+The emergency controller uses a two-step ownership transfer. The current owner nominates a pending owner, and only that address can accept control. Guardian membership remains an explicit, separately managed emergency role.
+
 ## Control model
 
 - The protocol governance proposer is intended to be a 3-of-5 multisig.
@@ -23,7 +25,7 @@ Split orders are checked as one complete order, preventing a caller from bypassi
 
 ## Parameter policy
 
-Repository defaults are test-only examples. Final token lists and numeric caps require BSC testnet measurements and risk-committee approval based on liquidity depth, execution reliability, oracle quality, security history, audit history, and operational monitoring.
+Repository defaults are test-only examples. Final token lists and numeric caps require BSC testnet measurements and risk-committee approval based on liquidity depth, execution reliability, oracle quality, security history, audit history, and operational monitoring. The risk multisig may immediately reduce existing token or DEX/token caps, but it cannot create or expand permissions; those changes remain timelocked governance actions.
 
 ## Mainnet gates
 
