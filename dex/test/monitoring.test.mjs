@@ -21,6 +21,7 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.status, "HEALTHY");
     assert.equal(report.counts.critical, 0);
     assert.equal(report.checks.every(check => check.status === "PASS"), true);
+    assert.equal(report.incident, null);
   });
 
   it("fails closed for stale blocks, validation failures, or retained funds", function () {
@@ -64,6 +65,10 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.status, "CRITICAL");
     assert.equal(report.checks.find(check => check.id === "multisig.governance.policy").status, "CRITICAL");
     assert.equal(report.checks.find(check => check.id === "multisig.governance.threshold").status, "CRITICAL");
+    assert.equal(report.incident.code, "SAFE_POLICY_BREACH");
+    assert.equal(report.incident.automaticTransactions, false);
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["GUARDIAN_MULTISIG", "EVIDENCE_REVIEW", "SAFE_MULTISIG", "TIMELOCK", "POST_CHECK"]);
   });
 
   it("warns when Safe signers change without weakening the approved policy", function () {
@@ -72,5 +77,7 @@ describe("LQC BSC testnet monitoring report", function () {
     const report = buildMonitoringReport(input);
     assert.equal(report.status, "WARNING");
     assert.equal(report.checks.find(check => check.id === "multisig.governance.signers").status, "WARNING");
+    assert.equal(report.incident.code, "SAFE_POLICY_REVIEW");
+    assert.equal(report.incident.actions[0].gate, "EVIDENCE_REVIEW");
   });
 });
