@@ -19,6 +19,10 @@
   function priceImpactBps(amountIn,amountOut,probeIn,probeOut){
     for(const value of [amountIn,amountOut,probeIn,probeOut])if(typeof value!=='bigint'||value<=0n)throw new Error('Invalid quote');
     const expectedOut=amountIn*probeOut/probeIn;
+    return priceImpactFromExpected(amountOut,expectedOut);
+  }
+  function priceImpactFromExpected(amountOut,expectedOut){
+    for(const value of [amountOut,expectedOut])if(typeof value!=='bigint'||value<=0n)throw new Error('Invalid quote');
     if(expectedOut===0n||amountOut>=expectedOut)return 0;
     return Number((expectedOut-amountOut)*10000n/expectedOut);
   }
@@ -66,5 +70,5 @@
     if(code==='NETWORK_ERROR'||message.includes('network')||message.includes('chain'))return{code:'NETWORK_ERROR',message:'BSC 테스트넷 연결을 확인할 수 없습니다.',action:'지갑 네트워크를 BSC Testnet으로 전환하세요.',retryable:true};
     return{code:'UNKNOWN',message:'거래를 실행하지 못했습니다.',action:'최신 견적과 지갑 상태를 확인한 뒤 다시 시도하세요.',retryable:true};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,rankRouteQuotes,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,rankRouteQuotes,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
