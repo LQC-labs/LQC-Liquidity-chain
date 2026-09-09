@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **41 Solidity sources** and reports **141 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **41 Solidity sources** and reports **144 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -35,6 +35,7 @@ The current suite compiles **41 Solidity sources** and reports **141 passing tes
 | Test token ownership and supply behavior | `test/testnet-token.test.mjs` | Test infrastructure only; not evidence for a final production LQC token. |
 | Browser route encoding and execution-plan SDK | `test/router-sdk.test.mjs` | Covered for supported routing formats. |
 | Proof of Best Execution | `test/router-sdk.test.mjs` | Produces tamper-evident single/split decision receipts, proves gas-adjusted route selection, rejects non-improving splits and inconsistent allocations, and excludes raw route data. |
+| Proof-to-Settlement binding | `test/router-sdk.test.mjs` | Binds a valid route proof to successful BSC testnet transaction and block evidence, enforces expiry and minimum output, records execution variance, and detects receipt tampering or proof substitution. RPC finality and event decoding remain external prerequisites. |
 | Reproducible BscScan verification bundle generation | `test/verification-bundle.test.mjs` | Bundle structure and source revision covered; explorer publication is deployment-specific. |
 | Vault donation-resistant share and idle-asset accounting | `test/liquidity-vault.test.mjs` | Covered for direct donations before deposits and strategy allocation. |
 | Vault strategy approval, role separation, and exposure cap | `test/liquidity-vault.test.mjs` | Covered with a vault-specific reference adapter; production strategies remain pending. |
