@@ -212,7 +212,8 @@ describe("LQC Liquidity Vault V1", function () {
     assert.equal(await token.balanceOf(await adapter.getAddress()), 0n);
     await (await vault.resumeAllocations()).wait();
     await (await vault.resumeDeposits()).wait();
-    await (await vault.connect(user).withdraw(ethers.parseEther("1"), await user.getAddress(), await user.getAddress())).wait();
+    await (await vault.connect(user).withdraw(ethers.parseEther("1"), await user.getAddress(), await user.getAddress(),
+      { gasLimit: 500_000 })).wait();
   });
 
   it("requires full shutdown and governance for an emergency loss override", async function () {
