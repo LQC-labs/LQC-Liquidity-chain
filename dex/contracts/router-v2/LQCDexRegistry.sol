@@ -2,6 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {ILQCDexRegistry} from "./interfaces/ILQCDexRegistry.sol";
+import {ILQCExecutionAdapter} from "./interfaces/ILQCExecutionAdapter.sol";
 
 /// @notice Owner-controlled registry of reviewed DEX adapters.
 contract LQCDexRegistry is ILQCDexRegistry {
@@ -33,6 +34,7 @@ contract LQCDexRegistry is ILQCDexRegistry {
     error InvalidDexId();
     error DexExists();
     error DexNotFound();
+    error InvalidAdapter();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
@@ -49,7 +51,7 @@ contract LQCDexRegistry is ILQCDexRegistry {
 
     function addDex(bytes32 dexId, address adapter, string calldata name, uint32 priority) external onlyOwner {
         if (dexId == bytes32(0)) revert InvalidDexId();
-        if (adapter == address(0)) revert ZeroAddress();
+        _validateAdapter(adapter);
         if (indexPlusOne[dexId] != 0) revert DexExists();
         dexes[dexId] = Dex(adapter, true, priority, uint64(block.timestamp), name);
         dexIds.push(dexId);
@@ -59,7 +61,7 @@ contract LQCDexRegistry is ILQCDexRegistry {
 
     function updateDex(bytes32 dexId, address adapter, uint32 priority) external onlyOwner {
         if (indexPlusOne[dexId] == 0) revert DexNotFound();
-        if (adapter == address(0)) revert ZeroAddress();
+        _validateAdapter(adapter);
         Dex storage dex = dexes[dexId];
         dex.adapter = adapter;
         dex.priority = priority;
@@ -98,6 +100,16 @@ contract LQCDexRegistry is ILQCDexRegistry {
         delete indexPlusOne[dexId];
         delete dexes[dexId];
         emit DexRemoved(dexId);
+    }
+
+    function _validateAdapter(address adapter) private view {
+        if (adapter == address(0)) revert ZeroAddress();
+        if (adapter.code.length == 0) revert InvalidAdapter();
+        try ILQCExecutionAdapter(adapter).supportsExecution() returns (bool) {
+            // Both quote-only (false) and execution-capable (true) reviewed adapters are valid.
+        } catch {
+            revert InvalidAdapter();
+        }
     }
 
     function dexCount() external view override returns (uint256) {
