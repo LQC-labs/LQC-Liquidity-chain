@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **41 Solidity sources** and reports **118 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **41 Solidity sources** and reports **122 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -38,7 +38,7 @@ The current suite compiles **41 Solidity sources** and reports **118 passing tes
 | Vault donation-resistant share and idle-asset accounting | `test/liquidity-vault.test.mjs` | Covered for direct donations before deposits and strategy allocation. |
 | Vault strategy approval, role separation, and exposure cap | `test/liquidity-vault.test.mjs` | Covered with a vault-specific reference adapter; production strategies remain pending. |
 | Strategy recall loss bound and shutdown-only emergency override | `test/liquidity-vault.test.mjs` | Covered with a deterministic lossy mock; economic safety and live protocol behavior remain unaudited. |
-| Vault isolation from Router, Risk, and DEX adapters | `test/vault-router-risk-integration.test.mjs` | Successful swaps and rejected cap/disabled-route paths must leave Vault principal, shares, accounting, and approvals unchanged. |
+| Vault isolation from Router, Risk, and DEX adapters | `test/vault-router-risk-integration.test.mjs` | Successful swaps and rejected cap/disabled-route paths must leave Vault principal, shares, accounting, approvals, active strategy debt, and deployed strategy assets unchanged. |
 | Vault total-loss insolvency fail-closed behavior | `test/liquidity-vault.test.mjs` | A zero-asset vault with outstanding shares rejects share quotes and deposit reopening; recapitalization requires a separately reviewed recovery mechanism. |
 | Testnet Vault deployment record and on-chain linkage | `test/testnet-validation.test.mjs`, `test/testnet-bootstrap.test.mjs` | Vault/adapter bytecode, asset binding, roles, caps, empty initial accounting, and insolvency state are validated before smoke tests; operational pauses remain valid warning states. |
 | Testnet Vault solvency and backing monitoring | `test/monitoring.test.mjs` | Strategy debt/cap, idle backing, adapter backing, insolvency, and pause states produce fail-closed monitoring results. |
