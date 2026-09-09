@@ -69,6 +69,10 @@ export WBNB_ADDRESS="0x..." # official WBNB for the selected BSC network
 export EXPECTED_CHAIN_ID="97" # deployment safety check; defaults to BSC testnet
 export FACTORY_OWNER="0x..." # required reviewed testnet governance/multisig address
 export RISK_ADMIN="0x..." # separate reviewed testnet risk multisig address
+export GOVERNANCE_MIN_OWNERS="7"
+export GOVERNANCE_MIN_THRESHOLD="4"
+export RISK_MIN_OWNERS="5"
+export RISK_MIN_THRESHOLD="3"
 node scripts/deploy.mjs
 ```
 
@@ -94,7 +98,10 @@ configured addresses without BSC-testnet bytecode. The deployer must retain at l
 default above initial liquidity for deployment gas, configurable through `MIN_DEPLOYER_TBNB_RESERVE`.
 `SOURCE_COMMIT` must be the full reviewed commit SHA, must equal the checked-out Git commit, and the
 worktree must be clean. Both preflight and the transaction-producing script enforce this binding.
-The governance owner must be a deployed multisig contract by default. Temporary testnet exceptions
+The governance owner must expose the Safe multisig interface and satisfy a 4-of-7 minimum by default;
+the separate risk administrator must satisfy a 3-of-5 minimum. The preflight reads both owner lists
+and thresholds on-chain, rejects duplicate or zero signers, and records the verified policy in its
+result. Temporary testnet exceptions
 require explicit runtime-only `ALLOW_DEPLOYER_AS_OWNER=true` and/or `ALLOW_EOA_OWNER=true` opt-ins.
 
 Every confirmed contract deployment is immediately recorded in
