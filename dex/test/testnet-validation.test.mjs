@@ -5,6 +5,7 @@ import {
   assertBscTestnetChain,
   assertContractCode,
   deploymentContractAddresses,
+  validateDeploymentEvidenceRecord,
   validateDeploymentDexRecords,
   validateRiskAdministrator,
   validateVaultDeploymentRecord,
@@ -34,6 +35,26 @@ describe("BSC testnet real-address validation", function () {
     assert.equal(Object.keys(deploymentContractAddresses(deployment)).length, 8);
     delete deployment.contracts.timelock;
     assert.throws(() => deploymentContractAddresses(deployment), /missing timelock/);
+  });
+
+  it("requires reproducible source, compiler, role, and transaction evidence", function () {
+    const address = n => `0x${n.toString(16).padStart(40, "0")}`;
+    const tx = n => `0x${n.toString(16).padStart(64, "0")}`;
+    const names = ["lqc", "mockUsdt", "factory", "router", "dexRegistry", "timelock", "emergencyController",
+      "riskRegistry", "quoteRouter", "executionRouter", "nativeRouter", "splitOptimizer", "autoRouter",
+      "gasCostOracle", "flowAdapter", "liquidityVault", "idleStrategyAdapter"];
+    const deployment = {
+      generatedAt: "2026-09-09T00:00:00.000Z", network: { chainId: 97 },
+      deployer: address(100), owner: address(101), riskAdmin: address(102), sourceRevision: "a".repeat(40),
+      compiler: { version: "0.8.30", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
+      contracts: Object.fromEntries(names.map((name, index) => [name, { address: address(index + 1), deploymentTx: tx(index + 1) }]))
+    };
+    assert.deepEqual(validateDeploymentEvidenceRecord(deployment), { sourceRevision: "a".repeat(40), contractCount: 17 });
+    assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, sourceRevision: "short" }), /source commit/);
+    assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, riskAdmin: deployment.owner }), /separate/);
+    assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, compiler: { ...deployment.compiler, viaIR: false } }), /compiler/);
+    const missingTx = structuredClone(deployment); missingTx.contracts.liquidityVault.deploymentTx = null;
+    assert.throws(() => validateDeploymentEvidenceRecord(missingTx), /liquidityVault transaction/);
   });
 
   it("validates fresh Vault roles, limits, accounting, and adapter linkage", function () {
