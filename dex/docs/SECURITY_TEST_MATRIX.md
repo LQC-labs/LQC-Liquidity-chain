@@ -45,7 +45,7 @@ The current suite compiles **41 Solidity sources** and reports **125 passing tes
 | Reproducible deployment evidence completeness | `test/testnet-validation.test.mjs`, `test/verification-bundle.test.mjs` | Full source SHA, exact compiler settings, separated governance/risk roles, and every required deployment transaction hash are mandatory. |
 | Reviewed-source deployment binding | `test/testnet-preflight.test.mjs` | Preflight and deployment reject missing/mismatched source SHAs and any dirty worktree before a transaction can be sent. |
 | Safe signer and threshold validation | `test/testnet-preflight.test.mjs` | Preflight reads on-chain Safe owners and thresholds, rejects malformed signer sets, and enforces the reviewed governance 4-of-7 and risk 3-of-5 minimum policies. |
-| Safe configuration drift monitoring | `test/monitoring.test.mjs` | Monitoring fails closed when signer count or threshold falls below policy, and warns whenever the signer set or a non-weakening threshold changes from the deployment record. |
+| Safe configuration drift and incident workflow | `test/monitoring.test.mjs` | Monitoring fails closed when signer count or threshold falls below policy, warns on other signer/threshold changes, and emits a deterministic multisig-pause, evidence, remediation, timelock, and post-check workflow without sending transactions automatically. |
 | Canonical checkpoint receipt recovery | `test/deployment-checkpoint.test.mjs` | Every reused confirmed operation must retain a successful receipt at its recorded block; missing, mismatched, reverted, or reorganized evidence fails closed. |
 
 ## Evidence limits
