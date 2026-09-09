@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **41 Solidity sources** and reports **132 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **41 Solidity sources** and reports **135 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -49,6 +49,7 @@ The current suite compiles **41 Solidity sources** and reports **132 passing tes
 | Emergency pause and timelocked recovery drill | `test/emergency-drill.test.mjs` | Reproduces a healthy swap, guardian DEX/all-swap pause, blocked execution, failed early recovery, delayed governance recovery, route re-enable, and successful post-recovery swap. Safe signature collection remains an external operational prerequisite. |
 | Emergency drill audit report | `test/emergency-drill-report.test.mjs` | Requires eight ordered PASS steps, BSC testnet chain 97, a pinned source revision, transaction/read-only evidence, chronological timestamps, the full timelock delay, and a deterministic SHA-256 evidence digest. |
 | Exchange/security review evidence package | `test/review-evidence-package.test.mjs` | Binds deployment, healthy monitoring, and passing drill artifacts to chain 97, one source revision, one deployment fingerprint, per-artifact digests, and a package digest; external audit, explorer, and legal evidence remain explicit gates. |
+| Human-readable review summary | `test/review-evidence-markdown.test.mjs` | Verifies the package digest before rendering a Markdown baseline, evidence table, drill reference, and explicit outstanding gates; escapes untrusted table content. |
 | Canonical checkpoint receipt recovery | `test/deployment-checkpoint.test.mjs` | Every reused confirmed operation must retain a successful receipt at its recorded block; missing, mismatched, reverted, or reorganized evidence fails closed. |
 
 ## Evidence limits
