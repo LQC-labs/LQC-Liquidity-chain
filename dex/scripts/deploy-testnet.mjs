@@ -3,7 +3,7 @@ import path from "node:path";
 import { ethers } from "ethers";
 import { checkpointedDeploy, checkpointedTransaction, loadDeploymentCheckpoint } from "./deployment-checkpoint.mjs";
 import { buildAppConfig } from "./app-config.mjs";
-import { assertReviewedSourceCommit, readGitSourceState } from "./preflight-testnet-deploy.mjs";
+import { assertReviewedSourceCommit, assertSafeMultisig, readGitSourceState } from "./preflight-testnet-deploy.mjs";
 
 const {
   BSC_TESTNET_RPC_URL,
@@ -57,6 +57,23 @@ const owner = FACTORY_OWNER || wallet.address;
 if (!ethers.isAddress(owner)) throw new Error("FACTORY_OWNER must be a valid address.");
 if (!ethers.isAddress(RISK_ADMIN)) throw new Error("RISK_ADMIN must be a valid separate risk-management address.");
 const riskAdmin = ethers.getAddress(RISK_ADMIN);
+const governanceMinimumOwners = BigInt(process.env.GOVERNANCE_MIN_OWNERS || "7");
+const governanceMinimumThreshold = BigInt(process.env.GOVERNANCE_MIN_THRESHOLD || "4");
+const riskMinimumOwners = BigInt(process.env.RISK_MIN_OWNERS || "5");
+const riskMinimumThreshold = BigInt(process.env.RISK_MIN_THRESHOLD || "3");
+const captureSafePolicy = async (address, label, minimumOwners, minimumThreshold, allowEoa) => {
+  if (await provider.getCode(address) === "0x") {
+    if (allowEoa) return null;
+    throw new Error(`${label} must be a deployed Safe.`);
+  }
+  const policy = await assertSafeMultisig(provider, address, label, minimumOwners, minimumThreshold);
+  return { address, owners: policy.owners, threshold: Number(policy.threshold),
+    minimumOwners: Number(minimumOwners), minimumThreshold: Number(minimumThreshold) };
+};
+const governanceSafePolicy = await captureSafePolicy(owner, "FACTORY_OWNER", governanceMinimumOwners,
+  governanceMinimumThreshold, process.env.ALLOW_EOA_OWNER === "true");
+const riskSafePolicy = await captureSafePolicy(riskAdmin, "RISK_ADMIN", riskMinimumOwners,
+  riskMinimumThreshold, process.env.ALLOW_EOA_RISK_ADMIN === "true");
 const checkpointFile = path.resolve(process.env.DEPLOYMENT_CHECKPOINT_FILE ||
   path.join(root, `deployments/bsc-testnet-${network.chainId}.checkpoint.local.json`));
 const checkpoint = loadDeploymentCheckpoint(checkpointFile, network.chainId, wallet.address);
@@ -239,6 +256,7 @@ const record = {
   deployer: wallet.address,
   owner,
   riskAdmin,
+  multisigPolicies: { governance: governanceSafePolicy, risk: riskSafePolicy },
   sourceRevision,
   compiler: { version: "0.8.30", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
   externalContracts: {
