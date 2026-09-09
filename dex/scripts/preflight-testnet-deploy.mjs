@@ -4,6 +4,11 @@ import path from "node:path";
 import { ethers } from "ethers";
 import { PANCAKE_BSC_TESTNET, assertBscTestnetChain, assertPancakeV3PoolsExist } from "./validate-bsc-testnet.mjs";
 
+const SAFE_INTERFACE = new ethers.Interface([
+  "function getOwners() view returns (address[])",
+  "function getThreshold() view returns (uint256)"
+]);
+
 const positive = (name, value) => {
   let parsed;
   try { parsed = ethers.parseUnits(String(value), 18); } catch { throw new Error(`${name} must be a valid non-negative 18-decimal amount.`); }
@@ -16,6 +21,35 @@ const nonNegative = (name, value) => {
   catch { throw new Error(`${name} must be a valid non-negative 18-decimal amount.`); }
   return parsed;
 };
+
+const boundedInteger = (name, value, minimum, maximum) => {
+  let parsed;
+  try { parsed = BigInt(value); } catch { throw new Error(`${name} must be an integer.`); }
+  if (parsed < minimum || parsed > maximum) {
+    throw new Error(`${name} must be between ${minimum} and ${maximum}.`);
+  }
+  return parsed;
+};
+
+export async function assertSafeMultisig(provider, address, label, minimumOwners, minimumThreshold) {
+  let owners, threshold;
+  try {
+    const ownersResult = await provider.call({ to: address, data: SAFE_INTERFACE.encodeFunctionData("getOwners") });
+    const thresholdResult = await provider.call({ to: address, data: SAFE_INTERFACE.encodeFunctionData("getThreshold") });
+    [owners] = SAFE_INTERFACE.decodeFunctionResult("getOwners", ownersResult);
+    [threshold] = SAFE_INTERFACE.decodeFunctionResult("getThreshold", thresholdResult);
+  } catch {
+    throw new Error(`${label} must expose the Safe getOwners/getThreshold interface.`);
+  }
+  const normalized = owners.map(owner => ethers.getAddress(owner));
+  if (normalized.some(owner => owner === ethers.ZeroAddress) || new Set(normalized).size !== normalized.length) {
+    throw new Error(`${label} contains a zero or duplicate signer.`);
+  }
+  if (BigInt(normalized.length) < minimumOwners || threshold < minimumThreshold || threshold > BigInt(normalized.length)) {
+    throw new Error(`${label} does not satisfy the required ${minimumThreshold}-of-${minimumOwners} minimum Safe policy.`);
+  }
+  return { owners: normalized, threshold };
+}
 
 export function assertReviewedSourceCommit(sourceCommit, currentCommit, dirty = false) {
   if (!/^[0-9a-fA-F]{40}$/.test(sourceCommit || "")) {
@@ -62,6 +96,10 @@ export function validateTestnetDeploymentConfig(env) {
   if (riskAdmin === owner && env.ALLOW_SHARED_RISK_ADMIN !== "true") {
     throw new Error("RISK_ADMIN must differ from FACTORY_OWNER to preserve role separation.");
   }
+  const governanceMinimumOwners = boundedInteger("GOVERNANCE_MIN_OWNERS", env.GOVERNANCE_MIN_OWNERS || "7", 3n, 20n);
+  const governanceMinimumThreshold = boundedInteger("GOVERNANCE_MIN_THRESHOLD", env.GOVERNANCE_MIN_THRESHOLD || "4", 2n, governanceMinimumOwners);
+  const riskMinimumOwners = boundedInteger("RISK_MIN_OWNERS", env.RISK_MIN_OWNERS || "5", 3n, 20n);
+  const riskMinimumThreshold = boundedInteger("RISK_MIN_THRESHOLD", env.RISK_MIN_THRESHOLD || "3", 2n, riskMinimumOwners);
   const delay = BigInt(env.TIMELOCK_DELAY || "3600");
   if (delay < 3600n || delay > 604800n) throw new Error("TIMELOCK_DELAY must be between 3600 and 604800 seconds.");
 
@@ -118,7 +156,8 @@ export function validateTestnetDeploymentConfig(env) {
     throw new Error("PancakeSwap V3 requires at least one reviewed allowed pool.");
   }
   return { walletAddress, owner, riskAdmin, sourceCommit: env.SOURCE_COMMIT.toLowerCase(), delay, bnbLiquidity, gasReserve,
-    vaultDepositCap, vaultStrategyCap, vaultMaxLossBps, v3Pools };
+    vaultDepositCap, vaultStrategyCap, vaultMaxLossBps, v3Pools,
+    governanceMinimumOwners, governanceMinimumThreshold, riskMinimumOwners, riskMinimumThreshold };
 }
 
 export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL), gitState = null) {
@@ -138,6 +177,16 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
   if (riskAdminCode === "0x" && env.ALLOW_EOA_RISK_ADMIN !== "true") {
     throw new Error("RISK_ADMIN has no contract bytecode; use a deployed risk multisig or explicitly set ALLOW_EOA_RISK_ADMIN=true for temporary testnet use.");
   }
+  let governanceSafe = null;
+  let riskSafe = null;
+  if (ownerCode !== "0x") {
+    governanceSafe = await assertSafeMultisig(provider, config.owner, "FACTORY_OWNER",
+      config.governanceMinimumOwners, config.governanceMinimumThreshold);
+  }
+  if (riskAdminCode !== "0x") {
+    riskSafe = await assertSafeMultisig(provider, config.riskAdmin, "RISK_ADMIN",
+      config.riskMinimumOwners, config.riskMinimumThreshold);
+  }
   const named = { governanceOwner: config.owner, riskAdmin: config.riskAdmin, wbnb: env.WBNB_ADDRESS };
   if (env.PANCAKE_V2_ROUTER_ADDRESS) named.pancakeV2Router = env.PANCAKE_V2_ROUTER_ADDRESS;
   if (env.PANCAKE_V3_ROUTER_ADDRESS) {
@@ -150,7 +199,8 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
     }
   }
   if (env.PANCAKE_V3_ROUTER_ADDRESS) await assertPancakeV3PoolsExist(provider, config.v3Pools);
-  return { chainId: Number(network.chainId), sourceCommit: config.sourceCommit, owner: config.owner, riskAdmin: config.riskAdmin, checkedContracts: Object.keys(named) };
+  return { chainId: Number(network.chainId), sourceCommit: config.sourceCommit, owner: config.owner, riskAdmin: config.riskAdmin,
+    governanceSafe, riskSafe, checkedContracts: Object.keys(named) };
 }
 
 async function main() {
