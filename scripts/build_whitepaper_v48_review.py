@@ -191,7 +191,7 @@ pages = [
         ("callout", "Utility activates only after contract completion, audit, parameters, legal review, formal approval and on-chain disclosure."),
     ]),
     ("Tokenomics", "23. Approved Tokenomics Overview", [
-        "The current approved project design uses a fixed maximum supply of 1,000,000,000 LQC and planned TGE circulation of 150,000,000 LQC (15%). Earlier draft figures are superseded.",
+        "The current approved project design uses a fixed maximum supply of 1,000,000,000 LQC and planned TGE circulation of 150,000,000 LQC (15%).",
         ("table", [["Allocation", "Share", "LQC"], ["Future ecosystem rewards", "35%", "350,000,000"], ["Community initial", "20%", "200,000,000"], ["Team and core contributors", "20%", "200,000,000"], ["Protocol treasury", "10%", "100,000,000"], ["Liquidity and market making", "10%", "100,000,000"], ["Grants and strategic ecosystem", "5%", "50,000,000"]], [260,80,164]),
     ]),
     ("Tokenomics", "24. TGE and Release Framework", [
