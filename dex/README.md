@@ -52,6 +52,7 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - \`LQCNativeRouter\`: safely wraps and unwraps BNB around protected Router 2.0 token execution without retaining user balances
 - Proof of Best Execution receipts record and hash why a gas-adjusted single or split route was selected
 - Proof-to-Settlement receipts bind that route decision to successful transaction, block, recipient, and actual-output evidence
+- Canonical settlement verification rechecks RPC receipts, block finality, reorg safety, and ERC-20 output transfer totals
 
 New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap V2 or V3 when their reviewed addresses are supplied. Exact-input token and native BNB execution, oracle-validated gas-cost conversion, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, atomic optimized execution, timelocked registry ownership, disable-only emergency control, token allowlisting, and staged transaction limits are now available. Live production feed configuration, final risk-committee parameter approval, multisig assignment, and production integrations remain pending.
 
