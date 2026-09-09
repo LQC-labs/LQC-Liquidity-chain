@@ -122,6 +122,25 @@ describe("LQC Router 2.0", function () {
     assert.equal(after.priority, before.priority);
   });
 
+  it("requires a DEX to be disabled before adapter updates or removal", async function () {
+    const dexId = ethers.id("LQC_FLOW");
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+
+    await assert.rejects(registry.updateDex(dexId, await adapter.getAddress(), 200));
+    await assert.rejects(registry.removeDex(dexId));
+    assert.equal((await registry.getDex(dexId)).enabled, true);
+
+    await (await registry.setDexEnabled(dexId, false)).wait();
+    await (await registry.updateDex(dexId, await adapter.getAddress(), 200, { gasLimit: 500_000 })).wait();
+    const updated = await registry.getDex(dexId);
+    assert.equal(updated.enabled, false);
+    assert.equal(updated.priority, 200n);
+
+    await (await registry.removeDex(dexId, { gasLimit: 500_000 })).wait();
+    assert.equal(await registry.dexCount(), 0n);
+    await assert.rejects(registry.getDex(dexId));
+  });
+
   it("compares LQC Flow with a PancakeSwap V2-compatible pool and selects the better quote", async function () {
     const Factory = new ethers.ContractFactory(artifact("LQCFlowFactory").abi, artifact("LQCFlowFactory").bytecode, owner);
     const pancakeFactory = await Factory.deploy(await owner.getAddress());

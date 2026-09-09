@@ -35,6 +35,7 @@ contract LQCDexRegistry is ILQCDexRegistry {
     error DexExists();
     error DexNotFound();
     error InvalidAdapter();
+    error DexMustBeDisabled();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
@@ -61,6 +62,7 @@ contract LQCDexRegistry is ILQCDexRegistry {
 
     function updateDex(bytes32 dexId, address adapter, uint32 priority) external onlyOwner {
         if (indexPlusOne[dexId] == 0) revert DexNotFound();
+        if (dexes[dexId].enabled) revert DexMustBeDisabled();
         _validateAdapter(adapter);
         Dex storage dex = dexes[dexId];
         dex.adapter = adapter;
@@ -89,6 +91,7 @@ contract LQCDexRegistry is ILQCDexRegistry {
     function removeDex(bytes32 dexId) external onlyOwner {
         uint256 position = indexPlusOne[dexId];
         if (position == 0) revert DexNotFound();
+        if (dexes[dexId].enabled) revert DexMustBeDisabled();
         uint256 index = position - 1;
         uint256 lastIndex = dexIds.length - 1;
         if (index != lastIndex) {
