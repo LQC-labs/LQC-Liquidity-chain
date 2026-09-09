@@ -177,4 +177,50 @@ describe("LQC Vault-Router-Risk-Adapter isolation", function () {
     assert.equal(await tokenA.balanceOf(await executionRouter.getAddress()), 0n);
     assert.equal(await tokenA.balanceOf(await adapter.getAddress()), 0n);
   });
+
+  it("contains a reported strategy loss inside the Vault while reviewed swaps remain solvent", async function () {
+    const LossyStrategy = new ethers.ContractFactory(
+      artifact("MockLossyStrategyAdapter", "mocks/MockLossyStrategyAdapter").abi,
+      artifact("MockLossyStrategyAdapter", "mocks/MockLossyStrategyAdapter").bytecode,
+      owner
+    );
+    const strategy = await LossyStrategy.deploy(await tokenA.getAddress(), await vault.getAddress());
+    await strategy.waitForDeployment();
+
+    const allocated = ethers.parseEther("60");
+    const reportedLoss = ethers.parseEther("10");
+    await (await vault.setStrategy(await strategy.getAddress())).wait();
+    await (await vault.setStrategyLimits(allocated, 2_000)).wait();
+    await (await vault.resumeAllocations()).wait();
+    await (await vault.allocateToStrategy(allocated)).wait();
+    await (await strategy.simulateReportedLoss(reportedLoss)).wait();
+
+    const impairedVault = await snapshotVault();
+    assert.equal(await vault.strategyDebt(), allocated);
+    assert.equal(await strategy.totalManagedAssets(), allocated - reportedLoss);
+
+    await (await tokenA.mint(await user.getAddress(), ethers.parseEther("1"))).wait();
+    await (await tokenA.connect(user).approve(await vault.getAddress(), ethers.parseEther("1"))).wait();
+    await assert.rejects((await vault.connect(user).deposit(
+      ethers.parseEther("1"), await user.getAddress(), { gasLimit: 500_000n }
+    )).wait());
+    await assert.rejects((await vault.connect(user).withdraw(
+      ethers.parseEther("1"), await user.getAddress(), await user.getAddress(), { gasLimit: 500_000n }
+    )).wait());
+
+    const amountIn = ethers.parseEther("5");
+    await (await tokenA.connect(user).approve(await executionRouter.getAddress(), amountIn)).wait();
+    const block = await provider.getBlock("latest");
+    await (await executionRouter.connect(user).swapExactInput(
+      dexId, await tokenA.getAddress(), await tokenB.getAddress(), amountIn, 1n,
+      await recipient.getAddress(), BigInt(block.timestamp + 3600), routeData
+    )).wait();
+
+    assert.deepEqual(await snapshotVault(), impairedVault);
+    assert.equal(await vault.strategyDebt(), allocated);
+    assert.equal(await strategy.totalManagedAssets(), allocated - reportedLoss);
+    assert.equal((await risk.dailyUsage(await tokenA.getAddress())).amount, amountIn);
+    assert.equal(await tokenA.balanceOf(await executionRouter.getAddress()), 0n);
+    assert.equal(await tokenA.balanceOf(await adapter.getAddress()), 0n);
+  });
 });
