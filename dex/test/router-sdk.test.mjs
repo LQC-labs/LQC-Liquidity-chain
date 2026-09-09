@@ -201,4 +201,37 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.verifySettlementReceipt(receipt, otherProof, ethers), false);
   });
 
+  it("verifies canonical confirmations and decoded output transfer logs", async function () {
+    const proof = singleRouteProof(), txHash = ethers.id("tx"), blockHash = ethers.id("block");
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: txHash,
+      blockHash, blockNumber: 12350, settledAt: 1788999999, recipient: tokenA,
+      actualAmountOut: 995n, status: 1 }, ethers);
+    const transfer = { address: tokenB, topics: [ethers.id("Transfer(address,address,uint256)"),
+      ethers.zeroPadValue(tokenB, 32), ethers.zeroPadValue(tokenA, 32)], data: ethers.toBeHex(995n, 32) };
+    const provider = { getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash,
+      blockNumber: 12350, logs: [transfer] }), getBlock: async () => ({ hash: blockHash }),
+      getBlockNumber: async () => 12352 };
+    const result = await sdk.verifyCanonicalSettlement(receipt, proof, provider, ethers, 3);
+    assert.equal(result.valid, true);
+    assert.equal(result.confirmations, 3);
+    assert.equal(result.decodedAmountOut, "995");
+  });
+
+  it("fails closed on reorgs, weak finality, or mismatched output logs", async function () {
+    const proof = singleRouteProof(), txHash = ethers.id("tx"), blockHash = ethers.id("block");
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: txHash,
+      blockHash, blockNumber: 12350, settledAt: 1788999999, recipient: tokenA,
+      actualAmountOut: 995n, status: 1 }, ethers);
+    const transfer = { address: tokenB, topics: [ethers.id("Transfer(address,address,uint256)"),
+      ethers.zeroPadValue(tokenB, 32), ethers.zeroPadValue(tokenA, 32)], data: ethers.toBeHex(994n, 32) };
+    const base = { getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash,
+      blockNumber: 12350, logs: [transfer] }), getBlock: async () => ({ hash: blockHash }),
+      getBlockNumber: async () => 12352 };
+    await assert.rejects(sdk.verifyCanonicalSettlement(receipt, proof, base, ethers, 3), /output log mismatch/);
+    await assert.rejects(sdk.verifyCanonicalSettlement(receipt, proof, { ...base,
+      getBlock: async () => ({ hash: ethers.id("reorg") }) }, ethers, 3), /not canonical/);
+    await assert.rejects(sdk.verifyCanonicalSettlement(receipt, proof, { ...base,
+      getBlockNumber: async () => 12351 }, ethers, 3), /lacks confirmations/);
+  });
+
 });
