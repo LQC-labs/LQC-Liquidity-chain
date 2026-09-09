@@ -71,6 +71,7 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.explainSwapError({ message: "QuoteWorsenedDuringApproval" }).code, "QUOTE_WORSENED");
     assert.equal(sdk.explainSwapError({ message: "WalletContextChanged" }).code, "WALLET_CHANGED");
     assert.equal(sdk.explainSwapError({ message: "InsufficientInputBalance" }).code, "INSUFFICIENT_BALANCE");
+    assert.equal(sdk.explainSwapError({ message: "InsufficientGasReserve" }).code, "INSUFFICIENT_GAS_RESERVE");
   });
 
   it("ranks executable primary and fallback routes by net output and priority", function () {
@@ -106,6 +107,10 @@ describe("LQC Router browser SDK", function () {
   it("requires approval only when the selected spender allowance is insufficient", function () {
     assert.equal(sdk.hasSufficientInputBalance(100n, 100n), true);
     assert.equal(sdk.hasSufficientInputBalance(99n, 100n), false);
+    assert.equal(sdk.hasSufficientNativeBalance(1_000n, 600n, 400n), true);
+    assert.equal(sdk.hasSufficientNativeBalance(999n, 600n, 400n), false);
+    assert.equal(sdk.hasSufficientNativeBalance(400n, 0n, 400n), true);
+    assert.throws(() => sdk.hasSufficientNativeBalance(-1n, 0n, 1n));
     assert.throws(() => sdk.hasSufficientInputBalance(-1n, 100n));
     assert.equal(sdk.requiresTokenApproval(99n, 100n), true);
     assert.equal(sdk.requiresTokenApproval(100n, 100n), false);
