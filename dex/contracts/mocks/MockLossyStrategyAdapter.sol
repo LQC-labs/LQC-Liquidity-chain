@@ -32,6 +32,11 @@ contract MockLossyStrategyAdapter is ILQCStrategyAdapter {
         lossBps = newLossBps;
     }
 
+    function simulateReportedLoss(uint256 assets) external {
+        if (assets > totalManagedAssets) revert InsufficientAssets();
+        totalManagedAssets -= assets;
+    }
+
     function deploy(uint256 assets) external onlyVault returns (uint256) {
         if (IERC20(asset).balanceOf(address(this)) < totalManagedAssets + assets) revert InsufficientAssets();
         totalManagedAssets += assets;
