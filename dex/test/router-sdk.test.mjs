@@ -234,4 +234,40 @@ describe("LQC Router browser SDK", function () {
       getBlockNumber: async () => 12351 }, ethers, 3), /lacks confirmations/);
   });
 
+  it("verifies native BNB settlement from the reviewed Native Router event", async function () {
+    const proof = singleRouteProof(), txHash = ethers.id("native-tx"), blockHash = ethers.id("native-block"), nativeRouter = "0x00000000000000000000000000000000000000c1";
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: txHash,
+      blockHash, blockNumber: 12350, settledAt: 1788999999, recipient: tokenA,
+      actualAmountOut: 995n, status: 1 }, ethers);
+    const event = { address: nativeRouter, topics: [ethers.id("NativeSwapExecuted(address,address,address,bool,uint256,uint256)"),
+      ethers.zeroPadValue(tokenB, 32), ethers.zeroPadValue(tokenA, 32), ethers.zeroPadValue(tokenA, 32)],
+      data: ethers.AbiCoder.defaultAbiCoder().encode(["bool", "uint256", "uint256"], [false, 1000n, 995n]) };
+    const provider = { getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash,
+      blockNumber: 12350, logs: [event] }), getBlock: async () => ({ hash: blockHash }),
+      getBlockNumber: async () => 12354 };
+    const result = await sdk.verifyCanonicalNativeSettlement(receipt, proof, provider, nativeRouter, ethers, 3);
+    assert.equal(result.valid, true);
+    assert.equal(result.kind, "native-bnb");
+    assert.equal(result.decodedAmountOut, "995");
+  });
+
+  it("rejects spoofed, duplicate, or inconsistent native settlement events", async function () {
+    const proof = singleRouteProof(), txHash = ethers.id("native-tx"), blockHash = ethers.id("native-block"), nativeRouter = "0x00000000000000000000000000000000000000c1";
+    const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: txHash,
+      blockHash, blockNumber: 12350, settledAt: 1788999999, recipient: tokenA,
+      actualAmountOut: 995n, status: 1 }, ethers);
+    const event = { address: nativeRouter, topics: [ethers.id("NativeSwapExecuted(address,address,address,bool,uint256,uint256)"),
+      ethers.zeroPadValue(tokenB, 32), ethers.zeroPadValue(tokenA, 32), ethers.zeroPadValue(tokenA, 32)],
+      data: ethers.AbiCoder.defaultAbiCoder().encode(["bool", "uint256", "uint256"], [false, 1000n, 994n]) };
+    const provider = { getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash,
+      blockNumber: 12350, logs: [event] }), getBlock: async () => ({ hash: blockHash }),
+      getBlockNumber: async () => 12354 };
+    await assert.rejects(sdk.verifyCanonicalNativeSettlement(receipt, proof, provider, nativeRouter, ethers), /amount mismatch/);
+    await assert.rejects(sdk.verifyCanonicalNativeSettlement(receipt, proof, { ...provider,
+      getTransactionReceipt: async () => ({ status: 1, hash: txHash, blockHash, blockNumber: 12350, logs: [event, event] })
+    }, nativeRouter, ethers), /event mismatch/);
+    await assert.rejects(sdk.verifyCanonicalNativeSettlement(receipt, proof, provider,
+      "0x00000000000000000000000000000000000000c2", ethers), /event mismatch/);
+  });
+
 });
