@@ -185,6 +185,15 @@ The renderer verifies the package digest before showing its baseline, evidence s
 reference, and outstanding external gates. It does not convert an incomplete package into an
 approval claim.
 
+Generate the JSON package, Markdown summary, and cross-file digest manifest in one operation:
+
+```bash
+npm run build:review-bundle -- <deployment.json> <monitoring.json> <drill.json> <empty-output-dir> [external-evidence.json]
+```
+
+The command writes all three outputs only after validation succeeds. It refuses to overwrite an
+existing evidence bundle, preserving the original review record.
+
 The JSON report verifies block freshness and the strict deployment configuration, reports emergency
 pause and pending-ownership states, and checks that execution, native, and automatic routers retain
 no BNB, LQC, mock-USDT, or WBNB custody. It also compares both Safe owner sets and thresholds with
