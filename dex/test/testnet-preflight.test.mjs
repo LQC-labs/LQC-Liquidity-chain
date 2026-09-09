@@ -6,6 +6,7 @@ import { assertReviewedSourceCommit, runTestnetPreflight, validateTestnetDeploym
 const key = `0x${"11".repeat(32)}`;
 const owner = "0x0000000000000000000000000000000000000001";
 const riskAdmin = "0x0000000000000000000000000000000000000003";
+const reviewedPool = JSON.stringify([{ tokenA: owner, tokenB: riskAdmin, fee: 2500 }]);
 const base = { BSC_TESTNET_RPC_URL: "https://example.invalid", DEPLOYER_PRIVATE_KEY: key,
   FACTORY_OWNER: owner, RISK_ADMIN: riskAdmin,
   WBNB_ADDRESS: "0x0000000000000000000000000000000000000002", EXPECTED_CHAIN_ID: "97",
@@ -58,7 +59,10 @@ describe("BSC testnet deployment preflight", function () {
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, PANCAKE_V2_ROUTER_ADDRESS: owner }), /not the pinned/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, PANCAKE_V3_ROUTER_ADDRESS: PANCAKE_BSC_TESTNET.v3Router }), /both/);
     assert.doesNotThrow(() => validateTestnetDeploymentConfig({ ...base, PANCAKE_V2_ROUTER_ADDRESS: PANCAKE_BSC_TESTNET.v2Router,
-      PANCAKE_V3_ROUTER_ADDRESS: PANCAKE_BSC_TESTNET.v3Router, PANCAKE_V3_QUOTER_ADDRESS: PANCAKE_BSC_TESTNET.v3Quoter }));
+      PANCAKE_V3_ROUTER_ADDRESS: PANCAKE_BSC_TESTNET.v3Router, PANCAKE_V3_QUOTER_ADDRESS: PANCAKE_BSC_TESTNET.v3Quoter,
+      PANCAKE_V3_ALLOWED_POOLS: reviewedPool }));
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base,
+      PANCAKE_V3_ROUTER_ADDRESS: PANCAKE_BSC_TESTNET.v3Router, PANCAKE_V3_QUOTER_ADDRESS: PANCAKE_BSC_TESTNET.v3Quoter }), /reviewed allowed pool/);
   });
 
   it("checks the live chain, deployer balance, and configured bytecode", async function () {

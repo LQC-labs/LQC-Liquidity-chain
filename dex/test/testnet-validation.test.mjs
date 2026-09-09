@@ -4,6 +4,7 @@ import {
   PANCAKE_BSC_TESTNET,
   assertBscTestnetChain,
   assertContractCode,
+  assertPancakeV3PoolsExist,
   deploymentContractAddresses,
   validateDeploymentEvidenceRecord,
   validateDeploymentDexRecords,
@@ -24,6 +25,23 @@ describe("BSC testnet real-address validation", function () {
     const provider = { getCode: async address => address.endsWith("01") ? "0x6000" : "0x" };
     await assert.doesNotReject(() => assertContractCode(provider, { ok: "0x0000000000000000000000000000000000000001" }));
     await assert.rejects(() => assertContractCode(provider, { missing: "0x0000000000000000000000000000000000000002" }), /no deployed bytecode/);
+  });
+
+  it("requires every reviewed PancakeSwap V3 pool to exist with bytecode", async function () {
+    const tokenA = "0x0000000000000000000000000000000000000001";
+    const tokenB = "0x0000000000000000000000000000000000000002";
+    const poolAddress = "0x0000000000000000000000000000000000000003";
+    const provider = {
+      call: async () => ethers.AbiCoder.defaultAbiCoder().encode(["address"], [poolAddress]),
+      getCode: async address => ethers.getAddress(address) === ethers.getAddress(poolAddress) ? "0x6000" : "0x"
+    };
+    const pools = [{ tokenA, tokenB, fee: 2500 }];
+    await assert.doesNotReject(() => assertPancakeV3PoolsExist(provider, pools));
+    await assert.rejects(() => assertPancakeV3PoolsExist({ ...provider,
+      call: async () => ethers.AbiCoder.defaultAbiCoder().encode(["address"], [ethers.ZeroAddress])
+    }, pools), /does not exist/);
+    await assert.rejects(() => assertPancakeV3PoolsExist({ ...provider, getCode: async () => "0x" }, pools), /no deployed bytecode/);
+    await assert.rejects(() => assertPancakeV3PoolsExist(provider, [...pools, { tokenA: tokenB, tokenB: tokenA, fee: 2500 }]), /duplicate pool/);
   });
 
   it("requires every safety-critical LQC contract in a chain-97 deployment record", function () {

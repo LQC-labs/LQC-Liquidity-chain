@@ -2,7 +2,7 @@ import { pathToFileURL } from "node:url";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 import { ethers } from "ethers";
-import { PANCAKE_BSC_TESTNET, assertBscTestnetChain } from "./validate-bsc-testnet.mjs";
+import { PANCAKE_BSC_TESTNET, assertBscTestnetChain, assertPancakeV3PoolsExist } from "./validate-bsc-testnet.mjs";
 
 const positive = (name, value) => {
   let parsed;
@@ -111,8 +111,14 @@ export function validateTestnetDeploymentConfig(env) {
       ethers.getAddress(v3Quoter) !== PANCAKE_BSC_TESTNET.v3Quoter)) {
     throw new Error("PancakeSwap V3 addresses do not match the pinned BSC testnet endpoints.");
   }
+  let v3Pools = [];
+  try { v3Pools = JSON.parse(env.PANCAKE_V3_ALLOWED_POOLS || "[]"); }
+  catch { throw new Error("PANCAKE_V3_ALLOWED_POOLS must be valid JSON."); }
+  if (!Array.isArray(v3Pools) || (v3Router && v3Pools.length === 0)) {
+    throw new Error("PancakeSwap V3 requires at least one reviewed allowed pool.");
+  }
   return { walletAddress, owner, riskAdmin, sourceCommit: env.SOURCE_COMMIT.toLowerCase(), delay, bnbLiquidity, gasReserve,
-    vaultDepositCap, vaultStrategyCap, vaultMaxLossBps };
+    vaultDepositCap, vaultStrategyCap, vaultMaxLossBps, v3Pools };
 }
 
 export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL), gitState = null) {
@@ -143,6 +149,7 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
       throw new Error(`${name} has no contract bytecode on BSC testnet.`);
     }
   }
+  if (env.PANCAKE_V3_ROUTER_ADDRESS) await assertPancakeV3PoolsExist(provider, config.v3Pools);
   return { chainId: Number(network.chainId), sourceCommit: config.sourceCommit, owner: config.owner, riskAdmin: config.riskAdmin, checkedContracts: Object.keys(named) };
 }
 
