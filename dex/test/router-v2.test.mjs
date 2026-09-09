@@ -172,6 +172,50 @@ describe("LQC Router 2.0", function () {
     assert.equal(await tokenA.allowance(await executionRouter.getAddress(), await adapter.getAddress()), 0n);
   });
 
+  it("reverts atomically when a downstream DEX leaves input in the adapter", async function () {
+    const PartialRouter = new ethers.ContractFactory(
+      artifact("MockPartialSpendRouter", "mocks/MockPartialSpendRouter").abi,
+      artifact("MockPartialSpendRouter", "mocks/MockPartialSpendRouter").bytecode,
+      owner
+    );
+    const partialRouter = await PartialRouter.deploy();
+    await partialRouter.waitForDeployment();
+    const Adapter = new ethers.ContractFactory(
+      artifact("PancakeV2Adapter", "router-v2/adapters/PancakeV2Adapter").abi,
+      artifact("PancakeV2Adapter", "router-v2/adapters/PancakeV2Adapter").bytecode,
+      owner
+    );
+    const partialAdapter = await Adapter.deploy(await partialRouter.getAddress());
+    await partialAdapter.waitForDeployment();
+
+    const dexId = ethers.id("PARTIAL_SPEND");
+    const amountIn = ethers.parseEther("10");
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    await (await registry.addDex(dexId, await partialAdapter.getAddress(), "Partial spend test", 1)).wait();
+    await (await tokenA.mint(await owner.getAddress(), amountIn)).wait();
+    await (await tokenB.mint(await partialRouter.getAddress(), amountIn)).wait();
+    await (await tokenA.approve(await executionRouter.getAddress(), amountIn)).wait();
+    const ownerInputBefore = await tokenA.balanceOf(await owner.getAddress());
+    const recipientOutputBefore = await tokenB.balanceOf(await other.getAddress());
+    const block = await provider.getBlock("latest");
+    const routeData = ethers.AbiCoder.defaultAbiCoder().encode(
+      ["address[]"], [[tokenIn, tokenOut]]
+    );
+
+    await assert.rejects(executionRouter.swapExactInput(
+      dexId, tokenIn, tokenOut, amountIn, 1n, await other.getAddress(),
+      BigInt(block.timestamp + 3600), routeData
+    ));
+
+    assert.equal(await tokenA.balanceOf(await owner.getAddress()), ownerInputBefore);
+    assert.equal(await tokenB.balanceOf(await other.getAddress()), recipientOutputBefore);
+    assert.equal(await tokenA.balanceOf(await executionRouter.getAddress()), 0n);
+    assert.equal(await tokenA.balanceOf(await partialAdapter.getAddress()), 0n);
+    assert.equal(await tokenA.allowance(await executionRouter.getAddress(), await partialAdapter.getAddress()), 0n);
+    assert.equal(await tokenA.allowance(await partialAdapter.getAddress(), await partialRouter.getAddress()), 0n);
+  });
+
   it("rejects fee-on-transfer input tokens without retaining balances or consuming approval", async function () {
     const FeeToken = new ethers.ContractFactory(
       artifact("MockFeeOnTransferToken", "mocks/MockFeeOnTransferToken").abi,

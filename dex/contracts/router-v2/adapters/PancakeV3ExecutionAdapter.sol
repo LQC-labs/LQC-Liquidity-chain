@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {ILQCExecutionAdapter} from "../interfaces/ILQCExecutionAdapter.sol";
 import {SafeTransferLib} from "../../libraries/SafeTransferLib.sol";
+import {IERC20} from "../../interfaces/IERC20.sol";
 
 interface IPancakeV3SwapRouter {
     struct ExactInputParams { bytes path; address recipient; uint256 amountIn; uint256 amountOutMinimum; }
@@ -39,6 +40,7 @@ contract PancakeV3ExecutionAdapter is ILQCExecutionAdapter {
     error FeeTierNotAllowed();
     error PoolNotAllowed();
     error InvalidMaxHops();
+    error UnsupportedTokenBehavior();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
@@ -75,12 +77,19 @@ contract PancakeV3ExecutionAdapter is ILQCExecutionAdapter {
     ) external override returns (uint256 amountOut) {
         if (block.timestamp > deadline) revert Expired();
         _validateRoute(tokenIn, tokenOut, routeData);
+        uint256 adapterBefore = IERC20(tokenIn).balanceOf(address(this));
         tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
+        if (IERC20(tokenIn).balanceOf(address(this)) - adapterBefore != amountIn) {
+            revert UnsupportedTokenBehavior();
+        }
         tokenIn.forceApprove(address(swapRouter), amountIn);
         amountOut = swapRouter.exactInput(IPancakeV3SwapRouter.ExactInputParams({
             path: routeData, recipient: recipient, amountIn: amountIn, amountOutMinimum: amountOutMinimum
         }));
         tokenIn.forceApprove(address(swapRouter), 0);
+        if (IERC20(tokenIn).balanceOf(address(this)) != adapterBefore) {
+            revert UnsupportedTokenBehavior();
+        }
         if (amountOut < amountOutMinimum) revert InsufficientOutput();
     }
 
