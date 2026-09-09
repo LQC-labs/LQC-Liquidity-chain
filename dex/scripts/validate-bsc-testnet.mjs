@@ -23,7 +23,7 @@ export async function assertContractCode(provider, namedAddresses) {
 }
 export function deploymentContractAddresses(deployment) {
   if (Number(deployment?.network?.chainId) !== 97) throw new Error("Deployment record must target BSC testnet chain 97.");
-  const required = ["dexRegistry", "riskRegistry", "emergencyController", "executionRouter", "timelock"];
+  const required = ["dexRegistry", "riskRegistry", "emergencyController", "executionRouter", "timelock", "gasCostOracle"];
   return Object.fromEntries(required.map(name => {
     const address = deployment?.contracts?.[name]?.address;
     if (!ethers.isAddress(address)) throw new Error(`Deployment record is missing ${name}.`);
@@ -50,6 +50,34 @@ export function validateDeploymentDexRecords(records, onchainDexes) {
   }
 }
 
+export function validateV3DeploymentRecord(record) {
+  const canonicalFees = new Set([100, 500, 2500, 10000]);
+  if (record?.kind !== "v3") throw new Error("PancakeSwap V3 deployment record is missing or has the wrong kind.");
+  if (!Number.isInteger(record.maxHops) || record.maxHops < 1 || record.maxHops > 3) {
+    throw new Error("PancakeSwap V3 maxHops must be an integer from 1 to 3.");
+  }
+  if (!Array.isArray(record.feeTiers) || record.feeTiers.length === 0 ||
+      new Set(record.feeTiers).size !== record.feeTiers.length ||
+      record.feeTiers.some(fee => !canonicalFees.has(Number(fee)))) {
+    throw new Error("PancakeSwap V3 fee tiers are invalid.");
+  }
+  if (!Array.isArray(record.pools) || record.pools.length === 0) {
+    throw new Error("PancakeSwap V3 deployment record has no reviewed pools.");
+  }
+  const poolKeys = new Set();
+  for (const pool of record.pools) {
+    if (!ethers.isAddress(pool?.tokenA) || !ethers.isAddress(pool?.tokenB) ||
+        same(pool.tokenA, pool.tokenB) || !record.feeTiers.includes(Number(pool.fee))) {
+      throw new Error("PancakeSwap V3 deployment record contains an invalid pool.");
+    }
+    const [token0, token1] = [ethers.getAddress(pool.tokenA), ethers.getAddress(pool.tokenB)].sort();
+    const key = `${token0}:${token1}:${Number(pool.fee)}`;
+    if (poolKeys.has(key)) throw new Error("PancakeSwap V3 deployment record contains a duplicate pool.");
+    poolKeys.add(key);
+  }
+  return record;
+}
+
 export async function validateBscTestnet({ provider, deployment }) {
   const network = await provider.getNetwork();
   assertBscTestnetChain(network.chainId);
@@ -69,6 +97,17 @@ export async function validateBscTestnet({ provider, deployment }) {
     throw new Error("PancakeSwap V3 Router/Quoter Factory mismatch.");
   }
   if (!same(v2Wbnb, v3Wbnb) || !same(v3Wbnb, quoterWbnb)) throw new Error("PancakeSwap WBNB mismatch.");
+
+  const gasCostOracle = new ethers.Contract(deployment.contracts.gasCostOracle.address, [
+    "function owner() view returns(address)", "function wrappedNative() view returns(address)"
+  ], provider);
+  const [gasOracleOwner, gasOracleWrappedNative] = await Promise.all([
+    gasCostOracle.owner(), gasCostOracle.wrappedNative()
+  ]);
+  if (!same(gasOracleOwner, deployment.contracts.timelock.address)) {
+    throw new Error("Gas-cost oracle ownership is not held by the timelock.");
+  }
+  if (!same(gasOracleWrappedNative, v2Wbnb)) throw new Error("Gas-cost oracle WBNB mismatch.");
 
   const registry = new ethers.Contract(deployment.contracts.dexRegistry.address, [
     "function owner() view returns(address)", "function pauseAdmin() view returns(address)",
@@ -95,6 +134,28 @@ export async function validateBscTestnet({ provider, deployment }) {
   await assertContractCode(provider, Object.fromEntries(onchainDexes.map((dex, index) => [
     `lqc.dexAdapter.${deployment.dexes[index].name || index}`, dex.adapter
   ])));
+
+  const v3Record = deployment.dexes.find(dex => dex.kind === "v3");
+  if (v3Record) {
+    validateV3DeploymentRecord(v3Record);
+    const v3Adapter = new ethers.Contract(v3Record.adapter, [
+      "function maxHops() view returns(uint256)",
+      "function allowedFeeTiers(uint24) view returns(bool)",
+      "function allowedPools(bytes32) view returns(bool)",
+      "function poolKey(address,address,uint24) pure returns(bytes32)"
+    ], provider);
+    const onchainMaxHops = Number(await v3Adapter.maxHops());
+    if (onchainMaxHops !== v3Record.maxHops) throw new Error("PancakeSwap V3 max-hop configuration mismatch.");
+    for (const fee of [100, 500, 2500, 10000]) {
+      if (await v3Adapter.allowedFeeTiers(fee) !== v3Record.feeTiers.includes(fee)) {
+        throw new Error(`PancakeSwap V3 fee-tier ${fee} configuration mismatch.`);
+      }
+    }
+    for (const pool of v3Record.pools) {
+      const key = await v3Adapter.poolKey(pool.tokenA, pool.tokenB, Number(pool.fee));
+      if (!await v3Adapter.allowedPools(key)) throw new Error("PancakeSwap V3 reviewed pool is not allowlisted on-chain.");
+    }
+  }
 
   const execution = new ethers.Contract(deployment.contracts.executionRouter.address, [
     "function registry() view returns(address)", "function riskRegistry() view returns(address)"

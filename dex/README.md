@@ -46,19 +46,9 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 
 New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap V2 or V3 when their reviewed addresses are supplied. Exact-input token and native BNB execution, oracle-validated gas-cost conversion, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, atomic optimized execution, timelocked registry ownership, disable-only emergency control, token allowlisting, and staged transaction limits are now available. Live production feed configuration, final risk-committee parameter approval, multisig assignment, and production integrations remain pending.
 
-Split execution rejects duplicate DEX identifiers. This prevents a caller from dividing one DEX allocation into repeated legs to bypass its configured per-DEX token cap.
-
-The risk multisig may immediately reduce an existing DEX/token cap but cannot create a new cap, raise a cap, allow a token, or resume paused trading. Expansion remains restricted to timelocked governance.
-
-Emergency-controller ownership changes use nomination and explicit acceptance, reducing the risk of transferring operational control to an incorrect or inaccessible address.
-
-Deterministic model-based fuzz tests compare on-chain daily usage against an independent accounting model across valid and rejected multi-route transactions. Failed transactions must leave the usage counter unchanged.
-
 Router 2.0 is intentionally protocol-neutral: every EVM DEX can be integrated through the same reviewed adapter interfaces and enabled or paused independently in the registry. A DEX is never treated as compatible until its protocol-specific quote and execution adapter, route validation, tests, and security review are complete. Non-EVM liquidity will be connected later through the cross-chain routing layer rather than unsafe direct assumptions.
 
 ## Commands
-
-The GitHub Actions workflow at `.github/workflows/dex-ci.yml` performs a locked dependency install, compiles every Solidity source, and runs the complete DEX test suite for relevant pull requests and `main` branch changes. Reviewers should use the [`security test matrix`](docs/SECURITY_TEST_MATRIX.md), [`audit scope`](docs/AUDIT_SCOPE.md), and [`audit handoff`](docs/AUDIT_HANDOFF.md) together. These documents organize evidence; they are not an audit claim.
 
 ```bash
 npm install
@@ -72,7 +62,7 @@ export BSC_TESTNET_RPC_URL="..."
 export DEPLOYER_PRIVATE_KEY="..."
 export WBNB_ADDRESS="0x..." # official WBNB for the selected BSC network
 export EXPECTED_CHAIN_ID="97" # deployment safety check; defaults to BSC testnet
-export FACTORY_OWNER="0x..." # preferably a multisig; optional for testnet
+export FACTORY_OWNER="0x..." # required reviewed testnet governance/multisig address
 node scripts/deploy.mjs
 ```
 
@@ -85,14 +75,31 @@ export DEPLOYER_PRIVATE_KEY="..." # never commit this value
 export WBNB_ADDRESS="0x..."
 export PANCAKE_V3_QUOTER_ADDRESS="0x..." # optional; set together with the V3 router
 export PANCAKE_V3_ROUTER_ADDRESS="0x..." # optional; token-to-token execution
+export PANCAKE_V3_ALLOWED_FEE_TIERS='[500,2500]' # reviewed canonical tiers only
 export PANCAKE_V3_ALLOWED_POOLS='[{"tokenA":"0x...","tokenB":"0x...","fee":2500}]'
-npm run preflight:testnet # read-only; broadcasts no transactions
+export PANCAKE_V3_MAX_HOPS="2" # deployment-specific ceiling; allowed range 1-3
 npm run deploy:testnet
 ```
 
-The preflight refuses any chain other than BSC testnet 97 and checks external contract bytecode,
-reviewed PancakeSwap endpoints, owner configuration, V3 pool-list syntax, and sufficient tBNB for
-the configured liquidity plus gas reserve. Never commit a private key or a populated `.env` file.
+`deploy:testnet` runs a non-transactional preflight first. It refuses non-chain-97 RPCs, missing or
+unsafe governance settings, timelocks outside 1 hour to 7 days, invalid daily/transaction limits,
+liquidity above minted test supply, insufficient test BNB, unpinned PancakeSwap endpoints, and
+configured addresses without BSC-testnet bytecode. The deployer must retain at least 0.5 tBNB by
+default above initial liquidity for deployment gas, configurable through `MIN_DEPLOYER_TBNB_RESERVE`.
+The governance owner must be a deployed multisig contract by default. Temporary testnet exceptions
+require explicit runtime-only `ALLOW_DEPLOYER_AS_OWNER=true` and/or `ALLOW_EOA_OWNER=true` opt-ins.
+
+Every confirmed contract deployment is immediately recorded in
+`deployments/bsc-testnet-97.checkpoint.local.json` (or `DEPLOYMENT_CHECKPOINT_FILE`). A retry with the
+same chain, deployer, constructor arguments, and compiled bytecode verifies the recorded on-chain
+code and reuses that contract instead of paying to deploy it again. Any mismatch stops the run.
+Checkpoint files are gitignored and never contain private keys.
+Registry configuration, DEX registration, token/DEX caps, and ownership-transfer operations are also
+checkpointed. Transaction hashes are saved before confirmation; retries inspect pending receipts and
+skip only operations proven successful on-chain. Missing or reverted receipts stop the deployment.
+Each operation is bound to a hash of its addresses, limits, amounts, and other settings, so a retry
+cannot silently reuse a successful transaction from a different deployment configuration. Test-token
+minting, exact approvals, and both initial-liquidity transactions are covered by the same recovery flow.
 
 The default mock supplies and pool amounts are configurable environment values for testing only;
 they do not define LQC mainnet supply, allocation, valuation, or launch liquidity.
@@ -101,13 +108,17 @@ proposer and should be a reviewed multisig address. Emergency guardians may disa
 but only a timelocked governance operation can re-enable or structurally change it.
 
 The automated test suite also reproduces the complete bootstrap locally and verifies both pool
-creation, Router 2.0 quoting, a capped smoke swap, and rejection when minimum-output protection fails.
+creation, exact initial-liquidity approvals with no residual Router allowance, Router 2.0 quoting,
+a capped smoke swap, and rejection when minimum-output protection fails.
 
 After deployment, run the read-only real-address validator before any smoke swap. It refuses every
 chain except BSC testnet `97`, checks deployed bytecode, verifies PancakeSwap V2/V3 Router-to-Factory
 and WBNB links, and confirms LQC timelock ownership, emergency pause authority, executor, DEX count,
 registry order, adapter addresses, active route status, Router/Emergency module linkage, and minimum
-timelock delay. A deployment record now pins each registered adapter address for this comparison.
+timelock delay. For PancakeSwap V3 it also matches the recorded maximum hop count, canonical fee-tier
+subset, and every reviewed pool against the deployed adapter allowlist. A deployment record pins each
+registered adapter address and V3 policy for this comparison. The gas-cost oracle is also transferred
+to the timelock during bootstrap; validation rejects deployer-owned or wrong-WBNB oracle instances.
 
 ```bash
 export BSC_TESTNET_RPC_URL="https://..."
@@ -115,31 +126,67 @@ export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
 npm run validate:testnet
 ```
 
-Generate a reproducible BscScan verification package from the validated deployment record:
+Generate a read-only operational health report after deployment:
+
+```bash
+export BSC_TESTNET_RPC_URL="https://..."
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
+npm run monitor:testnet
+```
+
+The JSON report verifies block freshness and the strict deployment configuration, reports emergency
+pause and pending-ownership states, and checks that execution, native, and automatic routers retain
+no BNB, LQC, mock-USDT, or WBNB custody. A critical result exits with status `2` for CI/monitoring
+integration. This operational evidence does not replace an independent audit.
+
+Generate a reproducible BscScan source-verification package from the validated deployment record:
 
 ```bash
 npm run prepare:verification -- ./deployments/bsc-testnet-97.json
 ```
 
-The generated package pins the recorded source revision, compiler settings, standard JSON input,
-constructor data, and deployed addresses. Confirm it matches the exact reviewed commit before explorer
-publication.
+The package pins the recorded source revision, compiler settings, standard JSON input, constructor
+data, and deployed addresses. Confirm that it matches the reviewed commit before explorer publication.
 
-After deployment, configure the verified Router, WBNB, and LQC test-token addresses:
+To probe reviewed LQC Flow and PancakeSwap V2/V3 routes without sending a transaction, copy the
+route-probe example and replace its DEX ids, token addresses, raw input amount, path, and V3 fees.
+The script ABI-encodes V2/LQC Flow paths and packed-encodes V3 paths automatically. Before quoting,
+it confirms path endpoints and restricts V3 routes to the deployment record's fee tiers, pool
+allowlist, and maximum hop count. It then repeats the complete chain/address/governance/V3-policy
+validation and refuses non-BSC-testnet networks, disabled DEXes, adapter mismatches, malformed probes,
+duplicate probes, and zero quotes.
 
 ```bash
-export ROUTER_ADDRESS="0x..."
-export QUOTE_ROUTER_ADDRESS="0x..."
-export EXECUTION_ROUTER_ADDRESS="0x..."
-export NATIVE_ROUTER_ADDRESS="0x..."
-export SPLIT_OPTIMIZER_ADDRESS="0x..."
-export AUTO_ROUTER_ADDRESS="0x..."
-export GAS_COST_ORACLE_ADDRESS="0x..."
-export WBNB_ADDRESS="0x..."
-export LQC_ADDRESS="0x..."
-export REGISTERED_DEXES='[{"id":"0x...","name":"LQC Flow"},{"id":"0x...","name":"PancakeSwap V2"}]'
+export BSC_TESTNET_RPC_URL="https://..."
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
+cp ./docs/bsc-testnet-route-probes.example.json ./deployments/bsc-testnet-route-probes.local.json
+export ROUTE_PROBES_FILE="./deployments/bsc-testnet-route-probes.local.json"
+npm run smoke:testnet
+```
+
+Transaction mode is opt-in. It requires a runtime-only key, caps every raw input amount, checks the
+swap with gas estimation, proves expired and impossible-minimum-output calls reject, uses an exact
+token approval, clears pre-existing and failure-path wallet allowances, and verifies that the Router
+and adapter retain neither input/output token balances nor execution allowance.
+
+```bash
+export EXECUTE_SMOKE_SWAP="true"
+export DEPLOYER_PRIVATE_KEY="..." # never store this in a file or commit it
+export SMOKE_MAX_INPUT_RAW="1000000000000000000"
+export SMOKE_MIN_OUTPUT_BPS="9900"
+npm run smoke:testnet
+```
+
+After deployment, generate the UI configuration directly from the verified deployment record:
+
+```bash
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
 npm run configure:app
 ```
+
+The generated configuration derives every Router, token, DEX id, and adapter from that single record
+and includes a deterministic deployment fingerprint. Any optional legacy address override must match
+the record exactly or generation fails, preventing mixed-deployment addresses from reaching the UI.
 
 The interface remains visibly disabled until all required Router 2.0 addresses are configured.
 

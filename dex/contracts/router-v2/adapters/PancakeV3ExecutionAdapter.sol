@@ -17,7 +17,7 @@ contract PancakeV3ExecutionAdapter is ILQCExecutionAdapter {
     bytes4 private constant QUOTE_EXACT_INPUT_SELECTOR = bytes4(keccak256("quoteExactInput(bytes,uint256)"));
     address public immutable quoterV2;
     IPancakeV3SwapRouter public immutable swapRouter;
-    uint256 public constant MAX_HOPS = 3;
+    uint256 public immutable maxHops;
     address public owner;
     address public pendingOwner;
     mapping(uint24 => bool) public allowedFeeTiers;
@@ -38,17 +38,20 @@ contract PancakeV3ExecutionAdapter is ILQCExecutionAdapter {
     error TooManyHops();
     error FeeTierNotAllowed();
     error PoolNotAllowed();
+    error InvalidMaxHops();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
         _;
     }
 
-    constructor(address quoterV2_, address swapRouter_, address owner_) {
+    constructor(address quoterV2_, address swapRouter_, address owner_, uint256 maxHops_) {
         if (quoterV2_ == address(0) || swapRouter_ == address(0) || owner_ == address(0)) revert ZeroAddress();
+        if (maxHops_ == 0 || maxHops_ > 3) revert InvalidMaxHops();
         quoterV2 = quoterV2_;
         swapRouter = IPancakeV3SwapRouter(swapRouter_);
         owner = owner_;
+        maxHops = maxHops_;
         emit OwnershipTransferred(address(0), owner_);
     }
 
@@ -84,7 +87,7 @@ contract PancakeV3ExecutionAdapter is ILQCExecutionAdapter {
     function _validateRoute(address tokenIn, address tokenOut, bytes calldata routeData) private view {
         if (routeData.length < 43 || (routeData.length - 20) % 23 != 0) revert InvalidRoute();
         uint256 hops = (routeData.length - 20) / 23;
-        if (hops > MAX_HOPS) revert TooManyHops();
+        if (hops > maxHops) revert TooManyHops();
         address first = address(bytes20(routeData[0:20]));
         address last = address(bytes20(routeData[routeData.length - 20:routeData.length]));
         if (first != tokenIn || last != tokenOut) revert RouteEndpointMismatch();

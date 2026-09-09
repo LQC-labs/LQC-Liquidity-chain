@@ -4,7 +4,8 @@ import {
   assertBscTestnetChain,
   assertContractCode,
   deploymentContractAddresses,
-  validateDeploymentDexRecords
+  validateDeploymentDexRecords,
+  validateV3DeploymentRecord
 } from "../scripts/validate-bsc-testnet.mjs";
 
 describe("BSC testnet real-address validation", function () {
@@ -24,9 +25,10 @@ describe("BSC testnet real-address validation", function () {
   it("requires every safety-critical LQC contract in a chain-97 deployment record", function () {
     const address = "0x0000000000000000000000000000000000000001";
     const deployment = { network: { chainId: 97 }, contracts: Object.fromEntries(
-      ["dexRegistry", "riskRegistry", "emergencyController", "executionRouter", "timelock"].map(name => [name, { address }])
+      ["dexRegistry", "riskRegistry", "emergencyController", "executionRouter", "timelock", "gasCostOracle"]
+        .map(name => [name, { address }])
     ) };
-    assert.equal(Object.keys(deploymentContractAddresses(deployment)).length, 5);
+    assert.equal(Object.keys(deploymentContractAddresses(deployment)).length, 6);
     delete deployment.contracts.timelock;
     assert.throws(() => deploymentContractAddresses(deployment), /missing timelock/);
   });
@@ -45,5 +47,18 @@ describe("BSC testnet real-address validation", function () {
       () => validateDeploymentDexRecords(records, [{ ...onchain[0], adapter: "0x0000000000000000000000000000000000000002" }]),
       /adapter mismatch/
     );
+  });
+
+  it("rejects unsafe PancakeSwap V3 fee, pool, and multihop records", function () {
+    const tokenA = "0x0000000000000000000000000000000000000001";
+    const tokenB = "0x0000000000000000000000000000000000000002";
+    const valid = { kind: "v3", maxHops: 2, feeTiers: [500, 2500], pools: [{ tokenA, tokenB, fee: 2500 }] };
+    assert.equal(validateV3DeploymentRecord(valid), valid);
+    assert.throws(() => validateV3DeploymentRecord({ ...valid, maxHops: 4 }), /maxHops/);
+    assert.throws(() => validateV3DeploymentRecord({ ...valid, feeTiers: [3000] }), /fee tiers/);
+    assert.throws(() => validateV3DeploymentRecord({ ...valid, pools: [] }), /no reviewed pools/);
+    assert.throws(() => validateV3DeploymentRecord({
+      ...valid, pools: [{ tokenA, tokenB, fee: 500 }, { tokenA: tokenB, tokenB: tokenA, fee: 500 }]
+    }), /duplicate pool/);
   });
 });
