@@ -77,6 +77,7 @@ npm run deploy:testnet
 - [ ] Preflight reports `status: ready` and chain id `97`.
 - [ ] Save the generated deployment record and checkpoint without secrets.
 - [ ] Do not rerun with changed settings against an existing checkpoint.
+- [ ] On retry, confirm every reused operation still has its original successful canonical receipt.
 
 ## 6. Post-deployment verification
 
