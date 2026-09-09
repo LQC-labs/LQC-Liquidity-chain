@@ -46,6 +46,8 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - \`LQCGasCostOracle\`: converts estimated BNB gas into output-token units only after primary/secondary price freshness and deviation checks
 - \`LQCTimelockController\`: delays structural registry changes behind a governance proposer and review window
 - \`LQCEmergencyController\`: gives guardians immediate DEX-specific or all-swap pause authority while every recovery remains governance-only
+- End-to-end emergency drill coverage proves swaps stop immediately and cannot resume until both
+  the Risk Registry and reviewed DEX route are restored through the configured timelock
 - \`LQCRiskRegistry\`: enforces token allowlisting plus per-DEX, per-transaction, and UTC-day input caps; the risk multisig can only reduce limits
 - \`LQCNativeRouter\`: safely wraps and unwraps BNB around protected Router 2.0 token execution without retaining user balances
 
