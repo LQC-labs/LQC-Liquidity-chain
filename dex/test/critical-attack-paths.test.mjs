@@ -89,6 +89,7 @@ describe("LQC critical attack paths", function () {
     await (await vault.connect(user).deposit(assets, await user.getAddress())).wait();
     await (await vault.setStrategy(await strategy.getAddress())).wait();
     await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await strategy.setAttackMode(1)).wait();
     await assert.rejects(vault.allocateToStrategy(allocation));
     assert.equal(await vault.strategyDebt(), 0n);
@@ -109,6 +110,7 @@ describe("LQC critical attack paths", function () {
     await (await vault.connect(user).deposit(assets, await user.getAddress())).wait();
     await (await vault.setStrategy(await strategy.getAddress())).wait();
     await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await vault.allocateToStrategy(allocation)).wait();
     await (await strategy.setAttackMode(2)).wait();
     await assert.rejects(vault.recallFromStrategy(allocation));
@@ -130,6 +132,7 @@ describe("LQC critical attack paths", function () {
     await (await vault.connect(user).deposit(assets, await user.getAddress())).wait();
     await (await vault.setStrategy(await strategy.getAddress())).wait();
     await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await vault.resumeAllocations()).wait();
     for (const mode of [1, 2]) {
       await (await strategy.setLieMode(mode)).wait();
       await assert.rejects(vault.allocateToStrategy(allocation));
@@ -152,6 +155,7 @@ describe("LQC critical attack paths", function () {
     await (await vault.connect(user).deposit(assets, await user.getAddress())).wait();
     await (await vault.setStrategy(await strategy.getAddress())).wait();
     await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await vault.allocateToStrategy(allocation)).wait();
     for (const mode of [3, 4, 5]) {
       await (await strategy.setLieMode(mode)).wait();
@@ -194,6 +198,7 @@ describe("LQC critical attack paths", function () {
     await (await vault.connect(user).deposit(deposit, await user.getAddress())).wait();
     await (await vault.setStrategy(await strategy.getAddress())).wait();
     await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await token.decreaseBalance(await vault.getAddress(), loss)).wait();
     const supply = await vault.totalSupply(), userShares = await vault.balanceOf(await user.getAddress());
     await assert.rejects(vault.allocateToStrategy(allocation));

@@ -108,6 +108,7 @@ const idleStrategyAdapter = await deploy("vault/adapters/LQCIdleStrategyAdapter"
 await transact("vault.setStrategy", [idleStrategyAdapter.target], () => liquidityVault.setStrategy(idleStrategyAdapter.target));
 await transact("vault.setStrategyLimits", [vaultStrategyCap, vaultMaxLossBps],
   () => liquidityVault.setStrategyLimits(vaultStrategyCap, vaultMaxLossBps));
+await transact("vault.resumeAllocations", [], () => liquidityVault.resumeAllocations());
 await transact("vault.setPauseAdmin", [riskAdmin], () => liquidityVault.setPauseAdmin(riskAdmin));
 await transact("vault.setStrategyAdmin", [riskAdmin], () => liquidityVault.setStrategyAdmin(riskAdmin));
 const factory = await deploy("LQCFlowFactory", [owner]);

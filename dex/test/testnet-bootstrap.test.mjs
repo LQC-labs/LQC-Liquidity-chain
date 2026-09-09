@@ -32,6 +32,7 @@ describe("BSC testnet bootstrap smoke flow", function () {
     ]);
     await (await vault.setStrategy(await idleStrategy.getAddress())).wait();
     await (await vault.setStrategyLimits(ethers.parseEther("10000"), 100)).wait();
+    await (await vault.resumeAllocations()).wait();
     const factory = await deploy("LQCFlowFactory", "LQCFlowFactory", [ownerAddress]);
     const router = await deploy("LQCFlowRouter", "LQCFlowRouter", [await factory.getAddress(), await wbnb.getAddress()]);
     const registry = await deploy("LQCDexRegistry", "router-v2/LQCDexRegistry", [ownerAddress]);

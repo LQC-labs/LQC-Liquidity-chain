@@ -72,6 +72,7 @@ contract LQCLiquidityVault {
     error InvalidLossLimit();
     error EmergencyModeRequired();
     error Insolvent();
+    error StrategyChangeRequiresPause();
 
     modifier onlyOwner() { if (msg.sender != owner) revert Forbidden(); _; }
     modifier nonReentrant() { if (unlocked != 1) revert Reentrancy(); unlocked = 2; _; unlocked = 1; }
@@ -84,12 +85,14 @@ contract LQCLiquidityVault {
         pauseAdmin = owner_;
         strategyAdmin = owner_;
         depositCap = depositCap_;
+        allocationsPaused = true;
         name = name_;
         symbol = symbol_;
         emit OwnershipTransferred(address(0), owner_);
         emit PauseAdminChanged(address(0), owner_);
         emit StrategyAdminChanged(address(0), owner_);
         emit DepositCapChanged(0, depositCap_);
+        emit AllocationPauseChanged(true, owner_);
     }
 
     function totalAssets() external view returns (uint256) { return accountedAssets; }
@@ -174,7 +177,9 @@ contract LQCLiquidityVault {
     }
 
     function setStrategy(address newStrategy) external onlyOwner {
+        if (!allocationsPaused) revert StrategyChangeRequiresPause();
         if (strategyDebt != 0) revert StrategyHasDebt();
+        _requireFullyBacked();
         if (newStrategy != address(0)) {
             if (newStrategy.code.length == 0) revert InvalidStrategy();
             if (ILQCStrategyAdapter(newStrategy).asset() != asset ||

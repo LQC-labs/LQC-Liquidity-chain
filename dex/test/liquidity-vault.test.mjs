@@ -96,6 +96,25 @@ describe("LQC Liquidity Vault V1", function () {
     await assert.rejects(vault.setDepositCap(1));
   });
 
+  it("stages every Strategy change behind an allocation pause", async function () {
+    const Adapter = new ethers.ContractFactory(artifact("LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter").abi,
+      artifact("LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter").bytecode, owner);
+    const first = await Adapter.deploy(await token.getAddress(), await vault.getAddress());
+    const second = await Adapter.deploy(await token.getAddress(), await vault.getAddress());
+    await Promise.all([first.waitForDeployment(), second.waitForDeployment()]);
+
+    assert.equal(await vault.allocationsPaused(), true);
+    await (await vault.setStrategy(await first.getAddress())).wait();
+    await (await vault.resumeAllocations()).wait();
+    await assert.rejects(vault.setStrategy(await second.getAddress()));
+    assert.equal(await vault.strategy(), await first.getAddress());
+
+    await (await vault.pauseAllocations()).wait();
+    await (await vault.setStrategy(await second.getAddress(), { gasLimit: 500_000 })).wait();
+    assert.equal(await vault.strategy(), await second.getAddress());
+    assert.equal(await vault.allocationsPaused(), true);
+  });
+
   it("allocates only to a matching approved strategy and recalls exact assets", async function () {
     const Adapter = new ethers.ContractFactory(artifact("LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter").abi,
       artifact("LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter").bytecode, owner);
@@ -107,6 +126,7 @@ describe("LQC Liquidity Vault V1", function () {
     await (await vault.connect(user).deposit(deposit, await user.getAddress())).wait();
     await (await vault.setStrategy(await adapter.getAddress())).wait();
     await (await vault.setStrategyLimits(allocation, 0)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await vault.allocateToStrategy(allocation)).wait();
 
     assert.equal(await vault.strategyDebt(), allocation);
@@ -129,6 +149,7 @@ describe("LQC Liquidity Vault V1", function () {
     await (await vault.connect(user).deposit(ethers.parseEther("1000"), await user.getAddress())).wait();
     await (await vault.setStrategy(await adapter.getAddress())).wait();
     await (await vault.setStrategyLimits(ethers.parseEther("300"), 0)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await vault.setStrategyAdmin(await guardian.getAddress())).wait();
 
     await assert.rejects(vault.connect(other).allocateToStrategy(1));
@@ -151,6 +172,7 @@ describe("LQC Liquidity Vault V1", function () {
     await (await vault.connect(user).deposit(deposit, await user.getAddress())).wait();
     await (await vault.setStrategy(await adapter.getAddress())).wait();
     await (await vault.setStrategyLimits(ethers.parseEther("800"), 0)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await vault.allocateToStrategy(ethers.parseEther("800"))).wait();
 
     await assert.rejects(vault.connect(user).withdraw(ethers.parseEther("201"), await user.getAddress(), await user.getAddress()));
@@ -168,6 +190,7 @@ describe("LQC Liquidity Vault V1", function () {
     await (await vault.connect(user).deposit(deposit, await user.getAddress())).wait();
     await (await vault.setStrategy(await adapter.getAddress())).wait();
     await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await vault.allocateToStrategy(allocation)).wait();
 
     await (await adapter.setLossBps(200)).wait();
@@ -191,6 +214,7 @@ describe("LQC Liquidity Vault V1", function () {
     await (await vault.connect(user).deposit(deposit, await user.getAddress())).wait();
     await (await vault.setStrategy(await adapter.getAddress())).wait();
     await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await vault.allocateToStrategy(allocation)).wait();
     await (await adapter.simulateReportedLoss(loss)).wait();
 
@@ -226,6 +250,7 @@ describe("LQC Liquidity Vault V1", function () {
     await (await vault.connect(user).deposit(deposit, await user.getAddress())).wait();
     await (await vault.setStrategy(await adapter.getAddress())).wait();
     await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await vault.allocateToStrategy(allocation)).wait();
     await (await adapter.setLossBps(3000)).wait();
 
@@ -249,6 +274,7 @@ describe("LQC Liquidity Vault V1", function () {
     await (await vault.connect(user).deposit(deposit, await user.getAddress())).wait();
     await (await vault.setStrategy(await adapter.getAddress())).wait();
     await (await vault.setStrategyLimits(deposit, 0)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await vault.allocateToStrategy(deposit)).wait();
     await (await adapter.setLossBps(10_000)).wait();
     await (await vault.pauseDeposits()).wait();
@@ -276,6 +302,7 @@ describe("LQC Liquidity Vault V1", function () {
     await (await token.connect(other).transfer(await vault.getAddress(), donation)).wait();
     await (await vault.setStrategy(await adapter.getAddress())).wait();
     await (await vault.setStrategyLimits(ethers.parseEther("1000"), 0)).wait();
+    await (await vault.resumeAllocations()).wait();
 
     await assert.rejects(vault.allocateToStrategy(deposit + 1n));
     await (await vault.allocateToStrategy(deposit)).wait();

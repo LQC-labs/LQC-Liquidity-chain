@@ -141,6 +141,7 @@ describe("LQC Vault-Router-Risk-Adapter isolation", function () {
     const allocated = ethers.parseEther("60");
     await (await vault.setStrategy(await strategy.getAddress())).wait();
     await (await vault.setStrategyLimits(allocated, 0)).wait();
+    await (await vault.resumeAllocations()).wait();
     await (await vault.allocateToStrategy(allocated)).wait();
 
     const strategySnapshot = async () => ({
