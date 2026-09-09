@@ -155,7 +155,9 @@ npm run monitor:testnet
 
 The JSON report verifies block freshness and the strict deployment configuration, reports emergency
 pause and pending-ownership states, and checks that execution, native, and automatic routers retain
-no BNB, LQC, mock-USDT, or WBNB custody. A critical result exits with status `2` for CI/monitoring
+no BNB, LQC, mock-USDT, or WBNB custody. It also compares both Safe owner sets and thresholds with
+the deployment record: a weakened policy is critical, while any other signer or threshold change
+requires governance review. A critical result exits with status `2` for CI/monitoring
 integration. This operational evidence does not replace an independent audit.
 
 Generate a reproducible BscScan source-verification package from the validated deployment record:
