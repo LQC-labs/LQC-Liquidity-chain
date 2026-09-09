@@ -117,4 +117,49 @@ describe("LQC critical attack paths", function () {
     assert.equal(await token.balanceOf(await strategy.getAddress()), allocation);
     assert.equal(await strategy.totalManagedAssets(), allocation);
   });
+
+  it("rejects false Strategy deployment receipts and managed-asset accounting", async function () {
+    const token = await deploy(owner, "MockERC20", "mocks/MockERC20", ["Vault", "VLT"]);
+    const vault = await deploy(owner, "LQCLiquidityVault", "vault/LQCLiquidityVault",
+      [await token.getAddress(), await owner.getAddress(), ethers.parseEther("1000"), "Share", "SHARE"]);
+    const strategy = await deploy(owner, "MockDishonestStrategyAdapter", "mocks/MockDishonestStrategyAdapter",
+      [await token.getAddress(), await vault.getAddress()]);
+    const assets = ethers.parseEther("100"), allocation = ethers.parseEther("20");
+    await (await token.mint(await user.getAddress(), assets)).wait();
+    await (await token.connect(user).approve(await vault.getAddress(), assets)).wait();
+    await (await vault.connect(user).deposit(assets, await user.getAddress())).wait();
+    await (await vault.setStrategy(await strategy.getAddress())).wait();
+    await (await vault.setStrategyLimits(allocation, 100)).wait();
+    for (const mode of [1, 2]) {
+      await (await strategy.setLieMode(mode)).wait();
+      await assert.rejects(vault.allocateToStrategy(allocation));
+      assert.equal(await vault.strategyDebt(), 0n);
+      assert.equal(await vault.idleAssets(), assets);
+      assert.equal(await strategy.totalManagedAssets(), 0n);
+      assert.equal(await token.balanceOf(await strategy.getAddress()), 0n);
+    }
+  });
+
+  it("rejects false Strategy withdrawal amounts, balances, and debt reduction", async function () {
+    const token = await deploy(owner, "MockERC20", "mocks/MockERC20", ["Vault", "VLT"]);
+    const vault = await deploy(owner, "LQCLiquidityVault", "vault/LQCLiquidityVault",
+      [await token.getAddress(), await owner.getAddress(), ethers.parseEther("1000"), "Share", "SHARE"]);
+    const strategy = await deploy(owner, "MockDishonestStrategyAdapter", "mocks/MockDishonestStrategyAdapter",
+      [await token.getAddress(), await vault.getAddress()]);
+    const assets = ethers.parseEther("100"), allocation = ethers.parseEther("20");
+    await (await token.mint(await user.getAddress(), assets)).wait();
+    await (await token.connect(user).approve(await vault.getAddress(), assets)).wait();
+    await (await vault.connect(user).deposit(assets, await user.getAddress())).wait();
+    await (await vault.setStrategy(await strategy.getAddress())).wait();
+    await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await vault.allocateToStrategy(allocation)).wait();
+    for (const mode of [3, 4, 5]) {
+      await (await strategy.setLieMode(mode)).wait();
+      await assert.rejects(vault.recallFromStrategy(allocation));
+      assert.equal(await vault.strategyDebt(), allocation);
+      assert.equal(await vault.idleAssets(), assets - allocation);
+      assert.equal(await strategy.totalManagedAssets(), allocation);
+      assert.equal(await token.balanceOf(await strategy.getAddress()), allocation);
+    }
+  });
 });
