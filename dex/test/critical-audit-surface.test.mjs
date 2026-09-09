@@ -22,6 +22,6 @@ describe("LQC critical Solidity audit surface", function () {
         mapped++;
       }
     }
-    assert.equal(mapped, 35);
+    assert.equal(mapped, 36);
   });
 });
