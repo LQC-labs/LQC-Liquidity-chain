@@ -2,12 +2,13 @@ import fs from "node:fs";
 import path from "node:path";
 import solc from "solc";
 import { ethers } from "ethers";
+import { validateDeploymentEvidenceRecord } from "./validate-bsc-testnet.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const recordPath = process.argv[2];
 if (!recordPath) throw new Error("Usage: npm run prepare:verification -- <deployment-record.json>");
 const deployment = JSON.parse(fs.readFileSync(path.resolve(recordPath), "utf8"));
-if (Number(deployment?.network?.chainId) !== 97) throw new Error("Only BSC testnet chain 97 is supported.");
+validateDeploymentEvidenceRecord(deployment);
 
 const sources = {};
 function collect(dir, prefix = "contracts") {

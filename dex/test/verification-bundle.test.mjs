@@ -8,7 +8,9 @@ import { ethers } from "ethers";
 describe("BscScan verification bundle", function () {
   it("pins compiler settings and constructor arguments for each core deployment", function () {
     const address = n => `0x${n.toString(16).padStart(40, "0")}`;
+    const tx = n => `0x${n.toString(16).padStart(64, "0")}`;
     const contracts = {
+      lqc: { address: address(18) }, mockUsdt: { address: address(19) },
       wbnb: { address: address(1) }, factory: { address: address(2) }, router: { address: address(3) },
       dexRegistry: { address: address(4) }, timelock: { address: address(5) }, riskRegistry: { address: address(6) },
       emergencyController: { address: address(7) }, quoteRouter: { address: address(8) }, executionRouter: { address: address(9) },
@@ -17,8 +19,14 @@ describe("BscScan verification bundle", function () {
       liquidityVault: { address: address(15), asset: address(16), depositCap: "100000000000000000000000" },
       idleStrategyAdapter: { address: address(17), asset: address(16), vault: address(15) }
     };
+    let txIndex = 1;
+    for (const item of Object.values(contracts)) {
+      if (item !== contracts.wbnb) item.deploymentTx = tx(txIndex++);
+    }
     const deployment = {
-      network: { chainId: 97 }, deployer: address(20), owner: address(21), riskAdmin: address(22), sourceRevision: "test-commit",
+      generatedAt: "2026-09-09T00:00:00.000Z", network: { chainId: 97 }, deployer: address(20),
+      owner: address(21), riskAdmin: address(22), sourceRevision: "a".repeat(40),
+      compiler: { version: "0.8.30", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
       dexRegistryOwnership: { timelockDelaySeconds: 3600 }, contracts
     };
     const temp = fs.mkdtempSync(path.join(os.tmpdir(), "lqc-verification-"));
@@ -31,7 +39,7 @@ describe("BscScan verification bundle", function () {
       const manifest = JSON.parse(fs.readFileSync(path.join(output, "manifest.json"), "utf8"));
       const input = JSON.parse(fs.readFileSync(path.join(output, "standard-input.json"), "utf8"));
       assert.equal(manifest.chainId, 97);
-      assert.equal(manifest.sourceRevision, "test-commit");
+      assert.equal(manifest.sourceRevision, "a".repeat(40));
       assert.equal(manifest.contracts.length, 15);
       assert.ok(manifest.contracts.every(item => /^0x[0-9a-fA-F]{40}$/.test(item.address)));
       assert.ok(manifest.contracts.every(item => /^[0-9a-f]*$/.test(item.constructorArguments)));

@@ -12,6 +12,11 @@ export const PANCAKE_BSC_TESTNET = Object.freeze({
 });
 
 const same = (a, b) => ethers.getAddress(a) === ethers.getAddress(b);
+const REQUIRED_DEPLOYMENT_EVIDENCE = Object.freeze([
+  "lqc", "mockUsdt", "factory", "router", "dexRegistry", "timelock", "emergencyController",
+  "riskRegistry", "quoteRouter", "executionRouter", "nativeRouter", "splitOptimizer", "autoRouter",
+  "gasCostOracle", "flowAdapter", "liquidityVault", "idleStrategyAdapter"
+]);
 export function assertBscTestnetChain(chainId) {
   if (BigInt(chainId) !== 97n) throw new Error(`Refusing validation on chain ${chainId}; expected BSC testnet 97.`);
 }
@@ -30,6 +35,36 @@ export function deploymentContractAddresses(deployment) {
     if (!ethers.isAddress(address)) throw new Error(`Deployment record is missing ${name}.`);
     return [`lqc.${name}`, address];
   }));
+}
+
+export function validateDeploymentEvidenceRecord(deployment) {
+  if (Number(deployment?.network?.chainId) !== 97) throw new Error("Deployment evidence must target BSC testnet chain 97.");
+  if (!/^0x[0-9a-fA-F]{40}$/.test(deployment?.deployer || "") ||
+      !/^0x[0-9a-fA-F]{40}$/.test(deployment?.owner || "") ||
+      !/^0x[0-9a-fA-F]{40}$/.test(deployment?.riskAdmin || "")) {
+    throw new Error("Deployment evidence is missing valid deployer, governance, or risk addresses.");
+  }
+  if (same(deployment.owner, deployment.riskAdmin)) throw new Error("Deployment evidence does not separate governance and risk roles.");
+  if (!/^[0-9a-fA-F]{40}$/.test(deployment?.sourceRevision || "")) {
+    throw new Error("Deployment evidence must pin a full 40-character source commit SHA.");
+  }
+  if (typeof deployment?.generatedAt !== "string" || Number.isNaN(Date.parse(deployment.generatedAt))) {
+    throw new Error("Deployment evidence has an invalid generation timestamp.");
+  }
+  const compiler = deployment?.compiler;
+  if (compiler?.version !== "0.8.30" || compiler?.optimizer?.enabled !== true ||
+      compiler?.optimizer?.runs !== 200 || compiler?.viaIR !== true || compiler?.evmVersion !== "shanghai") {
+    throw new Error("Deployment evidence compiler settings do not match the reviewed build.");
+  }
+  const required = [...REQUIRED_DEPLOYMENT_EVIDENCE];
+  if (deployment?.contracts?.pancakeAdapter) required.push("pancakeAdapter");
+  if (deployment?.contracts?.pancakeV3Adapter) required.push("pancakeV3Adapter");
+  for (const name of required) {
+    const item = deployment?.contracts?.[name];
+    if (!ethers.isAddress(item?.address)) throw new Error(`Deployment evidence is missing ${name} address.`);
+    if (!ethers.isHexString(item?.deploymentTx, 32)) throw new Error(`Deployment evidence is missing ${name} transaction hash.`);
+  }
+  return { sourceRevision: deployment.sourceRevision.toLowerCase(), contractCount: required.length };
 }
 
 export function validateDeploymentDexRecords(records, onchainDexes) {
@@ -124,6 +159,7 @@ export function validateVaultDeploymentRecord(deployment, onchain) {
 }
 
 export async function validateBscTestnet({ provider, deployment }) {
+  const evidence = validateDeploymentEvidenceRecord(deployment);
   const network = await provider.getNetwork();
   assertBscTestnetChain(network.chainId);
   const lqcAddresses = deploymentContractAddresses(deployment);
@@ -269,7 +305,8 @@ export async function validateBscTestnet({ provider, deployment }) {
       swapsPaused,
       riskAdmin,
       timelockDelaySeconds: Number(delay),
-      vaultReady: true
+      vaultReady: true,
+      evidenceContractCount: evidence.contractCount
     },
     safeForSmokeTest: !swapsPaused
   };
