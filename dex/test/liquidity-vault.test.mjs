@@ -160,7 +160,7 @@ describe("LQC Liquidity Vault V1", function () {
     await (await vault.pauseAllocations()).wait();
     await assert.rejects(vault.connect(guardian).allocateToStrategy(1));
     await assert.rejects(vault.connect(guardian).resumeAllocations());
-    await (await vault.resumeAllocations()).wait();
+    await (await vault.resumeAllocations({ gasLimit: 500_000n })).wait();
   });
 
   it("keeps user withdrawals within idle liquidity until strategy assets are recalled", async function () {

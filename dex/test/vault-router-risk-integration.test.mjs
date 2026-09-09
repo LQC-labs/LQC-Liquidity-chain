@@ -178,7 +178,7 @@ describe("LQC Vault-Router-Risk-Adapter isolation", function () {
     assert.equal(await tokenA.balanceOf(await adapter.getAddress()), 0n);
   });
 
-  it("contains a reported strategy loss inside the Vault while reviewed swaps remain solvent", async function () {
+  it("contains and reconciles a strategy loss without contaminating reviewed swap settlement", async function () {
     const LossyStrategy = new ethers.ContractFactory(
       artifact("MockLossyStrategyAdapter", "mocks/MockLossyStrategyAdapter").abi,
       artifact("MockLossyStrategyAdapter", "mocks/MockLossyStrategyAdapter").bytecode,
@@ -222,5 +222,24 @@ describe("LQC Vault-Router-Risk-Adapter isolation", function () {
     assert.equal((await risk.dailyUsage(await tokenA.getAddress())).amount, amountIn);
     assert.equal(await tokenA.balanceOf(await executionRouter.getAddress()), 0n);
     assert.equal(await tokenA.balanceOf(await adapter.getAddress()), 0n);
+
+    await (await vault.pauseDeposits()).wait();
+    await (await vault.pauseAllocations()).wait();
+    await (await vault.reconcileStrategyLoss(2_000)).wait();
+    await (await vault.recallFromStrategy(allocated - reportedLoss)).wait();
+
+    assert.equal(await vault.accountedAssets(), vaultDeposit - reportedLoss);
+    assert.equal(await vault.idleAssets(), vaultDeposit - reportedLoss);
+    assert.equal(await vault.strategyDebt(), 0n);
+    assert.equal(await strategy.totalManagedAssets(), 0n);
+    assert.equal((await risk.dailyUsage(await tokenA.getAddress())).amount, amountIn);
+    assert.equal(await tokenA.balanceOf(await executionRouter.getAddress()), 0n);
+    assert.equal(await tokenA.balanceOf(await adapter.getAddress()), 0n);
+
+    await (await vault.resumeDeposits()).wait();
+    await (await vault.connect(user).withdraw(
+      ethers.parseEther("1"), await user.getAddress(), await user.getAddress()
+    )).wait();
+    assert.equal(await vault.accountedAssets(), vaultDeposit - reportedLoss - ethers.parseEther("1"));
   });
 });
