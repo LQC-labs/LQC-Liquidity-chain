@@ -170,7 +170,7 @@ contract LQCGaslessPolicy {
             minimumNotionalUsdE18_ == 0 ||
             maxGasPerTransaction_ == 0 ||
             dailyGasBudget_ < maxGasPerTransaction_ ||
-            dailyGasBudget_ > type(uint192).max ||
+            dailyGasBudget_ > type(uint160).max ||
             maxTransactionsPerWalletPerDay_ == 0 ||
             maxTransactionsPerWalletPerDay_ > 5
         ) revert InvalidLimits();
