@@ -26,12 +26,14 @@ contract LQCFlowAdapter is ILQCExecutionAdapter {
     ILQCFlowQuoteRouter public immutable flowRouter;
 
     error ZeroAddress();
+    error InvalidEndpoint();
     error InvalidRoute();
     error RouteEndpointMismatch();
     error UnsupportedTokenBehavior();
 
     constructor(address flowRouter_) {
         if (flowRouter_ == address(0)) revert ZeroAddress();
+        if (flowRouter_.code.length == 0) revert InvalidEndpoint();
         flowRouter = ILQCFlowQuoteRouter(flowRouter_);
     }
 
