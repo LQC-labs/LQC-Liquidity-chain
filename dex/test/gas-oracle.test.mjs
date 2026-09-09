@@ -66,10 +66,11 @@ describe("LQC gas-cost oracle", function () {
     )).wait();
     await assert.rejects(oracle.quoteGasCost(await tokenOut.getAddress(), 100_000n, 1n));
 
-    await (await secondary.setAnswer(603_00000000n)).wait();
-    await (await primary.setUpdatedAt(1)).wait();
+    // Explicit limits avoid intermittent Ganache/ethers underestimation on storage updates in CI.
+    await (await secondary.setAnswer(603_00000000n, { gasLimit: 100_000 })).wait();
+    await (await primary.setUpdatedAt(1, { gasLimit: 100_000 })).wait();
     await assert.rejects(oracle.quoteGasCost(await tokenOut.getAddress(), 100_000n, 1n));
-    await (await oracle.setFeedEnabled(await tokenOut.getAddress(), false)).wait();
+    await (await oracle.setFeedEnabled(await tokenOut.getAddress(), false, { gasLimit: 100_000 })).wait();
     await assert.rejects(oracle.quoteGasCost(await tokenOut.getAddress(), 100_000n, 1n));
   });
 });
