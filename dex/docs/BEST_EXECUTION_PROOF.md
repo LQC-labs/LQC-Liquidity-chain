@@ -31,3 +31,15 @@ minimum. The resulting Keccak-256 `settlementHash` makes later changes detectabl
 This SDK receipt expects independently decoded and canonically confirmed transaction evidence. It
 does not itself query an RPC, decode token transfers, establish block finality, or prevent chain
 reorganizations. Those checks must be performed by the execution service before receipt creation.
+
+## Canonical settlement verification
+
+`verifyCanonicalSettlement` closes that evidence gap for ERC-20 output routes. It retrieves the
+transaction receipt from an RPC provider, requires successful execution, matches the transaction
+and recorded block, re-reads the block to detect a reorganization, enforces a configurable 1–100
+confirmation threshold, and sums matching `Transfer` logs from the committed output token to the
+committed recipient. The decoded total must exactly match the settlement receipt's actual output.
+
+Native BNB output requires separate balance-delta or protocol-event verification and is not claimed
+by this ERC-20 log verifier. The RPC must be independently trusted and production confirmation
+depth remains a governance risk parameter.
