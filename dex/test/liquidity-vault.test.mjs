@@ -180,6 +180,42 @@ describe("LQC Liquidity Vault V1", function () {
     assert.equal(await vault.totalAssets(), deposit - ethers.parseEther("0.5"));
   });
 
+  it("fails closed on reported Strategy loss and reconciles it only under shutdown governance", async function () {
+    const Adapter = new ethers.ContractFactory(artifact("MockLossyStrategyAdapter", "mocks/MockLossyStrategyAdapter").abi,
+      artifact("MockLossyStrategyAdapter", "mocks/MockLossyStrategyAdapter").bytecode, owner);
+    const adapter = await Adapter.deploy(await token.getAddress(), await vault.getAddress());
+    await adapter.waitForDeployment();
+    const deposit = ethers.parseEther("1000");
+    const allocation = ethers.parseEther("500");
+    const loss = ethers.parseEther("100");
+    await (await vault.connect(user).deposit(deposit, await user.getAddress())).wait();
+    await (await vault.setStrategy(await adapter.getAddress())).wait();
+    await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await vault.allocateToStrategy(allocation)).wait();
+    await (await adapter.simulateReportedLoss(loss)).wait();
+
+    await assert.rejects(vault.connect(user).deposit(ethers.parseEther("1"), await user.getAddress()));
+    await assert.rejects(vault.connect(user).withdraw(ethers.parseEther("1"), await user.getAddress(), await user.getAddress()));
+    await assert.rejects(vault.allocateToStrategy(1));
+    await assert.rejects(vault.reconcileStrategyLoss(2000));
+    await (await vault.pauseDeposits()).wait();
+    await (await vault.pauseAllocations()).wait();
+    await assert.rejects(vault.connect(guardian).reconcileStrategyLoss(2000));
+    await assert.rejects(vault.reconcileStrategyLoss(1999));
+    await (await vault.reconcileStrategyLoss(2000, { gasLimit: 500_000 })).wait();
+
+    assert.equal(await vault.strategyDebt(), allocation - loss);
+    assert.equal(await vault.totalAssets(), deposit - loss);
+    await (await vault.recallFromStrategy(allocation - loss, { gasLimit: 500_000 })).wait();
+    assert.equal(await vault.strategyDebt(), 0n);
+    assert.equal(await vault.idleAssets(), deposit - loss);
+    assert.equal(await token.balanceOf(await adapter.getAddress()), 0n);
+    await (await vault.resumeAllocations()).wait();
+    await (await vault.resumeDeposits()).wait();
+    await (await vault.connect(user).withdraw(ethers.parseEther("1"), await user.getAddress(), await user.getAddress(),
+      { gasLimit: 500_000 })).wait();
+  });
+
   it("requires full shutdown and governance for an emergency loss override", async function () {
     const Adapter = new ethers.ContractFactory(artifact("MockLossyStrategyAdapter", "mocks/MockLossyStrategyAdapter").abi,
       artifact("MockLossyStrategyAdapter", "mocks/MockLossyStrategyAdapter").bytecode, owner);

@@ -184,19 +184,27 @@ describe("LQC critical attack paths", function () {
     const token = await deploy(owner, "MockRebasingToken", "mocks/MockRebasingToken", ["Rebase", "RBS"]);
     const vault = await deploy(owner, "LQCLiquidityVault", "vault/LQCLiquidityVault",
       [await token.getAddress(), await owner.getAddress(), ethers.parseEther("1000"), "Share", "SHARE"]);
-    const deposit = ethers.parseEther("100"), loss = ethers.parseEther("20");
+    const strategy = await deploy(owner, "LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter",
+      [await token.getAddress(), await vault.getAddress()]);
+    const deposit = ethers.parseEther("100"), loss = ethers.parseEther("20"), allocation = ethers.parseEther("20");
     await (await token.mint(await user.getAddress(), deposit)).wait();
     await (await token.mint(await attacker.getAddress(), deposit)).wait();
     await (await token.connect(user).approve(await vault.getAddress(), deposit)).wait();
     await (await token.connect(attacker).approve(await vault.getAddress(), deposit)).wait();
     await (await vault.connect(user).deposit(deposit, await user.getAddress())).wait();
+    await (await vault.setStrategy(await strategy.getAddress())).wait();
+    await (await vault.setStrategyLimits(allocation, 100)).wait();
     await (await token.decreaseBalance(await vault.getAddress(), loss)).wait();
     const supply = await vault.totalSupply(), userShares = await vault.balanceOf(await user.getAddress());
+    await assert.rejects(vault.allocateToStrategy(allocation));
     await assert.rejects(vault.connect(attacker).deposit(deposit, await attacker.getAddress()));
     await assert.rejects(vault.connect(user).withdraw(ethers.parseEther("1"), await user.getAddress(), await user.getAddress()));
     await assert.rejects(vault.connect(user).redeem(ethers.parseEther("1"), await user.getAddress(), await user.getAddress()));
     assert.equal(await vault.totalAssets(), deposit);
     assert.equal(await vault.idleAssets(), deposit - loss);
+    assert.equal(await vault.strategyDebt(), 0n);
+    assert.equal(await strategy.totalManagedAssets(), 0n);
+    assert.equal(await token.balanceOf(await strategy.getAddress()), 0n);
     assert.equal(await vault.totalSupply(), supply);
     assert.equal(await vault.balanceOf(await user.getAddress()), userShares);
     assert.equal(await vault.balanceOf(await attacker.getAddress()), 0n);

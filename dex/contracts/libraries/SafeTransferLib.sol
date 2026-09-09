@@ -11,18 +11,14 @@ library SafeTransferLib {
         (bool success, bytes memory data) = token.call(
             abi.encodeWithSelector(bytes4(keccak256("transfer(address,uint256)")), to, amount)
         );
-        if (!success || (data.length != 0 && (data.length != 32 || !abi.decode(data, (bool))))) {
-            revert TransferFailed();
-        }
+        if (!success || (data.length != 0 && !abi.decode(data, (bool)))) revert TransferFailed();
     }
 
     function safeTransferFrom(address token, address from, address to, uint256 amount) internal {
         (bool success, bytes memory data) = token.call(
             abi.encodeWithSelector(bytes4(keccak256("transferFrom(address,address,uint256)")), from, to, amount)
         );
-        if (!success || (data.length != 0 && (data.length != 32 || !abi.decode(data, (bool))))) {
-            revert TransferFromFailed();
-        }
+        if (!success || (data.length != 0 && !abi.decode(data, (bool)))) revert TransferFromFailed();
     }
 
     /// @notice Sets an exact allowance, including compatibility with tokens that require zero-first approval.

@@ -50,6 +50,7 @@ contract LQCLiquidityVault {
     event StrategyAllocation(address indexed strategy, uint256 assets, uint256 strategyDebt);
     event StrategyRecall(address indexed strategy, uint256 debtRepaid, uint256 assetsReceived, uint256 loss);
     event EmergencyStrategyRecall(address indexed strategy, uint256 debtRepaid, uint256 assetsReceived, uint256 loss);
+    event StrategyLossRecognized(address indexed strategy, uint256 loss, uint256 remainingDebt);
     event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -119,7 +120,7 @@ contract LQCLiquidityVault {
         if (assets == 0) revert ZeroAmount();
         if (depositsPaused) revert DepositsPaused();
         if (isInsolvent()) revert Insolvent();
-        if (idleAssets() < accountedIdleAssets()) revert UnsupportedTokenBehavior();
+        _requireFullyBacked();
         if (accountedAssets + assets > depositCap) revert DepositCapExceeded();
         uint256 supply = totalSupply;
         if (supply == 0) {
@@ -197,6 +198,7 @@ contract LQCLiquidityVault {
         if (allocationsPaused) revert AllocationsPaused();
         if (strategy == address(0)) revert InvalidStrategy();
         if (assets == 0) revert ZeroAmount();
+        _requireFullyBacked();
         if (strategyDebt + assets > strategyCap) revert StrategyCapExceeded();
         if (assets > accountedIdleAssets() || assets > idleAssets()) revert InsufficientIdleLiquidity();
 
@@ -210,6 +212,25 @@ contract LQCLiquidityVault {
         }
         strategyDebt += assets;
         emit StrategyAllocation(strategy, assets, strategyDebt);
+    }
+
+    /// @notice Reconciles a Strategy's reported mark-to-market loss after a full operational shutdown.
+    /// @dev The reviewed Strategy remains the source of managed-asset valuation; recovery can then recall the remainder.
+    function reconcileStrategyLoss(uint256 emergencyMaxLossBps)
+        external onlyOwner nonReentrant returns (uint256 loss)
+    {
+        if (!depositsPaused || !allocationsPaused) revert EmergencyModeRequired();
+        if (emergencyMaxLossBps > BPS) revert InvalidLossLimit();
+        if (strategy == address(0)) revert InvalidStrategy();
+        uint256 reportedAssets = ILQCStrategyAdapter(strategy).totalManagedAssets();
+        if (reportedAssets > strategyDebt) revert UnsupportedTokenBehavior();
+        loss = strategyDebt - reportedAssets;
+        if (loss == 0) revert ZeroAmount();
+        if (loss * BPS > strategyDebt * emergencyMaxLossBps) revert LossLimitExceeded();
+
+        strategyDebt = reportedAssets;
+        accountedAssets -= loss;
+        emit StrategyLossRecognized(strategy, loss, reportedAssets);
     }
 
     function recallFromStrategy(uint256 assets) external nonReentrant returns (uint256 received, uint256 loss) {
@@ -265,12 +286,14 @@ contract LQCLiquidityVault {
     }
 
     function resumeAllocations() external onlyOwner {
+        _requireFullyBacked();
         allocationsPaused = false;
         emit AllocationPauseChanged(false, msg.sender);
     }
 
     function resumeDeposits() external onlyOwner {
         if (isInsolvent()) revert Insolvent();
+        _requireFullyBacked();
         depositsPaused = false;
         emit DepositPauseChanged(false, msg.sender);
     }
@@ -305,7 +328,7 @@ contract LQCLiquidityVault {
 
     function _withdraw(uint256 assets, uint256 shares, address receiver, address shareOwner) private {
         if (receiver == address(0) || receiver == address(this)) revert ZeroAddress();
-        if (idleAssets() < accountedIdleAssets()) revert UnsupportedTokenBehavior();
+        _requireFullyBacked();
         if (assets > accountedIdleAssets() || assets > idleAssets()) revert InsufficientIdleLiquidity();
         if (msg.sender != shareOwner) _spendAllowance(shareOwner, shares);
         _burn(shareOwner, shares);
@@ -316,6 +339,14 @@ contract LQCLiquidityVault {
         if (vaultBefore - IERC20(asset).balanceOf(address(this)) != assets ||
             IERC20(asset).balanceOf(receiver) - receiverBefore != assets) revert UnsupportedTokenBehavior();
         emit Withdraw(msg.sender, receiver, shareOwner, assets, shares);
+    }
+
+    function _requireFullyBacked() private view {
+        if (idleAssets() < accountedIdleAssets()) revert UnsupportedTokenBehavior();
+        if (strategyDebt != 0 &&
+            (strategy == address(0) || ILQCStrategyAdapter(strategy).totalManagedAssets() < strategyDebt)) {
+            revert UnsupportedTokenBehavior();
+        }
     }
 
     function _transfer(address from, address to, uint256 amount) private {
