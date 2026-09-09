@@ -108,4 +108,52 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.requiresTokenApproval(100n, 0n));
   });
 
+  it("creates a verifiable proof that a single route has the highest gas-adjusted output", function () {
+    const dexA = ethers.id("DEX_A"), dexB = ethers.id("DEX_B");
+    const proof = sdk.buildBestExecutionProof({ chainId: 97, quoteBlock: 12345, expiresAt: 1789000000,
+      tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n, slippageBps: 50,
+      candidates: [
+        { dexId: dexA, name: "A", amountOut: 1010n, cost: 30n, priceImpactBps: 12, routeDataHash: ethers.id("route-a") },
+        { dexId: dexB, name: "B", amountOut: 1000n, cost: 10n, priceImpactBps: 8, routeDataHash: ethers.id("route-b") }
+      ], plan: { kind: "single", cost: 10n, legs: [{ dexId: dexB, amountIn: 1000n, expectedOut: 1000n, minimumOut: 995n }] }
+    }, ethers);
+    assert.equal(proof.bestSingle.dexId, dexB.toLowerCase());
+    assert.equal(proof.plan.netAmountOut, "990");
+    assert.equal(sdk.verifyBestExecutionProof(proof, ethers), true);
+    assert.equal("routeData" in proof.candidates[0], false);
+  });
+
+  it("proves a split route only when it beats the best single route after gas", function () {
+    const dexA = ethers.id("DEX_A"), dexB = ethers.id("DEX_B");
+    const input = { chainId: 97, quoteBlock: 12345, expiresAt: 1789000000,
+      tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n, slippageBps: 50,
+      candidates: [
+        { dexId: dexA, name: "A", amountOut: 1000n, cost: 20n, routeDataHash: ethers.id("route-a") },
+        { dexId: dexB, name: "B", amountOut: 990n, cost: 20n, routeDataHash: ethers.id("route-b") }
+      ], plan: { kind: "split", cost: 30n, legs: [
+        { dexId: dexA, amountIn: 600n, expectedOut: 620n, minimumOut: 610n },
+        { dexId: dexB, amountIn: 400n, expectedOut: 410n, minimumOut: 400n }
+      ] } };
+    const proof = sdk.buildBestExecutionProof(input, ethers);
+    assert.equal(proof.plan.netAmountOut, "1000");
+    assert.equal(proof.improvementBps, 204);
+    const weak = structuredClone(input); weak.plan.legs[1].expectedOut = 380n; weak.plan.legs[1].minimumOut = 370n;
+    assert.throws(() => sdk.buildBestExecutionProof(weak, ethers), /does not improve/);
+  });
+
+  it("detects proof tampering and rejects unreviewed or inconsistent routes", function () {
+    const dexA = ethers.id("DEX_A");
+    const input = { chainId: 97, quoteBlock: 12345, expiresAt: 1789000000,
+      tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n, slippageBps: 50,
+      candidates: [{ dexId: dexA, name: "A", amountOut: 1000n, cost: 10n, routeDataHash: ethers.id("route-a") }],
+      plan: { kind: "single", cost: 10n, legs: [{ dexId: dexA, amountIn: 1000n, expectedOut: 1000n, minimumOut: 990n }] } };
+    const proof = sdk.buildBestExecutionProof(input, ethers);
+    proof.plan.minimumOut = "1";
+    assert.equal(sdk.verifyBestExecutionProof(proof, ethers), false);
+    const unknown = structuredClone(input); unknown.plan.legs[0].dexId = ethers.id("UNKNOWN");
+    assert.throws(() => sdk.buildBestExecutionProof(unknown, ethers), /Invalid proof leg/);
+    const inconsistent = structuredClone(input); inconsistent.plan.legs[0].amountIn = 999n;
+    assert.throws(() => sdk.buildBestExecutionProof(inconsistent, ethers), /allocation/);
+  });
+
 });
