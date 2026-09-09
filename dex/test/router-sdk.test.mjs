@@ -78,4 +78,11 @@ describe("LQC Router browser SDK", function () {
     assert.deepEqual(sdk.rankRouteQuotes([{ name: "zero", amountOut: 0n }]), []);
   });
 
+  it("restores a remembered wallet only when an account and the expected chain are present", function () {
+    assert.equal(sdk.walletSessionState([], true, "0x61", "0x61"), "disconnected");
+    assert.equal(sdk.walletSessionState([tokenA], false, "0x61", "0x61"), "disconnected");
+    assert.equal(sdk.walletSessionState([tokenA], true, "0x1", "0x61"), "wrong_network");
+    assert.equal(sdk.walletSessionState([tokenA], true, "0x61", "0x61"), "connected");
+  });
+
 });
