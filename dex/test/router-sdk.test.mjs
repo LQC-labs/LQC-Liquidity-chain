@@ -69,6 +69,7 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.explainSwapError({ message: "daily cap exceeded" }).retryable, false);
     assert.equal(sdk.explainSwapError({ message: "RouteChangedDuringApproval" }).code, "ROUTE_CHANGED");
     assert.equal(sdk.explainSwapError({ message: "QuoteWorsenedDuringApproval" }).code, "QUOTE_WORSENED");
+    assert.equal(sdk.explainSwapError({ message: "WalletContextChanged" }).code, "WALLET_CHANGED");
   });
 
   it("ranks executable primary and fallback routes by net output and priority", function () {
@@ -110,6 +111,10 @@ describe("LQC Router browser SDK", function () {
     assert.deepEqual(Array.from(sdk.tokenApprovalSequence(100n, 100n)), []);
     assert.equal(sdk.isRefreshedOutputAcceptable(1000n, 990n, 1), true);
     assert.equal(sdk.isRefreshedOutputAcceptable(1000n, 989n, 1), false);
+    assert.equal(sdk.executionContextMatches(tokenA, [tokenA], "0x61", "0x61"), true);
+    assert.equal(sdk.executionContextMatches(tokenA, [tokenB], "0x61", "0x61"), false);
+    assert.equal(sdk.executionContextMatches(tokenA, [tokenA], "0x61", "0x1"), false);
+    assert.equal(sdk.executionContextMatches(tokenA, [], "0x61", "0x61"), false);
     assert.throws(() => sdk.isRefreshedOutputAcceptable(0n, 100n, 1));
     assert.throws(() => sdk.tokenApprovalSequence(-1n, 100n));
     assert.throws(() => sdk.requiresTokenApproval(-1n, 100n));
