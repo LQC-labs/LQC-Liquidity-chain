@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **42 Solidity sources** and reports **159 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **43 Solidity sources** and reports **161 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -42,6 +42,7 @@ The current suite compiles **42 Solidity sources** and reports **159 passing tes
 | Router SDK coverage gate | `scripts/check-router-sdk-coverage.mjs` | Uses dependency-free V8 precise coverage and fails below 100% function or 90% executed-range coverage. The reviewed baseline is 35/35 functions and 217/241 ranges; neither metric is mislabeled as branch or Solidity coverage. |
 | Critical Solidity audit-surface drift | `test/critical-audit-surface.test.mjs`, `audit/critical-surface.json` | Maps all 35 state-changing ABI entry points across Execution Router, Risk Registry, and Liquidity Vault to explicit authority, critical/high risk, and existing automated evidence. Any unclassified ABI change fails the suite. |
 | Critical cross-module attack paths | `test/critical-attack-paths.test.mjs` | A malicious DEX adapter cannot reenter the Execution Router or retain funds/approval; an attacker cannot steal Risk/Vault authority, bypass pauses, consume limits, reopen deposits, or change caps/strategy. Rejected attacks preserve balances and configuration. |
+| Malicious Strategy callback isolation | `test/critical-attack-paths.test.mjs` | Strategy callbacks cannot reenter Vault allocation or recall. Both attacks revert atomically and preserve idle assets, strategy token backing, managed-asset accounting, and strategy debt. |
 | Reproducible BscScan verification bundle generation | `test/verification-bundle.test.mjs` | Bundle structure and source revision covered; explorer publication is deployment-specific. |
 | Vault donation-resistant share and idle-asset accounting | `test/liquidity-vault.test.mjs` | Covered for direct donations before deposits and strategy allocation. |
 | Vault strategy approval, role separation, and exposure cap | `test/liquidity-vault.test.mjs` | Covered with a vault-specific reference adapter; production strategies remain pending. |
