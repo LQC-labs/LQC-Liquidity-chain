@@ -23,7 +23,8 @@ export async function assertContractCode(provider, namedAddresses) {
 }
 export function deploymentContractAddresses(deployment) {
   if (Number(deployment?.network?.chainId) !== 97) throw new Error("Deployment record must target BSC testnet chain 97.");
-  const required = ["dexRegistry", "riskRegistry", "emergencyController", "executionRouter", "timelock", "gasCostOracle"];
+  const required = ["dexRegistry", "riskRegistry", "emergencyController", "executionRouter", "timelock", "gasCostOracle",
+    "liquidityVault", "idleStrategyAdapter"];
   return Object.fromEntries(required.map(name => {
     const address = deployment?.contracts?.[name]?.address;
     if (!ethers.isAddress(address)) throw new Error(`Deployment record is missing ${name}.`);
@@ -91,6 +92,37 @@ export function validateRiskAdministrator(deployment, onchainRiskAdmin) {
   return ethers.getAddress(onchainRiskAdmin);
 }
 
+export function validateVaultDeploymentRecord(deployment, onchain) {
+  const vault = deployment?.contracts?.liquidityVault;
+  const adapter = deployment?.contracts?.idleStrategyAdapter;
+  const roles = deployment?.liquidityVaultRoles;
+  if (!vault || !adapter || !roles) throw new Error("Deployment record is missing Vault configuration.");
+  for (const [name, address] of Object.entries({
+    vault: vault.address, vaultAsset: vault.asset, adapter: adapter.address,
+    adapterAsset: adapter.asset, adapterVault: adapter.vault,
+    owner: roles.owner, pauseAdmin: roles.pauseAdmin, strategyAdmin: roles.strategyAdmin
+  })) if (!ethers.isAddress(address)) throw new Error(`Vault record has an invalid ${name} address.`);
+  if (!same(vault.asset, adapter.asset) || !same(vault.address, adapter.vault)) {
+    throw new Error("Vault and strategy adapter linkage does not match the deployment record.");
+  }
+  if (same(roles.owner, roles.pauseAdmin) || same(roles.owner, roles.strategyAdmin)) {
+    throw new Error("Vault operational roles are not separated from governance.");
+  }
+  if (!same(onchain.owner, roles.owner) || !same(onchain.pauseAdmin, roles.pauseAdmin) ||
+      !same(onchain.strategyAdmin, roles.strategyAdmin)) throw new Error("Vault role configuration mismatch.");
+  if (!same(onchain.asset, vault.asset) || !same(onchain.strategy, adapter.address) ||
+      !same(onchain.adapterAsset, adapter.asset) || !same(onchain.adapterVault, adapter.vault)) {
+    throw new Error("Vault on-chain asset or strategy linkage mismatch.");
+  }
+  if (BigInt(onchain.depositCap) !== BigInt(vault.depositCap) ||
+      BigInt(onchain.strategyCap) !== BigInt(vault.strategyCap) ||
+      BigInt(onchain.maxLossBps) !== BigInt(vault.maxLossBps)) throw new Error("Vault limit configuration mismatch.");
+  if (BigInt(onchain.strategyDebt) !== 0n || BigInt(onchain.accountedAssets) !== 0n ||
+      BigInt(onchain.adapterManagedAssets) !== 0n) throw new Error("Fresh Vault deployment contains unexpected accounting state.");
+  if (onchain.insolvent) throw new Error("Vault reports an insolvent accounting state.");
+  return true;
+}
+
 export async function validateBscTestnet({ provider, deployment }) {
   const network = await provider.getNetwork();
   assertBscTestnetChain(network.chainId);
@@ -121,6 +153,40 @@ export async function validateBscTestnet({ provider, deployment }) {
     throw new Error("Gas-cost oracle ownership is not held by the timelock.");
   }
   if (!same(gasOracleWrappedNative, v2Wbnb)) throw new Error("Gas-cost oracle WBNB mismatch.");
+
+  const vaultRecord = deployment.contracts.liquidityVault;
+  const adapterRecord = deployment.contracts.idleStrategyAdapter;
+  const vault = new ethers.Contract(vaultRecord.address, [
+    "function owner() view returns(address)", "function pauseAdmin() view returns(address)",
+    "function strategyAdmin() view returns(address)", "function asset() view returns(address)",
+    "function strategy() view returns(address)", "function depositCap() view returns(uint256)",
+    "function strategyCap() view returns(uint256)", "function maxLossBps() view returns(uint256)",
+    "function strategyDebt() view returns(uint256)", "function accountedAssets() view returns(uint256)",
+    "function depositsPaused() view returns(bool)", "function allocationsPaused() view returns(bool)",
+    "function isInsolvent() view returns(bool)"
+  ], provider);
+  const adapter = new ethers.Contract(adapterRecord.address, [
+    "function asset() view returns(address)", "function vault() view returns(address)",
+    "function totalManagedAssets() view returns(uint256)"
+  ], provider);
+  const vaultValues = await Promise.all([
+    vault.owner(), vault.pauseAdmin(), vault.strategyAdmin(), vault.asset(), vault.strategy(), vault.depositCap(),
+    vault.strategyCap(), vault.maxLossBps(), vault.strategyDebt(), vault.accountedAssets(), vault.depositsPaused(),
+    vault.allocationsPaused(), vault.isInsolvent(), adapter.asset(), adapter.vault(), adapter.totalManagedAssets()
+  ]);
+  if (!same(vaultValues[0], deployment.contracts.timelock.address)) {
+    throw new Error("Vault ownership is not held by the timelock.");
+  }
+  if (!same(vaultValues[1], deployment.riskAdmin) || !same(vaultValues[2], deployment.riskAdmin)) {
+    throw new Error("Vault testnet operational roles do not match the risk administrator.");
+  }
+  validateVaultDeploymentRecord(deployment, {
+    owner: vaultValues[0], pauseAdmin: vaultValues[1], strategyAdmin: vaultValues[2], asset: vaultValues[3],
+    strategy: vaultValues[4], depositCap: vaultValues[5], strategyCap: vaultValues[6], maxLossBps: vaultValues[7],
+    strategyDebt: vaultValues[8], accountedAssets: vaultValues[9], depositsPaused: vaultValues[10],
+    allocationsPaused: vaultValues[11], insolvent: vaultValues[12], adapterAsset: vaultValues[13],
+    adapterVault: vaultValues[14], adapterManagedAssets: vaultValues[15]
+  });
 
   const registry = new ethers.Contract(deployment.contracts.dexRegistry.address, [
     "function owner() view returns(address)", "function pauseAdmin() view returns(address)",
@@ -202,7 +268,8 @@ export async function validateBscTestnet({ provider, deployment }) {
       activeDexCount: onchainDexes.filter(dex => dex.enabled).length,
       swapsPaused,
       riskAdmin,
-      timelockDelaySeconds: Number(delay)
+      timelockDelaySeconds: Number(delay),
+      vaultReady: true
     },
     safeForSmokeTest: !swapsPaused
   };

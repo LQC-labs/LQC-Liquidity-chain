@@ -8,6 +8,12 @@ const positive = (name, value) => {
   if (parsed <= 0n) throw new Error(`${name} must be positive.`);
   return parsed;
 };
+const nonNegative = (name, value) => {
+  let parsed;
+  try { parsed = ethers.parseUnits(String(value), 18); }
+  catch { throw new Error(`${name} must be a valid non-negative 18-decimal amount.`); }
+  return parsed;
+};
 
 export function validateTestnetDeploymentConfig(env) {
   if (!env.BSC_TESTNET_RPC_URL) throw new Error("BSC_TESTNET_RPC_URL is required.");
@@ -37,6 +43,18 @@ export function validateTestnetDeploymentConfig(env) {
   const delay = BigInt(env.TIMELOCK_DELAY || "3600");
   if (delay < 3600n || delay > 604800n) throw new Error("TIMELOCK_DELAY must be between 3600 and 604800 seconds.");
 
+  const vaultDepositCap = positive("TEST_VAULT_DEPOSIT_CAP", env.TEST_VAULT_DEPOSIT_CAP || "100000");
+  const vaultStrategyCap = nonNegative("TEST_VAULT_STRATEGY_CAP", env.TEST_VAULT_STRATEGY_CAP || "0");
+  let vaultMaxLossBps;
+  try { vaultMaxLossBps = BigInt(env.TEST_VAULT_MAX_LOSS_BPS || "100"); }
+  catch { throw new Error("TEST_VAULT_MAX_LOSS_BPS must be an integer from 0 to 2000."); }
+  if (vaultStrategyCap > vaultDepositCap) {
+    throw new Error("TEST_VAULT_STRATEGY_CAP cannot exceed TEST_VAULT_DEPOSIT_CAP.");
+  }
+  if (vaultMaxLossBps < 0n || vaultMaxLossBps > 2000n) {
+    throw new Error("TEST_VAULT_MAX_LOSS_BPS must be between 0 and 2000.");
+  }
+
   const limits = [
     ["TEST_LQC", env.TEST_LQC_MAX_TX || "10000", env.TEST_LQC_MAX_DAY || "100000"],
     ["TEST_USDT", env.TEST_USDT_MAX_TX || "10000", env.TEST_USDT_MAX_DAY || "100000"],
@@ -50,6 +68,7 @@ export function validateTestnetDeploymentConfig(env) {
 
   const lqcSupply = positive("TEST_LQC_SUPPLY", env.TEST_LQC_SUPPLY || "1000000");
   const usdtSupply = positive("TEST_USDT_SUPPLY", env.TEST_USDT_SUPPLY || "1000000");
+  if (vaultDepositCap > usdtSupply) throw new Error("TEST_VAULT_DEPOSIT_CAP cannot exceed the mock USDT supply.");
   const lqcLiquidity = positive("LQC_USDT_LIQUIDITY_LQC", env.LQC_USDT_LIQUIDITY_LQC || "100000") +
     positive("LQC_BNB_LIQUIDITY_LQC", env.LQC_BNB_LIQUIDITY_LQC || "100000");
   const usdtLiquidity = positive("LQC_USDT_LIQUIDITY_USDT", env.LQC_USDT_LIQUIDITY_USDT || "100000");
@@ -70,7 +89,8 @@ export function validateTestnetDeploymentConfig(env) {
       ethers.getAddress(v3Quoter) !== PANCAKE_BSC_TESTNET.v3Quoter)) {
     throw new Error("PancakeSwap V3 addresses do not match the pinned BSC testnet endpoints.");
   }
-  return { walletAddress, owner, riskAdmin, delay, bnbLiquidity, gasReserve };
+  return { walletAddress, owner, riskAdmin, delay, bnbLiquidity, gasReserve,
+    vaultDepositCap, vaultStrategyCap, vaultMaxLossBps };
 }
 
 export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL)) {

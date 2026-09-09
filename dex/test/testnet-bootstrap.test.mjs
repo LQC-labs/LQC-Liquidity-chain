@@ -24,6 +24,14 @@ describe("BSC testnet bootstrap smoke flow", function () {
     const lqc = await deploy("LQCTestToken", "testnet/LQCTestToken", ["LQC Test Token", "LQC", 18, ownerAddress]);
     const usdt = await deploy("LQCTestToken", "testnet/LQCTestToken", ["Mock USDT", "USDT", 18, ownerAddress]);
     const wbnb = await deploy("MockWBNB", "mocks/MockWBNB");
+    const vault = await deploy("LQCLiquidityVault", "vault/LQCLiquidityVault", [
+      await usdt.getAddress(), ownerAddress, ethers.parseEther("100000"), "LQC Testnet Vault Share", "lvUSDT"
+    ]);
+    const idleStrategy = await deploy("LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter", [
+      await usdt.getAddress(), await vault.getAddress()
+    ]);
+    await (await vault.setStrategy(await idleStrategy.getAddress())).wait();
+    await (await vault.setStrategyLimits(ethers.parseEther("10000"), 100)).wait();
     const factory = await deploy("LQCFlowFactory", "LQCFlowFactory", [ownerAddress]);
     const router = await deploy("LQCFlowRouter", "LQCFlowRouter", [await factory.getAddress(), await wbnb.getAddress()]);
     const registry = await deploy("LQCDexRegistry", "router-v2/LQCDexRegistry", [ownerAddress]);
@@ -51,6 +59,9 @@ describe("BSC testnet bootstrap smoke flow", function () {
 
     assert.notEqual(await factory.getPair(await lqc.getAddress(), await usdt.getAddress()), ethers.ZeroAddress);
     assert.notEqual(await factory.getPair(await lqc.getAddress(), await wbnb.getAddress()), ethers.ZeroAddress);
+    assert.equal(await vault.strategy(), await idleStrategy.getAddress());
+    assert.equal(await vault.strategyDebt(), 0n);
+    assert.equal(await idleStrategy.totalManagedAssets(), 0n);
 
     const path = [await lqc.getAddress(), await usdt.getAddress()];
     const amountIn = ethers.parseEther("1");
