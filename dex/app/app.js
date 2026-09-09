@@ -56,11 +56,22 @@
     if(!sdk.isSplitNetBetter(single.best.amountOut,netBest.cost,split.totalNetAmountOut))return{kind:'single',single,routes,costs,ranked,oracleReady:true};
     return{kind:'split',single,split,routes,costs,ranked,oracleReady:true,summary:sdk.summarizeSplit(cfg.dexes,split.amountsIn,value)};
   }
+  async function planPriceImpact(value,out,probe,path,plan){
+    if(plan.kind==='single'){
+      const probeOut=await new ethers.Contract(plan.single.dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),probe,plan.single.routeData);
+      return sdk.priceImpactBps(value,out,probe,probeOut);
+    }
+    const expectedParts=await Promise.all(plan.summary.map(async item=>{
+      const index=cfg.dexes.indexOf(item.dex),probeOut=await new ethers.Contract(item.dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),probe,plan.routes[index]);
+      return item.amountIn*probeOut/probe;
+    }));
+    return sdk.priceImpactFromExpected(out,expectedParts.reduce((total,part)=>total+part,0n));
+  }
   async function quote(){
     ui.amountOut.textContent='0.0';ui.minimum.textContent='—';ui.gas.textContent='—';ui.impact.textContent='—';ui.split.textContent='단일 경로';ui.selectedDex.textContent='견적 확인 중';ui.alternativeRoute.textContent='경로 확인 중';ui.alternativeRoute.classList.remove('alternative-ready');ui.preflightState.textContent='실행 조건 확인 중';ui.preflightState.className='';
     const raw=ui.amountIn.value.trim();if(!raw||Number(raw)<=0||!deployed){ui.selectedDex.textContent='LQC Flow · PancakeSwap 비교 대기';ui.alternativeRoute.textContent='견적 후 표시';ui.preflightState.textContent='확인 대기';return}
     try{
-      const path=[address(tokenIn),address(tokenOut)],value=ethers.parseUnits(raw,tokenIn.decimals),probe=value>1000n?value/1000n:1n,plan=await executionPlan(value,path),[probeResult,feeData]=await Promise.all([bestQuote(probe,path),provider.getFeeData()]),ranked=plan.ranked||await rankedRoutes(value,path,plan.routes,plan.costs),out=plan.kind==='split'?plan.split.totalAmountOut:plan.single.best.amountOut,min=sdk.minimumAmountOut(out,ui.slippage.value),impact=sdk.priceImpactBps(value,out,probe,probeResult.best.amountOut),gasDex=plan.kind==='split'?{gasUnits:plan.summary.reduce((total,item)=>total+Number(item.dex.gasUnits||220000),0)}:plan.single.dex,gasWei=sdk.estimatedGasWei(gasDex,feeData.gasPrice||0n,tokenIn.address==='native'||tokenOut.address==='native');
+      const path=[address(tokenIn),address(tokenOut)],value=ethers.parseUnits(raw,tokenIn.decimals),probe=value>1000n?value/1000n:1n,plan=await executionPlan(value,path),out=plan.kind==='split'?plan.split.totalAmountOut:plan.single.best.amountOut,[impact,feeData]=await Promise.all([planPriceImpact(value,out,probe,path,plan),provider.getFeeData()]),ranked=plan.ranked||await rankedRoutes(value,path,plan.routes,plan.costs),min=sdk.minimumAmountOut(out,ui.slippage.value),gasDex=plan.kind==='split'?{gasUnits:plan.summary.reduce((total,item)=>total+Number(item.dex.gasUnits||220000),0)}:plan.single.dex,gasWei=sdk.estimatedGasWei(gasDex,feeData.gasPrice||0n,tokenIn.address==='native'||tokenOut.address==='native');
       ui.amountOut.textContent=ethers.formatUnits(out,tokenOut.decimals);ui.minimum.textContent=`${Number(ethers.formatUnits(min,tokenOut.decimals)).toLocaleString(undefined,{maximumFractionDigits:6})} ${tokenOut.symbol}`;ui.gas.textContent=`≈ ${Number(ethers.formatEther(gasWei)).toFixed(6)} BNB`;ui.impact.textContent=`≈ ${(impact/100).toFixed(2)}%`;ui.impact.classList.toggle('warning',impact>=300);ui.selectedDex.textContent=plan.kind==='split'?plan.summary.map(item=>item.dex.name).join(' + '):plan.single.dex.name;ui.split.textContent=plan.kind==='split'?plan.summary.map(item=>`${item.dex.name} ${item.percent.toFixed(1)}%`).join(' · '):'단일 경로 100%';ui.routeStrategy.textContent=plan.kind==='split'?'Router 2.0 · 가스 차감 후 원자적 분할':plan.oracleReady?'Router 2.0 · 가스 차감 후 단일 최적':'가스 오라클 대기 · 안전 단일 경로';const fallback=ranked.find(item=>item.name!==ranked[0]?.name);ui.alternativeRoute.textContent=fallback?`${fallback.name} · 자동 재견적 가능`:'사용 가능한 추가 경로 없음';ui.alternativeRoute.classList.toggle('alternative-ready',Boolean(fallback));ui.preflightState.textContent=impact>=300?'주의 · 가격영향 3% 이상':plan.oracleReady?'준비 완료 · 가스 검증됨':'제한적 준비 · 가스 오라클 대기';ui.preflightState.className=impact>=300||!plan.oracleReady?'preflight-warning':'preflight-safe';status(impact>=300?'가격영향이 높습니다. 수량을 줄이거나 대체 경로를 확인하세요.':'거래 실행 전 점검을 통과했습니다.',impact>=300?'':'success');disabled(false);
     }catch{ui.selectedDex.textContent='유효한 경로 없음';ui.alternativeRoute.textContent='대체 경로도 없음';ui.preflightState.textContent='실행 불가';ui.preflightState.className='preflight-warning';disabled(true);status('이 거래쌍의 유동성을 확인할 수 없습니다. 수량을 줄이거나 다른 토큰을 선택하세요.','error')}
   }
