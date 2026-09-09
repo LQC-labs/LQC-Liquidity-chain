@@ -39,6 +39,7 @@
         { "signature": "pauseAllocations()", "authority": "pause-admin", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
         { "signature": "pauseDeposits()", "authority": "pause-admin", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
         { "signature": "recallFromStrategy(uint256)", "authority": "strategy-admin", "risk": "critical", "evidence": ["test/liquidity-vault.test.mjs"] },
+        { "signature": "reconcileStrategyLoss(uint256)", "authority": "governance", "risk": "critical", "evidence": ["test/liquidity-vault.test.mjs"] },
         { "signature": "redeem(uint256,address,address)", "authority": "share-holder-or-approved", "risk": "critical", "evidence": ["test/liquidity-vault.test.mjs"] },
         { "signature": "resumeAllocations()", "authority": "governance", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },
         { "signature": "resumeDeposits()", "authority": "governance", "risk": "high", "evidence": ["test/liquidity-vault.test.mjs"] },

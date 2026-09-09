@@ -51,6 +51,7 @@ describe("LQC emergency pause and timelocked recovery drill", function () {
     await (await timelock.acceptRegistryOwnership(await risk.getAddress())).wait();
 
     await (await risk.connect(executor).consumeSwap(tokenIn, tokenOut, [dexId], [10n])).wait();
+    const initialUsage = await risk.dailyUsage(tokenIn);
     await (await emergency.connect(guardian).pauseDex(dexId)).wait();
     await (await emergency.connect(guardian).pauseAllSwaps()).wait();
     assert.equal((await registry.getDex(dexId)).enabled, false);
@@ -85,6 +86,9 @@ describe("LQC emergency pause and timelocked recovery drill", function () {
     assert.equal(await risk.swapsPaused(), false);
     assert.equal((await registry.getDex(dexId)).enabled, true);
     await (await risk.connect(executor).consumeSwap(tokenIn, tokenOut, [dexId], [10n])).wait();
-    assert.equal((await risk.dailyUsage(tokenIn)).amount, 20n);
+    const finalBlock = await provider.getBlock("latest");
+    const finalDay = BigInt(Math.floor(finalBlock.timestamp / 86400));
+    const expectedUsage = initialUsage.day === finalDay ? 20n : 10n;
+    assert.equal((await risk.dailyUsage(tokenIn)).amount, expectedUsage);
   });
 });
