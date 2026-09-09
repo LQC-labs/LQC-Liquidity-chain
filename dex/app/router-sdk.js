@@ -94,6 +94,25 @@
     const{proofHash,...payload}=proof;
     return ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase()===proofHash.toLowerCase();
   }
+  function buildSettlementReceipt(proof,execution,ethers){
+    if(!verifyBestExecutionProof(proof,ethers))throw new Error('Invalid best execution proof');
+    if(!execution||Number(execution.chainId)!==proof.chainId||!ethers.isHexString(execution.transactionHash,32)||!ethers.isHexString(execution.blockHash,32)||!Number.isInteger(execution.blockNumber)||execution.blockNumber<proof.quoteBlock)throw new Error('Invalid settlement context');
+    if(!ethers.isAddress(execution.recipient)||typeof execution.actualAmountOut!=='bigint'||execution.actualAmountOut<=0n||execution.status!==1)throw new Error('Invalid settlement result');
+    if(!Number.isInteger(execution.settledAt)||execution.settledAt<=0||execution.settledAt>proof.expiresAt)throw new Error('Settlement outside proof validity');
+    const expected=BigInt(proof.plan.expectedOut),minimum=BigInt(proof.plan.minimumOut),actual=execution.actualAmountOut;
+    const executionDeltaBps=actual===expected?0:Number((actual-expected)*10000n/expected);
+    const payload={version:1,type:'LQC_PROOF_TO_SETTLEMENT',chainId:proof.chainId,proofHash:proof.proofHash.toLowerCase(),transactionHash:execution.transactionHash.toLowerCase(),blockHash:execution.blockHash.toLowerCase(),blockNumber:execution.blockNumber,settledAt:execution.settledAt,recipient:execution.recipient.toLowerCase(),tokenOut:proof.tokenOut,expectedAmountOut:expected.toString(),minimumAmountOut:minimum.toString(),actualAmountOut:actual.toString(),minimumSatisfied:actual>=minimum,executionDeltaBps};
+    if(!payload.minimumSatisfied)throw new Error('Settlement violates minimum output');
+    return{...payload,settlementHash:ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload)))};
+  }
+  function verifySettlementReceipt(receipt,proof,ethers){
+    if(!receipt||!verifyBestExecutionProof(proof,ethers)||!ethers.isHexString(receipt.settlementHash,32)||receipt.proofHash!==proof.proofHash.toLowerCase())return false;
+    const{settlementHash,...payload}=receipt;
+    if(payload.type!=='LQC_PROOF_TO_SETTLEMENT'||payload.version!==1||payload.chainId!==proof.chainId||payload.tokenOut!==proof.tokenOut||payload.expectedAmountOut!==proof.plan.expectedOut||payload.minimumAmountOut!==proof.plan.minimumOut||payload.minimumSatisfied!==true)return false;
+    if(!ethers.isHexString(payload.transactionHash,32)||!ethers.isHexString(payload.blockHash,32)||!ethers.isAddress(payload.recipient)||!Number.isInteger(payload.blockNumber)||payload.blockNumber<proof.quoteBlock||!Number.isInteger(payload.settledAt)||payload.settledAt<=0||payload.settledAt>proof.expiresAt)return false;
+    try{const actual=BigInt(payload.actualAmountOut),minimum=BigInt(payload.minimumAmountOut),expected=BigInt(payload.expectedAmountOut);if(actual<minimum||expected<=0n||payload.executionDeltaBps!==Number((actual-expected)*10000n/expected))return false;}catch{return false;}
+    return ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase()===settlementHash.toLowerCase();
+  }
   function explainSwapError(error){
     const code=String(error?.code||error?.info?.error?.code||'').toUpperCase();
     const message=String(error?.shortMessage||error?.reason||error?.message||'').toLowerCase();
@@ -107,5 +126,5 @@
     if(code==='NETWORK_ERROR'||message.includes('network')||message.includes('chain'))return{code:'NETWORK_ERROR',message:'BSC 테스트넷 연결을 확인할 수 없습니다.',action:'지갑 네트워크를 BSC Testnet으로 전환하세요.',retryable:true};
     return{code:'UNKNOWN',message:'거래를 실행하지 못했습니다.',action:'최신 견적과 지갑 상태를 확인한 뒤 다시 시도하세요.',retryable:true};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
