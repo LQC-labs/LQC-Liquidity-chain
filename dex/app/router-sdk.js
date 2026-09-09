@@ -62,6 +62,38 @@
       return{...item,netAmountOut:item.amountOut>cost?item.amountOut-cost:0n};
     }).filter(item=>item.netAmountOut>0n).sort((a,b)=>a.netAmountOut===b.netAmountOut?Number(b.priority||0)-Number(a.priority||0):(a.netAmountOut>b.netAmountOut?-1:1));
   }
+  function buildBestExecutionProof(input,ethers){
+    if(!ethers||typeof ethers.keccak256!=='function'||Number(input?.chainId)!==97||!Number.isInteger(input?.quoteBlock)||input.quoteBlock<=0||!Number.isInteger(input?.expiresAt)||input.expiresAt<=0)throw new Error('Invalid proof context');
+    if(!ethers.isAddress(input.tokenIn)||!ethers.isAddress(input.tokenOut)||input.tokenIn.toLowerCase()===input.tokenOut.toLowerCase()||typeof input.amountIn!=='bigint'||input.amountIn<=0n)throw new Error('Invalid proof trade');
+    if(!Array.isArray(input.candidates)||input.candidates.length===0||!input.plan||!Array.isArray(input.plan.legs)||input.plan.legs.length<1||input.plan.legs.length>4)throw new Error('Invalid proof routes');
+    const seen=new Set();
+    const candidates=input.candidates.map(candidate=>{
+      if(!ethers.isHexString(candidate.dexId,32)||seen.has(candidate.dexId.toLowerCase())||typeof candidate.amountOut!=='bigint'||candidate.amountOut<=0n||typeof candidate.cost!=='bigint'||candidate.cost<0n||!ethers.isHexString(candidate.routeDataHash,32))throw new Error('Invalid proof candidate');
+      seen.add(candidate.dexId.toLowerCase());
+      return{dexId:candidate.dexId.toLowerCase(),name:String(candidate.name||''),amountOut:candidate.amountOut,cost:candidate.cost,netAmountOut:candidate.amountOut>candidate.cost?candidate.amountOut-candidate.cost:0n,priceImpactBps:Number(candidate.priceImpactBps||0),routeDataHash:candidate.routeDataHash.toLowerCase()};
+    });
+    const ranked=rankRouteQuotes(candidates);
+    if(ranked.length===0)throw new Error('No executable proof candidate');
+    let allocated=0n,expected=0n,minimum=0n;
+    const legs=input.plan.legs.map(leg=>{
+      if(!seen.has(String(leg.dexId).toLowerCase())||typeof leg.amountIn!=='bigint'||leg.amountIn<=0n||typeof leg.expectedOut!=='bigint'||leg.expectedOut<=0n||typeof leg.minimumOut!=='bigint'||leg.minimumOut<=0n||leg.minimumOut>leg.expectedOut)throw new Error('Invalid proof leg');
+      allocated+=leg.amountIn;expected+=leg.expectedOut;minimum+=leg.minimumOut;
+      return{dexId:leg.dexId.toLowerCase(),amountIn:leg.amountIn.toString(),expectedOut:leg.expectedOut.toString(),minimumOut:leg.minimumOut.toString()};
+    });
+    if(allocated!==input.amountIn||typeof input.plan.cost!=='bigint'||input.plan.cost<0n)throw new Error('Invalid proof allocation');
+    const planNet=expected>input.plan.cost?expected-input.plan.cost:0n,bestSingle=ranked[0];
+    if(input.plan.kind==='single'&&(legs.length!==1||legs[0].dexId!==bestSingle.dexId))throw new Error('Single route is not best execution');
+    if(input.plan.kind==='split'&&(legs.length<2||planNet<=bestSingle.netAmountOut))throw new Error('Split route does not improve best execution');
+    if(!['single','split'].includes(input.plan.kind)||!Number.isInteger(input.slippageBps)||input.slippageBps<0||input.slippageBps>2000)throw new Error('Invalid proof policy');
+    const improvementBps=planNet>bestSingle.netAmountOut?Number((planNet-bestSingle.netAmountOut)*10000n/bestSingle.netAmountOut):0;
+    const payload={version:1,type:'LQC_PROOF_OF_BEST_EXECUTION',chainId:97,quoteBlock:input.quoteBlock,expiresAt:input.expiresAt,tokenIn:input.tokenIn.toLowerCase(),tokenOut:input.tokenOut.toLowerCase(),amountIn:input.amountIn.toString(),slippageBps:input.slippageBps,plan:{kind:input.plan.kind,legs,expectedOut:expected.toString(),minimumOut:minimum.toString(),cost:input.plan.cost.toString(),netAmountOut:planNet.toString()},bestSingle:{dexId:bestSingle.dexId,netAmountOut:bestSingle.netAmountOut.toString()},improvementBps,candidates:candidates.map(candidate=>({dexId:candidate.dexId,name:candidate.name,amountOut:candidate.amountOut.toString(),cost:candidate.cost.toString(),netAmountOut:candidate.netAmountOut.toString(),priceImpactBps:candidate.priceImpactBps,routeDataHash:candidate.routeDataHash}))};
+    return{...payload,proofHash:ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload)))};
+  }
+  function verifyBestExecutionProof(proof,ethers){
+    if(!proof||!ethers||!ethers.isHexString(proof.proofHash,32))return false;
+    const{proofHash,...payload}=proof;
+    return ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase()===proofHash.toLowerCase();
+  }
   function explainSwapError(error){
     const code=String(error?.code||error?.info?.error?.code||'').toUpperCase();
     const message=String(error?.shortMessage||error?.reason||error?.message||'').toLowerCase();
@@ -75,5 +107,5 @@
     if(code==='NETWORK_ERROR'||message.includes('network')||message.includes('chain'))return{code:'NETWORK_ERROR',message:'BSC 테스트넷 연결을 확인할 수 없습니다.',action:'지갑 네트워크를 BSC Testnet으로 전환하세요.',retryable:true};
     return{code:'UNKNOWN',message:'거래를 실행하지 못했습니다.',action:'최신 견적과 지갑 상태를 확인한 뒤 다시 시도하세요.',retryable:true};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
