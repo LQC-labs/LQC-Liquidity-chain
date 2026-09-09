@@ -55,6 +55,23 @@
     if(typeof allowance!=='bigint'||allowance<0n||typeof amountIn!=='bigint'||amountIn<=0n)throw new Error('Invalid approval state');
     return allowance<amountIn;
   }
+  function executionPlanFingerprint(plan){
+    if(!plan||!['single','split'].includes(plan.kind))throw new Error('Invalid execution plan');
+    if(plan.kind==='single'){
+      const dexId=String(plan.single?.best?.dexId||'').toLowerCase(),routeData=String(plan.single?.routeData||'').toLowerCase();
+      if(!dexId||!routeData)return'';
+      return`single:${dexId}:${routeData}`;
+    }
+    const dexIds=Array.from(plan.split?.dexIds||[]),amounts=Array.from(plan.split?.amountsIn||[]),routes=Array.from(plan.routes||[]);
+    if(dexIds.length===0||dexIds.length!==amounts.length||dexIds.length!==routes.length)return'';
+    const legs=[];
+    for(let i=0;i<dexIds.length;i++){
+      if(typeof amounts[i]!=='bigint'||amounts[i]<0n)return'';
+      if(amounts[i]===0n)continue;
+      legs.push(`${String(dexIds[i]).toLowerCase()}:${amounts[i]}:${String(routes[i]).toLowerCase()}`);
+    }
+    return legs.length?`split:${legs.join('|')}`:'';
+  }
   function rankRouteQuotes(candidates){
     if(!Array.isArray(candidates))throw new Error('Invalid route quotes');
     return candidates.filter(item=>item&&typeof item.amountOut==='bigint'&&item.amountOut>0n).map(item=>{
@@ -75,5 +92,5 @@
     if(code==='NETWORK_ERROR'||message.includes('network')||message.includes('chain'))return{code:'NETWORK_ERROR',message:'BSC 테스트넷 연결을 확인할 수 없습니다.',action:'지갑 네트워크를 BSC Testnet으로 전환하세요.',retryable:true};
     return{code:'UNKNOWN',message:'거래를 실행하지 못했습니다.',action:'최신 견적과 지갑 상태를 확인한 뒤 다시 시도하세요.',retryable:true};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,executionPlanFingerprint,rankRouteQuotes,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
