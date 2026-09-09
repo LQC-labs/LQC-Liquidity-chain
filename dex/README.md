@@ -57,6 +57,7 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - Deterministic execution-proof fuzzing exercises varied route economics and tamper attempts reproducibly
 - Dependency-free V8 coverage gate requires 100% Router SDK function coverage and reports executed ranges honestly
 - Audit-surface drift gate classifies every state-changing entry point in the three critical Solidity contracts
+- Adversarial integration tests prove malicious adapters and unauthorized callers cannot bypass critical Router, Risk, or Vault boundaries
 
 New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap V2 or V3 when their reviewed addresses are supplied. Exact-input token and native BNB execution, oracle-validated gas-cost conversion, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, atomic optimized execution, timelocked registry ownership, disable-only emergency control, token allowlisting, and staged transaction limits are now available. Live production feed configuration, final risk-committee parameter approval, multisig assignment, and production integrations remain pending.
 
