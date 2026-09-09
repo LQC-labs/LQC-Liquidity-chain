@@ -8,7 +8,7 @@ const artifact = (name, source) => JSON.parse(fs.readFileSync(
 ));
 
 describe("LQC Router governance controls", function () {
-  let eip1193, provider, proposer, guardian, outsider, registry, risk, timelock, emergency;
+  let eip1193, provider, proposer, guardian, outsider, registry, risk, timelock, emergency, adapter;
 
   beforeEach(async function () {
     eip1193 = ganache.provider({ logging: { quiet: true } });
@@ -40,7 +40,16 @@ describe("LQC Router governance controls", function () {
       proposer
     );
     emergency = await Emergency.deploy(await proposer.getAddress(), await registry.getAddress(), await risk.getAddress());
-    await Promise.all([registry.waitForDeployment(), risk.waitForDeployment(), timelock.waitForDeployment(), emergency.waitForDeployment()]);
+    const Adapter = new ethers.ContractFactory(
+      artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").abi,
+      artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").bytecode,
+      proposer
+    );
+    adapter = await Adapter.deploy(await outsider.getAddress());
+    await Promise.all([
+      registry.waitForDeployment(), risk.waitForDeployment(), timelock.waitForDeployment(),
+      emergency.waitForDeployment(), adapter.waitForDeployment()
+    ]);
   });
 
   it("lets guardians pause all swaps but never resume them", async function () {
@@ -56,7 +65,7 @@ describe("LQC Router governance controls", function () {
 
   it("lets guardians pause immediately but only governance re-enable", async function () {
     const dexId = ethers.id("LQC_FLOW");
-    await (await registry.addDex(dexId, await outsider.getAddress(), "LQC Flow", 100)).wait();
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
     await (await registry.setPauseAdmin(await emergency.getAddress())).wait();
     await (await emergency.setGuardian(await guardian.getAddress(), true)).wait();
     await assert.rejects(emergency.connect(outsider).pauseDex(dexId));
@@ -72,7 +81,7 @@ describe("LQC Router governance controls", function () {
     await (await registry.beginOwnershipTransfer(await timelock.getAddress())).wait();
     await (await timelock.acceptRegistryOwnership(await registry.getAddress())).wait();
     const data = registry.interface.encodeFunctionData("addDex", [
-      dexId, await outsider.getAddress(), "New reviewed DEX", 50
+      dexId, await adapter.getAddress(), "New reviewed DEX", 50
     ]);
     const salt = ethers.id("add-new-dex-v1");
     const id = await timelock.operationId(await registry.getAddress(), 0, data, salt);
