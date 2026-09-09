@@ -68,6 +68,7 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.explainSwapError({ message: "execution reverted: InsufficientOutput()" }).code, "PRICE_MOVED");
     assert.equal(sdk.explainSwapError({ message: "daily cap exceeded" }).retryable, false);
     assert.equal(sdk.explainSwapError({ message: "RouteChangedDuringApproval" }).code, "ROUTE_CHANGED");
+    assert.equal(sdk.explainSwapError({ message: "QuoteWorsenedDuringApproval" }).code, "QUOTE_WORSENED");
   });
 
   it("ranks executable primary and fallback routes by net output and priority", function () {
@@ -107,6 +108,9 @@ describe("LQC Router browser SDK", function () {
     assert.deepEqual(Array.from(sdk.tokenApprovalSequence(0n, 100n)), [100n]);
     assert.deepEqual(Array.from(sdk.tokenApprovalSequence(40n, 100n)), [0n, 100n]);
     assert.deepEqual(Array.from(sdk.tokenApprovalSequence(100n, 100n)), []);
+    assert.equal(sdk.isRefreshedOutputAcceptable(1000n, 990n, 1), true);
+    assert.equal(sdk.isRefreshedOutputAcceptable(1000n, 989n, 1), false);
+    assert.throws(() => sdk.isRefreshedOutputAcceptable(0n, 100n, 1));
     assert.throws(() => sdk.tokenApprovalSequence(-1n, 100n));
     assert.throws(() => sdk.requiresTokenApproval(-1n, 100n));
     assert.throws(() => sdk.requiresTokenApproval(100n, 0n));
