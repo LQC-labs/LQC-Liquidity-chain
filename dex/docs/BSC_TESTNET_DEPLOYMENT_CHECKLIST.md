@@ -10,13 +10,13 @@ authorize mainnet deployment or use of real user funds.
 - [ ] Record signer names and wallet addresses in the private governance register.
 - [ ] Verify every signer can access, review, and sign a test Safe transaction.
 - [ ] Use the deployed Protocol Governance Safe address as `FACTORY_OWNER`.
+- [ ] Use the deployed Risk Safe address as `RISK_ADMIN`.
 - [ ] Keep the deployer separate from `FACTORY_OWNER`.
 - [ ] Never paste, commit, email, or include the deployer private key in screenshots or documents.
 
-The current deployment script assigns protocol ownership and the timelock proposer to
-`FACTORY_OWNER`. The separate Risk Safe role must be wired in a follow-up reviewed configuration
-transaction before a public pilot; do not represent the initial deployment as final governance until
-that assignment is complete.
+The deployment script assigns protocol ownership and the timelock proposer to `FACTORY_OWNER`, while
+`RISK_ADMIN` receives only limit-reduction and pause authority. Preflight rejects a shared address by
+default so the role separation is established at deployment rather than deferred.
 
 ## 2. Network and external-contract verification
 

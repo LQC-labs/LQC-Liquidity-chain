@@ -63,6 +63,7 @@ export DEPLOYER_PRIVATE_KEY="..."
 export WBNB_ADDRESS="0x..." # official WBNB for the selected BSC network
 export EXPECTED_CHAIN_ID="97" # deployment safety check; defaults to BSC testnet
 export FACTORY_OWNER="0x..." # required reviewed testnet governance/multisig address
+export RISK_ADMIN="0x..." # separate reviewed testnet risk multisig address
 node scripts/deploy.mjs
 ```
 
@@ -106,6 +107,8 @@ they do not define LQC mainnet supply, allocation, valuation, or launch liquidit
 The deployment transfers registry ownership to the timelock. `FACTORY_OWNER` becomes the governance
 proposer and should be a reviewed multisig address. Emergency guardians may disable a route immediately,
 but only a timelocked governance operation can re-enable or structurally change it.
+`RISK_ADMIN` is assigned directly to the Risk Registry and may only reduce existing limits or pause;
+the preflight rejects a shared governance/risk address unless a testnet-only override is explicit.
 
 The automated test suite also reproduces the complete bootstrap locally and verifies both pool
 creation, exact initial-liquidity approvals with no residual Router allowance, Router 2.0 quoting,

@@ -19,9 +19,20 @@ export function validateTestnetDeploymentConfig(env) {
   if (!ethers.isAddress(env.FACTORY_OWNER)) {
     throw new Error("FACTORY_OWNER is required and must be the reviewed testnet governance or multisig address.");
   }
+  if (!ethers.isAddress(env.RISK_ADMIN)) {
+    throw new Error("RISK_ADMIN is required and must be the reviewed testnet risk multisig address.");
+  }
   const walletAddress = new ethers.Wallet(env.DEPLOYER_PRIVATE_KEY).address;
-  if (ethers.getAddress(env.FACTORY_OWNER) === walletAddress && env.ALLOW_DEPLOYER_AS_OWNER !== "true") {
+  const owner = ethers.getAddress(env.FACTORY_OWNER);
+  const riskAdmin = ethers.getAddress(env.RISK_ADMIN);
+  if (owner === walletAddress && env.ALLOW_DEPLOYER_AS_OWNER !== "true") {
     throw new Error("FACTORY_OWNER must differ from the deployer unless ALLOW_DEPLOYER_AS_OWNER=true is explicitly set for a temporary testnet bootstrap.");
+  }
+  if (riskAdmin === walletAddress && env.ALLOW_DEPLOYER_AS_RISK_ADMIN !== "true") {
+    throw new Error("RISK_ADMIN must differ from the deployer unless ALLOW_DEPLOYER_AS_RISK_ADMIN=true is explicitly set for a temporary testnet bootstrap.");
+  }
+  if (riskAdmin === owner && env.ALLOW_SHARED_RISK_ADMIN !== "true") {
+    throw new Error("RISK_ADMIN must differ from FACTORY_OWNER to preserve role separation.");
   }
   const delay = BigInt(env.TIMELOCK_DELAY || "3600");
   if (delay < 3600n || delay > 604800n) throw new Error("TIMELOCK_DELAY must be between 3600 and 604800 seconds.");
@@ -59,7 +70,7 @@ export function validateTestnetDeploymentConfig(env) {
       ethers.getAddress(v3Quoter) !== PANCAKE_BSC_TESTNET.v3Quoter)) {
     throw new Error("PancakeSwap V3 addresses do not match the pinned BSC testnet endpoints.");
   }
-  return { walletAddress, owner: ethers.getAddress(env.FACTORY_OWNER), delay, bnbLiquidity, gasReserve };
+  return { walletAddress, owner, riskAdmin, delay, bnbLiquidity, gasReserve };
 }
 
 export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL)) {
@@ -74,18 +85,22 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
   if (ownerCode === "0x" && env.ALLOW_EOA_OWNER !== "true") {
     throw new Error("FACTORY_OWNER has no contract bytecode; use a deployed multisig or explicitly set ALLOW_EOA_OWNER=true for temporary testnet use.");
   }
-  const named = { governanceOwner: config.owner, wbnb: env.WBNB_ADDRESS };
+  const riskAdminCode = await provider.getCode(config.riskAdmin);
+  if (riskAdminCode === "0x" && env.ALLOW_EOA_RISK_ADMIN !== "true") {
+    throw new Error("RISK_ADMIN has no contract bytecode; use a deployed risk multisig or explicitly set ALLOW_EOA_RISK_ADMIN=true for temporary testnet use.");
+  }
+  const named = { governanceOwner: config.owner, riskAdmin: config.riskAdmin, wbnb: env.WBNB_ADDRESS };
   if (env.PANCAKE_V2_ROUTER_ADDRESS) named.pancakeV2Router = env.PANCAKE_V2_ROUTER_ADDRESS;
   if (env.PANCAKE_V3_ROUTER_ADDRESS) {
     named.pancakeV3Router = env.PANCAKE_V3_ROUTER_ADDRESS;
     named.pancakeV3Quoter = env.PANCAKE_V3_QUOTER_ADDRESS;
   }
   for (const [name, address] of Object.entries(named)) {
-    if (name !== "governanceOwner" && await provider.getCode(address) === "0x") {
+    if (name !== "governanceOwner" && name !== "riskAdmin" && await provider.getCode(address) === "0x") {
       throw new Error(`${name} has no contract bytecode on BSC testnet.`);
     }
   }
-  return { chainId: Number(network.chainId), owner: config.owner, checkedContracts: Object.keys(named) };
+  return { chainId: Number(network.chainId), owner: config.owner, riskAdmin: config.riskAdmin, checkedContracts: Object.keys(named) };
 }
 
 async function main() {

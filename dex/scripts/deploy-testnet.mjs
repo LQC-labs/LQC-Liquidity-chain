@@ -9,6 +9,7 @@ const {
   DEPLOYER_PRIVATE_KEY,
   WBNB_ADDRESS,
   FACTORY_OWNER,
+  RISK_ADMIN,
   PANCAKE_V2_ROUTER_ADDRESS = "",
   PANCAKE_V3_QUOTER_ADDRESS = "",
   PANCAKE_V3_ROUTER_ADDRESS = "",
@@ -48,6 +49,8 @@ if (network.chainId !== BigInt(EXPECTED_CHAIN_ID)) {
 }
 const owner = FACTORY_OWNER || wallet.address;
 if (!ethers.isAddress(owner)) throw new Error("FACTORY_OWNER must be a valid address.");
+if (!ethers.isAddress(RISK_ADMIN)) throw new Error("RISK_ADMIN must be a valid separate risk-management address.");
+const riskAdmin = ethers.getAddress(RISK_ADMIN);
 const checkpointFile = path.resolve(process.env.DEPLOYMENT_CHECKPOINT_FILE ||
   path.join(root, `deployments/bsc-testnet-${network.chainId}.checkpoint.local.json`));
 const checkpoint = loadDeploymentCheckpoint(checkpointFile, network.chainId, wallet.address);
@@ -74,7 +77,7 @@ const factory = await deploy("LQCFlowFactory", [owner]);
 const router = await deploy("LQCFlowRouter", [await factory.getAddress(), WBNB_ADDRESS]);
 const registry = await deploy("router-v2/LQCDexRegistry", [wallet.address]);
 const timelock = await deploy("router-v2/LQCTimelockController", [owner, BigInt(TIMELOCK_DELAY)]);
-const riskRegistry = await deploy("router-v2/LQCRiskRegistry", [wallet.address, owner]);
+const riskRegistry = await deploy("router-v2/LQCRiskRegistry", [wallet.address, riskAdmin]);
 const emergencyController = await deploy("router-v2/LQCEmergencyController", [
   owner, await registry.getAddress(), await riskRegistry.getAddress()
 ]);
@@ -211,6 +214,7 @@ const record = {
   network: { name: "BSC Testnet", chainId: Number(network.chainId), explorer: "https://testnet.bscscan.com" },
   deployer: wallet.address,
   owner,
+  riskAdmin,
   sourceRevision: process.env.SOURCE_COMMIT || null,
   compiler: { version: "0.8.30", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
   externalContracts: {
@@ -224,6 +228,12 @@ const record = {
     governanceProposer: owner,
     pauseAdmin: await emergencyController.getAddress(),
     timelockDelaySeconds: Number(TIMELOCK_DELAY)
+  },
+  riskRegistryRoles: {
+    owner: await timelock.getAddress(),
+    riskAdmin: await riskRegistry.riskAdmin(),
+    pauseAdmin: await emergencyController.getAddress(),
+    executor: await executionRouter.getAddress()
   },
   contracts: {
     lqc: { address: lqcAddress, decimals: 18, deploymentTx: txHash(lqc) },

@@ -1,10 +1,12 @@
 import assert from "node:assert/strict";
+import { ethers } from "ethers";
 import {
   PANCAKE_BSC_TESTNET,
   assertBscTestnetChain,
   assertContractCode,
   deploymentContractAddresses,
   validateDeploymentDexRecords,
+  validateRiskAdministrator,
   validateV3DeploymentRecord
 } from "../scripts/validate-bsc-testnet.mjs";
 
@@ -47,6 +49,15 @@ describe("BSC testnet real-address validation", function () {
       () => validateDeploymentDexRecords(records, [{ ...onchain[0], adapter: "0x0000000000000000000000000000000000000002" }]),
       /adapter mismatch/
     );
+  });
+
+  it("requires a recorded, distinct risk administrator that matches on-chain state", function () {
+    const owner = "0x0000000000000000000000000000000000000001";
+    const riskAdmin = "0x0000000000000000000000000000000000000002";
+    assert.equal(validateRiskAdministrator({ owner, riskAdmin }, riskAdmin), ethers.getAddress(riskAdmin));
+    assert.throws(() => validateRiskAdministrator({ owner, riskAdmin: owner }, owner), /not separated/);
+    assert.throws(() => validateRiskAdministrator({ owner, riskAdmin }, owner), /does not match/);
+    assert.throws(() => validateRiskAdministrator({ owner }, riskAdmin), /missing governance or risk/);
   });
 
   it("rejects unsafe PancakeSwap V3 fee, pool, and multihop records", function () {

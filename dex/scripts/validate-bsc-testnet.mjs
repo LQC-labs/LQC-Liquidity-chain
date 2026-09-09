@@ -78,6 +78,19 @@ export function validateV3DeploymentRecord(record) {
   return record;
 }
 
+export function validateRiskAdministrator(deployment, onchainRiskAdmin) {
+  if (!ethers.isAddress(deployment?.owner) || !ethers.isAddress(deployment?.riskAdmin)) {
+    throw new Error("Deployment record is missing governance or risk administrator.");
+  }
+  if (!ethers.isAddress(onchainRiskAdmin) || !same(onchainRiskAdmin, deployment.riskAdmin)) {
+    throw new Error("Risk administrator does not match the deployment record.");
+  }
+  if (same(deployment.riskAdmin, deployment.owner)) {
+    throw new Error("Risk administrator is not separated from protocol governance.");
+  }
+  return ethers.getAddress(onchainRiskAdmin);
+}
+
 export async function validateBscTestnet({ provider, deployment }) {
   const network = await provider.getNetwork();
   assertBscTestnetChain(network.chainId);
@@ -115,15 +128,17 @@ export async function validateBscTestnet({ provider, deployment }) {
     "function getDex(bytes32) view returns(address adapter,bool enabled,uint32 priority)"
   ], provider);
   const risk = new ethers.Contract(deployment.contracts.riskRegistry.address, [
-    "function owner() view returns(address)", "function pauseAdmin() view returns(address)", "function executor() view returns(address)", "function swapsPaused() view returns(bool)"
+    "function owner() view returns(address)", "function riskAdmin() view returns(address)",
+    "function pauseAdmin() view returns(address)", "function executor() view returns(address)", "function swapsPaused() view returns(bool)"
   ], provider);
-  const [registryOwner, registryPauseAdmin, dexCount, riskOwner, riskPauseAdmin, executor, swapsPaused] = await Promise.all([
-    registry.owner(), registry.pauseAdmin(), registry.dexCount(), risk.owner(), risk.pauseAdmin(), risk.executor(), risk.swapsPaused()
+  const [registryOwner, registryPauseAdmin, dexCount, riskOwner, riskAdmin, riskPauseAdmin, executor, swapsPaused] = await Promise.all([
+    registry.owner(), registry.pauseAdmin(), registry.dexCount(), risk.owner(), risk.riskAdmin(), risk.pauseAdmin(), risk.executor(), risk.swapsPaused()
   ]);
   const timelock = deployment.contracts.timelock.address, emergency = deployment.contracts.emergencyController.address;
   if (!same(registryOwner, timelock) || !same(riskOwner, timelock)) throw new Error("Registry ownership is not held by the timelock.");
   if (!same(registryPauseAdmin, emergency) || !same(riskPauseAdmin, emergency)) throw new Error("Emergency pause authority mismatch.");
   if (!same(executor, deployment.contracts.executionRouter.address)) throw new Error("Risk executor mismatch.");
+  validateRiskAdministrator(deployment, riskAdmin);
 
   const onchainDexes = await Promise.all(Array.from({ length: Number(dexCount) }, async (_, index) => {
     const id = await registry.dexIdAt(index);
@@ -186,6 +201,7 @@ export async function validateBscTestnet({ provider, deployment }) {
       dexCount: Number(dexCount),
       activeDexCount: onchainDexes.filter(dex => dex.enabled).length,
       swapsPaused,
+      riskAdmin,
       timelockDelaySeconds: Number(delay)
     },
     safeForSmokeTest: !swapsPaused

@@ -5,18 +5,23 @@ import { runTestnetPreflight, validateTestnetDeploymentConfig } from "../scripts
 
 const key = `0x${"11".repeat(32)}`;
 const owner = "0x0000000000000000000000000000000000000001";
+const riskAdmin = "0x0000000000000000000000000000000000000003";
 const base = { BSC_TESTNET_RPC_URL: "https://example.invalid", DEPLOYER_PRIVATE_KEY: key,
-  FACTORY_OWNER: owner, WBNB_ADDRESS: "0x0000000000000000000000000000000000000002", EXPECTED_CHAIN_ID: "97" };
+  FACTORY_OWNER: owner, RISK_ADMIN: riskAdmin,
+  WBNB_ADDRESS: "0x0000000000000000000000000000000000000002", EXPECTED_CHAIN_ID: "97" };
 
 describe("BSC testnet deployment preflight", function () {
   it("accepts bounded defaults and a separate governance owner", function () {
     const result = validateTestnetDeploymentConfig(base);
     assert.equal(result.owner, owner);
+    assert.equal(result.riskAdmin, riskAdmin);
     assert.equal(result.delay, 3600n);
   });
 
   it("rejects missing governance, wrong chains, weak limits, and excess liquidity", function () {
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, FACTORY_OWNER: "" }), /FACTORY_OWNER/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, RISK_ADMIN: "" }), /RISK_ADMIN/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, RISK_ADMIN: owner }), /role separation/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, EXPECTED_CHAIN_ID: "56" }), /expected BSC testnet/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, TIMELOCK_DELAY: "3599" }), /TIMELOCK_DELAY/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, TEST_LQC_MAX_TX: "2", TEST_LQC_MAX_DAY: "1" }), /MAX_DAY/);
@@ -27,6 +32,13 @@ describe("BSC testnet deployment preflight", function () {
     const wallet = new ethers.Wallet(key).address;
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, FACTORY_OWNER: wallet }), /must differ/);
     assert.doesNotThrow(() => validateTestnetDeploymentConfig({ ...base, FACTORY_OWNER: wallet, ALLOW_DEPLOYER_AS_OWNER: "true" }));
+  });
+
+  it("requires explicit overrides for temporary deployer or shared risk administration", function () {
+    const wallet = new ethers.Wallet(key).address;
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, RISK_ADMIN: wallet }), /must differ from the deployer/);
+    assert.doesNotThrow(() => validateTestnetDeploymentConfig({ ...base, RISK_ADMIN: wallet, ALLOW_DEPLOYER_AS_RISK_ADMIN: "true" }));
+    assert.doesNotThrow(() => validateTestnetDeploymentConfig({ ...base, RISK_ADMIN: owner, ALLOW_SHARED_RISK_ADMIN: "true" }));
   });
 
   it("pins every configured PancakeSwap endpoint", function () {
@@ -40,6 +52,7 @@ describe("BSC testnet deployment preflight", function () {
     const provider = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("11"), getCode: async () => "0x6000" };
     const result = await runTestnetPreflight(base, provider);
     assert.equal(result.chainId, 97);
+    assert.equal(result.riskAdmin, riskAdmin);
     await assert.rejects(() => runTestnetPreflight(base, { ...provider, getBalance: async () => 0n }), /balance/);
     await assert.rejects(() => runTestnetPreflight(base, { ...provider, getCode: async () => "0x" }), /bytecode/);
   });
@@ -51,5 +64,9 @@ describe("BSC testnet deployment preflight", function () {
       getCode: async address => ethers.getAddress(address) === owner ? "0x" : "0x6000" };
     await assert.rejects(() => runTestnetPreflight(base, eoaOwner), /multisig/);
     await assert.doesNotReject(() => runTestnetPreflight({ ...base, ALLOW_EOA_OWNER: "true" }, eoaOwner));
+    const eoaRisk = { ...funded, getBalance: async () => ethers.parseEther("11"),
+      getCode: async address => ethers.getAddress(address) === riskAdmin ? "0x" : "0x6000" };
+    await assert.rejects(() => runTestnetPreflight(base, eoaRisk), /risk multisig/);
+    await assert.doesNotReject(() => runTestnetPreflight({ ...base, ALLOW_EOA_RISK_ADMIN: "true" }, eoaRisk));
   });
 });
