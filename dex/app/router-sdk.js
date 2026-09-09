@@ -63,6 +63,11 @@
     if(typeof originalAmountOut!=='bigint'||originalAmountOut<=0n||typeof refreshedAmountOut!=='bigint'||refreshedAmountOut<=0n)throw new Error('Invalid quote output');
     return refreshedAmountOut>=minimumAmountOut(originalAmountOut,slippagePercent);
   }
+  function executionContextMatches(expectedAccount,currentAccounts,expectedChainId,currentChainId){
+    if(typeof expectedAccount!=='string'||!expectedAccount)return false;
+    if(!Array.isArray(currentAccounts)||currentAccounts.length===0)return false;
+    return expectedAccount.toLowerCase()===String(currentAccounts[0]).toLowerCase()&&String(expectedChainId).toLowerCase()===String(currentChainId).toLowerCase();
+  }
   function executionPlanFingerprint(plan){
     if(!plan||!['single','split'].includes(plan.kind))throw new Error('Invalid execution plan');
     if(plan.kind==='single'){
@@ -98,8 +103,9 @@
     if(message.includes('allowance')||message.includes('approve'))return{code:'APPROVAL_REQUIRED',message:'토큰 사용 승인이 완료되지 않았습니다.',action:'승인 거래를 완료한 뒤 Swap을 다시 실행하세요.',retryable:true};
     if(message.includes('routechangedduringapproval'))return{code:'ROUTE_CHANGED',message:'승인 중 최적 거래 경로가 다시 변경되었습니다.',action:'최신 견적을 확인한 뒤 Swap을 다시 실행하세요.',retryable:true};
     if(message.includes('quoteworsenedduringapproval'))return{code:'QUOTE_WORSENED',message:'승인 중 예상 수령액이 허용 범위보다 낮아졌습니다.',action:'새 견적과 가격영향을 확인한 뒤 Swap을 다시 실행하세요.',retryable:true};
+    if(message.includes('walletcontextchanged'))return{code:'WALLET_CHANGED',message:'거래 확인 중 지갑 계정 또는 네트워크가 변경되었습니다.',action:'현재 계정과 BSC 테스트넷을 확인한 뒤 새 견적을 받아주세요.',retryable:true};
     if(code==='NETWORK_ERROR'||message.includes('network')||message.includes('chain'))return{code:'NETWORK_ERROR',message:'BSC 테스트넷 연결을 확인할 수 없습니다.',action:'지갑 네트워크를 BSC Testnet으로 전환하세요.',retryable:true};
     return{code:'UNKNOWN',message:'거래를 실행하지 못했습니다.',action:'최신 견적과 지갑 상태를 확인한 뒤 다시 시도하세요.',retryable:true};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,tokenApprovalSequence,isRefreshedOutputAcceptable,executionPlanFingerprint,rankRouteQuotes,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,tokenApprovalSequence,isRefreshedOutputAcceptable,executionContextMatches,executionPlanFingerprint,rankRouteQuotes,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
