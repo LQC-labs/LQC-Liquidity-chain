@@ -113,6 +113,26 @@
     try{const actual=BigInt(payload.actualAmountOut),minimum=BigInt(payload.minimumAmountOut),expected=BigInt(payload.expectedAmountOut);if(actual<minimum||expected<=0n||payload.executionDeltaBps!==Number((actual-expected)*10000n/expected))return false;}catch{return false;}
     return ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase()===settlementHash.toLowerCase();
   }
+  async function verifyCanonicalSettlement(receipt,proof,provider,ethers,requiredConfirmations=3){
+    if(!verifySettlementReceipt(receipt,proof,ethers))throw new Error('Invalid settlement receipt');
+    if(!provider||typeof provider.getTransactionReceipt!=='function'||typeof provider.getBlock!=='function'||typeof provider.getBlockNumber!=='function'||!Number.isInteger(requiredConfirmations)||requiredConfirmations<1||requiredConfirmations>100)throw new Error('Invalid canonical verifier');
+    const chainReceipt=await provider.getTransactionReceipt(receipt.transactionHash);
+    if(!chainReceipt||Number(chainReceipt.status)!==1)throw new Error('Settlement transaction not successful');
+    const chainTxHash=String(chainReceipt.hash||chainReceipt.transactionHash||'').toLowerCase();
+    if(chainTxHash!==receipt.transactionHash||Number(chainReceipt.blockNumber)!==receipt.blockNumber||String(chainReceipt.blockHash||'').toLowerCase()!==receipt.blockHash)throw new Error('Settlement receipt mismatch');
+    const canonicalBlock=await provider.getBlock(receipt.blockNumber);
+    if(!canonicalBlock||String(canonicalBlock.hash||'').toLowerCase()!==receipt.blockHash)throw new Error('Settlement block is not canonical');
+    const latestBlock=Number(await provider.getBlockNumber()),confirmations=latestBlock-receipt.blockNumber+1;
+    if(!Number.isSafeInteger(latestBlock)||confirmations<requiredConfirmations)throw new Error('Settlement lacks confirmations');
+    const transferTopic=ethers.id('Transfer(address,address,uint256)').toLowerCase(),recipientTopic=ethers.zeroPadValue(receipt.recipient,32).toLowerCase();
+    let decodedAmountOut=0n,matchedTransfers=0;
+    for(const log of chainReceipt.logs||[]){
+      if(String(log.address||'').toLowerCase()!==receipt.tokenOut||String(log.topics?.[0]||'').toLowerCase()!==transferTopic||String(log.topics?.[2]||'').toLowerCase()!==recipientTopic||!ethers.isHexString(log.data,32))continue;
+      decodedAmountOut+=BigInt(log.data);matchedTransfers++;
+    }
+    if(matchedTransfers===0||decodedAmountOut!==BigInt(receipt.actualAmountOut))throw new Error('Settlement output log mismatch');
+    return{valid:true,chainId:receipt.chainId,proofHash:receipt.proofHash,settlementHash:receipt.settlementHash,transactionHash:receipt.transactionHash,blockHash:receipt.blockHash,blockNumber:receipt.blockNumber,confirmations,requiredConfirmations,matchedTransfers,decodedAmountOut:decodedAmountOut.toString()};
+  }
   function explainSwapError(error){
     const code=String(error?.code||error?.info?.error?.code||'').toUpperCase();
     const message=String(error?.shortMessage||error?.reason||error?.message||'').toLowerCase();
@@ -126,5 +146,5 @@
     if(code==='NETWORK_ERROR'||message.includes('network')||message.includes('chain'))return{code:'NETWORK_ERROR',message:'BSC 테스트넷 연결을 확인할 수 없습니다.',action:'지갑 네트워크를 BSC Testnet으로 전환하세요.',retryable:true};
     return{code:'UNKNOWN',message:'거래를 실행하지 못했습니다.',action:'최신 견적과 지갑 상태를 확인한 뒤 다시 시도하세요.',retryable:true};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
