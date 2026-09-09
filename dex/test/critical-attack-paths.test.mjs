@@ -76,4 +76,45 @@ describe("LQC critical attack paths", function () {
     assert.equal(await vault.totalAssets(), assets);
     assert.equal(await vault.owner(), await owner.getAddress());
   });
+
+  it("rolls back a Strategy callback attack during Vault allocation", async function () {
+    const token = await deploy(owner, "MockERC20", "mocks/MockERC20", ["Vault", "VLT"]);
+    const vault = await deploy(owner, "LQCLiquidityVault", "vault/LQCLiquidityVault",
+      [await token.getAddress(), await owner.getAddress(), ethers.parseEther("1000"), "Share", "SHARE"]);
+    const strategy = await deploy(owner, "MockReentrantStrategyAdapter", "mocks/MockReentrantStrategyAdapter",
+      [await token.getAddress(), await vault.getAddress()]);
+    const assets = ethers.parseEther("100"), allocation = ethers.parseEther("20");
+    await (await token.mint(await user.getAddress(), assets)).wait();
+    await (await token.connect(user).approve(await vault.getAddress(), assets)).wait();
+    await (await vault.connect(user).deposit(assets, await user.getAddress())).wait();
+    await (await vault.setStrategy(await strategy.getAddress())).wait();
+    await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await strategy.setAttackMode(1)).wait();
+    await assert.rejects(vault.allocateToStrategy(allocation));
+    assert.equal(await vault.strategyDebt(), 0n);
+    assert.equal(await vault.idleAssets(), assets);
+    assert.equal(await token.balanceOf(await strategy.getAddress()), 0n);
+    assert.equal(await strategy.totalManagedAssets(), 0n);
+  });
+
+  it("rolls back a Strategy callback attack during Vault recall", async function () {
+    const token = await deploy(owner, "MockERC20", "mocks/MockERC20", ["Vault", "VLT"]);
+    const vault = await deploy(owner, "LQCLiquidityVault", "vault/LQCLiquidityVault",
+      [await token.getAddress(), await owner.getAddress(), ethers.parseEther("1000"), "Share", "SHARE"]);
+    const strategy = await deploy(owner, "MockReentrantStrategyAdapter", "mocks/MockReentrantStrategyAdapter",
+      [await token.getAddress(), await vault.getAddress()]);
+    const assets = ethers.parseEther("100"), allocation = ethers.parseEther("20");
+    await (await token.mint(await user.getAddress(), assets)).wait();
+    await (await token.connect(user).approve(await vault.getAddress(), assets)).wait();
+    await (await vault.connect(user).deposit(assets, await user.getAddress())).wait();
+    await (await vault.setStrategy(await strategy.getAddress())).wait();
+    await (await vault.setStrategyLimits(allocation, 100)).wait();
+    await (await vault.allocateToStrategy(allocation)).wait();
+    await (await strategy.setAttackMode(2)).wait();
+    await assert.rejects(vault.recallFromStrategy(allocation));
+    assert.equal(await vault.strategyDebt(), allocation);
+    assert.equal(await vault.idleAssets(), assets - allocation);
+    assert.equal(await token.balanceOf(await strategy.getAddress()), allocation);
+    assert.equal(await strategy.totalManagedAssets(), allocation);
+  });
 });
