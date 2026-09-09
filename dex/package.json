@@ -5,14 +5,15 @@
   "description": "LQC Flow DEX constant-product AMM MVP",
   "scripts": {
     "compile": "node scripts/compile.mjs",
-    "test": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
+    "test": "npm run check:app && npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
     "preflight:testnet": "node scripts/preflight-testnet-deploy.mjs",
     "deploy:testnet": "npm run preflight:testnet && npm run compile && node scripts/deploy-testnet.mjs",
     "prepare:verification": "npm run compile && node scripts/prepare-bscscan-verification.mjs",
     "validate:testnet": "node scripts/validate-bsc-testnet.mjs",
     "monitor:testnet": "node scripts/monitor-bsc-testnet.mjs",
     "smoke:testnet": "node scripts/smoke-test-bsc-routes.mjs",
-    "configure:app": "node scripts/configure-app.mjs"
+    "configure:app": "node scripts/configure-app.mjs",
+    "check:app": "node --check app/config.js && node --check app/router-sdk.js && node --check app/app.js"
   },
   "devDependencies": {
     "ethers": "^6.15.0",
