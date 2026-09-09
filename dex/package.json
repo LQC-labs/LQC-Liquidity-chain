@@ -15,7 +15,8 @@
     "configure:app": "node scripts/configure-app.mjs",
     "report:emergency-drill": "node scripts/emergency-drill-report.mjs",
     "package:review-evidence": "node scripts/build-review-evidence-package.mjs",
-    "render:review-summary": "node scripts/render-review-evidence-markdown.mjs"
+    "render:review-summary": "node scripts/render-review-evidence-markdown.mjs",
+    "build:review-bundle": "node scripts/build-review-bundle.mjs"
   },
   "devDependencies": {
     "ethers": "^6.15.0",
