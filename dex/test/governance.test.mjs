@@ -40,12 +40,13 @@ describe("LQC Router governance controls", function () {
       proposer
     );
     emergency = await Emergency.deploy(await proposer.getAddress(), await registry.getAddress(), await risk.getAddress());
+    await registry.waitForDeployment();
     const Adapter = new ethers.ContractFactory(
       artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").abi,
       artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").bytecode,
       proposer
     );
-    adapter = await Adapter.deploy(await outsider.getAddress());
+    adapter = await Adapter.deploy(await registry.getAddress());
     await Promise.all([
       registry.waitForDeployment(), risk.waitForDeployment(), timelock.waitForDeployment(),
       emergency.waitForDeployment(), adapter.waitForDeployment()
