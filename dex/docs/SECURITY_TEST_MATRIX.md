@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **47 Solidity sources** and reports **168 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **48 Solidity sources** and reports **170 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -46,6 +46,7 @@ The current suite compiles **47 Solidity sources** and reports **168 passing tes
 | Dishonest Strategy accounting isolation | `test/critical-attack-paths.test.mjs` | False deployment returns, false managed-asset deltas, short token returns, false withdrawal returns, and false debt reductions all revert atomically while preserving Vault and Strategy accounting. |
 | Rebasing-token Vault isolation | `test/critical-attack-paths.test.mjs` | Positive rebases remain outside share pricing; a negative idle-balance rebase makes backing deficient and fails new deposits and all withdrawals closed, preventing first-mover extraction. Rebasing tokens remain unsupported. |
 | Non-standard ERC-20 return isolation | `test/critical-attack-paths.test.mjs` | Empty legacy returns are accepted, strict 32-byte true returns are required otherwise, and false, short, or oversized transfer/transferFrom/approve returns revert atomically. Zero-first approvals remain supported. |
+| Hostile ERC-20 balance/callback isolation | `test/critical-attack-paths.test.mjs` | Reverting or short `balanceOf` responses fail deposits closed, and transfer callbacks cannot reenter Vault deposit or withdrawal; rejected calls preserve assets, shares, supply, and backing. Arbitrarily lying token balances remain outside the supported-token trust boundary. |
 | Reproducible BscScan verification bundle generation | `test/verification-bundle.test.mjs` | Bundle structure and source revision covered; explorer publication is deployment-specific. |
 | Vault donation-resistant share and idle-asset accounting | `test/liquidity-vault.test.mjs` | Covered for direct donations before deposits and strategy allocation. |
 | Vault strategy approval, role separation, and exposure cap | `test/liquidity-vault.test.mjs` | Covered with a vault-specific reference adapter; production strategies remain pending. |
