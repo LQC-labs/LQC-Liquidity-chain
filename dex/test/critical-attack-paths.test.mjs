@@ -202,4 +202,51 @@ describe("LQC critical attack paths", function () {
     assert.equal(await vault.balanceOf(await attacker.getAddress()), 0n);
     assert.equal(await token.balanceOf(await attacker.getAddress()), deposit);
   });
+
+  it("accepts empty ERC-20 returns but rejects false and malformed transferFrom returns atomically", async function () {
+    const token = await deploy(owner, "MockNonStandardERC20", "mocks/MockNonStandardERC20");
+    const harness = await deploy(owner, "SafeTransferHarness", "mocks/SafeTransferHarness");
+    const amount = ethers.parseEther("10"), userAddress = await user.getAddress();
+    await (await token.mint(userAddress, amount * 4n)).wait();
+    await (await token.connect(user).approve(await harness.getAddress(), ethers.MaxUint256)).wait();
+    await (await token.setBehavior(2, false)).wait();
+    await (await harness.pull(await token.getAddress(), userAddress, amount)).wait();
+    assert.equal(await token.balanceOf(await harness.getAddress()), amount);
+    for (const mode of [1, 3, 4]) {
+      await (await token.setBehavior(mode, false)).wait();
+      const before = await token.balanceOf(userAddress);
+      await assert.rejects(async () => (await harness.pull(await token.getAddress(), userAddress, amount)).wait(), `mode ${mode}`);
+      assert.equal(await token.balanceOf(userAddress), before);
+      assert.equal(await token.balanceOf(await harness.getAddress()), amount);
+    }
+  });
+
+  it("rejects false and malformed transfer returns without leaking harness custody", async function () {
+    const token = await deploy(owner, "MockNonStandardERC20", "mocks/MockNonStandardERC20");
+    const harness = await deploy(owner, "SafeTransferHarness", "mocks/SafeTransferHarness");
+    const amount = ethers.parseEther("10"), recipient = await user.getAddress();
+    await (await token.mint(await harness.getAddress(), amount * 4n)).wait();
+    for (const mode of [1, 3, 4]) {
+      await (await token.setBehavior(mode, false)).wait();
+      const before = await token.balanceOf(await harness.getAddress());
+      await assert.rejects(async () => (await harness.push(await token.getAddress(), recipient, amount)).wait());
+      assert.equal(await token.balanceOf(await harness.getAddress()), before);
+      assert.equal(await token.balanceOf(recipient), 0n);
+    }
+  });
+
+  it("supports zero-first approvals and rejects malformed approval return data", async function () {
+    const token = await deploy(owner, "MockNonStandardERC20", "mocks/MockNonStandardERC20");
+    const harness = await deploy(owner, "SafeTransferHarness", "mocks/SafeTransferHarness");
+    const spender = await attacker.getAddress(), tokenAddress = await token.getAddress();
+    await (await harness.approveExact(tokenAddress, spender, 10n)).wait();
+    await (await token.setBehavior(0, true)).wait();
+    await (await harness.approveExact(tokenAddress, spender, 20n)).wait();
+    assert.equal(await token.allowance(await harness.getAddress(), spender), 20n);
+    for (const mode of [1, 3, 4]) {
+      await (await token.setBehavior(mode, false)).wait();
+      await assert.rejects(async () => (await harness.approveExact(tokenAddress, spender, 30n)).wait());
+      assert.equal(await token.allowance(await harness.getAddress(), spender), 20n);
+    }
+  });
 });
