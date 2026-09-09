@@ -52,7 +52,10 @@ These are testnet starting points, not production risk approvals.
 | WBNB | 10 | 100 |
 
 Initial Vault safety defaults: Mock USDT asset, 100,000 deposit cap, zero strategy allocation cap,
-and 1% normal-recall loss tolerance. These are testnet configuration limits, not production terms.
+1% normal-recall loss tolerance, and strategy allocations paused. The deployment script does not
+resume allocations. Any later activation requires a separately reviewed Timelock operation after
+the Strategy cap, adapter, monitoring, and risk approvals are recorded. These are testnet
+configuration limits, not production terms.
 
 - [ ] Risk reviewers approve or reduce every limit before deployment.
 - [ ] Every enabled DEX/token route has a non-zero cap no higher than the token transaction cap.
