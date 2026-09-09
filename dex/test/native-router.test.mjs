@@ -24,6 +24,7 @@ describe("LQC Router 2.0 native BNB wrapper", function () {
     const nativeRouter = await deploy("LQCNativeRouter", "router-v2/LQCNativeRouter", [await wbnb.getAddress(), await execution.getAddress()]);
     const dexId = ethers.id("LQC_FLOW");
     await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    await (await registry.setDexEnabled(dexId, true)).wait();
     await (await token.mint(ownerAddress, ethers.parseEther("10000"))).wait();
     await (await token.approve(await flow.getAddress(), ethers.MaxUint256)).wait();
     const deadline = BigInt((await provider.getBlock("latest")).timestamp + 3600);

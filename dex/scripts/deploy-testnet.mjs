@@ -186,6 +186,10 @@ for (const [token, perTx, perDay] of limits) {
       () => riskRegistry.setDexTokenCap(dex.id, token, ethers.parseUnits(perTx, 18)));
   }
 }
+for (const dex of dexes) {
+  await transact(`registry.enable.${dex.id}`, [dex.id, true],
+    () => registry.setDexEnabled(dex.id, true));
+}
 await transact("registry.beginOwnershipTransfer", [timelock.target], () => registry.beginOwnershipTransfer(timelock.target));
 await transact("registry.acceptOwnership", [registry.target], () => timelock.acceptRegistryOwnership(registry.target));
 await transact("riskRegistry.beginOwnershipTransfer", [timelock.target], () => riskRegistry.beginOwnershipTransfer(timelock.target));

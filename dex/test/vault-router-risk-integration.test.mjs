@@ -53,6 +53,7 @@ describe("LQC Vault-Router-Risk-Adapter isolation", function () {
     await (await risk.setTokenLimits(tokenAAddress, true, ethers.parseEther("20"), ethers.parseEther("50"))).wait();
     await (await risk.setTokenLimits(tokenBAddress, true, ethers.parseEther("1000"), ethers.parseEther("1000"))).wait();
     await (await risk.setDexTokenCap(dexId, tokenAAddress, ethers.parseEther("20"))).wait();
+    await (await registry.setDexEnabled(dexId, true)).wait();
 
     await (await tokenA.mint(await owner.getAddress(), liquidity)).wait();
     await (await tokenB.mint(await owner.getAddress(), liquidity)).wait();
