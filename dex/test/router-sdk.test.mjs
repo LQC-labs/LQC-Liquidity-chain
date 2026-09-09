@@ -67,6 +67,7 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.explainSwapError({ message: "execution reverted: NoValidQuote()" }).code, "NO_ROUTE");
     assert.equal(sdk.explainSwapError({ message: "execution reverted: InsufficientOutput()" }).code, "PRICE_MOVED");
     assert.equal(sdk.explainSwapError({ message: "daily cap exceeded" }).retryable, false);
+    assert.equal(sdk.explainSwapError({ message: "RouteChangedDuringApproval" }).code, "ROUTE_CHANGED");
   });
 
   it("ranks executable primary and fallback routes by net output and priority", function () {
@@ -97,6 +98,14 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.walletSessionState([tokenA], false, "0x61", "0x61"), "disconnected");
     assert.equal(sdk.walletSessionState([tokenA], true, "0x1", "0x61"), "wrong_network");
     assert.equal(sdk.walletSessionState([tokenA], true, "0x61", "0x61"), "connected");
+  });
+
+  it("requires approval only when the selected spender allowance is insufficient", function () {
+    assert.equal(sdk.requiresTokenApproval(99n, 100n), true);
+    assert.equal(sdk.requiresTokenApproval(100n, 100n), false);
+    assert.equal(sdk.requiresTokenApproval(101n, 100n), false);
+    assert.throws(() => sdk.requiresTokenApproval(-1n, 100n));
+    assert.throws(() => sdk.requiresTokenApproval(100n, 0n));
   });
 
 });
