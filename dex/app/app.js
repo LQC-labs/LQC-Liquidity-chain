@@ -85,7 +85,13 @@
     wallets.push(detail);renderWallets();
   }
   function renderWallets(){
-    ui.walletList.replaceChildren(...wallets.map(wallet=>{const button=document.createElement('button');button.type='button';button.className='wallet-option';const icon=wallet.info.icon&&wallet.info.icon.startsWith('data:')?`<img src="${wallet.info.icon}" alt="">`:`<span class="wallet-fallback">${wallet.info.name.slice(0,1)}</span>`;button.innerHTML=`${icon}<span><b>${wallet.info.name}</b><small>비수탁형 지갑</small></span>`;button.onclick=()=>{ui.walletDialog.close();connect(wallet.provider,true)};return button}));
+    ui.walletList.replaceChildren(...wallets.map(wallet=>{
+      const button=document.createElement('button'),label=document.createElement('span'),name=document.createElement('b'),kind=document.createElement('small'),safeName=String(wallet.info.name||'비수탁형 지갑');
+      button.type='button';button.className='wallet-option';name.textContent=safeName;kind.textContent='비수탁형 지갑';label.append(name,kind);
+      if(typeof wallet.info.icon==='string'&&wallet.info.icon.startsWith('data:image/')){const image=document.createElement('img');image.src=wallet.info.icon;image.alt='';button.append(image)}
+      else{const fallback=document.createElement('span');fallback.className='wallet-fallback';fallback.textContent=safeName.slice(0,1);button.append(fallback)}
+      button.append(label);button.onclick=()=>{ui.walletDialog.close();connect(wallet.provider,true)};return button;
+    }));
   }
   function chooseWallet(){
     if(wallets.length===0&&window.ethereum)addWallet({info:{uuid:'legacy-injected',name:'브라우저 지갑',rdns:'legacy.injected'},provider:window.ethereum});
