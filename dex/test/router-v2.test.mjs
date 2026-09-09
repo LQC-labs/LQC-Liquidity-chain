@@ -79,6 +79,26 @@ describe("LQC Router 2.0", function () {
     await assert.rejects(quoteRouter.quoteBest(path[0], path[1], 1n, [data]));
   });
 
+  it("rejects EOAs and incompatible contracts without changing an approved DEX", async function () {
+    const dexId = ethers.id("LQC_FLOW");
+    await assert.rejects(registry.addDex(
+      ethers.id("EOA_ADAPTER"), await other.getAddress(), "EOA", 1
+    ));
+    await assert.rejects(registry.addDex(
+      ethers.id("TOKEN_ADAPTER"), await tokenA.getAddress(), "Token", 1
+    ));
+
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    const before = await registry.getDex(dexId);
+    await assert.rejects(registry.updateDex(dexId, await other.getAddress(), 999));
+    await assert.rejects(registry.updateDex(dexId, await tokenA.getAddress(), 999));
+    const after = await registry.getDex(dexId);
+
+    assert.equal(after.adapter, before.adapter);
+    assert.equal(after.enabled, before.enabled);
+    assert.equal(after.priority, before.priority);
+  });
+
   it("compares LQC Flow with a PancakeSwap V2-compatible pool and selects the better quote", async function () {
     const Factory = new ethers.ContractFactory(artifact("LQCFlowFactory").abi, artifact("LQCFlowFactory").bytecode, owner);
     const pancakeFactory = await Factory.deploy(await owner.getAddress());
