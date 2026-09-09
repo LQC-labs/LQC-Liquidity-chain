@@ -26,6 +26,37 @@ export async function assertContractCode(provider, namedAddresses) {
     if (await provider.getCode(address) === "0x") throw new Error(`${name} has no deployed bytecode.`);
   }
 }
+
+/// @notice Fails closed unless every reviewed V3 route resolves to a deployed pool in the
+/// canonical PancakeSwap V3 factory. This prevents a manually approved token/fee tuple from
+/// reaching deployment evidence when the pool is absent or points to an undeployed address.
+export async function assertPancakeV3PoolsExist(provider, pools) {
+  if (!Array.isArray(pools) || pools.length === 0) {
+    throw new Error("PancakeSwap V3 requires at least one reviewed pool.");
+  }
+  const factory = new ethers.Contract(PANCAKE_BSC_TESTNET.v3Factory, [
+    "function getPool(address,address,uint24) view returns(address)"
+  ], provider);
+  const seen = new Set();
+  for (const pool of pools) {
+    if (!ethers.isAddress(pool?.tokenA) || !ethers.isAddress(pool?.tokenB) ||
+        same(pool.tokenA, pool.tokenB) || !Number.isInteger(Number(pool.fee))) {
+      throw new Error("PancakeSwap V3 reviewed pool configuration is invalid.");
+    }
+    const [token0, token1] = [ethers.getAddress(pool.tokenA), ethers.getAddress(pool.tokenB)].sort();
+    const key = `${token0}:${token1}:${Number(pool.fee)}`;
+    if (seen.has(key)) throw new Error("PancakeSwap V3 reviewed pool configuration contains a duplicate pool.");
+    seen.add(key);
+    const poolAddress = await factory.getPool(token0, token1, Number(pool.fee));
+    if (!ethers.isAddress(poolAddress) || poolAddress === ethers.ZeroAddress) {
+      throw new Error(`PancakeSwap V3 reviewed pool does not exist: ${key}.`);
+    }
+    if (await provider.getCode(poolAddress) === "0x") {
+      throw new Error(`PancakeSwap V3 reviewed pool has no deployed bytecode: ${key}.`);
+    }
+  }
+  return true;
+}
 export function deploymentContractAddresses(deployment) {
   if (Number(deployment?.network?.chainId) !== 97) throw new Error("Deployment record must target BSC testnet chain 97.");
   const required = ["dexRegistry", "riskRegistry", "emergencyController", "executionRouter", "timelock", "gasCostOracle",
@@ -255,6 +286,7 @@ export async function validateBscTestnet({ provider, deployment }) {
   const v3Record = deployment.dexes.find(dex => dex.kind === "v3");
   if (v3Record) {
     validateV3DeploymentRecord(v3Record);
+    await assertPancakeV3PoolsExist(provider, v3Record.pools);
     const v3Adapter = new ethers.Contract(v3Record.adapter, [
       "function maxHops() view returns(uint256)",
       "function allowedFeeTiers(uint24) view returns(bool)",
