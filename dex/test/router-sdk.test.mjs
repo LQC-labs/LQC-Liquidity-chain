@@ -72,6 +72,7 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.explainSwapError({ message: "WalletContextChanged" }).code, "WALLET_CHANGED");
     assert.equal(sdk.explainSwapError({ message: "InsufficientInputBalance" }).code, "INSUFFICIENT_BALANCE");
     assert.equal(sdk.explainSwapError({ message: "InsufficientGasReserve" }).code, "INSUFFICIENT_GAS_RESERVE");
+    assert.equal(sdk.explainSwapError({ message: "ApprovalIncomplete" }).code, "APPROVAL_INCOMPLETE");
   });
 
   it("ranks executable primary and fallback routes by net output and priority", function () {
