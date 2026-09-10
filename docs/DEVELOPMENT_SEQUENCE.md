@@ -51,3 +51,9 @@ Stage 1 is active. The repository already contains Router 2.0, risk controls, Va
 ## Immediate next milestone
 
 Complete Stage 1 Router-Vault-Risk-Adapter integration evidence. Then prepare Stage 2 without deploying until reviewed BSC testnet governance, risk-admin, guardian, treasury, and deployment addresses are supplied.
+
+Run the repository-level Stage 1 exit gate from `dex/` with `npm run gate:stage1`. The gate fails
+closed unless browser syntax checks, Solidity compilation, the complete contract/security suite, and
+the Router SDK coverage threshold all pass. Passing this gate confirms repository evidence only; it
+does not authorize deployment or replace the reviewed addresses and operational evidence required by
+Stage 2.
