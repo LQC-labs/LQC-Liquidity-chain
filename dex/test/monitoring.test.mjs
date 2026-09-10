@@ -48,6 +48,21 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.checks.filter(check => check.id.startsWith("vault.") && check.status === "CRITICAL").length, 4);
   });
 
+  it("creates a shutdown and governed recovery response for Vault backing breaches", function () {
+    const input = healthyInput();
+    input.vaultState = { ...input.vaultState, strategyDebt: "300", idleBalance: "1",
+      adapterManagedAssets: "299", insolvent: true };
+    const report = buildMonitoringReport(input);
+
+    assert.equal(report.incident.code, "VAULT_BACKING_BREACH");
+    assert.equal(report.incident.severity, "CRITICAL");
+    assert.equal(report.incident.automaticTransactions, false);
+    assert.deepEqual(report.incident.triggers,
+      ["vault.solvency", "vault.strategy_exposure", "vault.idle_backing", "vault.adapter_backing"]);
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["RISK_MULTISIG", "EVIDENCE_REVIEW", "STRATEGY_REVIEW", "TIMELOCK", "POST_CHECK"]);
+  });
+
   it("reports Vault emergency pauses as warnings without treating expected custody as Router residue", function () {
     const input = healthyInput();
     input.vaultState.depositsPaused = true;

@@ -23,6 +23,21 @@ export function buildIncidentResponse(checks) {
       { order: 5, gate: "POST_CHECK", action: "Execute recovery after the timelock, rerun monitoring, and publish the incident disposition." }
     ]
   };
+  const backingIds = new Set([
+    "vault.solvency", "vault.strategy_exposure", "vault.idle_backing", "vault.adapter_backing"
+  ]);
+  const backingBreaches = checks.filter(check => backingIds.has(check.id) && check.status === "CRITICAL");
+  if (backingBreaches.length) return {
+    code: "VAULT_BACKING_BREACH", severity: "CRITICAL", automaticTransactions: false,
+    triggers: backingBreaches.map(check => check.id),
+    actions: [
+      { order: 1, gate: "RISK_MULTISIG", action: "Approve and submit LiquidityVault.pauseDeposits and pauseAllocations immediately; do not use a single EOA." },
+      { order: 2, gate: "EVIDENCE_REVIEW", action: "Pin the detection block, Vault accounting, token balances, Strategy reports, limits, and related events." },
+      { order: 3, gate: "STRATEGY_REVIEW", action: "Assess Strategy recall safety, loss bounds, token behavior, and whether emergency reconciliation is required." },
+      { order: 4, gate: "TIMELOCK", action: "Execute only the reviewed recall, reconciliation, limit, or recovery operation after governance approval." },
+      { order: 5, gate: "POST_CHECK", action: "Confirm full backing, zero unauthorized exposure, and passing validation before reopening any operation." }
+    ]
+  };
   const allocationDrift = checks.find(check =>
     check.id === "vault.allocation_status" && check.status === "CRITICAL");
   if (allocationDrift) return {
