@@ -185,6 +185,12 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function fixedFeeFields/);
     assert.match(script, /provider\.getTransactionCount\(account,'pending'\)/);
     assert.match(script, /provider\.getFeeData\(\)/);
+    assert.match(script, /function consensusFeeFields/);
+    assert.match(script, /readProviders\[index\]\.getFeeData\(\)/);
+    assert.match(script, /chartHealth\.consensusFeeData\(observations,readProviders\.length\)/);
+    assert.match(script, /TransactionFeeConsensusFailed/);
+    assert.match(script, /maximumNetworkFee/);
+    assert.match(script, /BNB · RPC 합의/);
     assert.match(script, /function sendPreparedTransaction/);
     assert.match(script, /WalletNonceChangedBeforeSigning/);
     assert.match(script, /chartHealth\.bindTransaction\(anchorQuote,request\)/);
