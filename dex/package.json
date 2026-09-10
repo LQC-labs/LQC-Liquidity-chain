@@ -15,6 +15,7 @@
     "prepare:verification": "npm run compile && node scripts/prepare-bscscan-verification.mjs",
     "prepare:role-activation": "node scripts/prepare-operational-role-activation.mjs",
     "verify:role-activation": "node scripts/verify-operational-role-activation.mjs",
+    "verify:guardian-activation-tx": "node scripts/verify-guardian-activation-transaction.mjs",
     "validate:testnet": "node scripts/validate-bsc-testnet.mjs",
     "monitor:testnet": "node scripts/monitor-bsc-testnet.mjs",
     "smoke:testnet": "node scripts/smoke-test-bsc-routes.mjs",
