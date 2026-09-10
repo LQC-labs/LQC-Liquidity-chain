@@ -31,3 +31,35 @@ export function approvedPool(deployment, poolAddress) {
   const target = String(poolAddress || "").toLowerCase();
   return (deployment?.pools || []).some(pool => String(pool.address || "").toLowerCase() === target);
 }
+
+function validTrade(trade) {
+  return typeof trade?.base === "string" && typeof trade?.quote === "string" &&
+    [trade.timestamp, trade.price, trade.baseVolume, trade.quoteVolume].every(Number.isFinite) &&
+    trade.timestamp > 0 && trade.price > 0 && trade.baseVolume > 0 && trade.quoteVolume > 0;
+}
+
+export function createIndexerCheckpoint(cursor, pools, maxTrades = 200000) {
+  if (!Number.isSafeInteger(cursor) || cursor < 0) throw new Error("Indexer cursor is invalid.");
+  const records = {};
+  for (const pool of pools) {
+    const address = String(pool.address || "").toLowerCase();
+    if (!address || !pool.token0 || !pool.token1) throw new Error("Indexer pool identity is incomplete.");
+    const trades = (pool.trades || []).filter(validTrade).slice(-maxTrades);
+    records[address] = { token0: pool.token0.toLowerCase(), token1: pool.token1.toLowerCase(), trades };
+  }
+  return { schemaVersion: 1, chainId: 97, nextBlock: cursor, pools: records };
+}
+
+export function restoreIndexerCheckpoint(snapshot, pools, maxTrades = 200000) {
+  if (snapshot?.schemaVersion !== 1 || snapshot?.chainId !== 97 || !Number.isSafeInteger(snapshot?.nextBlock) || snapshot.nextBlock < 0 || !snapshot?.pools) {
+    throw new Error("Candle indexer checkpoint is incompatible.");
+  }
+  for (const pool of pools) {
+    const saved = snapshot.pools[String(pool.address).toLowerCase()];
+    if (!saved || saved.token0 !== pool.token0.toLowerCase() || saved.token1 !== pool.token1.toLowerCase() || !Array.isArray(saved.trades) || saved.trades.some(trade => !validTrade(trade))) {
+      throw new Error("Candle indexer checkpoint does not match the approved pools.");
+    }
+    pool.trades = saved.trades.slice(-maxTrades);
+  }
+  return snapshot.nextBlock;
+}
