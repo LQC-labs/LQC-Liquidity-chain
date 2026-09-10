@@ -56,5 +56,12 @@
     const winner=[...groups.values()].sort((a,b)=>b.length-a.length)[0]||[],quorum=Math.floor(configuredSources/2)+1;if(winner.length<quorum)return null;const quote=winner[0].quote;
     return Object.freeze({dexId:quote.dexId.toLowerCase(),adapter:quote.adapter.toLowerCase(),amountOut:quote.amountOut,priority:BigInt(quote.priority),sourceIndexes:Object.freeze(winner.map(item=>item.index))});
   }
-  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead,consensusHash,sourceHealth,sourceHealthSnapshot,restoreSourceHealth,rankCanonicalSources,consensusQuote});
+  function bindQuote(quote,blockNumber,blockHash,issuedAt=Date.now(),ttlMs=10000){
+    if(!quote||typeof quote.dexId!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(quote.dexId)||typeof quote.adapter!=='string'||!/^0x[0-9a-fA-F]{40}$/.test(quote.adapter)||typeof quote.amountOut!=='bigint'||quote.amountOut<=0n||!['bigint','number'].includes(typeof quote.priority)||!Number.isSafeInteger(blockNumber)||blockNumber<0||typeof blockHash!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(blockHash)||!Number.isFinite(issuedAt)||issuedAt<0||!Number.isFinite(ttlMs)||ttlMs<1000||ttlMs>30000)throw new Error('Chart RPC quote binding input is invalid');
+    return Object.freeze({...quote,dexId:quote.dexId.toLowerCase(),adapter:quote.adapter.toLowerCase(),priority:BigInt(quote.priority),blockNumber,blockHash:blockHash.toLowerCase(),issuedAt,expiresAt:issuedAt+ttlMs});
+  }
+  function quoteBindingMatches(bound,quote,blockHash,now=Date.now()){
+    if(!bound||!quote||!Number.isFinite(now)||typeof blockHash!=='string'||!['bigint','number'].includes(typeof quote.priority))return false;return now>=bound.issuedAt&&now<=bound.expiresAt&&blockHash.toLowerCase()===bound.blockHash&&quote.dexId?.toLowerCase()===bound.dexId&&quote.adapter?.toLowerCase()===bound.adapter&&quote.amountOut===bound.amountOut&&BigInt(quote.priority)===bound.priority;
+  }
+  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead,consensusHash,sourceHealth,sourceHealthSnapshot,restoreSourceHealth,rankCanonicalSources,consensusQuote,bindQuote,quoteBindingMatches});
 })(typeof window==='undefined'?globalThis:window);

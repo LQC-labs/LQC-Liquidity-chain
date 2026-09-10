@@ -166,6 +166,10 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /chartHealth\.consensusQuote\(observations,readProviders\.length\)/);
     assert.match(script, /blockTag:trustedReadBlock/);
     assert.match(script, /Browser RPC quote consensus unavailable/);
+    assert.match(script, /chartHealth\.bindQuote\(consensus,trustedReadBlock,trustedReadHash,now\)/);
+    assert.match(script, /function verifyQuoteBeforeSigning/);
+    assert.match(script, /chartHealth\.quoteBindingMatches/);
+    assert.match(script, /await verifyQuoteBeforeSigning\(plan\.anchorQuote/);
     assert.match(script, /RPC 합의 대기/);
     assert.match(script, /chartHealth\.restoreSourceHealth\(JSON\.parse\(localStorage\.getItem\(rpcHealthMemoryKey\)/);
     assert.match(script, /chartHealth\.sourceHealthSnapshot\(rpcSourceHealth,cfg\.deploymentFingerprint,now\)/);
