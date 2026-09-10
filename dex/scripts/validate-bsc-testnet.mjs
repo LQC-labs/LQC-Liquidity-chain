@@ -158,6 +158,28 @@ export function validateRiskAdministrator(deployment, onchainRiskAdmin) {
   return ethers.getAddress(onchainRiskAdmin);
 }
 
+export function validateOperationalRoles(deployment, guardianEnabled) {
+  const roles = {
+    deployer: deployment?.deployer,
+    governance: deployment?.owner,
+    risk: deployment?.riskAdmin,
+    guardian: deployment?.guardian,
+    treasury: deployment?.treasury,
+  };
+  for (const [name, address] of Object.entries(roles)) {
+    if (!ethers.isAddress(address) || address === ethers.ZeroAddress) {
+      throw new Error(`Deployment record has an invalid ${name} operational role.`);
+    }
+  }
+  if (new Set(Object.values(roles).map(address => ethers.getAddress(address))).size !== 5) {
+    throw new Error("Deployment operational roles are not fully separated.");
+  }
+  if (guardianEnabled !== true) {
+    throw new Error("Reviewed emergency Guardian is not active on-chain.");
+  }
+  return Object.fromEntries(Object.entries(roles).map(([name, address]) => [name, ethers.getAddress(address)]));
+}
+
 export function validateVaultDeploymentRecord(deployment, onchain) {
   const vault = deployment?.contracts?.liquidityVault;
   const adapter = deployment?.contracts?.idleStrategyAdapter;
@@ -307,7 +329,8 @@ export async function validateBscTestnet({ provider, deployment }) {
   }
 
   const execution = new ethers.Contract(deployment.contracts.executionRouter.address, [
-    "function registry() view returns(address)", "function riskRegistry() view returns(address)"
+    "function registry() view returns(address)", "function riskRegistry() view returns(address)",
+    "function guardians(address) view returns(bool)"
   ], provider);
   const emergencyController = new ethers.Contract(emergency, [
     "function registry() view returns(address)", "function riskRegistry() view returns(address)"
@@ -315,9 +338,9 @@ export async function validateBscTestnet({ provider, deployment }) {
   const timelockContract = new ethers.Contract(timelock, [
     "function proposer() view returns(address)", "function delay() view returns(uint256)", "function MIN_DELAY() view returns(uint256)"
   ], provider);
-  const [executionRegistry, executionRisk, emergencyRegistry, emergencyRisk, proposer, delay, minDelay] = await Promise.all([
+  const [executionRegistry, executionRisk, emergencyRegistry, emergencyRisk, guardianEnabled, proposer, delay, minDelay] = await Promise.all([
     execution.registry(), execution.riskRegistry(), emergencyController.registry(), emergencyController.riskRegistry(),
-    timelockContract.proposer(), timelockContract.delay(), timelockContract.MIN_DELAY()
+    emergencyController.guardians(deployment.guardian), timelockContract.proposer(), timelockContract.delay(), timelockContract.MIN_DELAY()
   ]);
   if (!same(executionRegistry, deployment.contracts.dexRegistry.address) ||
       !same(executionRisk, deployment.contracts.riskRegistry.address)) throw new Error("Execution Router module linkage mismatch.");
@@ -326,6 +349,7 @@ export async function validateBscTestnet({ provider, deployment }) {
   if (!ethers.isAddress(proposer) || proposer === ethers.ZeroAddress || delay < minDelay) {
     throw new Error("Timelock configuration is unsafe.");
   }
+  const operationalRoles = validateOperationalRoles(deployment, guardianEnabled);
 
   return {
     chainId: Number(network.chainId),
@@ -336,11 +360,13 @@ export async function validateBscTestnet({ provider, deployment }) {
       activeDexCount: onchainDexes.filter(dex => dex.enabled).length,
       swapsPaused,
       riskAdmin,
+      guardian: operationalRoles.guardian,
+      guardianActive: true,
       timelockDelaySeconds: Number(delay),
       vaultReady: true,
       evidenceContractCount: evidence.contractCount
     },
-    safeForSmokeTest: !swapsPaused
+    safeForSmokeTest: !swapsPaused && guardianEnabled
   };
 }
 
