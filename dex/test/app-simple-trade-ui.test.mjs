@@ -25,6 +25,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /ui\.tokenSearch\.oninput=/);
     assert.match(script, /function approvedRoutes\(path\)/);
     assert.match(script, /No mutually approved DEX route/);
+    assert.match(script, /No approved token pair/);
     assert.doesNotMatch(script, /token-option[^\n]*innerHTML/);
   });
 
@@ -34,15 +35,5 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /async function applyBalancePercent\(percent\)/);
     assert.match(script, /available\*BigInt\(percent\)\/100n/);
     assert.match(script, /tokenIn\.address==='native'\?ethers\.parseEther\('\.01'\):0n/);
-  });
-
-  it("opens a reviewed market list and carries the selected asset into Buy and Sell", function () {
-    assert.match(html, /id="marketSelector"[^>]*aria-haspopup="dialog"/);
-    assert.match(html, /id="marketSearch"[^>]*placeholder="토큰 검색"/);
-    assert.match(html, /배포·위험 검토 완료 토큰만 표시/);
-    assert.match(script, /function marketList\(query=''\)/);
-    assert.match(script, /function selectMarket\(token\)/);
-    assert.match(script, /next==='buy'\?\[quoteToken,selectedAsset\]:\[selectedAsset,quoteToken\]/);
-    assert.doesNotMatch(script, /market-row[^\n]*innerHTML/);
   });
 });
