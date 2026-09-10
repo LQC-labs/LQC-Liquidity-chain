@@ -137,6 +137,17 @@ npm run verify:role-activation -- ./deployments/role-activation.local.json ./dep
 The verifier recomputes the source-bound deployment fingerprint, action calldata, and SHA-256 bundle
 digest and rejects any modified field.
 
+After the Governance Safe executes the reviewed action, verify its successful Safe event, exact
+Guardian event, on-chain active state, and finality before any route probe:
+
+```bash
+export GUARDIAN_ACTIVATION_TX="0x..."
+export GUARDIAN_MIN_CONFIRMATIONS="3"
+npm run verify:guardian-activation-tx
+```
+
+This command is read-only and never signs or sends a transaction.
+
 `deploy:testnet` runs a non-transactional preflight first. It refuses non-chain-97 RPCs, missing or
 unsafe governance settings, timelocks outside 1 hour to 7 days, invalid daily/transaction limits,
 liquidity above minted test supply, insufficient test BNB, unpinned PancakeSwap endpoints, and
