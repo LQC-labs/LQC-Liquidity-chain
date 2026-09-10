@@ -36,6 +36,19 @@ export function buildIncidentResponse(checks) {
       { order: 5, gate: "POST_CHECK", action: "Confirm zero Router and Adapter custody, zero residual approvals, and passing deployment validation before resuming swaps." }
     ]
   };
+  const deploymentDrift = checks.find(check =>
+    check.id === "deployment.configuration" && check.status === "CRITICAL");
+  if (deploymentDrift) return {
+    code: "DEPLOYMENT_CONFIGURATION_DRIFT", severity: "CRITICAL", automaticTransactions: false,
+    triggers: [deploymentDrift.id],
+    actions: [
+      { order: 1, gate: "GUARDIAN_MULTISIG", action: "Pause all swaps and disable affected DEX routes with the authorized multisig." },
+      { order: 2, gate: "EVIDENCE_REVIEW", action: "Pin the detection block, validation error, contract bytecode, roles, adapters, limits, pools, and deployment record." },
+      { order: 3, gate: "CONFIGURATION_REVIEW", action: "Classify the drift as unauthorized, failed deployment, or approved but unrecorded governance change." },
+      { order: 4, gate: "TIMELOCK", action: "Restore the reviewed configuration or approve a new baseline only through governance and the configured delay." },
+      { order: 5, gate: "POST_CHECK", action: "Rerun full deployment validation, route probes, custody checks, and monitoring before resuming swaps." }
+    ]
+  };
   const roleDrift = checks.find(check => check.id === "vault.role_integrity" && check.status === "CRITICAL");
   if (roleDrift) return {
     code: "VAULT_ROLE_DRIFT", severity: "CRITICAL", automaticTransactions: false,

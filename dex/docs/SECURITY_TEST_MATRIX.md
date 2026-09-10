@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **48 Solidity sources** and reports **182 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **48 Solidity sources** and reports **183 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -32,6 +32,7 @@ The current suite compiles **48 Solidity sources** and reports **182 passing tes
 | V3 endpoint, path, fee-tier, pool, and hop validation | `test/router-v2.test.mjs`, `test/router-sdk.test.mjs` | Covered for configured reviewed pools. Production integration review pending. |
 | Fee-on-transfer input rejection | `test/router-v2.test.mjs` | Explicit rejection and rollback covered; these tokens remain unsupported. |
 | BSC testnet chain ID 97, bytecode, and module/link ownership checks | `test/testnet-validation.test.mjs`, `test/testnet-bootstrap.test.mjs` | Validator behavior covered; each real deployment must still be validated. |
+| Deployment configuration-drift response | `test/monitoring.test.mjs` | Any failed live deployment validation is critical and produces a non-automatic global pause, evidence preservation, configuration review, Timelock remediation, and full post-check plan. |
 | Test token ownership and supply behavior | `test/testnet-token.test.mjs` | Test infrastructure only; not evidence for a final production LQC token. |
 | Browser route encoding and execution-plan SDK | `test/router-sdk.test.mjs` | Covered for supported routing formats. |
 | Proof of Best Execution | `test/router-sdk.test.mjs` | Produces tamper-evident single/split decision receipts, proves gas-adjusted route selection, rejects non-improving splits and inconsistent allocations, and excludes raw route data. |

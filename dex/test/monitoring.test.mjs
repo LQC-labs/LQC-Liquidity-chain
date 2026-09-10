@@ -39,6 +39,19 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.counts.critical, 3);
   });
 
+  it("creates a governed response when deployment validation detects configuration drift", function () {
+    const input = healthyInput();
+    input.validation = null;
+    input.validationError = "DEX adapter configuration mismatch";
+    const report = buildMonitoringReport(input);
+
+    assert.equal(report.status, "CRITICAL");
+    assert.equal(report.incident.code, "DEPLOYMENT_CONFIGURATION_DRIFT");
+    assert.equal(report.incident.automaticTransactions, false);
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["GUARDIAN_MULTISIG", "EVIDENCE_REVIEW", "CONFIGURATION_REVIEW", "TIMELOCK", "POST_CHECK"]);
+  });
+
   it("creates a pause and governed recovery response for retained Router funds", function () {
     const input = healthyInput();
     input.custody[0].balance = "1";
