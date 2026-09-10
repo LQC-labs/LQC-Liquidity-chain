@@ -17,7 +17,12 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /비수탁 거래/);
     assert.match(html, /Gasless 조건 확인/);
     assert.match(html, /<nav class="mobile-nav" aria-label="주요 메뉴">/);
+    assert.match(html, /id="tokenSearch"[^>]*placeholder="이름, 심볼 또는 컨트랙트 주소"/);
+    assert.match(html, /Router 위험 정책에 등록된 토큰만 표시/);
     assert.match(script, /ui\.buy\.onclick=ui\.buyTab\.onclick/);
     assert.match(script, /ui\.walletNav\.onclick=chooseWallet/);
+    assert.match(script, /\[t\.symbol,t\.name,t\.address\]/);
+    assert.match(script, /ui\.tokenSearch\.oninput=/);
+    assert.doesNotMatch(script, /token-option[^\n]*innerHTML/);
   });
 });

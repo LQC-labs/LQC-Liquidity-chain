@@ -1,0 +1,47 @@
+.token-count {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.token-search {
+  height: 44px;
+  margin-top: 16px;
+  padding: 0 13px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line2);
+  border-radius: 13px;
+  background: #f8fafb;
+  color: var(--muted);
+}
+
+.token-search input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: none;
+  color: var(--text);
+  font-size: 13px;
+}
+
+.token-policy,
+.token-empty {
+  margin: 9px 2px 0;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.token-empty {
+  padding: 24px 0;
+  text-align: center;
+}
+
+.token-list {
+  max-height: 360px;
+  margin-top: 13px;
+  overflow-y: auto;
+}

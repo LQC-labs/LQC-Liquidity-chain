@@ -7,6 +7,7 @@
   <meta name="description" content="LQC Flow DEX — BNB Smart Chain testnet trading interface">
   <title>LQC Flow DEX</title>
   <link rel="stylesheet" href="styles.css?v=20260910a">
+  <link rel="stylesheet" href="token-search.css?v=20260910a">
 </head>
 <body>
   <header class="topbar">
@@ -101,7 +102,7 @@
   <div class="bottom-actions" aria-label="LQC 매수 및 매도"><button class="action-buy active" id="buyAction" type="button">Buy</button><button class="action-sell" id="sellAction" type="button">Sell</button><button class="quick" id="quickTrade" type="button" aria-label="빠른 거래">↯</button></div>
   <nav class="mobile-nav" aria-label="주요 메뉴"><a href="../../index.html"><span>⌂</span>Home</a><button id="marketNav" type="button"><span>⌁</span>Market</button><button class="active" id="tradeNav" type="button"><span>⇄</span>Trade</button><button id="walletNav" type="button"><span>▣</span>Wallet</button></nav>
 
-  <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><h2>토큰 선택</h2><button value="cancel" aria-label="닫기">×</button></div><div class="token-list" id="tokenList" role="listbox"></div></form></dialog>
+  <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><div><h2>토큰 선택</h2><span class="token-count" id="tokenCount">0개 등록</span></div><button value="cancel" aria-label="닫기">×</button></div><label class="token-search"><span aria-hidden="true">⌕</span><input id="tokenSearch" type="search" autocomplete="off" spellcheck="false" placeholder="이름, 심볼 또는 컨트랙트 주소" aria-label="거래 토큰 검색"></label><p class="token-policy">검증된 배포 목록과 Router 위험 정책에 등록된 토큰만 표시됩니다.</p><div class="token-list" id="tokenList" role="listbox"></div><p class="token-empty" id="tokenEmpty" hidden>일치하는 등록 토큰이 없습니다.</p></form></dialog>
   <dialog id="walletDialog"><form method="dialog"><div class="dialog-head"><h2>지갑 선택</h2><button value="cancel" aria-label="닫기">×</button></div><p class="wallet-help">기기에 설치되었거나 앱 내부에서 제공되는 비수탁형 지갑을 선택하세요.</p><div class="wallet-list" id="walletList" role="listbox"></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
   <script src="config.js?v=20260906m"></script><script src="router-sdk.js?v=20260906n"></script><script src="app.js?v=20260910a"></script>
