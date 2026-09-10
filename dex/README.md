@@ -161,6 +161,11 @@ to the timelock during bootstrap; validation rejects deployer-owned or wrong-WBN
 
 ```bash
 export BSC_TESTNET_RPC_URL="https://..."
+export BSC_TESTNET_RPC_URLS="https://independent-rpc-2.example,https://independent-rpc-3.example"
+export CANDLE_SIGNING_PRIVATE_KEY="<dedicated indexer signing key; never commit>"
+export CANDLE_REQUESTS_PER_MINUTE="120"
+export CANDLE_MAX_CONCURRENT="32"
+export METRICS_BEARER_TOKEN="<at least 32 random characters>"
 export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
 npm run validate:testnet
 ```
@@ -313,16 +318,30 @@ export CORS_ORIGIN="https://lqc-labs.github.io"
 npm run serve:candles
 ```
 
-The indexer atomically checkpoints its next finalized block and bounded trade history to
-`.data/candle-indexer-97.json`, so a normal restart resumes without losing history or replaying
-already committed blocks. Set `INDEXER_STATE_FILE` to a durable absolute path in production.
-Startup fails closed if the checkpoint network or pool identities differ from the reviewed
-deployment record; do not copy a checkpoint between deployments.
-
+When redundant URLs are configured, every sync requires a majority of independent RPC sources to
+agree on the same finalized block hash. An unavailable primary automatically fails over to the first
+healthy source in the canonical majority; missing quorum or conflicting hashes stop candle updates.
+Every candle response is bound to chain, market, timeframe, finalized cursor, and a 30-second expiry
+with an EIP-191 signature. Record the dedicated signer's public address as
+`ui.candleSignerAddress`; the browser rejects expired, substituted, or modified responses.
+The service applies per-client request limits, a bounded concurrent-work ceiling, short signed-response
+caching, and ETags. Forwarded client addresses are ignored unless the deployment explicitly sets
+`TRUST_PROXY=1` behind a trusted reverse proxy.
+An authenticated `/metrics` endpoint exposes low-cardinality Prometheus counters and gauges for
+requests, rate limits, overload rejection, cache efficiency, signed responses, sync failures, reorg
+recovery, index lag, and RPC quorum health. It never labels metrics with wallet addresses or client
+IP addresses. The endpoint remains disabled when `METRICS_BEARER_TOKEN` is unset.
 Deploy this process behind HTTPS and set the deployment record's `ui.candleDataUrl` to its
-`/candles` URL before running `npm run configure:app`. This checkpointed testnet service is a
-validation foundation; redundant storage and RPCs, deeper finality/reorg recovery, and monitoring
-remain required before any mainnet pilot.
+`/candles` URL before running `npm run configure:app`. The indexer atomically persists its finalized
+cursor, block-hash anchors, and Swap-log positions, then detects chain reorganizations and rolls back
+orphaned trades before rebuilding candles. `GET /health` reports operational state and `GET /ready`
+returns HTTP 503 until finalized indexing is fresh and within the configured lag policy.
+
+Set `CANDLE_INDEXER_HEALTH_URL` to the deployed `/ready` endpoint when running
+`npm run monitor:testnet`. The monitoring report fails historical candle publication closed when the
+indexer is unavailable, and emits a time-bounded warning after a recovered reorg. It never pauses or
+resumes swaps automatically because Router execution is independently validated. Redundant RPC
+operation and an external alert delivery service remain required before any mainnet pilot.
 
 Never commit private keys or `.env` files.
 

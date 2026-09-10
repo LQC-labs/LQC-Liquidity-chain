@@ -19,8 +19,10 @@ describe("LQC DEX app deployment configuration", function () {
     assert.equal(first.candleDataUrl, "");
   });
   it("accepts only a secure configured candle indexer", function () {
-    assert.equal(buildAppConfig({ ...deployment, ui: { candleDataUrl: "https://indexer.lqc.example/candles" } }).candleDataUrl, "https://indexer.lqc.example/candles");
-    assert.throws(() => buildAppConfig({ ...deployment, ui: { candleDataUrl: "http://indexer.lqc.example/candles" } }), /must use HTTPS/);
+    const config=buildAppConfig({ ...deployment, ui: { candleDataUrl: "https://indexer.lqc.example/candles",candleSignerAddress:address(20) } });assert.equal(config.candleDataUrl, "https://indexer.lqc.example/candles");assert.equal(config.candleSignerAddress,address(20));
+    assert.throws(() => buildAppConfig({ ...deployment, ui: { candleDataUrl: "http://indexer.lqc.example/candles",candleSignerAddress:address(20) } }), /must use HTTPS/);
+    assert.throws(() => buildAppConfig({ ...deployment, ui: { candleDataUrl: "https://indexer.lqc.example/candles" } }), /candleSignerAddress/);
+    assert.throws(() => buildAppConfig({ ...deployment, ui: { candleSignerAddress:address(20) } }), /requires candleDataUrl/);
   });
   it("rejects wrong chains, missing contracts, and duplicate DEX ids", function () {
     assert.throws(() => buildAppConfig({ ...deployment, network: { chainId: 56 } }), /chain 97/);

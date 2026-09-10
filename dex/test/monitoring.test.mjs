@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
-import { buildMonitoringReport } from "../scripts/monitor-bsc-testnet.mjs";
+import { buildMonitoringReport, fetchIndexerHealth } from "../scripts/monitor-bsc-testnet.mjs";
 
 const vaultOwner = "0x0000000000000000000000000000000000000001";
 const vaultPauseAdmin = "0x0000000000000000000000000000000000000002";
@@ -233,5 +233,31 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.checks.find(check => check.id === "multisig.governance.signers").status, "WARNING");
     assert.equal(report.incident.code, "SAFE_POLICY_REVIEW");
     assert.equal(report.incident.actions[0].gate, "EVIDENCE_REVIEW");
+  });
+
+  it("includes a healthy candle indexer in the operational report", function () {
+    const input=healthyInput();input.indexerState={ready:true,chainId:97,cursor:100,finalizedHead:99,lagBlocks:0,reorgCount:0,lastReorgAt:null};
+    const report=buildMonitoringReport(input);
+    assert.equal(report.status,"HEALTHY");assert.equal(report.checks.find(check=>check.id==="indexer.readiness").status,"PASS");
+  });
+
+  it("fails candle publication closed without automatically pausing swaps", function () {
+    const input=healthyInput();input.indexerError="connection refused";
+    const report=buildMonitoringReport(input);
+    assert.equal(report.status,"CRITICAL");assert.equal(report.incident.code,"CANDLE_INDEXER_UNAVAILABLE");assert.equal(report.incident.automaticTransactions,false);
+    assert.deepEqual(report.incident.actions.map(action=>action.gate),["CHART_DATA_FAIL_CLOSED","SERVICE_RECOVERY","CANONICAL_CHAIN_REVIEW","POST_CHECK"]);
+  });
+
+  it("warns after a recent recovered reorg", function () {
+    const input=healthyInput(),checkedAtMs=new Date(input.checkedAt).getTime();input.indexerState={ready:true,chainId:97,cursor:100,finalizedHead:99,lagBlocks:0,reorgCount:1,lastReorgAt:checkedAtMs-30000};
+    const report=buildMonitoringReport(input);
+    assert.equal(report.status,"WARNING");assert.equal(report.incident.code,"CANDLE_INDEXER_REORG_REVIEW");
+  });
+
+  it("validates the dedicated indexer readiness endpoint", async function () {
+    const payload={ready:true,chainId:97,cursor:100,reorgCount:0};
+    const value=await fetchIndexerHealth("http://127.0.0.1:8787/ready",{fetchImpl:async()=>({ok:true,json:async()=>payload})});assert.deepEqual(value,payload);
+    await assert.rejects(()=>fetchIndexerHealth("http://indexer.example/ready",{fetchImpl:async()=>{throw new Error("must not fetch")}}),/HTTPS or loopback/);
+    await assert.rejects(()=>fetchIndexerHealth("https://indexer.example/ready",{fetchImpl:async()=>({ok:true,json:async()=>({ready:true,chainId:56,cursor:1,reorgCount:0})})}),/invalid/);
   });
 });

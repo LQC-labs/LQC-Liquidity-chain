@@ -101,11 +101,13 @@ export function buildAppConfig(deployment) {
     }
   }
   const candleDataUrl = String(deployment.ui?.candleDataUrl || "").trim();
+  const candleSignerAddress=String(deployment.ui?.candleSignerAddress||"").trim();
   if (candleDataUrl) {
     let parsed; try { parsed = new URL(candleDataUrl); } catch { throw new Error("Deployment candleDataUrl is invalid."); }
     if (parsed.protocol !== "https:" && parsed.hostname !== "localhost") throw new Error("Deployment candleDataUrl must use HTTPS.");
-  }
-  const fingerprintPayload = { chainId: 97, contracts: mapped, dexes: dexes.map(({ id, adapter }) => ({ id, adapter })),
+    if(!ethers.isAddress(candleSignerAddress))throw new Error("Deployment candleSignerAddress is required for signed candle data.");
+  }else if(candleSignerAddress)throw new Error("Deployment candleSignerAddress requires candleDataUrl.");
+  const fingerprintPayload = { chainId: 97, contracts: mapped, candleDataUrl, candleSignerAddress:candleSignerAddress?ethers.getAddress(candleSignerAddress):"", dexes: dexes.map(({ id, adapter }) => ({ id, adapter })),
     tokens: tokens.filter(token => token.address !== "native").map(({ symbol, name, address, decimals, reviewed = false, routeDexIds = [] }) =>
       ({ symbol, name, address, decimals, reviewed, routeDexIds })), reviewedPairs };
   return { chainId: 97, chainIdHex: "0x61", chainName: "BSC Testnet",
@@ -113,7 +115,7 @@ export function buildAppConfig(deployment) {
     nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 }, routerAddress: mapped.router,
     quoteRouterAddress: mapped.quoteRouter, executionRouterAddress: mapped.executionRouter, nativeRouterAddress: mapped.nativeRouter,
     splitOptimizerAddress: mapped.splitOptimizer, autoRouterAddress: mapped.autoRouter, gasCostOracleAddress: mapped.gasCostOracle,
-    candleDataUrl, dexes, tokens, reviewedPairs, deploymentFingerprint: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(fingerprintPayload))) };
+    candleDataUrl, candleSignerAddress:candleSignerAddress?ethers.getAddress(candleSignerAddress):"", dexes, tokens, reviewedPairs, deploymentFingerprint: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(fingerprintPayload))) };
 }
 
 export function assertOverridesMatchDeployment(config, env) {

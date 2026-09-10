@@ -19,16 +19,22 @@
     for(const [key,value] of Object.entries({chainId,base,quote,timeframe,limit:Math.min(300,Math.max(20,Number(limit)||120))}))url.searchParams.set(key,String(value));
     return url.toString();
   }
-  async function load(baseUrl,params,{fetcher=root.fetch,timeoutMs=8000}={}){
+  function signedPayload(raw){return{chainId:Number(raw?.chainId),base:String(raw?.base||'').toLowerCase(),quote:String(raw?.quote||'').toLowerCase(),timeframe:raw?.timeframe,candles:raw?.candles,issuedAt:Number(raw?.issuedAt),expiresAt:Number(raw?.expiresAt),cursor:Number(raw?.cursor),finalizedBlock:Number(raw?.finalizedBlock)}}
+  function verify(raw,expectedSigner,ethersLib=root.ethers,now=Math.floor(Date.now()/1000)){
+    try{if(!ethersLib?.isAddress(expectedSigner)||raw?.proof?.scheme!=='EIP-191')return false;const payload=signedPayload(raw),digest=ethersLib.keccak256(ethersLib.toUtf8Bytes(JSON.stringify(payload)));if(digest.toLowerCase()!==String(raw.proof.digest).toLowerCase()||now>payload.expiresAt||now<payload.issuedAt-30)return false;return ethersLib.verifyMessage(ethersLib.getBytes(digest),raw.proof.signature).toLowerCase()===expectedSigner.toLowerCase()&&String(raw.proof.signer).toLowerCase()===expectedSigner.toLowerCase()}catch{return false}
+  }
+  async function load(baseUrl,params,{fetcher=root.fetch,timeoutMs=8000,expectedSigner='',ethersLib=root.ethers}={}){
     if(!baseUrl)return [];
     const controller=typeof AbortController==='function'?new AbortController():null,timer=controller?setTimeout(()=>controller.abort(),timeoutMs):null;
     try{
       const response=await fetcher(requestUrl(baseUrl,params),{headers:{accept:'application/json'},signal:controller?.signal});
       if(!response.ok)throw new Error(`Candle service returned ${response.status}`);
-      const candles=normalize(await response.json());
+      const raw=await response.json();if(!verify(raw,expectedSigner,ethersLib))throw new Error('Candle data signature is invalid');
+      const payload=signedPayload(raw);if(payload.chainId!==Number(params.chainId)||payload.base!==String(params.base).toLowerCase()||payload.quote!==String(params.quote).toLowerCase()||payload.timeframe!==params.timeframe)throw new Error('Candle data context is invalid');
+      const candles=normalize(payload.candles);
       if(candles.length<2)throw new Error('Candle history is incomplete');
       return candles;
     }finally{if(timer)clearTimeout(timer)}
   }
-  root.LQCCandleData=Object.freeze({intervals,normalize,requestUrl,load});
+  root.LQCCandleData=Object.freeze({intervals,normalize,requestUrl,verify,load});
 })(typeof window==='undefined'?globalThis:window);

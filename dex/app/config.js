@@ -12,8 +12,9 @@ window.LQC_FLOW_CONFIG = Object.freeze({
   splitOptimizerAddress: "",
   autoRouterAddress: "",
   gasCostOracleAddress: "",
-  // Optional same-origin/indexer endpoint returning { candles: [{time,open,high,low,close,volume}] }.
+  // Optional signed indexer endpoint; candleSignerAddress must identify its dedicated signer.
   candleDataUrl: "",
+  candleSignerAddress: "",
   dexes: [],
   tokens: [
     { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },

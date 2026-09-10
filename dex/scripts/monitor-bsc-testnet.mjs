@@ -21,6 +21,17 @@ export function buildIncidentResponse(checks) {
       { order: 4, gate: "POST_CHECK", action: "Restore monitoring and transaction submission only after block freshness and full deployment validation pass on independent providers." }
     ]
   };
+  const indexerFailure = checks.find(check => check.id === "indexer.readiness" && check.status === "CRITICAL");
+  if (indexerFailure) return {
+    code: "CANDLE_INDEXER_UNAVAILABLE", severity: "CRITICAL", automaticTransactions: false,
+    triggers: [indexerFailure.id],
+    actions: [
+      { order: 1, gate: "CHART_DATA_FAIL_CLOSED", action: "Stop publishing historical candles from the affected indexer while keeping Router quotes and swap execution independently validated." },
+      { order: 2, gate: "SERVICE_RECOVERY", action: "Restore RPC connectivity or restart the indexer from its durable checkpoint without deleting recovery evidence." },
+      { order: 3, gate: "CANONICAL_CHAIN_REVIEW", action: "Verify the finalized cursor, block-hash anchors, lag, and recent reorg history against an independent BSC testnet provider." },
+      { order: 4, gate: "POST_CHECK", action: "Republish candle history only after readiness is healthy and sampled candles match canonical Swap logs." }
+    ]
+  };
   const safeChecks = checks.filter(check => check.id.startsWith("multisig."));
   const critical = safeChecks.filter(check => check.status === "CRITICAL");
   const warnings = safeChecks.filter(check => check.status === "WARNING");
@@ -158,6 +169,16 @@ export function buildIncidentResponse(checks) {
       { order: 5, gate: "POST_CHECK", action: "Rerun role, backing, limit, and deployment validation before closing the operational review." }
     ]
   };
+  const indexerReorg = checks.find(check => check.id === "indexer.reorg_recovery" && check.status === "WARNING");
+  if (indexerReorg) return {
+    code: "CANDLE_INDEXER_REORG_REVIEW", severity: "WARNING", automaticTransactions: false,
+    triggers: [indexerReorg.id],
+    actions: [
+      { order: 1, gate: "EVIDENCE_REVIEW", action: "Record the reorg time, old and replacement anchors, rewind block, and affected candle intervals." },
+      { order: 2, gate: "CANONICAL_CHAIN_REVIEW", action: "Compare recovered Swap logs and candles against an independent finalized BSC testnet view." },
+      { order: 3, gate: "POST_CHECK", action: "Close the review only after indexer readiness remains healthy beyond the configured warning window." }
+    ]
+  };
   if (warnings.length) return {
     code: "SAFE_POLICY_REVIEW", severity: "WARNING", automaticTransactions: false,
     triggers: warnings.map(check => check.id),
@@ -171,7 +192,8 @@ export function buildIncidentResponse(checks) {
 }
 
 export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, validation, validationError,
-  custody, ownership, vaultState = null, safeState = [] }) {
+  custody, ownership, vaultState = null, safeState = [], indexerState = null, indexerError = null,
+  indexerReorgWarningSeconds = 600 }) {
   const checks = [];
   const add = (id, status, detail) => checks.push({ id, status, detail });
   const age = Math.max(0, Math.floor(new Date(checkedAt).getTime() / 1000) - Number(block.timestamp));
@@ -179,6 +201,11 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     `latest block ${block.number} is ${age}s old (limit ${maxBlockAgeSeconds}s)`);
   add("deployment.configuration", validationError ? "CRITICAL" : "PASS",
     validationError || `${validation.lqc.contractCount} core contracts and ${validation.lqc.dexCount} DEX adapters verified`);
+  if(indexerState||indexerError){
+    const ready=!indexerError&&indexerState?.ready===true&&indexerState?.chainId===97;
+    add("indexer.readiness",ready?"PASS":"CRITICAL",ready?`ready at finalized block ${indexerState.finalizedHead}; lag ${indexerState.lagBlocks} blocks`:"candle indexer health endpoint is unavailable, malformed, or not ready");
+    if(ready){const checkedAtMs=new Date(checkedAt).getTime(),recent=Number.isInteger(indexerState.lastReorgAt)&&indexerState.lastReorgAt>0&&checkedAtMs-indexerState.lastReorgAt<=indexerReorgWarningSeconds*1000;add("indexer.reorg_recovery",recent?"WARNING":"PASS",recent?`reorg recovery reported within ${indexerReorgWarningSeconds}s warning window`:`${indexerState.reorgCount||0} recovered reorgs; no recent recovery warning`);}
+  }
   if (validation) add("protocol.swap_status", validation.lqc.swapsPaused ? "WARNING" : "PASS",
     validation.lqc.swapsPaused ? "swaps are paused" : "swaps are enabled");
   for (const item of custody) add(`custody.${item.contract}.${item.asset}`,
@@ -256,7 +283,15 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     status: counts.critical ? "CRITICAL" : counts.warning ? "WARNING" : "HEALTHY", counts, checks, incident };
 }
 
-export async function monitorBscTestnet({ provider, deployment, checkedAt = new Date().toISOString(), maxBlockAgeSeconds = 180 }) {
+export async function fetchIndexerHealth(url,{fetchImpl=fetch,timeoutMs=5000}={}){
+  const parsed=new URL(url);if(parsed.protocol!=="https:"&&!(parsed.protocol==="http:"&&["127.0.0.1","localhost","::1"].includes(parsed.hostname)))throw new Error("Indexer health URL must use HTTPS or loopback HTTP.");
+  const response=await fetchImpl(parsed,{signal:AbortSignal.timeout(timeoutMs),headers:{accept:"application/json"}});
+  const value=await response.json();
+  if(!response.ok||typeof value?.ready!=="boolean"||value.chainId!==97||!Number.isInteger(value.cursor)||!Number.isInteger(value.reorgCount))throw new Error("Indexer health response is invalid.");
+  return value;
+}
+
+export async function monitorBscTestnet({ provider, deployment, checkedAt = new Date().toISOString(), maxBlockAgeSeconds = 180,indexerHealthUrl=null,fetchImpl=fetch }) {
   const network = await provider.getNetwork();
   if (BigInt(network.chainId) !== 97n) throw new Error(`Refusing monitoring on chain ${network.chainId}; expected BSC testnet 97.`);
   const latest = await provider.getBlock("latest");
@@ -264,6 +299,8 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
   let validation = null, validationError = null;
   try { validation = await validateBscTestnet({ provider, deployment }); }
   catch (error) { validationError = error.message; }
+  let indexerState=null,indexerError=null;
+  if(indexerHealthUrl)try{indexerState=await fetchIndexerHealth(indexerHealthUrl,{fetchImpl});}catch{indexerError="health endpoint unavailable or malformed";}
 
   const monitored = ["executionRouter", "nativeRouter", "autoRouter"]
     .filter(name => ethers.isAddress(deployment?.contracts?.[name]?.address));
@@ -330,7 +367,7 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
       expectedAllocationsPaused: deployment.contracts.liquidityVault.allocationsPaused };
   }
   return buildMonitoringReport({ checkedAt, block: latest, maxBlockAgeSeconds, validation, validationError,
-    custody, ownership, vaultState, safeState });
+    custody, ownership, vaultState, safeState,indexerState,indexerError });
 }
 
 async function main() {
@@ -343,7 +380,7 @@ async function main() {
   if (!Number.isInteger(maxBlockAgeSeconds) || maxBlockAgeSeconds < 30 || maxBlockAgeSeconds > 3600) {
     throw new Error("MONITOR_MAX_BLOCK_AGE_SECONDS must be an integer from 30 to 3600.");
   }
-  const report = await monitorBscTestnet({ provider: new ethers.JsonRpcProvider(rpcUrl), deployment, maxBlockAgeSeconds });
+  const report = await monitorBscTestnet({ provider: new ethers.JsonRpcProvider(rpcUrl), deployment, maxBlockAgeSeconds,indexerHealthUrl:process.env.CANDLE_INDEXER_HEALTH_URL||null });
   console.log(JSON.stringify({ deploymentPath, ...report }, null, 2));
   if (report.status === "CRITICAL") process.exitCode = 2;
 }

@@ -48,6 +48,9 @@
       <div class="chart-wrap">
         <span class="chart-data-badge" id="chartDataBadge" aria-live="polite">1m 예시 차트 · 실시간 히스토리 연동 전</span>
         <div class="ma-legend"><span id="ma5Legend">MA5: —</span><span id="ma10Legend">MA10: —</span><span id="ma20Legend">MA20: —</span></div>
+        <div class="ema-legend indicator-hidden"><span id="ema9Legend">EMA9: —</span><span id="ema21Legend">EMA21: —</span></div>
+        <div class="boll-legend indicator-hidden"><span id="bollUpperLegend">BOLL U: —</span><span id="bollMiddleLegend">M: —</span><span id="bollLowerLegend">L: —</span></div>
+        <div class="sar-legend indicator-hidden" id="sarLegend">SAR: —</div>
         <div class="pnl-strip"><b>PnL -0.4817</b><span>68.4199</span><em>0.09564</em></div>
         <svg class="chart" viewBox="0 0 760 390" role="img" aria-label="LQC 테스트넷 예시 캔들 차트">
           <defs>
@@ -58,6 +61,12 @@
           <path class="ma ma-a" id="ma5Line" d="M0 105C90 112 90 275 160 195S260 175 320 250S405 155 480 290S560 130 635 235S720 180 760 230"/>
           <path class="ma ma-b" id="ma10Line" d="M0 112C95 120 100 225 165 205S260 165 330 235S410 180 490 265S565 170 640 220S710 205 760 220"/>
           <path class="ma ma-c" id="ma20Line" d="M0 91C110 135 105 190 178 192S280 182 345 218S435 205 500 232S590 200 660 214S720 205 760 211"/>
+          <path class="ema ema-fast indicator-hidden" id="ema9Line" d=""/>
+          <path class="ema ema-slow indicator-hidden" id="ema21Line" d=""/>
+          <path class="boll boll-upper indicator-hidden" id="bollUpperLine" d=""/>
+          <path class="boll boll-middle indicator-hidden" id="bollMiddleLine" d=""/>
+          <path class="boll boll-lower indicator-hidden" id="bollLowerLine" d=""/>
+          <g class="sar-points indicator-hidden" id="sarPoints"></g>
           <g id="candles"></g>
           <line class="current-line" id="currentPriceLine" x1="0" x2="760" y1="286" y2="286"/><text class="current-label" id="currentPriceLabel" x="687" y="280">—</text>
           <g class="axis" id="priceAxis"><text x="697" y="48">—</text><text x="697" y="98">—</text><text x="697" y="148">—</text><text x="697" y="198">—</text><text x="697" y="248">—</text><text x="697" y="298">—</text><text x="697" y="348">—</text></g>
@@ -66,7 +75,9 @@
       </div>
 
       <div class="volume" id="volumeIndicator"><span id="chartVolumeLabel">VOL: —</span><div class="volume-bars" id="volumeBars"></div></div>
-      <div class="indicators" aria-label="차트 지표"><button class="active" type="button" data-indicator="volume" aria-pressed="true">VOL</button><button class="active" type="button" data-indicator="ma" aria-pressed="true">MA</button><button type="button" disabled title="준비 중">EMA</button><button type="button" disabled title="준비 중">BOLL</button><button type="button" disabled title="준비 중">SAR</button><button type="button" disabled title="준비 중">MACD</button><button type="button" disabled title="준비 중">KDJ</button></div>
+      <div class="macd-indicator indicator-hidden" id="macdIndicator"><span id="macdLabel">MACD (12, 26, 9): —</span><div class="macd-bars" id="macdBars"></div></div>
+      <div class="kdj-indicator indicator-hidden" id="kdjIndicator"><span id="kdjLabel">KDJ (9, 3, 3): —</span><svg viewBox="0 0 680 76" role="img" aria-label="KDJ 보조지표"><path class="kdj-guide" d="M0 20H680M0 56H680"/><path class="kdj-line k-line" id="kdjKLine" d=""/><path class="kdj-line d-line" id="kdjDLine" d=""/><path class="kdj-line j-line" id="kdjJLine" d=""/></svg></div>
+      <div class="indicators" aria-label="차트 지표"><button class="active" type="button" data-indicator="volume" aria-pressed="true">VOL</button><button class="active" type="button" data-indicator="ma" aria-pressed="true">MA</button><button type="button" data-indicator="ema" aria-pressed="false">EMA</button><button type="button" data-indicator="boll" aria-pressed="false">BOLL</button><button type="button" data-indicator="sar" aria-pressed="false">SAR</button><button type="button" data-indicator="macd" aria-pressed="false">MACD</button><button type="button" data-indicator="kdj" aria-pressed="false">KDJ</button></div>
 
       <nav class="position-tabs" aria-label="계정 정보"><button class="active">My positions</button><button>Holders <span>(249)</span></button><button>Top traders</button><button>Activities</button></nav>
       <div class="position-card">
@@ -110,6 +121,6 @@
   <dialog class="market-dialog" id="marketDialog"><form method="dialog"><div class="dialog-head"><div><h2>Markets</h2><span class="token-count" id="marketCount">0개 마켓</span></div><button value="cancel" aria-label="마켓 닫기">×</button></div><label class="token-search"><span aria-hidden="true">⌕</span><input id="marketSearch" type="search" autocomplete="off" spellcheck="false" placeholder="토큰 검색" aria-label="마켓 토큰 검색"></label><div class="market-filter" aria-label="마켓 필터"><button class="active" type="button">All</button><span>배포·위험 검토 완료 토큰만 표시</span></div><div class="market-table-head"><span># · Token</span><span>Price</span><span>Status</span></div><div class="market-list" id="marketList" role="listbox"></div><p class="token-empty" id="marketEmpty" hidden>일치하는 활성 마켓이 없습니다.</p></form></dialog>
   <dialog id="walletDialog"><form method="dialog"><div class="dialog-head"><h2>지갑 선택</h2><button value="cancel" aria-label="닫기">×</button></div><p class="wallet-help">기기에 설치되었거나 앱 내부에서 제공되는 비수탁형 지갑을 선택하세요.</p><div class="wallet-list" id="walletList" role="listbox"></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js?v=20260910d"></script><script src="router-sdk.js?v=20260906n"></script><script src="candle-data.js?v=20260910a"></script><script src="app.js?v=20260910h"></script>
+  <script src="config.js?v=20260910e"></script><script src="router-sdk.js?v=20260906n"></script><script src="candle-data.js?v=20260910b"></script><script src="chart-indicators.js?v=20260910a"></script><script src="app.js?v=20260910p"></script>
 </body>
 </html>
