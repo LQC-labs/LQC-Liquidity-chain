@@ -23,6 +23,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /ui\.walletNav\.onclick=chooseWallet/);
     assert.match(script, /\[t\.symbol,t\.name,t\.address\]/);
     assert.match(script, /ui\.tokenSearch\.oninput=/);
+    assert.match(script, /function approvedRoutes\(path\)/);
+    assert.match(script, /No mutually approved DEX route/);
     assert.doesNotMatch(script, /token-option[^\n]*innerHTML/);
   });
 
