@@ -85,5 +85,13 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /id="timeAxis"/);
     assert.match(script, /function renderLiveChartLabels\(candles,min,max,y,timeframe\)/);
     assert.match(script, /function movingAverage\(items,period\)/);
+    assert.match(html, /id="priceArea"/);
+    assert.match(html, /id="ma5Line"/);
+    assert.match(html, /id="ma10Line"/);
+    assert.match(html, /id="ma20Line"/);
+    assert.match(html, /id="chartVolumeLabel"/);
+    assert.match(script, /function chartPath\(candles,y,step,period=1\)/);
+    assert.match(script, /function clearLiveChartLabels\(\)/);
+    assert.match(script, /chartVolumeLabel/);
   });
 });

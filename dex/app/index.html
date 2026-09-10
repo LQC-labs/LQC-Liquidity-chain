@@ -54,10 +54,10 @@
             <linearGradient id="chartFade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#4fe0d1" stop-opacity=".22"/><stop offset="1" stop-color="#4fe0d1" stop-opacity="0"/></linearGradient>
           </defs>
           <g class="grid"><path d="M0 65H760M0 145H760M0 225H760M0 305H760"/><path d="M120 0V390M260 0V390M400 0V390M540 0V390M680 0V390"/></g>
-          <path class="area" d="M0 98L45 112L83 176L120 255L160 190L205 170L245 182L285 145L322 285L360 218L403 177L444 205L485 315L525 248L565 150L603 132L642 260L680 230L720 204L760 245V390H0Z"/>
-          <path class="ma ma-a" d="M0 105C90 112 90 275 160 195S260 175 320 250S405 155 480 290S560 130 635 235S720 180 760 230"/>
-          <path class="ma ma-b" d="M0 112C95 120 100 225 165 205S260 165 330 235S410 180 490 265S565 170 640 220S710 205 760 220"/>
-          <path class="ma ma-c" d="M0 91C110 135 105 190 178 192S280 182 345 218S435 205 500 232S590 200 660 214S720 205 760 211"/>
+          <path class="area" id="priceArea" d="M0 98L45 112L83 176L120 255L160 190L205 170L245 182L285 145L322 285L360 218L403 177L444 205L485 315L525 248L565 150L603 132L642 260L680 230L720 204L760 245V390H0Z"/>
+          <path class="ma ma-a" id="ma5Line" d="M0 105C90 112 90 275 160 195S260 175 320 250S405 155 480 290S560 130 635 235S720 180 760 230"/>
+          <path class="ma ma-b" id="ma10Line" d="M0 112C95 120 100 225 165 205S260 165 330 235S410 180 490 265S565 170 640 220S710 205 760 220"/>
+          <path class="ma ma-c" id="ma20Line" d="M0 91C110 135 105 190 178 192S280 182 345 218S435 205 500 232S590 200 660 214S720 205 760 211"/>
           <g id="candles"></g>
           <line class="current-line" id="currentPriceLine" x1="0" x2="760" y1="286" y2="286"/><text class="current-label" id="currentPriceLabel" x="687" y="280">—</text>
           <g class="axis" id="priceAxis"><text x="697" y="48">—</text><text x="697" y="98">—</text><text x="697" y="148">—</text><text x="697" y="198">—</text><text x="697" y="248">—</text><text x="697" y="298">—</text><text x="697" y="348">—</text></g>
@@ -65,7 +65,7 @@
         <div class="time-axis" id="timeAxis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span></div>
       </div>
 
-      <div class="volume"><span>VOL (LQC): 108.5751</span><div class="volume-bars" id="volumeBars"></div></div>
+      <div class="volume"><span id="chartVolumeLabel">VOL: —</span><div class="volume-bars" id="volumeBars"></div></div>
       <div class="indicators" aria-label="차트 지표"><button class="active">VOL</button><button>MA</button><button>EMA</button><button>BOLL</button><button>SAR</button><button>MACD</button><button>KDJ</button></div>
 
       <nav class="position-tabs" aria-label="계정 정보"><button class="active">My positions</button><button>Holders <span>(249)</span></button><button>Top traders</button><button>Activities</button></nav>
@@ -110,6 +110,6 @@
   <dialog class="market-dialog" id="marketDialog"><form method="dialog"><div class="dialog-head"><div><h2>Markets</h2><span class="token-count" id="marketCount">0개 마켓</span></div><button value="cancel" aria-label="마켓 닫기">×</button></div><label class="token-search"><span aria-hidden="true">⌕</span><input id="marketSearch" type="search" autocomplete="off" spellcheck="false" placeholder="토큰 검색" aria-label="마켓 토큰 검색"></label><div class="market-filter" aria-label="마켓 필터"><button class="active" type="button">All</button><span>배포·위험 검토 완료 토큰만 표시</span></div><div class="market-table-head"><span># · Token</span><span>Price</span><span>Status</span></div><div class="market-list" id="marketList" role="listbox"></div><p class="token-empty" id="marketEmpty" hidden>일치하는 활성 마켓이 없습니다.</p></form></dialog>
   <dialog id="walletDialog"><form method="dialog"><div class="dialog-head"><h2>지갑 선택</h2><button value="cancel" aria-label="닫기">×</button></div><p class="wallet-help">기기에 설치되었거나 앱 내부에서 제공되는 비수탁형 지갑을 선택하세요.</p><div class="wallet-list" id="walletList" role="listbox"></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js?v=20260910d"></script><script src="router-sdk.js?v=20260906n"></script><script src="candle-data.js?v=20260910a"></script><script src="app.js?v=20260910f"></script>
+  <script src="config.js?v=20260910d"></script><script src="router-sdk.js?v=20260906n"></script><script src="candle-data.js?v=20260910a"></script><script src="app.js?v=20260910g"></script>
 </body>
 </html>
