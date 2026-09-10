@@ -2,15 +2,24 @@
   'use strict';
   const intervals=Object.freeze({"1m":60,"3m":180,"5m":300,"15m":900,"1h":3600,"4h":14400,"1D":86400,"1W":604800,"1M":2592000});
   class CandleWatermarks{
-    constructor(maxMarkets=200){if(!Number.isInteger(maxMarkets)||maxMarkets<1)throw new Error('Candle watermark limit is invalid');this.maxMarkets=maxMarkets;this.values=new Map()}
+    constructor(maxMarkets=200,{storage=null,storageKey='lqc:candle-watermarks:v1'}={}){
+      if(!Number.isInteger(maxMarkets)||maxMarkets<1)throw new Error('Candle watermark limit is invalid');this.maxMarkets=maxMarkets;this.values=new Map();this.storage=storage;this.storageKey=storageKey;this.restore();
+    }
+    valid(entry){return entry&&['cursor','finalizedBlock','issuedAt'].every(key=>Number.isSafeInteger(entry[key])&&entry[key]>=0)&&typeof entry.digest==='string'&&entry.digest.length>0}
+    restore(){
+      try{const saved=JSON.parse(this.storage?.getItem(this.storageKey)||'[]');if(!Array.isArray(saved))return;for(const item of saved.slice(-this.maxMarkets)){if(Array.isArray(item)&&typeof item[0]==='string'&&item[0].length<=256&&this.valid(item[1]))this.values.set(item[0],item[1])}}catch{}
+    }
+    persist(){try{this.storage?.setItem(this.storageKey,JSON.stringify([...this.values]))}catch{}}
     accept(payload,digest){
       const key=`${payload.chainId}:${payload.base}:${payload.quote}:${payload.timeframe}`,current=this.values.get(key),next={cursor:payload.cursor,finalizedBlock:payload.finalizedBlock,issuedAt:payload.issuedAt,digest:String(digest).toLowerCase()};
+      if(!this.valid(next))throw new Error('Candle watermark is invalid');
       if(current&&(next.cursor<current.cursor||next.finalizedBlock<current.finalizedBlock||next.issuedAt<current.issuedAt))throw new Error('Candle data replay or rollback detected');
       if(current&&next.cursor===current.cursor&&next.finalizedBlock===current.finalizedBlock&&next.issuedAt===current.issuedAt&&next.digest!==current.digest)throw new Error('Conflicting candle data revision detected');
-      this.values.delete(key);this.values.set(key,next);if(this.values.size>this.maxMarkets)this.values.delete(this.values.keys().next().value);return true;
+      this.values.delete(key);this.values.set(key,next);if(this.values.size>this.maxMarkets)this.values.delete(this.values.keys().next().value);this.persist();return true;
     }
   }
-  const defaultWatermarks=new CandleWatermarks();
+  function sessionStore(){try{return root.sessionStorage||null}catch{return null}}
+  const defaultWatermarks=new CandleWatermarks(200,{storage:sessionStore()});
   function normalize(raw){
     const rows=Array.isArray(raw)?raw:Array.isArray(raw?.candles)?raw.candles:[];
     const byTime=new Map();

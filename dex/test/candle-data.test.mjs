@@ -56,6 +56,14 @@ describe("LQC candle data boundary",function(){
     watermarks.accept(payload,"0x01");watermarks.accept({...payload,base:address(23)},"0x02");assert.equal(watermarks.values.size,1);
     assert.throws(()=>new api.CandleWatermarks(0),/limit/);
   });
+
+  it("keeps verified watermarks across a same-tab reload and ignores corrupt storage",function(){
+    const records=new Map(),storage={getItem:key=>records.get(key)||null,setItem:(key,value)=>records.set(key,value)},payload={chainId:97,base:address(31),quote:address(32),timeframe:"15m",cursor:51,finalizedBlock:50,issuedAt:10};
+    const first=new api.CandleWatermarks(2,{storage});first.accept(payload,"0xabc");
+    const restored=new api.CandleWatermarks(2,{storage});assert.throws(()=>restored.accept({...payload,cursor:50},"0xdef"),/replay or rollback/);assert.equal(restored.values.size,1);
+    records.set('lqc:candle-watermarks:v1','not-json');assert.doesNotThrow(()=>new api.CandleWatermarks(2,{storage}));
+    const unavailable={getItem(){throw new Error('blocked')},setItem(){throw new Error('blocked')}};const memoryOnly=new api.CandleWatermarks(2,{storage:unavailable});assert.doesNotThrow(()=>memoryOnly.accept(payload,"0xabc"));
+  });
 });
 
 function address(number){return`0x${number.toString(16).padStart(40,'0')}`}
