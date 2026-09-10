@@ -365,4 +365,24 @@ describe("LQC Router browser SDK", function () {
       getBlockNumber: async () => 12350 }, tokenA, ethers, 2), /lacks confirmations/);
   });
 
+  it("fails closed for invalid native receipts and execution-evidence envelopes", async function () {
+    const proof = singleRouteProof();
+    await assert.rejects(
+      sdk.verifyCanonicalNativeSettlement({ settlementHash: ethers.id("invalid") }, proof, {}, tokenA, ethers),
+      /Invalid settlement receipt/
+    );
+    assert.throws(
+      () => sdk.buildExecutionEvidence(null, null, ethers.id("deployment"), 1, ethers),
+      /Invalid execution evidence/
+    );
+    assert.equal(sdk.verifyExecutionEvidence({
+      evidenceHash: ethers.id("evidence"),
+      deploymentFingerprint: ethers.id("deployment"),
+      type: "LQC_VERIFIED_SWAP",
+      version: 1,
+      settlement: { transactionHash: ethers.id("tx"), blockHash: ethers.id("block"), actualAmountOut: "bad" },
+      execution: { minimumAmountOut: "1" }
+    }, ethers.id("deployment"), ethers), false);
+  });
+
 });

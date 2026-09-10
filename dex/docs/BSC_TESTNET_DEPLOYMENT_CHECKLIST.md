@@ -5,18 +5,20 @@ authorize mainnet deployment or use of real user funds.
 
 ## 1. Required roles and wallets
 
-- [ ] Create a Protocol Governance Safe with a 3-of-5 signing threshold.
-- [ ] Create a Risk Safe with a 2-of-3 signing threshold.
+- [ ] Create a Protocol Governance Safe meeting the default 4-of-7 minimum policy.
+- [ ] Create separate Risk, Emergency Guardian, and Treasury Safes meeting the default 3-of-5 minimum policy.
 - [ ] Record signer names and wallet addresses in the private governance register.
 - [ ] Verify every signer can access, review, and sign a test Safe transaction.
 - [ ] Use the deployed Protocol Governance Safe address as `FACTORY_OWNER`.
 - [ ] Use the deployed Risk Safe address as `RISK_ADMIN`.
-- [ ] Keep the deployer separate from `FACTORY_OWNER`.
+- [ ] Set `GUARDIAN_ADDRESS` and `TREASURY_ADDRESS` to their reviewed Safe addresses.
+- [ ] Keep the deployer separate from all four operational roles.
 - [ ] Never paste, commit, email, or include the deployer private key in screenshots or documents.
 
 The deployment script assigns protocol ownership and the timelock proposer to `FACTORY_OWNER`, while
-`RISK_ADMIN` receives only limit-reduction and pause authority. Preflight rejects a shared address by
-default so the role separation is established at deployment rather than deferred.
+`RISK_ADMIN` receives only limit-reduction and pause authority. Guardian and Treasury addresses are
+recorded as reviewed operational roles for the later governance activation and funding steps.
+Preflight rejects shared addresses by default so role separation is established before deployment.
 For the first testnet deployment, the Risk Safe is also recorded as the Vault pause and strategy
 administrator. Vault ownership is transferred to the timelock, and the strategy allocation cap
 defaults to zero until governance explicitly approves a bounded exercise.
@@ -67,6 +69,9 @@ confirm the same value on-chain. A missing, false, or mismatched value blocks de
 
 ## 5. Preflight and deployment
 
+- [ ] Generate `npm run prepare:role-activation -- <deployment.json>` and review the unsigned Guardian action in the Governance Safe.
+- [ ] Confirm Treasury remains unfunded until a separately approved capped-pilot funding proposal.
+
 Run from `dex/`:
 
 ```bash
@@ -77,6 +82,14 @@ npm run preflight:testnet
 npm run deploy:testnet
 ```
 
+After the deployment record is available, generate and independently review the unsigned Guardian
+activation bundle with `npm run prepare:roles -- ./deployments/bsc-testnet-97.json`. Submit its single
+`setGuardian` action through the recorded Governance Safe, then verify the stated postcondition before
+any route smoke swap. The generator never signs or broadcasts the action.
+
+- [ ] Confirm the activation bundle source revision and deployment fingerprint match the reviewed deployment.
+- [ ] Confirm every Safe policy address in the bundle matches its recorded governance, risk, guardian, or treasury role.
+- [ ] Run `verify:role-activation` against the saved bundle and deployment record before Safe submission.
 - [ ] Both GitHub DEX workflows pass on the selected source commit.
 - [ ] Local compilation and all automated tests pass.
 - [ ] Production dependency audit reports zero vulnerabilities.
@@ -96,6 +109,7 @@ npm run configure:app
 
 - [ ] Validator confirms contract bytecode, ownership, module linkage, DEX order, adapters, V3 policy,
       Vault roles, Vault limits, and Vault/Strategy linkage.
+- [ ] Validator confirms the reviewed Guardian Safe is active on-chain and all five operational roles remain separated.
 - [ ] Monitor reports a fresh block, no unexplained Router custody, and fully backed Vault accounting.
 - [ ] BscScan verification bundle matches `SOURCE_COMMIT` and compiler settings.
 - [ ] Publish verified source for every deployed LQC contract.

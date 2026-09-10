@@ -84,9 +84,26 @@ export function validateTestnetDeploymentConfig(env) {
   if (!ethers.isAddress(env.RISK_ADMIN)) {
     throw new Error("RISK_ADMIN is required and must be the reviewed testnet risk multisig address.");
   }
+  if (!ethers.isAddress(env.GUARDIAN_ADDRESS)) {
+    throw new Error("GUARDIAN_ADDRESS is required and must be the reviewed emergency multisig address.");
+  }
+  if (!ethers.isAddress(env.TREASURY_ADDRESS)) {
+    throw new Error("TREASURY_ADDRESS is required and must be the reviewed treasury multisig address.");
+  }
   const walletAddress = new ethers.Wallet(env.DEPLOYER_PRIVATE_KEY).address;
   const owner = ethers.getAddress(env.FACTORY_OWNER);
   const riskAdmin = ethers.getAddress(env.RISK_ADMIN);
+  const guardian = ethers.getAddress(env.GUARDIAN_ADDRESS);
+  const treasury = ethers.getAddress(env.TREASURY_ADDRESS);
+  const separatedRoles = env.ALLOW_SHARED_RISK_ADMIN === "true" && riskAdmin === owner
+    ? [owner, guardian, treasury]
+    : [owner, riskAdmin, guardian, treasury];
+  if (new Set(separatedRoles).size !== separatedRoles.length) {
+    throw new Error("Governance, risk, guardian, and treasury role separation is required; all addresses must be separated.");
+  }
+  if ((guardian === walletAddress || treasury === walletAddress) && env.ALLOW_DEPLOYER_OPERATIONAL_ROLE !== "true") {
+    throw new Error("Deployer must not control guardian or treasury roles.");
+  }
   if (owner === walletAddress && env.ALLOW_DEPLOYER_AS_OWNER !== "true") {
     throw new Error("FACTORY_OWNER must differ from the deployer unless ALLOW_DEPLOYER_AS_OWNER=true is explicitly set for a temporary testnet bootstrap.");
   }
@@ -100,6 +117,10 @@ export function validateTestnetDeploymentConfig(env) {
   const governanceMinimumThreshold = boundedInteger("GOVERNANCE_MIN_THRESHOLD", env.GOVERNANCE_MIN_THRESHOLD || "4", 2n, governanceMinimumOwners);
   const riskMinimumOwners = boundedInteger("RISK_MIN_OWNERS", env.RISK_MIN_OWNERS || "5", 3n, 20n);
   const riskMinimumThreshold = boundedInteger("RISK_MIN_THRESHOLD", env.RISK_MIN_THRESHOLD || "3", 2n, riskMinimumOwners);
+  const guardianMinimumOwners = boundedInteger("GUARDIAN_MIN_OWNERS", env.GUARDIAN_MIN_OWNERS || "5", 3n, 20n);
+  const guardianMinimumThreshold = boundedInteger("GUARDIAN_MIN_THRESHOLD", env.GUARDIAN_MIN_THRESHOLD || "3", 2n, guardianMinimumOwners);
+  const treasuryMinimumOwners = boundedInteger("TREASURY_MIN_OWNERS", env.TREASURY_MIN_OWNERS || "5", 3n, 20n);
+  const treasuryMinimumThreshold = boundedInteger("TREASURY_MIN_THRESHOLD", env.TREASURY_MIN_THRESHOLD || "3", 2n, treasuryMinimumOwners);
   const delay = BigInt(env.TIMELOCK_DELAY || "3600");
   if (delay < 3600n || delay > 604800n) throw new Error("TIMELOCK_DELAY must be between 3600 and 604800 seconds.");
 
@@ -155,9 +176,10 @@ export function validateTestnetDeploymentConfig(env) {
   if (!Array.isArray(v3Pools) || (v3Router && v3Pools.length === 0)) {
     throw new Error("PancakeSwap V3 requires at least one reviewed allowed pool.");
   }
-  return { walletAddress, owner, riskAdmin, sourceCommit: env.SOURCE_COMMIT.toLowerCase(), delay, bnbLiquidity, gasReserve,
+  return { walletAddress, owner, riskAdmin, guardian, treasury, sourceCommit: env.SOURCE_COMMIT.toLowerCase(), delay, bnbLiquidity, gasReserve,
     vaultDepositCap, vaultStrategyCap, vaultMaxLossBps, v3Pools,
-    governanceMinimumOwners, governanceMinimumThreshold, riskMinimumOwners, riskMinimumThreshold };
+    governanceMinimumOwners, governanceMinimumThreshold, riskMinimumOwners, riskMinimumThreshold,
+    guardianMinimumOwners, guardianMinimumThreshold, treasuryMinimumOwners, treasuryMinimumThreshold };
 }
 
 export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL), gitState = null) {
@@ -177,8 +199,15 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
   if (riskAdminCode === "0x" && env.ALLOW_EOA_RISK_ADMIN !== "true") {
     throw new Error("RISK_ADMIN has no contract bytecode; use a deployed risk multisig or explicitly set ALLOW_EOA_RISK_ADMIN=true for temporary testnet use.");
   }
+  const guardianCode = await provider.getCode(config.guardian);
+  const treasuryCode = await provider.getCode(config.treasury);
+  if (guardianCode === "0x" || treasuryCode === "0x") {
+    throw new Error("GUARDIAN_ADDRESS and TREASURY_ADDRESS must be deployed multisigs.");
+  }
   let governanceSafe = null;
   let riskSafe = null;
+  let guardianSafe = null;
+  let treasurySafe = null;
   if (ownerCode !== "0x") {
     governanceSafe = await assertSafeMultisig(provider, config.owner, "FACTORY_OWNER",
       config.governanceMinimumOwners, config.governanceMinimumThreshold);
@@ -187,20 +216,26 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
     riskSafe = await assertSafeMultisig(provider, config.riskAdmin, "RISK_ADMIN",
       config.riskMinimumOwners, config.riskMinimumThreshold);
   }
-  const named = { governanceOwner: config.owner, riskAdmin: config.riskAdmin, wbnb: env.WBNB_ADDRESS };
+  guardianSafe = await assertSafeMultisig(provider, config.guardian, "GUARDIAN_ADDRESS",
+    config.guardianMinimumOwners, config.guardianMinimumThreshold);
+  treasurySafe = await assertSafeMultisig(provider, config.treasury, "TREASURY_ADDRESS",
+    config.treasuryMinimumOwners, config.treasuryMinimumThreshold);
+  const named = { governanceOwner: config.owner, riskAdmin: config.riskAdmin, guardian: config.guardian,
+    treasury: config.treasury, wbnb: env.WBNB_ADDRESS };
   if (env.PANCAKE_V2_ROUTER_ADDRESS) named.pancakeV2Router = env.PANCAKE_V2_ROUTER_ADDRESS;
   if (env.PANCAKE_V3_ROUTER_ADDRESS) {
     named.pancakeV3Router = env.PANCAKE_V3_ROUTER_ADDRESS;
     named.pancakeV3Quoter = env.PANCAKE_V3_QUOTER_ADDRESS;
   }
   for (const [name, address] of Object.entries(named)) {
-    if (name !== "governanceOwner" && name !== "riskAdmin" && await provider.getCode(address) === "0x") {
+    if (!["governanceOwner", "riskAdmin", "guardian", "treasury"].includes(name) && await provider.getCode(address) === "0x") {
       throw new Error(`${name} has no contract bytecode on BSC testnet.`);
     }
   }
   if (env.PANCAKE_V3_ROUTER_ADDRESS) await assertPancakeV3PoolsExist(provider, config.v3Pools);
   return { chainId: Number(network.chainId), sourceCommit: config.sourceCommit, owner: config.owner, riskAdmin: config.riskAdmin,
-    governanceSafe, riskSafe, checkedContracts: Object.keys(named) };
+    guardian: config.guardian, treasury: config.treasury, governanceSafe, riskSafe, guardianSafe, treasurySafe,
+    checkedContracts: Object.keys(named) };
 }
 
 async function main() {

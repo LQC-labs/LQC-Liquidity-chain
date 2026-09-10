@@ -110,6 +110,16 @@ npm install
 npm test
 ```
 
+Before preparing Stage 2, run the complete Stage 1 repository exit gate:
+
+```bash
+npm run gate:stage1
+```
+
+This repeats the browser syntax checks, compiles all Solidity sources, runs the complete security
+suite, and enforces the Router SDK coverage baseline. It does not deploy contracts or authorize use
+of real funds.
+
 To deploy after compilation:
 
 ```bash
@@ -119,6 +129,8 @@ export WBNB_ADDRESS="0x..." # official WBNB for the selected BSC network
 export EXPECTED_CHAIN_ID="97" # deployment safety check; defaults to BSC testnet
 export FACTORY_OWNER="0x..." # required reviewed testnet governance/multisig address
 export RISK_ADMIN="0x..." # separate reviewed testnet risk multisig address
+export GUARDIAN_ADDRESS="0x..." # separate reviewed emergency multisig address
+export TREASURY_ADDRESS="0x..." # separate reviewed treasury multisig address
 export GOVERNANCE_MIN_OWNERS="7"
 export GOVERNANCE_MIN_THRESHOLD="4"
 export RISK_MIN_OWNERS="5"
@@ -140,6 +152,26 @@ export PANCAKE_V3_ALLOWED_POOLS='[{"tokenA":"0x...","tokenB":"0x...","fee":2500}
 export PANCAKE_V3_MAX_HOPS="2" # deployment-specific ceiling; allowed range 1-3
 npm run deploy:testnet
 ```
+
+After deployment evidence is produced, generate the unsigned Governance Safe action that activates
+the reviewed emergency Guardian:
+
+```bash
+npm run prepare:roles -- ./deployments/bsc-testnet-97.json
+```
+
+The output validates all four recorded Safe policies, their exact role addresses, role separation,
+the reviewed source revision, and a deterministic deployment fingerprint, then encodes
+`EmergencyController.setGuardian(guardian, true)`. It never signs or sends a transaction and marks
+the Treasury as recorded but unfunded. Save and independently verify the bundle before Safe review:
+
+```bash
+npm run prepare:roles -- ./deployments/bsc-testnet-97.json > ./deployments/role-activation.local.json
+npm run verify:role-activation -- ./deployments/role-activation.local.json ./deployments/bsc-testnet-97.json
+```
+
+The verifier recomputes the source-bound deployment fingerprint, action calldata, and SHA-256 bundle
+digest and rejects any modified field.
 
 `deploy:testnet` runs a non-transactional preflight first. It refuses non-chain-97 RPCs, missing or
 unsafe governance settings, timelocks outside 1 hour to 7 days, invalid daily/transaction limits,
@@ -180,11 +212,22 @@ The automated test suite also reproduces the complete bootstrap locally and veri
 creation, exact initial-liquidity approvals with no residual Router allowance, Router 2.0 quoting,
 a capped smoke swap, and rejection when minimum-output protection fails.
 
+After deployment, generate the unsigned Governance Safe action for emergency Guardian activation:
+
+```bash
+npm run prepare:role-activation -- ./deployments/bsc-testnet-97.json
+```
+
+The generator rechecks chain 97, full role separation, and the recorded 4-of-7 / 3-of-5 Safe
+policies before encoding `setGuardian(address,true)`. It records Treasury as unfunded and never signs,
+sends, or funds a transaction.
+
 After deployment, run the read-only real-address validator before any smoke swap. It refuses every
 chain except BSC testnet `97`, checks deployed bytecode, verifies PancakeSwap V2/V3 Router-to-Factory
 and WBNB links, and confirms LQC timelock ownership, emergency pause authority, executor, DEX count,
 registry order, adapter addresses, active route status, Router/Emergency module linkage, and minimum
-timelock delay. For PancakeSwap V3 it also matches the recorded maximum hop count, canonical fee-tier
+timelock delay. It also refuses smoke-test readiness unless the reviewed Guardian Safe is active
+on-chain and every operational role remains separated. For PancakeSwap V3 it matches the recorded maximum hop count, canonical fee-tier
 subset, and every reviewed pool against the deployed adapter allowlist. A deployment record pins each
 registered adapter address and V3 policy for this comparison. The gas-cost oracle is also transferred
 to the timelock during bootstrap; validation rejects deployer-owned or wrong-WBNB oracle instances.
