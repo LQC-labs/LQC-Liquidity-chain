@@ -17,6 +17,8 @@ Strategy Adapter V1 creates a narrow boundary between `LQCLiquidityVault` and a 
 - When ownership changes, default administrators that still equal the previous owner follow the new owner automatically; explicitly separated pause and strategy administrators remain unchanged.
 - Governance may perform an emergency recall with an explicit loss bound only after deposits and allocations are both paused.
 - A strategy cannot be replaced while any recorded debt remains.
+- Strategy exposure or loss limits can increase only while allocations are paused; governance may
+  reduce either limit immediately so emergency risk tightening is never delayed.
 
 ## Operational sequence
 

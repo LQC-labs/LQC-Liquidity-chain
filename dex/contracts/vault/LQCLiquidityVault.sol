@@ -73,6 +73,7 @@ contract LQCLiquidityVault {
     error EmergencyModeRequired();
     error Insolvent();
     error StrategyChangeRequiresPause();
+    error StrategyLimitIncreaseRequiresPause();
 
     modifier onlyOwner() { if (msg.sender != owner) revert Forbidden(); _; }
     modifier nonReentrant() { if (unlocked != 1) revert Reentrancy(); unlocked = 2; _; unlocked = 1; }
@@ -193,6 +194,9 @@ contract LQCLiquidityVault {
     function setStrategyLimits(uint256 newStrategyCap, uint256 newMaxLossBps) external onlyOwner {
         if (newStrategyCap < strategyDebt) revert StrategyCapExceeded();
         if (newMaxLossBps > MAX_CONFIGURED_LOSS_BPS) revert InvalidLossLimit();
+        if (!allocationsPaused && (newStrategyCap > strategyCap || newMaxLossBps > maxLossBps)) {
+            revert StrategyLimitIncreaseRequiresPause();
+        }
         strategyCap = newStrategyCap;
         maxLossBps = newMaxLossBps;
         emit StrategyLimitsChanged(newStrategyCap, newMaxLossBps);

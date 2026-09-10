@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **48 Solidity sources** and reports **176 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **48 Solidity sources** and reports **177 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -49,7 +49,7 @@ The current suite compiles **48 Solidity sources** and reports **176 passing tes
 | Hostile ERC-20 balance/callback isolation | `test/critical-attack-paths.test.mjs` | Reverting or short `balanceOf` responses fail deposits closed, and transfer callbacks cannot reenter Vault deposit or withdrawal; rejected calls preserve assets, shares, supply, and backing. Arbitrarily lying token balances remain outside the supported-token trust boundary. |
 | Reproducible BscScan verification bundle generation | `test/verification-bundle.test.mjs` | Bundle structure and source revision covered; explorer publication is deployment-specific. |
 | Vault donation-resistant share and idle-asset accounting | `test/liquidity-vault.test.mjs` | Covered for direct donations before deposits and strategy allocation. |
-| Vault strategy approval, role separation, and exposure cap | `test/liquidity-vault.test.mjs` | Covered with a vault-specific reference adapter; production strategies remain pending. |
+| Vault strategy approval, role separation, staged risk increases, and exposure cap | `test/liquidity-vault.test.mjs` | Strategy/cap/loss-risk increases require paused allocations, while live risk reductions remain available. Covered with a vault-specific reference adapter; production strategies remain pending. |
 | Paused-by-default Strategy staging | `test/liquidity-vault.test.mjs`, `test/testnet-bootstrap.test.mjs` | New Vaults and the BSC testnet bootstrap remain allocation-paused after Strategy configuration and ownership staging. Activation requires a separately reviewed Timelock operation; Strategy replacement is rejected unless allocations are paused and debt is zero. |
 | Vault ownership and administrator continuity | `test/liquidity-vault.test.mjs` | Two-step ownership acceptance automatically transfers only default owner-held pause and strategy roles; explicitly separated administrators remain unchanged and the former owner retains no implicit authority. |
 | Strategy recall loss bound and shutdown-only emergency override | `test/liquidity-vault.test.mjs` | Covered with a deterministic lossy mock; economic safety and live protocol behavior remain unaudited. |

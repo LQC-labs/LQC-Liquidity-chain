@@ -31,6 +31,8 @@ Test tokens and mocks are excluded from production deployment but remain in scop
     depositor capital, and normal recalls cannot realize losses above the configured bound.
 12. A strategy cannot be replaced with outstanding debt; emergency loss overrides require full
     shutdown and governance authorization.
+13. Strategy exposure and loss-limit increases require allocation pause, while risk reductions remain
+    available during live operation.
 
 ## Reproducible baseline
 

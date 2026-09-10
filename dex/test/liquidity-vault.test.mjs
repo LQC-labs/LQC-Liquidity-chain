@@ -132,6 +132,28 @@ describe("LQC Liquidity Vault V1", function () {
     assert.equal(await vault.allocationsPaused(), true);
   });
 
+  it("stages Strategy risk increases while permitting immediate risk reductions", async function () {
+    const initialCap = ethers.parseEther("300");
+    await (await vault.setStrategyLimits(initialCap, 100)).wait();
+    await (await vault.resumeAllocations()).wait();
+
+    await assert.rejects(vault.setStrategyLimits(ethers.parseEther("301"), 100));
+    await assert.rejects(vault.setStrategyLimits(initialCap, 101));
+    assert.equal(await vault.strategyCap(), initialCap);
+    assert.equal(await vault.maxLossBps(), 100n);
+
+    const reducedCap = ethers.parseEther("200");
+    await (await vault.setStrategyLimits(reducedCap, 50)).wait();
+    assert.equal(await vault.strategyCap(), reducedCap);
+    assert.equal(await vault.maxLossBps(), 50n);
+    assert.equal(await vault.allocationsPaused(), false);
+
+    await (await vault.pauseAllocations()).wait();
+    await (await vault.setStrategyLimits(ethers.parseEther("400"), 150)).wait();
+    assert.equal(await vault.strategyCap(), ethers.parseEther("400"));
+    assert.equal(await vault.maxLossBps(), 150n);
+  });
+
   it("allocates only to a matching approved strategy and recalls exact assets", async function () {
     const Adapter = new ethers.ContractFactory(artifact("LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter").abi,
       artifact("LQCIdleStrategyAdapter", "vault/adapters/LQCIdleStrategyAdapter").bytecode, owner);
