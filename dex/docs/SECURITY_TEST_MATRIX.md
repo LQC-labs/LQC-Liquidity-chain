@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **48 Solidity sources** and reports **183 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **48 Solidity sources** and reports **184 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -34,7 +34,7 @@ The current suite compiles **48 Solidity sources** and reports **183 passing tes
 | BSC testnet chain ID 97, bytecode, and module/link ownership checks | `test/testnet-validation.test.mjs`, `test/testnet-bootstrap.test.mjs` | Validator behavior covered; each real deployment must still be validated. |
 | Deployment configuration-drift response | `test/monitoring.test.mjs` | Any failed live deployment validation is critical and produces a non-automatic global pause, evidence preservation, configuration review, Timelock remediation, and full post-check plan. |
 | Test token ownership and supply behavior | `test/testnet-token.test.mjs` | Test infrastructure only; not evidence for a final production LQC token. |
-| Browser route encoding and execution-plan SDK | `test/router-sdk.test.mjs` | Covered for supported routing formats. |
+| Browser route encoding and simple trade interface | `test/router-sdk.test.mjs`, `test/app-simple-trade-ui.test.mjs` | Supported routing formats remain covered while the default UI exposes Buy/Sell, token amounts, and expected output first; optional details preserve minimum received, gas, price impact, selected DEX, split, fallback, and preflight evidence. |
 | Proof of Best Execution | `test/router-sdk.test.mjs` | Produces tamper-evident single/split decision receipts, proves gas-adjusted route selection, rejects non-improving splits and inconsistent allocations, and excludes raw route data. |
 | Proof-to-Settlement binding | `test/router-sdk.test.mjs` | Binds a valid route proof to successful BSC testnet transaction and block evidence, enforces expiry and minimum output, records execution variance, and detects receipt tampering or proof substitution. RPC finality and event decoding remain external prerequisites. |
 | Canonical ERC-20 settlement verification | `test/router-sdk.test.mjs` | Re-fetches the transaction and canonical block, enforces confirmation depth, and exactly reconciles output-token transfers to the committed recipient. Reorgs, insufficient finality, and log mismatches fail closed; native BNB is excluded. |
