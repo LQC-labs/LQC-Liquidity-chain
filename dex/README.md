@@ -66,7 +66,9 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - Browser block-head checks support one to five deployment-pinned HTTPS RPCs, require a configured-source
   majority within three blocks, isolate divergent sources, and use the conservative head of the winning cluster.
   The browser then requires the same configured-source majority to return an identical 32-byte hash for that
-  exact block before reporting synchronization; conflicting forks or forged RPC responses fail closed
+  exact block before reporting synchronization; conflicting forks or forged RPC responses fail closed. A source
+  that fails transport, height-cluster, or canonical-hash checks three consecutive times is isolated for 60 seconds,
+  then admitted only through a fresh health check without ever reducing the configured majority threshold
 - Native BNB settlement verification authenticates the reviewed Native Router event and reconciles its exact execution amounts
 - Deterministic execution-proof fuzzing exercises varied route economics and tamper attempts reproducibly
 - Dependency-free V8 coverage gate requires 100% Router SDK function coverage and reports executed ranges honestly

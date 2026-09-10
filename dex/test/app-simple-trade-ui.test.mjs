@@ -162,10 +162,13 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /chartHealth\.consensusHead\(heads,readProviders\.length\)/);
     assert.match(script, /getBlock\(headConsensus\.head\)/);
     assert.match(script, /chartHealth\.consensusHash\(hashes,readProviders\.length\)/);
+    assert.match(script, /rpcSourceHealth\[item\.index\]=chartHealth\.sourceHealth/);
+    assert.match(script, /quarantinedUntil<=now/);
     assert.match(script, /chartHealth\.chainSync\(primary\.finalizedBlock,consensus\.head,cfg\.candleFinalityBlocks\)/);
     assert.match(script, /sync\.lagBlocks/);
     assert.match(script, /RPC \$\{consensus\.healthySources\}\/\$\{consensus\.configuredSources\}/);
     assert.match(script, /다중 RPC 블록 해시 합의 실패/);
+    assert.match(script, /격리 \$\{consensus\.quarantinedSources\}/);
     assert.match(script, /정상 갱신 \$\{lastHealthyByChart\.get\(chartKey\)\|\|'기록 없음'\}/);
     assert.match(html, /chart-health\.js/);
     assert.match(styles, /data-state="interrupted"/);

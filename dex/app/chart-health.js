@@ -29,5 +29,12 @@
     if(bestCount<quorum)return null;
     return Object.freeze({blockHash:bestHash,healthySources:bestCount,configuredSources,independent:configuredSources>1});
   }
-  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead,consensusHash});
+  function sourceHealth(current,healthy,now=Date.now(),failureThreshold=3,quarantineMs=60000){
+    if(!current||!Number.isSafeInteger(current.failures)||current.failures<0||!Number.isFinite(current.quarantinedUntil)||current.quarantinedUntil<0||typeof healthy!=='boolean'||!Number.isFinite(now)||now<0||!Number.isSafeInteger(failureThreshold)||failureThreshold<1||!Number.isFinite(quarantineMs)||quarantineMs<1000)throw new Error('Chart RPC source health input is invalid');
+    if(healthy)return Object.freeze({failures:0,quarantinedUntil:0});
+    if(current.quarantinedUntil>now)return Object.freeze({failures:current.failures,quarantinedUntil:current.quarantinedUntil});
+    const failures=(current.quarantinedUntil>0?0:current.failures)+1;
+    return Object.freeze({failures:failures>=failureThreshold?0:failures,quarantinedUntil:failures>=failureThreshold?now+quarantineMs:0});
+  }
+  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead,consensusHash,sourceHealth});
 })(typeof window==='undefined'?globalThis:window);
