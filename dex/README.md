@@ -297,6 +297,27 @@ responses after market or interval changes, and labels the chart as verified his
 valid response. If the endpoint is absent or fails, the UI remains honest and displays the clearly
 labelled example chart; it never presents a spot quote as historical market data.
 
+The testnet LQC Flow event indexer can now provide that endpoint. It reads only pool addresses pinned
+in the completed deployment record, converts exact on-chain `Swap` events into both token-pair
+orientations, aggregates deterministic OHLCV buckets, caps retained trades and API results, and
+rejects every non-chain-97, unknown-pool, invalid-address, or unsupported-interval request. It indexes
+only blocks behind the configurable finality boundary (12 blocks by default). The UI independently
+requests 1-hour candles for complete 24-hour change, high, low, and base-volume statistics and leaves
+those fields blank rather than extrapolating when a full window is unavailable.
+
+```bash
+export BSC_TESTNET_RPC_URL="https://..."
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
+export START_BLOCK="<reviewed deployment block>"
+export CORS_ORIGIN="https://lqc-labs.github.io"
+npm run serve:candles
+```
+
+Deploy this process behind HTTPS and set the deployment record's `ui.candleDataUrl` to its
+`/candles` URL before running `npm run configure:app`. The in-memory testnet service is a validation
+foundation; durable production indexing, redundant RPCs, finality/reorg recovery, and monitoring
+remain required before any mainnet pilot.
+
 Never commit private keys or `.env` files.
 
 ## Gasless policy foundation

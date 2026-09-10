@@ -14,11 +14,12 @@
     "monitor:testnet": "node scripts/monitor-bsc-testnet.mjs",
     "smoke:testnet": "node scripts/smoke-test-bsc-routes.mjs",
     "configure:app": "node scripts/configure-app.mjs",
+    "serve:candles": "node scripts/serve-candle-indexer.mjs",
     "report:emergency-drill": "node scripts/emergency-drill-report.mjs",
     "package:review-evidence": "node scripts/build-review-evidence-package.mjs",
     "render:review-summary": "node scripts/render-review-evidence-markdown.mjs",
     "build:review-bundle": "node scripts/build-review-bundle.mjs",
-    "check:app": "node --check app/config.js && node --check app/router-sdk.js && node --check app/candle-data.js && node --check app/app.js"
+    "check:app": "node --check app/config.js && node --check app/router-sdk.js && node --check app/candle-data.js && node --check app/app.js && node --check scripts/candle-indexer-core.mjs && node --check scripts/serve-candle-indexer.mjs"
   },
   "devDependencies": {
     "ethers": "^6.15.0",
