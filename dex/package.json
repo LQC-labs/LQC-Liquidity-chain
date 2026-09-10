@@ -8,6 +8,7 @@
     "test": "npm run check:app && npm run test:contracts",
     "test:contracts": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
     "gate:stage1": "node scripts/run-stage1-gate.mjs",
+    "gate:stage2-predeploy": "node scripts/run-stage2-predeploy-gate.mjs",
     "coverage:router-sdk": "node scripts/check-router-sdk-coverage.mjs",
     "preflight:testnet": "node scripts/preflight-testnet-deploy.mjs",
     "prepare:roles": "node scripts/prepare-operational-role-activation.mjs",

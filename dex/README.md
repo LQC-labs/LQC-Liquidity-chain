@@ -186,6 +186,10 @@ and thresholds on-chain, rejects duplicate or zero signers, and records the veri
 result. Temporary testnet exceptions
 require explicit runtime-only `ALLOW_DEPLOYER_AS_OWNER=true` and/or `ALLOW_EOA_OWNER=true` opt-ins.
 
+Before `deploy:testnet`, run `npm run gate:stage2-predeploy`. This single fail-closed command first
+runs the complete Stage 1 repository exit gate, then audits production dependencies at high severity,
+and finally runs the live BSC testnet preflight. It never signs or broadcasts a transaction.
+
 Every confirmed contract deployment is immediately recorded in
 `deployments/bsc-testnet-97.checkpoint.local.json` (or `DEPLOYMENT_CHECKPOINT_FILE`). A retry with the
 same chain, deployer, constructor arguments, and compiled bytecode verifies the recorded on-chain

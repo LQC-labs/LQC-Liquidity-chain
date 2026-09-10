@@ -76,11 +76,13 @@ Run from `dex/`:
 
 ```bash
 npm ci --ignore-scripts
-npm test
-npm audit --omit=dev
-npm run preflight:testnet
+npm run gate:stage2-predeploy
 npm run deploy:testnet
 ```
+
+`gate:stage2-predeploy` runs the complete Stage 1 exit gate, the production dependency audit, and
+the live chain-97 deployment preflight in that fixed order. It stops immediately on the first
+failure and does not broadcast a transaction.
 
 After the deployment record is available, generate and independently review the unsigned Guardian
 activation bundle with `npm run prepare:roles -- ./deployments/bsc-testnet-97.json`. Submit its single
