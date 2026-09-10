@@ -334,6 +334,10 @@ After submission, the UI does not treat the wallet provider's receipt as final e
 RPC participants independently wait for three confirmations and must form a configured-source
 majority on the transaction hash, successful status, block number, and block hash. A reorg, failed
 receipt, insufficient confirmation, timeout, or split view prevents the UI from reporting success.
+The same agreeing receipts must also prove the received amount. ERC-20 outputs are summed only from
+valid `Transfer` logs for the bound output token and recipient, while native BNB outputs require one
+exact `NativeSwapExecuted` event from the reviewed Native Router with the bound input token and
+amount. A configured-source majority must decode the same output at or above the signed minimum.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match

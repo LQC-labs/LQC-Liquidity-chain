@@ -201,7 +201,11 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /waitForTransaction\(transactionHash,requiredConfirmations,90000\)/);
     assert.match(script, /chartHealth\.consensusTransactionReceipt\(observations,readProviders\.length,transactionHash,requiredConfirmations\)/);
     assert.match(script, /TransactionReceiptConsensusFailed/);
-    assert.match(script, /다중 RPC 확정성을 확인합니다/);
+    assert.match(script, /chartHealth\.decodeSettlementOutput\(receipt,context\)/);
+    assert.match(script, /chartHealth\.consensusSettlementOutput/);
+    assert.match(script, /kind:'native-out'/);
+    assert.match(script, /kind:'erc20'/);
+    assert.match(script, /수령량과 다중 RPC 확정성을 확인합니다/);
     assert.match(script, /settlement\.confirmations/);
     assert.match(script, /RPC 합의 대기/);
     assert.match(script, /chartHealth\.restoreSourceHealth\(JSON\.parse\(localStorage\.getItem\(rpcHealthMemoryKey\)/);
