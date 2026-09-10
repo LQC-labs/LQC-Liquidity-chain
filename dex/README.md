@@ -395,6 +395,9 @@ history and export paths re-run evidence verification and never render untrusted
 The trading client also holds a single in-flight submission lock from pre-sign checks through
 settlement verification, so repeated clicks or concurrent UI refreshes cannot submit the same order
 twice. The action remains visibly busy and disabled until the attempt succeeds or fails.
+Each attempt also snapshots the connected account, chain, and wallet-context revision. Account or
+network changes invalidate the attempt, and the client rechecks the live signer and chain before
+every approval and final Swap signature.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match

@@ -40,6 +40,17 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /finally\{setSwapInFlight\(false\)\}/);
   });
 
+  it("invalidates pre-sign execution when the wallet account or chain changes", function () {
+    assert.match(script, /walletContextVersion=0/);
+    assert.match(script, /function invalidateWalletContext\(\)\{walletContextVersion\+\+\}/);
+    assert.match(script, /function snapshotWalletContext\(\)/);
+    assert.match(script, /async function assertWalletContext\(context\)/);
+    assert.match(script, /WalletContextChangedDuringSwap/);
+    assert.match(script, /sendPreparedTransaction\(prepared,walletContext\)/);
+    assert.match(script, /accountsChanged[^\n]*invalidateWalletContext\(\)/);
+    assert.match(script, /chainChanged[^\n]*invalidateWalletContext\(\)/);
+  });
+
   it("offers a market-first order and familiar balance percentage controls", function () {
     assert.match(html, /<strong>시장가<\/strong>/);
     for (const percent of [25, 50, 75, 100]) assert.match(html, new RegExp(`data-percent="${percent}"`));
@@ -226,7 +237,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /chartHealth\.bindTransaction\(anchorQuote,request\)/);
     assert.match(script, /chartHealth\.transactionMatches\(binding,request\)/);
     assert.match(script, /signer\.sendTransaction\(prepared\.request\)/);
-    assert.match(script, /tx=await sendPreparedTransaction\(prepared\)/);
+    assert.match(script, /tx=await sendPreparedTransaction\(prepared,walletContext\)/);
     assert.match(script, /function verifySubmittedTransaction/);
     assert.match(script, /waitForTransaction\(transactionHash,requiredConfirmations,90000\)/);
     assert.match(script, /chartHealth\.consensusTransactionReceipt\(observations,readProviders\.length,transactionHash,requiredConfirmations\)/);
