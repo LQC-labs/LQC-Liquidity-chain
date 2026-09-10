@@ -12,7 +12,7 @@
   const adapterAbi=['function quoteExactInput(address,address,uint256,bytes) view returns (uint256)'];
   const ui={connect:$('connectButton'),settings:$('settingsButton'),settingsPanel:$('settingsPanel'),amountIn:$('amountIn'),amountOut:$('amountOut'),minimum:$('minimumReceived'),gas:$('estimatedGas'),impact:$('priceImpact'),split:$('splitRatio'),route:$('routeLabel'),selectedDex:$('selectedDex'),selectedPath:$('selectedPath'),routeStrategy:$('routeStrategy'),alternativeRoute:$('alternativeRoute'),preflightState:$('preflightState'),balanceIn:$('balanceIn'),balanceOut:$('balanceOut'),walletDialog:$('walletDialog'),walletList:$('walletList'),positionBalance:$('positionBalance'),portfolioValue:$('portfolioValue'),tokenInButton:$('tokenInButton'),tokenOutButton:$('tokenOutButton'),flip:$('flipButton'),max:$('maxButton'),buy:$('buyAction'),sell:$('sellAction'),buyTab:$('buyTab'),sellTab:$('sellTab'),quick:$('quickTrade'),marketNav:$('marketNav'),tradeNav:$('tradeNav'),walletNav:$('walletNav'),order:$('orderPanel'),close:$('closeOrder'),title:$('orderTitle'),execute:$('executeButton'),status:$('statusBox'),statusText:$('statusText'),dialog:$('tokenDialog'),tokenList:$('tokenList'),tokenSearch:$('tokenSearch'),tokenCount:$('tokenCount'),tokenEmpty:$('tokenEmpty'),marketSelector:$('marketSelector'),marketPair:$('marketPair'),marketDialog:$('marketDialog'),marketList:$('marketList'),marketSearch:$('marketSearch'),marketCount:$('marketCount'),marketEmpty:$('marketEmpty'),tickerPrice:$('tickerPrice'),tickerChange:$('tickerChange'),priceSourceLabel:$('priceSourceLabel'),quoteAssetStat:$('quoteAssetStat'),priceStatusStat:$('priceStatusStat'),high24h:$('high24hStat'),low24h:$('low24hStat'),volume24h:$('volume24hStat'),slippage:$('slippageInput')};
   const walletMemoryKey='lqc-flow-wallet-connected';
-  let walletProvider,provider,signer,account,router,quoteRouter,executionRouter,nativeRouter,splitOptimizer,autoRouter,gasCostOracle,wallets=[],boundWallets=new WeakSet(),side='in',timer,marketPriceRequest=0,chartRequest=0,selectedTimeframe='1m',mode='buy',selectedAsset=cfg.tokens.find(t=>t.symbol==='LQC')||cfg.tokens[0],quoteToken=cfg.tokens.find(t=>t.symbol==='USDT')||cfg.tokens.find(t=>t.symbol==='BNB')||cfg.tokens[0],tokenIn=quoteToken,tokenOut=selectedAsset;
+  let walletProvider,provider,signer,account,router,quoteRouter,executionRouter,nativeRouter,splitOptimizer,autoRouter,gasCostOracle,wallets=[],boundWallets=new WeakSet(),side='in',timer,chartRefreshTimer,marketPriceRequest=0,chartRequest=0,selectedTimeframe='1m',mode='buy',selectedAsset=cfg.tokens.find(t=>t.symbol==='LQC')||cfg.tokens[0],quoteToken=cfg.tokens.find(t=>t.symbol==='USDT')||cfg.tokens.find(t=>t.symbol==='BNB')||cfg.tokens[0],tokenIn=quoteToken,tokenOut=selectedAsset;
   const deployed=ethers.isAddress(cfg.quoteRouterAddress)&&ethers.isAddress(cfg.executionRouterAddress)&&ethers.isAddress(cfg.nativeRouterAddress)&&ethers.isAddress(cfg.splitOptimizerAddress)&&ethers.isAddress(cfg.autoRouterAddress)&&ethers.isAddress(cfg.gasCostOracleAddress)&&cfg.tokens.filter(t=>t.address!=='native').every(t=>ethers.isAddress(t.address));
   const readProvider=deployed?new ethers.JsonRpcProvider(cfg.rpcUrls[0],cfg.chainId,{staticNetwork:true}):null,marketQuoteRouter=deployed?new ethers.Contract(cfg.quoteRouterAddress,quoteRouterAbi,readProvider):null;
   const address=t=>t.address==='native'?(cfg.tokens.find(x=>x.symbol==='WBNB')?.address||''):t.address;
@@ -128,7 +128,8 @@
   function chart(closes=chartSeries['1m'],timeframe='1m',source='example'){const g=$('candles'),bars=$('volumeBars'),ns='http://www.w3.org/2000/svg';g.replaceChildren();bars.replaceChildren();$('chartDataBadge').textContent=source==='live'?`${timeframe} 검증된 마켓 히스토리`:`${timeframe} 예시 차트 · 실시간 히스토리 연동 전`;closes.forEach((close,i)=>{const open=i?closes[i-1]+((i%5)-2)*3:108,x=i*16+3,up=close<open,high=Math.max(50,Math.min(open,close)-5-(i%4)*3),low=Math.min(340,Math.max(open,close)+7+(i%3)*4),wick=document.createElementNS(ns,'line'),body=document.createElementNS(ns,'rect');wick.setAttribute('x1',x+5.5);wick.setAttribute('x2',x+5.5);wick.setAttribute('y1',high);wick.setAttribute('y2',low);wick.setAttribute('class',`wick ${up?'up':'down'}`);body.setAttribute('x',x);body.setAttribute('y',Math.min(open,close));body.setAttribute('width',11);body.setAttribute('height',Math.max(5,Math.abs(open-close)));body.setAttribute('rx','.5');body.setAttribute('class',`candle ${up?'up':'down'}`);g.append(wick,body);const bar=document.createElement('i');bar.style.height=`${Math.min(66,9+Math.abs(open-close)*.8+(i%5)*2)}px`;if(!up)bar.className='hot';bars.append(bar)})}
   function chartLive(candles,timeframe){
     const recent=candles.slice(-47),values=recent.flatMap(item=>[item.high,item.low]),min=Math.min(...values),max=Math.max(...values),range=max-min||1,maxVolume=Math.max(...recent.map(item=>item.volume),1),g=$('candles'),bars=$('volumeBars'),ns='http://www.w3.org/2000/svg',step=680/recent.length,width=Math.max(3,Math.min(11,step*.68)),y=value=>330-(value-min)/range*270;
-    g.replaceChildren();bars.replaceChildren();$('chartDataBadge').textContent=`${timeframe} 검증된 마켓 히스토리`;
+    const refreshedAt=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+    g.replaceChildren();bars.replaceChildren();$('chartDataBadge').textContent=`${timeframe} 실시간 · ${refreshedAt}`;
     recent.forEach((item,index)=>{const x=index*step+3,open=y(item.open),close=y(item.close),high=y(item.high),low=y(item.low),up=item.close>=item.open,wick=document.createElementNS(ns,'line'),body=document.createElementNS(ns,'rect'),bar=document.createElement('i');wick.setAttribute('x1',x+width/2);wick.setAttribute('x2',x+width/2);wick.setAttribute('y1',high);wick.setAttribute('y2',low);wick.setAttribute('class',`wick ${up?'up':'down'}`);body.setAttribute('x',x);body.setAttribute('y',Math.min(open,close));body.setAttribute('width',width);body.setAttribute('height',Math.max(2,Math.abs(open-close)));body.setAttribute('rx','.5');body.setAttribute('class',`candle ${up?'up':'down'}`);g.append(wick,body);bar.style.height=`${Math.max(3,item.volume/maxVolume*66)}px`;if(!up)bar.className='hot';bars.append(bar)});
   }
   function clearMarketStats(){ui.tickerChange.textContent='24h —';ui.tickerChange.classList.remove('negative');ui.high24h.textContent='—';ui.low24h.textContent='—';ui.volume24h.textContent='—'}
@@ -141,6 +142,12 @@
     ui.low24h.textContent=`${format(Math.min(...window24h.map(item=>item.low)))} ${quote.symbol}`;
     ui.volume24h.textContent=`${format(window24h.reduce((sum,item)=>sum+item.volume,0))} ${asset.symbol}`;
   }
+  function scheduleChartRefresh(){
+    clearTimeout(chartRefreshTimer);
+    if(!cfg.candleDataUrl||document.hidden)return;
+    const delay=['1D','1W','1M'].includes(selectedTimeframe)?60000:15000;
+    chartRefreshTimer=setTimeout(()=>{loadChartHistory();refreshMarketPrice()},delay);
+  }
   async function loadChartHistory(){
     const request=++chartRequest,asset=selectedAsset,quote=quoteToken,timeframe=selectedTimeframe;
     clearMarketStats();if(!cfg.candleDataUrl||!candleData)return chart(chartSeries[timeframe],timeframe);
@@ -151,6 +158,7 @@
       chartLive(candles,timeframe);
       renderMarketStats(stats,asset,quote);
     }catch{if(request===chartRequest)chart(chartSeries[timeframe],timeframe)}
+    finally{if(request===chartRequest)scheduleChartRefresh()}
   }
   function selectTimeframe(timeframe){if(!chartSeries[timeframe])return;selectedTimeframe=timeframe;document.querySelectorAll('.timeframes [data-timeframe]').forEach(button=>button.classList.toggle('active',button.dataset.timeframe===timeframe));loadChartHistory()}
   function bindWalletEvents(target){
@@ -180,6 +188,7 @@
     status('설치된 비수탁형 지갑을 찾지 못했습니다.','error');
   }
   window.addEventListener('eip6963:announceProvider',event=>addWallet(event.detail));
+  document.addEventListener('visibilitychange',()=>{clearTimeout(chartRefreshTimer);if(!document.hidden){loadChartHistory();refreshMarketPrice()}});
   window.dispatchEvent(new Event('eip6963:requestProvider'));
   if(window.ethereum)setTimeout(()=>{if(wallets.length===0)addWallet({info:{uuid:'legacy-injected',name:'브라우저 지갑',rdns:'legacy.injected'},provider:window.ethereum})},0);
   ui.connect.onclick=chooseWallet;ui.buy.onclick=ui.buyTab.onclick=()=>setMode('buy');ui.sell.onclick=ui.sellTab.onclick=()=>setMode('sell');ui.quick.onclick=ui.tradeNav.onclick=()=>setMode(mode);ui.walletNav.onclick=chooseWallet;ui.marketNav.onclick=ui.marketSelector.onclick=openMarkets;ui.marketSearch.oninput=()=>marketList(ui.marketSearch.value);ui.close.onclick=()=>ui.order.classList.remove('open');ui.execute.onclick=swap;ui.tokenInButton.onclick=()=>openTokenDialog('in');ui.tokenOutButton.onclick=()=>openTokenDialog('out');ui.tokenSearch.oninput=()=>tokenList(ui.tokenSearch.value);ui.flip.onclick=()=>{[tokenIn,tokenOut]=[tokenOut,tokenIn];selectedAsset=mode==='buy'?tokenOut:tokenIn;quoteToken=mode==='buy'?tokenIn:tokenOut;render();balances();refreshMarketPrice();loadChartHistory();quoteSoon()};ui.amountIn.oninput=quoteSoon;ui.slippage.oninput=quoteSoon;ui.settings.onclick=()=>{ui.settingsPanel.hidden=!ui.settingsPanel.hidden;ui.order.classList.add('open')};ui.max.onclick=()=>applyBalancePercent(100);
