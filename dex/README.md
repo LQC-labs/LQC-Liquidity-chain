@@ -124,7 +124,8 @@ the reviewed emergency Guardian:
 npm run prepare:roles -- ./deployments/bsc-testnet-97.json
 ```
 
-The output validates all four recorded Safe policies and role separation, then encodes
+The output validates all four recorded Safe policies, their exact role addresses, role separation,
+the reviewed source revision, and a deterministic deployment fingerprint, then encodes
 `EmergencyController.setGuardian(guardian, true)`. It never signs or sends a transaction and marks
 the Treasury as recorded but unfunded.
 
