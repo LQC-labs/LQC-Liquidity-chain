@@ -80,7 +80,8 @@ describe("BSC testnet real-address validation", function () {
     const [vaultAddress, asset, adapterAddress, ownerAddress, pauseAdmin, strategyAdmin] = addresses;
     const deployment = {
       contracts: {
-        liquidityVault: { address: vaultAddress, asset, depositCap: "1000", strategyCap: "100", maxLossBps: 100 },
+        liquidityVault: { address: vaultAddress, asset, depositCap: "1000", strategyCap: "100", maxLossBps: 100,
+          allocationsPaused: true },
         idleStrategyAdapter: { address: adapterAddress, asset, vault: vaultAddress }
       },
       liquidityVaultRoles: { owner: ownerAddress, pauseAdmin, strategyAdmin }
@@ -88,9 +89,14 @@ describe("BSC testnet real-address validation", function () {
     const onchain = { owner: ownerAddress, pauseAdmin, strategyAdmin, asset, strategy: adapterAddress,
       adapterAsset: asset, adapterVault: vaultAddress, depositCap: 1000n, strategyCap: 100n, maxLossBps: 100n,
       strategyDebt: 0n, accountedAssets: 0n, adapterManagedAssets: 0n,
-      depositsPaused: false, allocationsPaused: false, insolvent: false };
+      depositsPaused: false, allocationsPaused: true, insolvent: false };
     assert.equal(validateVaultDeploymentRecord(deployment, onchain), true);
-    assert.equal(validateVaultDeploymentRecord(deployment, { ...onchain, depositsPaused: true, allocationsPaused: true }), true);
+    assert.equal(validateVaultDeploymentRecord(deployment, { ...onchain, depositsPaused: true }), true);
+    assert.throws(() => validateVaultDeploymentRecord(deployment, { ...onchain, allocationsPaused: false }), /pause state/);
+    assert.throws(() => validateVaultDeploymentRecord({
+      ...deployment, contracts: { ...deployment.contracts,
+        liquidityVault: { ...deployment.contracts.liquidityVault, allocationsPaused: false } }
+    }, { ...onchain, allocationsPaused: false }), /must require paused/);
     assert.throws(() => validateVaultDeploymentRecord(deployment, { ...onchain, strategyDebt: 1n }), /unexpected accounting/);
     assert.throws(() => validateVaultDeploymentRecord(deployment, { ...onchain, insolvent: true }), /insolvent/);
     assert.throws(() => validateVaultDeploymentRecord(deployment, { ...onchain, adapterVault: asset }), /linkage mismatch/);

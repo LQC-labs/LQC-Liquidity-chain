@@ -311,7 +311,8 @@ const record = {
     liquidityVault: {
       address: await liquidityVault.getAddress(), deploymentTx: txHash(liquidityVault),
       asset: usdtAddress, depositCap: vaultDepositCap.toString(),
-      strategyCap: vaultStrategyCap.toString(), maxLossBps: Number(vaultMaxLossBps)
+      strategyCap: vaultStrategyCap.toString(), maxLossBps: Number(vaultMaxLossBps),
+      allocationsPaused: await liquidityVault.allocationsPaused()
     },
     idleStrategyAdapter: {
       address: await idleStrategyAdapter.getAddress(), deploymentTx: txHash(idleStrategyAdapter),

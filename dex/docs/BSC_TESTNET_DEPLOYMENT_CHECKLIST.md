@@ -57,6 +57,9 @@ resume allocations. Any later activation requires a separately reviewed Timelock
 the Strategy cap, adapter, monitoring, and risk approvals are recorded. These are testnet
 configuration limits, not production terms.
 
+The deployment record must contain `allocationsPaused: true`, and the real-address validator must
+confirm the same value on-chain. A missing, false, or mismatched value blocks deployment evidence.
+
 - [ ] Risk reviewers approve or reduce every limit before deployment.
 - [ ] Every enabled DEX/token route has a non-zero cap no higher than the token transaction cap.
 - [ ] The initial LQC/USDT and LQC/WBNB pool amounts are explicitly approved.

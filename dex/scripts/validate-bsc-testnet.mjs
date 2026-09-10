@@ -183,6 +183,12 @@ export function validateVaultDeploymentRecord(deployment, onchain) {
   if (BigInt(onchain.depositCap) !== BigInt(vault.depositCap) ||
       BigInt(onchain.strategyCap) !== BigInt(vault.strategyCap) ||
       BigInt(onchain.maxLossBps) !== BigInt(vault.maxLossBps)) throw new Error("Vault limit configuration mismatch.");
+  if (vault.allocationsPaused !== true) {
+    throw new Error("Fresh Vault deployment record must require paused strategy allocations.");
+  }
+  if (onchain.allocationsPaused !== vault.allocationsPaused) {
+    throw new Error("Vault allocation pause state does not match the deployment record.");
+  }
   if (BigInt(onchain.strategyDebt) !== 0n || BigInt(onchain.accountedAssets) !== 0n ||
       BigInt(onchain.adapterManagedAssets) !== 0n) throw new Error("Fresh Vault deployment contains unexpected accounting state.");
   if (onchain.insolvent) throw new Error("Vault reports an insolvent accounting state.");
