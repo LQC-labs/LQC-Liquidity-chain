@@ -81,6 +81,8 @@ activation bundle with `npm run prepare:roles -- ./deployments/bsc-testnet-97.js
 `setGuardian` action through the recorded Governance Safe, then verify the stated postcondition before
 any route smoke swap. The generator never signs or broadcasts the action.
 
+- [ ] Confirm the activation bundle source revision and deployment fingerprint match the reviewed deployment.
+- [ ] Confirm every Safe policy address in the bundle matches its recorded governance, risk, guardian, or treasury role.
 - [ ] Both GitHub DEX workflows pass on the selected source commit.
 - [ ] Local compilation and all automated tests pass.
 - [ ] Production dependency audit reports zero vulnerabilities.
