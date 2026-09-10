@@ -35,7 +35,14 @@
   async function balances(){const lqc=cfg.tokens.find(t=>t.symbol==='LQC'),[a,b,l]=await Promise.all([balance(tokenIn),balance(tokenOut),balance(lqc)]);ui.balanceIn.textContent=format(a,tokenIn);ui.balanceOut.textContent=format(b,tokenOut);ui.positionBalance.textContent=l===null?'—':`${format(l,lqc)} LQC`;if(l!==null)ui.portfolioValue.textContent=`$${(Number(ethers.formatUnits(l,lqc.decimals))*.091348).toLocaleString(undefined,{maximumFractionDigits:2})}`}
   async function applyBalancePercent(percent){const current=await balance(tokenIn);if(current===null)return status('먼저 지갑을 연결하세요.','error');const reserve=tokenIn.address==='native'?ethers.parseEther('.01'):0n,available=current>reserve?current-reserve:0n,value=available*BigInt(percent)/100n;ui.amountIn.value=ethers.formatUnits(value,tokenIn.decimals);quoteSoon()}
   function quoteSoon(){clearTimeout(timer);timer=setTimeout(quote,300)}
-  async function bestQuote(value,path){const routes=sdk.encodeRoutes(cfg.dexes,path,ethers),best=await quoteRouter.quoteBest(path[0],path.at(-1),value,routes),index=cfg.dexes.findIndex(d=>d.id.toLowerCase()===best.dexId.toLowerCase());if(index<0)throw new Error('Unknown DEX');return{best,routeData:routes[index],dex:cfg.dexes[index]}}
+  function approvedRoutes(path){
+    const restricted=[tokenIn,tokenOut].filter(token=>token.reviewed).map(token=>new Set(token.routeDexIds||[]));
+    const allowed=restricted.length?cfg.dexes.filter(dex=>restricted.every(ids=>ids.has(dex.id.toLowerCase()))):cfg.dexes;
+    if(allowed.length===0)throw new Error('No mutually approved DEX route');
+    const allowedIds=new Set(allowed.map(dex=>dex.id.toLowerCase())),encoded=sdk.encodeRoutes(cfg.dexes,path,ethers);
+    return encoded.map((route,index)=>allowedIds.has(cfg.dexes[index].id.toLowerCase())?route:'0x');
+  }
+  async function bestQuote(value,path,routes=approvedRoutes(path)){const best=await quoteRouter.quoteBest(path[0],path.at(-1),value,routes),index=cfg.dexes.findIndex(d=>d.id.toLowerCase()===best.dexId.toLowerCase());if(index<0||routes[index]==='0x')throw new Error('Unknown or unapproved DEX');return{best,routeData:routes[index],dex:cfg.dexes[index]}}
   async function rankedRoutes(value,path,routes,costs){
     const candidates=await Promise.all(cfg.dexes.map(async(dex,index)=>{
       if(!ethers.isAddress(dex.adapter))return null;
@@ -47,7 +54,7 @@
     return sdk.rankRouteQuotes(candidates);
   }
   async function executionPlan(value,path){
-    const grossSingle=await bestQuote(value,path),routes=sdk.encodeRoutes(cfg.dexes,path,ethers);
+    const routes=approvedRoutes(path),grossSingle=await bestQuote(value,path,routes);
     if(tokenIn.address==='native'||tokenOut.address==='native')return{kind:'single',single:grossSingle,routes,costs:cfg.dexes.map(()=>0n),oracleReady:false};
     let costs;try{const feeData=await provider.getFeeData(),gasUnits=cfg.dexes.map(dex=>BigInt(dex.gasUnits||220000));costs=await gasCostOracle.quoteRouteCosts(path.at(-1),gasUnits,feeData.gasPrice||0n)}catch{return{kind:'single',single:grossSingle,routes,costs:cfg.dexes.map(()=>0n),oracleReady:false}}
     const ranked=await rankedRoutes(value,path,routes,costs),netBest=ranked[0];
