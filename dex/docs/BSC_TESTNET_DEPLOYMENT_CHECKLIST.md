@@ -5,18 +5,20 @@ authorize mainnet deployment or use of real user funds.
 
 ## 1. Required roles and wallets
 
-- [ ] Create a Protocol Governance Safe with a 3-of-5 signing threshold.
-- [ ] Create a Risk Safe with a 2-of-3 signing threshold.
+- [ ] Create a Protocol Governance Safe meeting the default 4-of-7 minimum policy.
+- [ ] Create separate Risk, Emergency Guardian, and Treasury Safes meeting the default 3-of-5 minimum policy.
 - [ ] Record signer names and wallet addresses in the private governance register.
 - [ ] Verify every signer can access, review, and sign a test Safe transaction.
 - [ ] Use the deployed Protocol Governance Safe address as `FACTORY_OWNER`.
 - [ ] Use the deployed Risk Safe address as `RISK_ADMIN`.
-- [ ] Keep the deployer separate from `FACTORY_OWNER`.
+- [ ] Set `GUARDIAN_ADDRESS` and `TREASURY_ADDRESS` to their reviewed Safe addresses.
+- [ ] Keep the deployer separate from all four operational roles.
 - [ ] Never paste, commit, email, or include the deployer private key in screenshots or documents.
 
 The deployment script assigns protocol ownership and the timelock proposer to `FACTORY_OWNER`, while
-`RISK_ADMIN` receives only limit-reduction and pause authority. Preflight rejects a shared address by
-default so the role separation is established at deployment rather than deferred.
+`RISK_ADMIN` receives only limit-reduction and pause authority. Guardian and Treasury addresses are
+recorded as reviewed operational roles for the later governance activation and funding steps.
+Preflight rejects shared addresses by default so role separation is established before deployment.
 For the first testnet deployment, the Risk Safe is also recorded as the Vault pause and strategy
 administrator. Vault ownership is transferred to the timelock, and the strategy allocation cap
 defaults to zero until governance explicitly approves a bounded exercise.
