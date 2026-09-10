@@ -144,6 +144,14 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function setIndicatorVisibility\(name,visible\)/);
     assert.match(script, /lowerIndicators\.filter\(other=>other!==name\)/);
     assert.match(script, /supportedTimeframes\.includes\(value\.timeframe\)/);
+    assert.match(html, /id="lastTradeLink"/);
+    assert.match(html, /id="lastSettledOutput"/);
+    assert.match(html, /id="lastEvidenceHash"/);
+    assert.match(script, /function storedExecutionEvidence/);
+    assert.match(script, /sdk\.verifyExecutionEvidence/);
+    assert.match(script, /function rememberExecutionEvidence/);
+    assert.match(script, /sdk\.buildExecutionEvidence\(plan\.anchorQuote,settlement,cfg\.deploymentFingerprint,Date\.now\(\),ethers\)/);
+    assert.match(script, /\.slice\(0,10\)/);
   });
 
   it("shows candle connection health and retries failures with bounded backoff", function () {

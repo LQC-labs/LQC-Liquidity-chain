@@ -1,126 +1,422 @@
-<!doctype html>
-<html lang="ko">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#ffffff">
-  <meta name="description" content="LQC Flow DEX — BNB Smart Chain testnet trading interface">
-  <title>LQC Flow DEX</title>
-  <link rel="stylesheet" href="styles.css?v=20260910c">
-  <link rel="stylesheet" href="token-search.css?v=20260910a">
-</head>
-<body>
-  <header class="topbar">
-    <a class="back" href="../../index.html" aria-label="홈으로 돌아가기">‹</a>
-    <div class="asset-title">
-      <span class="asset-logo"><img src="../../lqc-token-symbol.png" alt="LQC"></span>
-      <span><strong>LQC FLOW <i>⌄</i></strong><button class="address-connect" id="connectButton" type="button">지갑 연결 <b>▣</b></button></span>
-    </div>
-    <button class="header-icon favorite" type="button" aria-label="즐겨찾기">★</button>
-    <button class="header-icon menu" type="button" aria-label="더보기">•••</button>
-  </header>
+# LQC Flow DEX — AMM MVP
 
-  <main class="exchange">
-    <section class="market" aria-label="LQC 시장 차트">
-      <button class="market-selector" id="marketSelector" type="button" aria-haspopup="dialog"><span class="market-token-icon">L</span><strong id="marketPair">LQC / BNB</strong><span>⌄</span><small>검토된 마켓</small></button>
-      <div class="ticker-row">
-        <div class="price-block"><span class="price-label" id="priceSourceLabel">Router spot price</span><strong class="ticker-price" id="tickerPrice">—</strong><span class="ticker-change" id="tickerChange">24h —</span></div>
-        <dl class="quick-stats">
-          <div><dt>Quote asset</dt><dd id="quoteAssetStat">—</dd></div>
-          <div><dt>24h High</dt><dd id="high24hStat">—</dd></div>
-          <div><dt>24h Low</dt><dd id="low24hStat">—</dd></div>
-          <div><dt>24h Volume</dt><dd id="volume24hStat">—</dd></div>
-          <div><dt>Network</dt><dd>BSC Testnet</dd></div>
-          <div><dt>Price status</dt><dd id="priceStatusStat">배포 대기</dd></div>
-        </dl>
-      </div>
+This package implements the first testable smart-contract layer for **LQC Flow DEX** on EVM-compatible networks such as BNB Smart Chain.
 
-      <nav class="section-tabs" aria-label="시장 정보">
-        <button class="active" type="button">Charts</button><button type="button">Info</button><button type="button">Data</button><button type="button">Risk</button><button type="button">Routes</button>
-      </nav>
+## Included
 
-      <div class="market-facts"><button type="button" aria-label="시장 검색">⌕</button><span>LP Fee <b>0.30%</b></span><span>Route <b>Optimal Path</b></span><span class="sell-all">TESTNET</span></div>
+- `LQCFlowFactory`: permissionless token-pair creation and two-step owner transfer
+- `LQCFlowPair`: constant-product (`x*y=k`) pool and ERC-20 LP shares
+- `LQCFlowRouter`: token/BNB liquidity add/remove, exact-input swaps, exact-output swaps, and multi-hop paths
+- Native BNB wrapping/unwrapping through the configured WBNB contract
+- 0.30% swap fee retained in the pool for liquidity providers
+- Minimum permanently locked liquidity
+- Slippage bounds and transaction deadlines
+- Pair-level reentrancy lock and safe ERC-20 transfers
+- Local compilation and integration tests
+- Deterministic stateful AMM invariant tests covering reserve accounting, non-decreasing constant
+  product, router dust balances, and permanently locked minimum liquidity
+- Sampled Router 2.0 split invariants covering exact allocation/output totals, one-to-four-route caps,
+  gas-cost deductions, inactive legs, and invalid part/route bounds
+- Atomic split rollback tests proving that a later adapter failure restores user balances, pool
+  reserves, and zero Router/adapter custody even after an earlier leg was executable
+- BSC testnet deployment script
+- Static wallet-connected swap interface in `app/`
+- `LQCLiquidityVault` V1 with exact-asset accounting, permanently locked initial shares,
+  donation-resistant share pricing, deposit caps, guardian deposit pause, and two-step ownership
+- Strategy Adapter V1 with vault/asset binding, separate strategy administration, absolute exposure
+  caps, bounded loss recognition, donation-resistant allocation accounting, pause controls, and a
+  shutdown-only governance emergency recall
 
-      <div class="timeframes" aria-label="차트 시간 단위">
-        <button class="active" type="button" data-timeframe="1m">1m</button><button type="button" data-timeframe="3m">3m</button><button type="button" data-timeframe="5m">5m</button><button type="button" data-timeframe="15m">15m</button><button type="button" data-timeframe="1h">1h</button><button type="button" data-timeframe="4h">4h</button><button type="button" data-timeframe="1D">1D</button><button type="button" data-timeframe="1W">1W</button><button type="button" data-timeframe="1M">1M</button><span class="tool-divider"></span><button class="chart-icon" type="button" aria-label="차트 유형">⌁</button><button class="chart-tool" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⬡</button>
-      </div>
+## Router 2.0 extensibility foundation
 
-      <div class="chart-wrap">
-        <span class="chart-data-badge" id="chartDataBadge" aria-live="polite">1m 예시 차트 · 실시간 히스토리 연동 전</span>
-        <div class="ma-legend"><span id="ma5Legend">MA5: —</span><span id="ma10Legend">MA10: —</span><span id="ma20Legend">MA20: —</span></div>
-        <div class="ema-legend indicator-hidden"><span id="ema9Legend">EMA9: —</span><span id="ema21Legend">EMA21: —</span></div>
-        <div class="boll-legend indicator-hidden"><span id="bollUpperLegend">BOLL U: —</span><span id="bollMiddleLegend">M: —</span><span id="bollLowerLegend">L: —</span></div>
-        <div class="sar-legend indicator-hidden" id="sarLegend">SAR: —</div>
-        <div class="pnl-strip"><b>PnL -0.4817</b><span>68.4199</span><em>0.09564</em></div>
-        <svg class="chart" viewBox="0 0 760 390" role="img" aria-label="LQC 테스트넷 예시 캔들 차트">
-          <defs>
-            <linearGradient id="chartFade" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#4fe0d1" stop-opacity=".22"/><stop offset="1" stop-color="#4fe0d1" stop-opacity="0"/></linearGradient>
-          </defs>
-          <g class="grid"><path d="M0 65H760M0 145H760M0 225H760M0 305H760"/><path d="M120 0V390M260 0V390M400 0V390M540 0V390M680 0V390"/></g>
-          <path class="area" id="priceArea" d="M0 98L45 112L83 176L120 255L160 190L205 170L245 182L285 145L322 285L360 218L403 177L444 205L485 315L525 248L565 150L603 132L642 260L680 230L720 204L760 245V390H0Z"/>
-          <path class="ma ma-a" id="ma5Line" d="M0 105C90 112 90 275 160 195S260 175 320 250S405 155 480 290S560 130 635 235S720 180 760 230"/>
-          <path class="ma ma-b" id="ma10Line" d="M0 112C95 120 100 225 165 205S260 165 330 235S410 180 490 265S565 170 640 220S710 205 760 220"/>
-          <path class="ma ma-c" id="ma20Line" d="M0 91C110 135 105 190 178 192S280 182 345 218S435 205 500 232S590 200 660 214S720 205 760 211"/>
-          <path class="ema ema-fast indicator-hidden" id="ema9Line" d=""/>
-          <path class="ema ema-slow indicator-hidden" id="ema21Line" d=""/>
-          <path class="boll boll-upper indicator-hidden" id="bollUpperLine" d=""/>
-          <path class="boll boll-middle indicator-hidden" id="bollMiddleLine" d=""/>
-          <path class="boll boll-lower indicator-hidden" id="bollLowerLine" d=""/>
-          <g class="sar-points indicator-hidden" id="sarPoints"></g>
-          <g id="candles"></g>
-          <line class="current-line" id="currentPriceLine" x1="0" x2="760" y1="286" y2="286"/><text class="current-label" id="currentPriceLabel" x="687" y="280">—</text>
-          <g class="axis" id="priceAxis"><text x="697" y="48">—</text><text x="697" y="98">—</text><text x="697" y="148">—</text><text x="697" y="198">—</text><text x="697" y="248">—</text><text x="697" y="298">—</text><text x="697" y="348">—</text></g>
-        </svg>
-        <div class="time-axis" id="timeAxis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span></div>
-      </div>
+The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 
-      <div class="volume" id="volumeIndicator"><span id="chartVolumeLabel">VOL: —</span><div class="volume-bars" id="volumeBars"></div></div>
-      <div class="macd-indicator indicator-hidden" id="macdIndicator"><span id="macdLabel">MACD (12, 26, 9): —</span><div class="macd-bars" id="macdBars"></div></div>
-      <div class="kdj-indicator indicator-hidden" id="kdjIndicator"><span id="kdjLabel">KDJ (9, 3, 3): —</span><svg viewBox="0 0 680 76" role="img" aria-label="KDJ 보조지표"><path class="kdj-guide" d="M0 20H680M0 56H680"/><path class="kdj-line k-line" id="kdjKLine" d=""/><path class="kdj-line d-line" id="kdjDLine" d=""/><path class="kdj-line j-line" id="kdjJLine" d=""/></svg></div>
-      <div class="indicators" aria-label="차트 지표"><button class="active" type="button" data-indicator="volume" aria-pressed="true">VOL</button><button class="active" type="button" data-indicator="ma" aria-pressed="true">MA</button><button type="button" data-indicator="ema" aria-pressed="false">EMA</button><button type="button" data-indicator="boll" aria-pressed="false">BOLL</button><button type="button" data-indicator="sar" aria-pressed="false">SAR</button><button type="button" data-indicator="macd" aria-pressed="false">MACD</button><button type="button" data-indicator="kdj" aria-pressed="false">KDJ</button></div>
+- \`ILQCDexAdapter\`: common exact-input quote interface for every reviewed DEX integration
+- \`LQCDexRegistry\`: owner-controlled registration, update, pause, removal, metadata, and two-step ownership transfer
+- \`LQCQuoteRouter\`: failure-isolated comparison across all enabled adapters with deterministic priority tie-breaking
+- \`LQCFlowAdapter\`: connects native LQC Flow direct or multi-hop pool quotes to Router 2.0
+- \`PancakeV2Adapter\`: connects reviewed PancakeSwap V2-compatible routers for cross-DEX quote comparison
+- \`PancakeV3Adapter\`: validates packed V3 paths and reads PancakeSwap QuoterV2 through an isolated static call
+- \`PancakeV3ExecutionAdapter\`: executes only reviewed V3 fee tiers and token-pair pools, caps paths at three hops, and applies deadline, exact-approval, and minimum-output protection
+- \`LQCExecutionRouter\`: executes token exact-input swaps only through enabled registry adapters, with minimum-output, deadline, recipient balance verification, exact temporary approvals, and reentrancy protection
+- Automatic best-route execution compares every enabled execution adapter, isolates failed routes, applies caller-supplied gas estimates denominated in the output token, and uses deterministic registry priority for ties
+- Atomic split execution can divide one order across two to four reviewed routes, enforcing exact input allocation plus per-route and aggregate minimum-output protection
+- \`LQCSplitOptimizer\`: read-only incremental optimizer that distributes an order across every enabled execution adapter according to marginal output, price impact, route cost, and deterministic priority
+- \`LQCAutoRouter\`: converts a capped optimizer result into a single-route or two-to-four-route atomic swap and derives route-level minimum outputs from user slippage tolerance
+- \`LQCGasCostOracle\`: converts estimated BNB gas into output-token units only after primary/secondary price freshness and deviation checks
+- \`LQCTimelockController\`: delays structural registry changes behind a governance proposer and review window
+- \`LQCEmergencyController\`: gives guardians immediate DEX-specific or all-swap pause authority while every recovery remains governance-only
+- End-to-end emergency drill coverage proves swaps stop immediately and cannot resume until both
+  the Risk Registry and reviewed DEX route are restored through the configured timelock
+- \`LQCRiskRegistry\`: enforces token allowlisting plus per-DEX, per-transaction, and UTC-day input caps; the risk multisig can only reduce limits
+- \`LQCNativeRouter\`: safely wraps and unwraps BNB around protected Router 2.0 token execution without retaining user balances
+- Proof of Best Execution receipts record and hash why a gas-adjusted single or split route was selected
+- Proof-to-Settlement receipts bind that route decision to successful transaction, block, recipient, and actual-output evidence
+- Canonical settlement verification rechecks RPC receipts, block finality, reorg safety, and ERC-20 output transfer totals
+- Signed candle clients retain bounded per-market finality watermarks for the browser tab and reject
+  cursor, finalized-block, or issuance-time rollback plus conflicting same-revision responses
+- Live charts preserve the last verified view during indexer failures, expose loading, delayed, and
+  offline states, retry with bounded exponential backoff, and recover immediately when connectivity returns
+- Chart health reports verified round-trip latency: responses up to 1.5 seconds are healthy, slower
+  responses are delayed, and offline state or three consecutive failures are interrupted
+- The client also checks the signed issuance time, treats responses older than 15 seconds as delayed,
+  and shows the last healthy refresh time separately for each exact market and timeframe
+- The browser compares every signed finalized block with a bounded live BSC head lookup and reports
+  synchronized, catching-up, stale, or unverifiable status without making chart availability depend on that RPC
+- Browser block-head checks support one to five deployment-pinned HTTPS RPCs, require a configured-source
+  majority within three blocks, isolate divergent sources, and use the conservative head of the winning cluster.
+  The browser then requires the same configured-source majority to return an identical 32-byte hash for that
+  exact block before reporting synchronization; conflicting forks or forged RPC responses fail closed. A source
+  that fails transport, height-cluster, or canonical-hash checks three consecutive times is isolated for 60 seconds,
+  then admitted only through a fresh health check without ever reducing the configured majority threshold. Bounded
+  health state survives browser restarts only for the exact deployment fingerprint; records older than five minutes,
+  expired quarantines, provider-count changes, and forged long isolation periods are discarded. Read-only Router
+  quotes use only canonical height-and-hash participants, prefer the lowest measured latency, and fail over through
+  the remaining canonical providers; no quote is shown before an RPC quorum is established. Every Router quote is
+  evaluated at the same consensus-pinned block and must match exactly across a configured-source majority (DEX id,
+  adapter, output amount, and priority), so a split or manipulated quote is rejected before trade preparation. The
+  accepted quote is bound to that block number and hash for at most 10 seconds; immediately before wallet signing,
+  the browser rechecks both the canonical hash and exact Router result with the full configured quorum policy. The
+  same binding covers chain id, Quote Router address, ordered token pair, exact input amount, every encoded route,
+  and signing slippage, preventing a valid quote from being replayed for modified trade parameters. The final plan
+  additionally binds sender, recipient, exact execution Router, minimum output, deadline, and execution kind; those
+  values are compared again after quote revalidation and immediately before opening the wallet signature request.
+  The client then populates the exact transaction once, binds its chain id, destination, calldata, and native value,
+  and sends that same immutable request to the signer; target substitution, calldata mutation, and value injection fail closed
+- Native BNB settlement verification authenticates the reviewed Native Router event and reconciles its exact execution amounts
+- Deterministic execution-proof fuzzing exercises varied route economics and tamper attempts reproducibly
+- Dependency-free V8 coverage gate requires 100% Router SDK function coverage and reports executed ranges honestly
+- Audit-surface drift gate classifies every state-changing entry point in the three critical Solidity contracts
+- Adversarial integration tests prove malicious adapters and unauthorized callers cannot bypass critical Router, Risk, or Vault boundaries
+- Malicious Strategy callback tests prove Vault allocation and recall remain atomic under reentrancy attempts
+- Dishonest Strategy tests reject false deployment, withdrawal, token-balance, managed-asset, and debt reports
+- Rebasing-token tests prove positive balance changes cannot inflate shares and negative idle-backing
+  deficits halt deposits and withdrawals before first-mover extraction
+- Strict ERC-20 return-data validation rejects false, short, and oversized responses atomically while
+  retaining compatibility with empty-return and zero-first-approval tokens
+- Hostile token tests fail closed on invalid balance responses and roll back transfer-callback
+  reentrancy without changing Vault assets, shares, supply, or backing
+- Vault Strategy allocation starts paused, and every Strategy change requires a paused, debt-free
+  staging window followed by an explicit governance resume
 
-      <nav class="position-tabs" aria-label="계정 정보"><button class="active">My positions</button><button>Holders <span>(249)</span></button><button>Top traders</button><button>Activities</button></nav>
-      <div class="position-card">
-        <div class="position-label"><span class="mini-logo">L</span><span>LQC balance</span></div>
-        <strong id="portfolioValue">$0.00</strong>
-        <p>Unrealized PnL <span>$0.00 (0.00%)</span></p>
-        <div class="position-meta"><span>보유 수량 <b id="positionBalance">—</b></span><span>네트워크 <b>BSC Testnet</b></span></div>
-      </div>
-    </section>
+New DEXs can be added through reviewed adapters without replacing the quote, optimizer, auto, or execution routers. The BSC testnet deployment script deploys and registers the LQC Flow adapter automatically and optionally registers PancakeSwap V2 or V3 when their reviewed addresses are supplied. Exact-input token and native BNB execution, oracle-validated gas-cost conversion, gas-cost-adjusted route selection, automatic split optimization, slippage-derived protection, atomic optimized execution, timelocked registry ownership, disable-only emergency control, token allowlisting, and staged transaction limits are now available. Live production feed configuration, final risk-committee parameter approval, multisig assignment, and production integrations remain pending.
 
-    <section class="order-panel" id="orderPanel" aria-labelledby="orderTitle">
-      <div class="order-head"><div><span class="eyebrow">NON-CUSTODIAL SWAP</span><h1 id="orderTitle">LQC 매수</h1></div><button class="close-order" id="closeOrder" type="button" aria-label="주문창 닫기">×</button></div>
-      <div class="trade-mode-tabs" aria-label="거래 방향"><button class="active" id="buyTab" type="button">Buy</button><button id="sellTab" type="button">Sell</button></div>
-      <div class="order-kind"><strong>시장가</strong><span>Router가 가장 유리한 가격으로 자동 실행</span></div>
-      <div class="simple-benefits" aria-label="LQC 간편 거래 특징"><span>✓ 최적가 자동</span><span>✓ 비수탁 거래</span><span>✓ Gasless 조건 확인</span></div>
-      <div class="settings" id="settingsPanel" hidden><label for="slippageInput">슬리피지 허용 범위</label><div class="slippage-row"><button class="slippage-option" data-value="0.1">0.1%</button><button class="slippage-option active" data-value="0.5">0.5%</button><button class="slippage-option" data-value="1">1.0%</button><span class="custom-slippage"><input id="slippageInput" inputmode="decimal" value="0.5" aria-label="직접 입력 슬리피지"><b>%</b></span></div></div>
-      <div class="token-panel"><div class="panel-label"><span>보내는 토큰</span><button id="maxButton" type="button">MAX</button></div><div class="amount-row"><input id="amountIn" inputmode="decimal" autocomplete="off" placeholder="0.0" aria-label="보낼 수량"><button class="token-button" id="tokenInButton" type="button"><span class="token-symbol" id="tokenInIcon">BNB</span><b id="tokenInLabel">BNB</b><span>⌄</span></button></div><div class="balance">잔액 <span id="balanceIn">—</span></div><div class="amount-presets" aria-label="보유 잔액 비율 선택"><button type="button" data-percent="25">25%</button><button type="button" data-percent="50">50%</button><button type="button" data-percent="75">75%</button><button type="button" data-percent="100">MAX</button></div></div>
-      <div class="flip-wrap"><button class="flip-button" id="flipButton" type="button" aria-label="토큰 순서 변경">⇅</button></div>
-      <div class="token-panel receive-panel"><div class="panel-label"><span>받는 토큰</span><span>예상 수량</span></div><div class="amount-row"><output id="amountOut">0.0</output><button class="token-button" id="tokenOutButton" type="button"><span class="token-symbol mint" id="tokenOutIcon">LQC</span><b id="tokenOutLabel">LQC</b><span>⌄</span></button></div><div class="balance">잔액 <span id="balanceOut">—</span></div></div>
-      <details class="trade-details" id="tradeDetails"><summary><span>거래 상세</span><b id="routeSummary">최적 경로 자동 선택</b></summary>
-      <div class="quote-box"><div><span>최소 수령량</span><b id="minimumReceived">—</b></div><div><span>DEX 수수료</span><b>견적 포함</b></div><div><span>예상 가스비</span><b id="estimatedGas">—</b></div><div><span>가격 영향</span><b id="priceImpact">—</b></div><div><span>경로</span><b id="routeLabel">BNB → LQC</b></div></div>
-      <div class="route-card" aria-label="LQC 최적 거래 경로">
-        <div class="route-card-head"><span>OPTIMAL PATH</span><b>TESTNET</b></div>
-        <div class="route-source"><span>선택된 DEX</span><strong id="selectedDex">LQC Flow · PancakeSwap 비교 대기</strong></div>
-        <div class="route-source"><span>최적 경로</span><strong id="selectedPath">BNB → LQC</strong></div>
-        <div class="route-source"><span>분할 비율</span><strong id="splitRatio">단일 경로 100%</strong></div><div class="route-source"><span>대체 경로</span><strong id="alternativeRoute">견적 후 표시</strong></div><div class="route-source"><span>실행 준비</span><strong id="preflightState">확인 대기</strong></div>
-        <div class="route-source muted-route"><span>실행 전략</span><strong id="routeStrategy">단일 경로 · 견적 우선</strong></div>
-      </div>
-      </details>
-      <div class="status" id="statusBox" role="status"><i></i><span id="statusText">테스트넷 배포 주소를 연결하면 거래가 활성화됩니다.</span></div>
-      <button class="execute-button buy" id="executeButton" type="button" disabled>LQC 매수</button>
-      <p class="risk-note">테스트넷 MVP · 실제 자금을 보내지 마세요. 독립 보안감사 전에는 메인넷에서 사용할 수 없습니다.</p>
-      <span id="contractState" hidden>배포 대기</span>
-    </section>
-  </main>
+Router 2.0 is intentionally protocol-neutral: every EVM DEX can be integrated through the same reviewed adapter interfaces and enabled or paused independently in the registry. A DEX is never treated as compatible until its protocol-specific quote and execution adapter, route validation, tests, and security review are complete. Non-EVM liquidity will be connected later through the cross-chain routing layer rather than unsafe direct assumptions.
 
-  <div class="bottom-actions" aria-label="LQC 매수 및 매도"><button class="action-buy active" id="buyAction" type="button">Buy</button><button class="action-sell" id="sellAction" type="button">Sell</button><button class="quick" id="quickTrade" type="button" aria-label="빠른 거래">↯</button></div>
-  <nav class="mobile-nav" aria-label="주요 메뉴"><a href="../../index.html"><span>⌂</span>Home</a><button id="marketNav" type="button"><span>⌁</span>Market</button><button class="active" id="tradeNav" type="button"><span>⇄</span>Trade</button><button id="walletNav" type="button"><span>▣</span>Wallet</button></nav>
+## Commands
 
-  <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><div><h2>토큰 선택</h2><span class="token-count" id="tokenCount">0개 등록</span></div><button value="cancel" aria-label="닫기">×</button></div><label class="token-search"><span aria-hidden="true">⌕</span><input id="tokenSearch" type="search" autocomplete="off" spellcheck="false" placeholder="이름, 심볼 또는 컨트랙트 주소" aria-label="거래 토큰 검색"></label><p class="token-policy">검증된 배포 목록과 Router 위험 정책에 등록된 토큰만 표시됩니다.</p><div class="token-list" id="tokenList" role="listbox"></div><p class="token-empty" id="tokenEmpty" hidden>일치하는 등록 토큰이 없습니다.</p></form></dialog>
-  <dialog class="market-dialog" id="marketDialog"><form method="dialog"><div class="dialog-head"><div><h2>Markets</h2><span class="token-count" id="marketCount">0개 마켓</span></div><button value="cancel" aria-label="마켓 닫기">×</button></div><label class="token-search"><span aria-hidden="true">⌕</span><input id="marketSearch" type="search" autocomplete="off" spellcheck="false" placeholder="토큰 검색" aria-label="마켓 토큰 검색"></label><div class="market-filter" aria-label="마켓 필터"><button class="active" type="button">All</button><span>배포·위험 검토 완료 토큰만 표시</span></div><div class="market-table-head"><span># · Token</span><span>Price</span><span>Status</span></div><div class="market-list" id="marketList" role="listbox"></div><p class="token-empty" id="marketEmpty" hidden>일치하는 활성 마켓이 없습니다.</p></form></dialog>
-  <dialog id="walletDialog"><form method="dialog"><div class="dialog-head"><h2>지갑 선택</h2><button value="cancel" aria-label="닫기">×</button></div><p class="wallet-help">기기에 설치되었거나 앱 내부에서 제공되는 비수탁형 지갑을 선택하세요.</p><div class="wallet-list" id="walletList" role="listbox"></div></form></dialog>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js?v=20260910e"></script><script src="router-sdk.js?v=20260906n"></script><script src="candle-data.js?v=20260910b"></script><script src="chart-indicators.js?v=20260910a"></script><script src="chart-health.js?v=20260910a"></script><script src="app.js?v=20260910q"></script>
-</body>
-</html>
+```bash
+npm install
+npm test
+```
+
+To deploy after compilation:
+
+```bash
+export BSC_TESTNET_RPC_URL="..."
+export DEPLOYER_PRIVATE_KEY="..."
+export WBNB_ADDRESS="0x..." # official WBNB for the selected BSC network
+export EXPECTED_CHAIN_ID="97" # deployment safety check; defaults to BSC testnet
+export FACTORY_OWNER="0x..." # required reviewed testnet governance/multisig address
+export RISK_ADMIN="0x..." # separate reviewed testnet risk multisig address
+export GOVERNANCE_MIN_OWNERS="7"
+export GOVERNANCE_MIN_THRESHOLD="4"
+export RISK_MIN_OWNERS="5"
+export RISK_MIN_THRESHOLD="3"
+node scripts/deploy.mjs
+```
+
+For a complete BSC testnet setup that deploys owner-controlled LQC/Mock USDT tokens, Router 2.0,
+creates LQC/USDT and LQC/WBNB pools, records all addresses, and configures the web interface:
+
+```bash
+export BSC_TESTNET_RPC_URL="..."
+export DEPLOYER_PRIVATE_KEY="..." # never commit this value
+export WBNB_ADDRESS="0x..."
+export PANCAKE_V3_QUOTER_ADDRESS="0x..." # optional; set together with the V3 router
+export PANCAKE_V3_ROUTER_ADDRESS="0x..." # optional; token-to-token execution
+export PANCAKE_V3_ALLOWED_FEE_TIERS='[500,2500]' # reviewed canonical tiers only
+export PANCAKE_V3_ALLOWED_POOLS='[{"tokenA":"0x...","tokenB":"0x...","fee":2500}]'
+export PANCAKE_V3_MAX_HOPS="2" # deployment-specific ceiling; allowed range 1-3
+npm run deploy:testnet
+```
+
+`deploy:testnet` runs a non-transactional preflight first. It refuses non-chain-97 RPCs, missing or
+unsafe governance settings, timelocks outside 1 hour to 7 days, invalid daily/transaction limits,
+liquidity above minted test supply, insufficient test BNB, unpinned PancakeSwap endpoints, and
+configured addresses without BSC-testnet bytecode. The deployer must retain at least 0.5 tBNB by
+default above initial liquidity for deployment gas, configurable through `MIN_DEPLOYER_TBNB_RESERVE`.
+`SOURCE_COMMIT` must be the full reviewed commit SHA, must equal the checked-out Git commit, and the
+worktree must be clean. Both preflight and the transaction-producing script enforce this binding.
+The governance owner must expose the Safe multisig interface and satisfy a 4-of-7 minimum by default;
+the separate risk administrator must satisfy a 3-of-5 minimum. The preflight reads both owner lists
+and thresholds on-chain, rejects duplicate or zero signers, and records the verified policy in its
+result. Temporary testnet exceptions
+require explicit runtime-only `ALLOW_DEPLOYER_AS_OWNER=true` and/or `ALLOW_EOA_OWNER=true` opt-ins.
+
+Every confirmed contract deployment is immediately recorded in
+`deployments/bsc-testnet-97.checkpoint.local.json` (or `DEPLOYMENT_CHECKPOINT_FILE`). A retry with the
+same chain, deployer, constructor arguments, and compiled bytecode verifies the recorded on-chain
+code and reuses that contract instead of paying to deploy it again. Any mismatch stops the run.
+Checkpoint files are gitignored and never contain private keys.
+Registry configuration, DEX registration, token/DEX caps, and ownership-transfer operations are also
+checkpointed. Transaction hashes are saved before confirmation; retries inspect pending receipts and
+skip only operations proven successful on-chain. Missing or reverted receipts stop the deployment.
+Previously confirmed operations are also rechecked against the canonical receipt on every retry;
+missing receipts or changed block evidence stop recovery instead of trusting stale local state.
+Each operation is bound to a hash of its addresses, limits, amounts, and other settings, so a retry
+cannot silently reuse a successful transaction from a different deployment configuration. Test-token
+minting, exact approvals, and both initial-liquidity transactions are covered by the same recovery flow.
+
+The default mock supplies and pool amounts are configurable environment values for testing only;
+they do not define LQC mainnet supply, allocation, valuation, or launch liquidity.
+The deployment transfers registry ownership to the timelock. `FACTORY_OWNER` becomes the governance
+proposer and should be a reviewed multisig address. Emergency guardians may disable a route immediately,
+but only a timelocked governance operation can re-enable or structurally change it.
+`RISK_ADMIN` is assigned directly to the Risk Registry and may only reduce existing limits or pause;
+the preflight rejects a shared governance/risk address unless a testnet-only override is explicit.
+
+The automated test suite also reproduces the complete bootstrap locally and verifies both pool
+creation, exact initial-liquidity approvals with no residual Router allowance, Router 2.0 quoting,
+a capped smoke swap, and rejection when minimum-output protection fails.
+
+After deployment, run the read-only real-address validator before any smoke swap. It refuses every
+chain except BSC testnet `97`, checks deployed bytecode, verifies PancakeSwap V2/V3 Router-to-Factory
+and WBNB links, and confirms LQC timelock ownership, emergency pause authority, executor, DEX count,
+registry order, adapter addresses, active route status, Router/Emergency module linkage, and minimum
+timelock delay. For PancakeSwap V3 it also matches the recorded maximum hop count, canonical fee-tier
+subset, and every reviewed pool against the deployed adapter allowlist. A deployment record pins each
+registered adapter address and V3 policy for this comparison. The gas-cost oracle is also transferred
+to the timelock during bootstrap; validation rejects deployer-owned or wrong-WBNB oracle instances.
+
+```bash
+export BSC_TESTNET_RPC_URL="https://..."
+export BSC_TESTNET_RPC_URLS="https://independent-rpc-2.example,https://independent-rpc-3.example"
+export CANDLE_SIGNING_PRIVATE_KEY="<dedicated indexer signing key; never commit>"
+export CANDLE_REQUESTS_PER_MINUTE="120"
+export CANDLE_MAX_CONCURRENT="32"
+export METRICS_BEARER_TOKEN="<at least 32 random characters>"
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
+npm run validate:testnet
+```
+
+Generate a read-only operational health report after deployment:
+
+```bash
+export BSC_TESTNET_RPC_URL="https://..."
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
+npm run monitor:testnet
+```
+
+Convert a completed emergency exercise record into a deterministic audit-evidence report:
+
+```bash
+npm run report:emergency-drill -- ./deployments/emergency-drill-input.local.json
+```
+
+The generator requires the complete eight-step pause-and-recovery sequence, chain 97, the reviewed
+source revision, chronological timestamps, transaction hashes or read-only revert evidence, and the
+full configured timelock delay. It emits a SHA-256 digest and refuses incomplete or failed drills.
+
+Combine the deployment, latest monitoring result, and drill report into one review manifest:
+
+```bash
+npm run package:review-evidence -- <deployment.json> <monitoring.json> <drill.json> [external-evidence.json]
+```
+
+The package refuses mixed networks, commits, or deployment fingerprints and requires HEALTHY
+monitoring. Missing explorer verification, independent audit, or secure legal/KYB references remain
+explicit pending gates; repository evidence alone is never reported as full listing approval.
+
+Render the verified package as a reviewer-readable Markdown summary:
+
+```bash
+npm run render:review-summary -- <review-evidence-package.json>
+```
+
+The renderer verifies the package digest before showing its baseline, evidence status, drill
+reference, and outstanding external gates. It does not convert an incomplete package into an
+approval claim.
+
+Generate the JSON package, Markdown summary, and cross-file digest manifest in one operation:
+
+```bash
+npm run build:review-bundle -- <deployment.json> <monitoring.json> <drill.json> <empty-output-dir> [external-evidence.json]
+```
+
+The command writes all three outputs only after validation succeeds. It refuses to overwrite an
+existing evidence bundle, preserving the original review record.
+
+The JSON report verifies block freshness and the strict deployment configuration, fails closed with
+independent-provider confirmation steps when RPC data is stale, reports emergency
+pause and pending-ownership states, and checks that execution, native, and automatic routers retain
+no BNB, LQC, mock-USDT, or WBNB custody. It also compares both Safe owner sets and thresholds with
+the deployment record: a weakened policy is critical, while any other signer or threshold change
+requires governance review. The report emits deterministic incident-response sequences for Safe
+policy findings, pending ownership transfers, active emergency swap pauses, and Vault operation
+pauses, but never signs or sends a pause, ownership,
+signer-change, or recovery transaction. Emergency
+pause requires the guardian multisig; recovery remains governance-approved and timelocked. A critical result exits with status `2` for CI/monitoring
+integration. This operational evidence does not replace an independent audit.
+
+Generate a reproducible BscScan source-verification package from the validated deployment record:
+
+```bash
+npm run prepare:verification -- ./deployments/bsc-testnet-97.json
+```
+
+The package pins the recorded source revision, compiler settings, standard JSON input, constructor
+data, and deployed addresses. Confirm that it matches the reviewed commit before explorer publication.
+
+To probe reviewed LQC Flow and PancakeSwap V2/V3 routes without sending a transaction, copy the
+route-probe example and replace its DEX ids, token addresses, raw input amount, path, and V3 fees.
+The script ABI-encodes V2/LQC Flow paths and packed-encodes V3 paths automatically. Before quoting,
+it confirms path endpoints and restricts V3 routes to the deployment record's fee tiers, pool
+allowlist, and maximum hop count. It then repeats the complete chain/address/governance/V3-policy
+validation and refuses non-BSC-testnet networks, disabled DEXes, adapter mismatches, malformed probes,
+duplicate probes, and zero quotes.
+
+```bash
+export BSC_TESTNET_RPC_URL="https://..."
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
+cp ./docs/bsc-testnet-route-probes.example.json ./deployments/bsc-testnet-route-probes.local.json
+export ROUTE_PROBES_FILE="./deployments/bsc-testnet-route-probes.local.json"
+npm run smoke:testnet
+```
+
+Transaction mode is opt-in. It requires a runtime-only key, caps every raw input amount, checks the
+swap with gas estimation, proves expired and impossible-minimum-output calls reject, uses an exact
+token approval, clears pre-existing and failure-path wallet allowances, and verifies that the Router
+and adapter retain neither input/output token balances nor execution allowance.
+
+```bash
+export EXECUTE_SMOKE_SWAP="true"
+export DEPLOYER_PRIVATE_KEY="..." # never store this in a file or commit it
+export SMOKE_MAX_INPUT_RAW="1000000000000000000"
+export SMOKE_MIN_OUTPUT_BPS="9900"
+npm run smoke:testnet
+```
+
+After deployment, generate the UI configuration directly from the verified deployment record:
+
+```bash
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
+npm run configure:app
+```
+
+The generated UI can scale beyond the bootstrap BNB/WBNB/LQC/Mock-USDT set through the deployment
+record's optional `reviewedTokens` array. Every added token must have a valid address, bounded symbol,
+name and decimals, an explicit `riskApproved: true` marker, and one or more `routeDexIds` that match
+registered DEX adapters. The browser sends valid route data only to the intersection of DEX routes
+approved for both selected tokens and the exact unordered token pair recorded in `reviewedPairs`;
+all other adapters receive an invalid isolated probe and cannot be
+selected for execution. Configuration generation rejects duplicate symbols
+or addresses, malformed metadata, unapproved entries, and lists above 500 tokens. This keeps token
+search convenient without turning it into an unsafe arbitrary-contract importer.
+The Markets dialog and both token selectors apply the same exact-pair registry before selection, so
+users see only assets that have a reviewed quote market with the current counter-token. Unsupported
+pair errors are prevented before an RPC quote or wallet approval is requested.
+
+Before signing, canonical RPC participants simulate the exact populated transaction. A majority of
+all configured sources must return the same call result, agreeing gas estimates must stay within 20%
+of each other and below the reviewed route ceiling, and the bounded estimate is attached as an
+immutable gas limit. Missing quorum, divergent execution, or abnormal gas fails closed before the
+wallet receives the request.
+The connected wallet's pending nonce and one unambiguous fee model (legacy or EIP-1559) are then
+bound into the same immutable request. The pending nonce is checked once more immediately before
+submission, so a parallel transaction or any mutation of the target, calldata, value, gas, fee, or
+nonce stops the swap before signing.
+Fees are sourced from the canonical RPC participants rather than trusted to one wallet endpoint. A
+configured-source majority must agree on the legacy or EIP-1559 model, each fee component must remain
+within a 20% spread, and the highest agreeing value is bound conservatively. The interface replaces
+its preliminary estimate with the resulting maximum BNB network cost before opening the wallet.
+After submission, the UI does not treat the wallet provider's receipt as final evidence. Canonical
+RPC participants independently wait for three confirmations and must form a configured-source
+majority on the transaction hash, successful status, block number, and block hash. A reorg, failed
+receipt, insufficient confirmation, timeout, or split view prevents the UI from reporting success.
+The same agreeing receipts must also prove the received amount. ERC-20 outputs are summed only from
+valid `Transfer` logs for the bound output token and recipient, while native BNB outputs require one
+exact `NativeSwapExecuted` event from the reviewed Native Router with the bound input token and
+amount. A configured-source majority must decode the same output at or above the signed minimum.
+Each verified swap is reduced to tamper-evident execution evidence that binds the deployment,
+canonical quote, approved route request, final execution policy, immutable wallet transaction, and
+confirmed settlement. The browser retains at most ten valid records for the exact deployment and
+shows the latest transaction link, actual received amount, and evidence hash in Trade Details.
+
+The generated configuration derives every Router, token, DEX id, and adapter from that single record
+and includes a deterministic deployment fingerprint. Any optional legacy address override must match
+the record exactly or generation fails, preventing mixed-deployment addresses from reaching the UI.
+
+The interface remains visibly disabled until all required Router 2.0 addresses are configured.
+
+Historical candles use a separate, read-only indexer boundary because a spot Router quote cannot
+prove past OHLCV values. Set `candleDataUrl` in the generated app configuration to an endpoint that
+accepts `chainId`, `base`, `quote`, `timeframe`, and `limit` query parameters and returns
+`{ "candles": [{ "time", "open", "high", "low", "close", "volume" }] }`. The browser rejects
+malformed OHLCV rows, sorts and deduplicates timestamps, caps history at 300 candles, discards stale
+responses after market or interval changes, and labels the chart as verified history only after a
+valid response. If the endpoint is absent or fails, the UI remains honest and displays the clearly
+labelled example chart; it never presents a spot quote as historical market data.
+
+The testnet LQC Flow event indexer can now provide that endpoint. It reads only pool addresses pinned
+in the completed deployment record, converts exact on-chain `Swap` events into both token-pair
+orientations, aggregates deterministic OHLCV buckets, caps retained trades and API results, and
+rejects every non-chain-97, unknown-pool, invalid-address, or unsupported-interval request. It indexes
+only blocks behind the configurable finality boundary (12 blocks by default). The UI independently
+requests 1-hour candles for complete 24-hour change, high, low, and base-volume statistics and leaves
+those fields blank rather than extrapolating when a full window is unavailable.
+
+```bash
+export BSC_TESTNET_RPC_URL="https://..."
+export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
+export START_BLOCK="<reviewed deployment block>"
+export CORS_ORIGIN="https://lqc-labs.github.io"
+npm run serve:candles
+```
+
+When redundant URLs are configured, every sync requires a majority of independent RPC sources to
+agree on the same finalized block hash. An unavailable primary automatically fails over to the first
+healthy source in the canonical majority; missing quorum or conflicting hashes stop candle updates.
+Every candle response is bound to chain, market, timeframe, finalized cursor, and a 30-second expiry
+with an EIP-191 signature. Record the dedicated signer's public address as
+`ui.candleSignerAddress`; the browser rejects expired, substituted, or modified responses.
+The service applies per-client request limits, a bounded concurrent-work ceiling, short signed-response
+caching, and ETags. Forwarded client addresses are ignored unless the deployment explicitly sets
+`TRUST_PROXY=1` behind a trusted reverse proxy.
+An authenticated `/metrics` endpoint exposes low-cardinality Prometheus counters and gauges for
+requests, rate limits, overload rejection, cache efficiency, signed responses, sync failures, reorg
+recovery, index lag, and RPC quorum health. It never labels metrics with wallet addresses or client
+IP addresses. The endpoint remains disabled when `METRICS_BEARER_TOKEN` is unset.
+Deploy this process behind HTTPS and set the deployment record's `ui.candleDataUrl` to its
+`/candles` URL before running `npm run configure:app`. The indexer atomically persists its finalized
+cursor, block-hash anchors, and Swap-log positions, then detects chain reorganizations and rolls back
+orphaned trades before rebuilding candles. `GET /health` reports operational state and `GET /ready`
+returns HTTP 503 until finalized indexing is fresh and within the configured lag policy.
+
+Set `CANDLE_INDEXER_HEALTH_URL` to the deployed `/ready` endpoint when running
+`npm run monitor:testnet`. The monitoring report fails historical candle publication closed when the
+indexer is unavailable, and emits a time-bounded warning after a recovered reorg. It never pauses or
+resumes swaps automatically because Router execution is independently validated. Redundant RPC
+operation and an external alert delivery service remain required before any mainnet pilot.
+
+Never commit private keys or `.env` files.
+
+## Gasless policy foundation
+
+The first Gasless safety boundary is available in `contracts/gasless/LQCGaslessPolicy.sol`. It
+records eligibility and consumes sponsorship quotas for a future BSC testnet paymaster or signed
+relay. It enforces an expected chain, approved targets and tokens, a minimum oracle-derived notional,
+insufficient user native gas, a per-transaction gas cap, a maximum of five sponsored transactions
+per wallet per UTC day, a protocol-wide daily budget, and guardian pause with governance-only
+recovery.
+
+This policy does not relay a transaction, verify a user operation, reimburse a bundler, custody
+assets, or provide sponsorship funds. Those components, stablecoin cost recovery, oracle integration,
+abuse controls, monitoring, deployment, and an independent audit remain pending. See
+[`GASLESS_POLICY.md`](docs/GASLESS_POLICY.md).
+
+## Current limitations
+
+This is an unaudited testnet MVP, not production-ready software. Fee-on-transfer tokens, permit signatures, protocol-fee accounting, LQC fee conversion/burning, production oracle feeds, and audited production integrations are intentionally deferred.
+
+Before any mainnet use, complete independent audits, invariant/fuzz testing, economic simulations, legal review, multisig/timelock setup, token and pool allowlisting decisions, monitoring, and a capped-liquidity testnet/pilot phase.

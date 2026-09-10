@@ -206,6 +206,11 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.verifySettlementReceipt(receipt, otherProof, ethers), false);
   });
 
+  it("builds tamper-evident evidence from the bound quote through settlement", function () {
+    const router="0x0000000000000000000000000000000000000010",dexId=ethers.id("DEX_A"),adapter="0x0000000000000000000000000000000000000020",blockHash=ethers.id("quote-block"),deployment=ethers.id("deployment"),bound={dexId,adapter,amountOut:1000n,priority:1n,blockNumber:12345,blockHash,expiresAt:1789000000,request:{chainId:97,router,tokenIn:tokenA,tokenOut:tokenB,amountIn:1000n,routes:["0x1234"],slippageBps:100},execution:{sender:tokenA,recipient:tokenA,router,minimumAmountOut:990n,deadline:1789000000,kind:"single"},transaction:{chainId:97,to:router,data:"0x12345678",value:0n,gasLimit:120000n,nonce:7,type:0,gasPrice:3000000000n,maxFeePerGas:null,maxPriorityFeePerGas:null}},settlement={transactionHash:ethers.id("tx"),blockHash:ethers.id("settled-block"),blockNumber:12350,confirmations:3,amountOut:995n},evidence=sdk.buildExecutionEvidence(bound,settlement,deployment,1788999999,ethers);
+    assert.equal(evidence.settlement.actualAmountOut,"995");assert.equal(evidence.transaction.nonce,7);assert.equal(sdk.verifyExecutionEvidence(evidence,deployment,ethers),true);const changed=structuredClone(evidence);changed.settlement.actualAmountOut="999";assert.equal(sdk.verifyExecutionEvidence(changed,deployment,ethers),false);assert.equal(sdk.verifyExecutionEvidence(evidence,ethers.id("other-deployment"),ethers),false);
+  });
+
   it("verifies canonical confirmations and decoded output transfer logs", async function () {
     const proof = singleRouteProof(), txHash = ethers.id("tx"), blockHash = ethers.id("block");
     const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: txHash,
