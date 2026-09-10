@@ -103,17 +103,20 @@ export function buildAppConfig(deployment) {
   const candleDataUrl = String(deployment.ui?.candleDataUrl || "").trim();
   const candleSignerAddress=String(deployment.ui?.candleSignerAddress||"").trim();
   const candleFinalityBlocks=Number(deployment.ui?.candleFinalityBlocks??12);
+  const rpcUrls=deployment.ui?.rpcUrls??deployment.network?.rpcUrls??["https://data-seed-prebsc-1-s1.bnbchain.org:8545"];
+  if(!Array.isArray(rpcUrls)||rpcUrls.length<1||rpcUrls.length>5||new Set(rpcUrls).size!==rpcUrls.length)throw new Error("Deployment rpcUrls must contain 1 to 5 unique endpoints.");
+  for(const value of rpcUrls){let parsed;try{parsed=new URL(value)}catch{throw new Error("Deployment rpcUrls contains an invalid endpoint.")}if(parsed.protocol!=="https:"&&parsed.hostname!=="localhost")throw new Error("Deployment rpcUrls must use HTTPS.")}
   if(!Number.isSafeInteger(candleFinalityBlocks)||candleFinalityBlocks<2||candleFinalityBlocks>200)throw new Error("Deployment candleFinalityBlocks must be between 2 and 200.");
   if (candleDataUrl) {
     let parsed; try { parsed = new URL(candleDataUrl); } catch { throw new Error("Deployment candleDataUrl is invalid."); }
     if (parsed.protocol !== "https:" && parsed.hostname !== "localhost") throw new Error("Deployment candleDataUrl must use HTTPS.");
     if(!ethers.isAddress(candleSignerAddress))throw new Error("Deployment candleSignerAddress is required for signed candle data.");
   }else if(candleSignerAddress)throw new Error("Deployment candleSignerAddress requires candleDataUrl.");
-  const fingerprintPayload = { chainId: 97, contracts: mapped, candleDataUrl, candleSignerAddress:candleSignerAddress?ethers.getAddress(candleSignerAddress):"", candleFinalityBlocks, dexes: dexes.map(({ id, adapter }) => ({ id, adapter })),
+  const fingerprintPayload = { chainId: 97, contracts: mapped, rpcUrls, candleDataUrl, candleSignerAddress:candleSignerAddress?ethers.getAddress(candleSignerAddress):"", candleFinalityBlocks, dexes: dexes.map(({ id, adapter }) => ({ id, adapter })),
     tokens: tokens.filter(token => token.address !== "native").map(({ symbol, name, address, decimals, reviewed = false, routeDexIds = [] }) =>
       ({ symbol, name, address, decimals, reviewed, routeDexIds })), reviewedPairs };
   return { chainId: 97, chainIdHex: "0x61", chainName: "BSC Testnet",
-    rpcUrls: ["https://data-seed-prebsc-1-s1.bnbchain.org:8545"], blockExplorerUrls: ["https://testnet.bscscan.com"],
+    rpcUrls, blockExplorerUrls: ["https://testnet.bscscan.com"],
     nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 }, routerAddress: mapped.router,
     quoteRouterAddress: mapped.quoteRouter, executionRouterAddress: mapped.executionRouter, nativeRouterAddress: mapped.nativeRouter,
     splitOptimizerAddress: mapped.splitOptimizer, autoRouterAddress: mapped.autoRouter, gasCostOracleAddress: mapped.gasCostOracle,

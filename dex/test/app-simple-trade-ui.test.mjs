@@ -158,8 +158,11 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /ageSeconds=Math\.max/);
     assert.match(script, /lastHealthyByChart\.set\(chartKey,updatedAt\)/);
     assert.match(script, /function chainHeadWithin\(timeoutMs=2500\)/);
-    assert.match(script, /chartHealth\.chainSync\(primary\.finalizedBlock,chainHead,cfg\.candleFinalityBlocks\)/);
+    assert.match(script, /cfg\.rpcUrls\.map\(url=>new ethers\.JsonRpcProvider/);
+    assert.match(script, /chartHealth\.consensusHead\(heads,readProviders\.length\)/);
+    assert.match(script, /chartHealth\.chainSync\(primary\.finalizedBlock,consensus\.head,cfg\.candleFinalityBlocks\)/);
     assert.match(script, /sync\.lagBlocks/);
+    assert.match(script, /RPC \$\{consensus\.healthySources\}\/\$\{consensus\.configuredSources\}/);
     assert.match(script, /정상 갱신 \$\{lastHealthyByChart\.get\(chartKey\)\|\|'기록 없음'\}/);
     assert.match(html, /chart-health\.js/);
     assert.match(styles, /data-state="interrupted"/);

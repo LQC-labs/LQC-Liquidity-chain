@@ -15,5 +15,12 @@
     if(lagBlocks<=confirmations+20)return Object.freeze({level:'catching-up',label:'블록 동기화 지연',lagBlocks});
     return Object.freeze({level:'stale',label:'블록 동기화 중단',lagBlocks});
   }
-  root.LQCChartHealth=Object.freeze({classify,chainSync});
+  function consensusHead(heads,configuredSources=heads?.length,maxSpread=3){
+    if(!Array.isArray(heads)||!Number.isSafeInteger(configuredSources)||configuredSources<1||configuredSources<heads.length||!Number.isSafeInteger(maxSpread)||maxSpread<0||heads.some(head=>!Number.isSafeInteger(head)||head<0))throw new Error('Chart RPC consensus input is invalid');
+    const ordered=[...heads].sort((a,b)=>a-b),quorum=Math.floor(configuredSources/2)+1;let best=[];
+    for(let start=0;start<ordered.length;start++){const cluster=ordered.slice(start).filter(head=>head-ordered[start]<=maxSpread);if(cluster.length>best.length)best=cluster}
+    if(best.length<quorum)return null;
+    return Object.freeze({head:best[0],healthySources:best.length,configuredSources,independent:configuredSources>1});
+  }
+  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead});
 })(typeof window==='undefined'?globalThis:window);

@@ -26,6 +26,10 @@ describe("LQC DEX app deployment configuration", function () {
     assert.throws(() => buildAppConfig({ ...deployment, ui: { candleSignerAddress:address(20) } }), /requires candleDataUrl/);
     assert.throws(() => buildAppConfig({ ...deployment, ui: { candleFinalityBlocks:1 } }), /between 2 and 200/);
   });
+  it("pins one to five unique HTTPS browser RPC endpoints into the deployment fingerprint",function(){
+    const rpcUrls=["https://rpc-a.example","https://rpc-b.example","https://rpc-c.example"],config=buildAppConfig({...deployment,ui:{rpcUrls}});assert.deepEqual(config.rpcUrls,rpcUrls);assert.notEqual(config.deploymentFingerprint,buildAppConfig(deployment).deploymentFingerprint);
+    assert.throws(()=>buildAppConfig({...deployment,ui:{rpcUrls:[rpcUrls[0],rpcUrls[0]]}}),/unique/);assert.throws(()=>buildAppConfig({...deployment,ui:{rpcUrls:["http://rpc.example"]}}),/HTTPS/);
+  });
   it("rejects wrong chains, missing contracts, and duplicate DEX ids", function () {
     assert.throws(() => buildAppConfig({ ...deployment, network: { chainId: 56 } }), /chain 97/);
     assert.throws(() => buildAppConfig({ ...deployment, contracts: { ...deployment.contracts, autoRouter: null } }), /autoRouter/);
