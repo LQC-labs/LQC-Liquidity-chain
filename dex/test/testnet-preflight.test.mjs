@@ -6,9 +6,11 @@ import { assertReviewedSourceCommit, assertSafeMultisig, runTestnetPreflight, va
 const key = `0x${"11".repeat(32)}`;
 const owner = "0x0000000000000000000000000000000000000001";
 const riskAdmin = "0x0000000000000000000000000000000000000003";
+const guardian = "0x0000000000000000000000000000000000000004";
+const treasury = "0x0000000000000000000000000000000000000005";
 const reviewedPool = JSON.stringify([{ tokenA: owner, tokenB: riskAdmin, fee: 2500 }]);
 const base = { BSC_TESTNET_RPC_URL: "https://example.invalid", DEPLOYER_PRIVATE_KEY: key,
-  FACTORY_OWNER: owner, RISK_ADMIN: riskAdmin,
+  FACTORY_OWNER: owner, RISK_ADMIN: riskAdmin, GUARDIAN_ADDRESS: guardian, TREASURY_ADDRESS: treasury,
   WBNB_ADDRESS: "0x0000000000000000000000000000000000000002", EXPECTED_CHAIN_ID: "97",
   SOURCE_COMMIT: "a".repeat(40) };
 const safeInterface = new ethers.Interface([
@@ -34,6 +36,8 @@ describe("BSC testnet deployment preflight", function () {
     const result = validateTestnetDeploymentConfig(base);
     assert.equal(result.owner, owner);
     assert.equal(result.riskAdmin, riskAdmin);
+    assert.equal(result.guardian, guardian);
+    assert.equal(result.treasury, treasury);
     assert.equal(result.delay, 3600n);
   });
 
@@ -50,7 +54,10 @@ describe("BSC testnet deployment preflight", function () {
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, FACTORY_OWNER: "" }), /FACTORY_OWNER/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, SOURCE_COMMIT: "" }), /SOURCE_COMMIT/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, RISK_ADMIN: "" }), /RISK_ADMIN/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, GUARDIAN_ADDRESS: "" }), /GUARDIAN_ADDRESS/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, TREASURY_ADDRESS: "" }), /TREASURY_ADDRESS/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, RISK_ADMIN: owner }), /role separation/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, GUARDIAN_ADDRESS: riskAdmin }), /must be separated/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, EXPECTED_CHAIN_ID: "56" }), /expected BSC testnet/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, TIMELOCK_DELAY: "3599" }), /TIMELOCK_DELAY/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, TEST_LQC_MAX_TX: "2", TEST_LQC_MAX_DAY: "1" }), /MAX_DAY/);
@@ -87,6 +94,8 @@ describe("BSC testnet deployment preflight", function () {
     const result = await runTestnetPreflight(base, provider);
     assert.equal(result.chainId, 97);
     assert.equal(result.riskAdmin, riskAdmin);
+    assert.equal(result.guardian, guardian);
+    assert.equal(result.treasury, treasury);
     await assert.rejects(() => runTestnetPreflight(base, { ...provider, getBalance: async () => 0n }), /balance/);
     await assert.rejects(() => runTestnetPreflight(base, { ...provider, getCode: async () => "0x" }), /bytecode/);
   });
@@ -112,6 +121,10 @@ describe("BSC testnet deployment preflight", function () {
     assert.equal(governance.threshold, 4n);
     assert.equal(risk.owners.length, 5);
     assert.equal(risk.threshold, 3n);
+    const guardianPolicy = await assertSafeMultisig(provider, guardian, "GUARDIAN_ADDRESS", 5n, 3n);
+    const treasuryPolicy = await assertSafeMultisig(provider, treasury, "TREASURY_ADDRESS", 5n, 3n);
+    assert.equal(guardianPolicy.threshold, 3n);
+    assert.equal(treasuryPolicy.threshold, 3n);
 
     const weak = { call: async ({ data }) => data.slice(0, 10) === safeInterface.getFunction("getOwners").selector
       ? safeInterface.encodeFunctionResult("getOwners", [riskOwners])
