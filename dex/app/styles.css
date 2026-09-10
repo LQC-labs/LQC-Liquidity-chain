@@ -30,6 +30,7 @@ body{font-family:Roboto,Arial,"Noto Sans KR",sans-serif;letter-spacing:-.012em}.
 .section-tabs{gap:36px}.section-tabs button{font-size:16px;font-weight:500;color:#666}.section-tabs button.active{font-weight:700;color:#111}.section-tabs button.active:after{height:2px;background:#111}
 .timeframes{padding-top:12px;padding-bottom:10px;gap:8px}.timeframes button{font-size:14px;font-weight:400;color:#7b7f83;min-width:52px}.timeframes button.active{font-weight:700;color:#111;background:#eef0f2}.timeframes .chart-tool{color:#222}
 .ma-legend{font-size:12px;font-weight:400}.chart-wrap{padding-bottom:30px}.chart{height:calc(100% - 30px)}
+.indicators button:disabled{opacity:.32;cursor:not-allowed}.indicator-hidden{display:none!important}
 .time-axis{position:absolute;left:0;right:0;bottom:0;height:30px;display:flex;align-items:center;justify-content:space-between;color:#858a8e;font-size:11px;border-top:1px solid #eceff1;padding:0 8px}.time-axis span{white-space:nowrap}
 .indicators button{font-size:14px}.position-tabs button{font-size:15px}.position-card>strong{font-weight:700}.position-label,.position-card p{font-size:15px}
 @media(max-width:560px){.section-tabs{gap:30px}.section-tabs button{font-size:15px}.timeframes{gap:2px}.timeframes button{min-width:54px;font-size:13px}.time-axis{font-size:9px;padding:0 2px}.time-axis span:nth-child(2),.time-axis span:nth-child(4){display:none}.ma-legend{font-size:10px}}

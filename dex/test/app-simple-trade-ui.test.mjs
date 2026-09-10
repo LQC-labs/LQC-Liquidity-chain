@@ -93,5 +93,11 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function chartPath\(candles,y,step,period=1\)/);
     assert.match(script, /function clearLiveChartLabels\(\)/);
     assert.match(script, /chartVolumeLabel/);
+    assert.match(html, /data-indicator="volume"[^>]*aria-pressed="true"/);
+    assert.match(html, /data-indicator="ma"[^>]*aria-pressed="true"/);
+    assert.match(html, /disabled title="준비 중">EMA/);
+    assert.match(script, /function toggleIndicator\(button\)/);
+    assert.match(script, /volumeIndicator/);
+    assert.match(script, /ma\$\{period\}Line/);
   });
 });
