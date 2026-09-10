@@ -29,12 +29,12 @@ describe("LQC DEX app deployment configuration", function () {
   });
   it("adds only validated risk-approved tokens to the searchable UI list", function () {
     const withTokens = { ...deployment, reviewedTokens: [
-      { symbol: "CAKE", name: "PancakeSwap Token", address: address(12), decimals: 18, riskApproved: true },
-      { symbol: "USDC", name: "USD Coin", address: address(13), decimals: 6, riskApproved: true }
+      { symbol: "CAKE", name: "PancakeSwap Token", address: address(12), decimals: 18, riskApproved: true, routeDexIds: [id] },
+      { symbol: "USDC", name: "USD Coin", address: address(13), decimals: 6, riskApproved: true, routeDexIds: [id] }
     ] };
     const config = buildAppConfig(withTokens);
-    assert.deepEqual(config.tokens.slice(-2).map(token => [token.symbol, token.decimals, token.reviewed]), [
-      ["CAKE", 18, true], ["USDC", 6, true]
+    assert.deepEqual(config.tokens.slice(-2).map(token => [token.symbol, token.decimals, token.reviewed, token.routeDexIds]), [
+      ["CAKE", 18, true, [id]], ["USDC", 6, true, [id]]
     ]);
     assert.notEqual(buildAppConfig({ ...withTokens, reviewedTokens: withTokens.reviewedTokens.slice(0, 1) }).deploymentFingerprint,
       config.deploymentFingerprint);
@@ -43,10 +43,13 @@ describe("LQC DEX app deployment configuration", function () {
   });
   it("rejects unapproved, malformed, or duplicate reviewed tokens", function () {
     const reviewed = token => ({ ...deployment, reviewedTokens: [token] });
-    assert.throws(() => buildAppConfig(reviewed({ symbol: "CAKE", name: "Cake", address: address(12), decimals: 18 })), /not risk-approved/);
-    assert.throws(() => buildAppConfig(reviewed({ symbol: "BAD TOKEN", name: "Bad", address: address(12), decimals: 18, riskApproved: true })), /invalid symbol/);
-    assert.throws(() => buildAppConfig(reviewed({ symbol: "CAKE", name: "Cake", address: address(12), decimals: 37, riskApproved: true })), /invalid decimals/);
-    assert.throws(() => buildAppConfig(reviewed({ symbol: "LQC", name: "Duplicate", address: address(12), decimals: 18, riskApproved: true })), /duplicates a symbol/);
-    assert.throws(() => buildAppConfig(reviewed({ symbol: "CAKE", name: "Duplicate", address: address(9), decimals: 18, riskApproved: true })), /duplicates an address/);
+    const valid = { symbol: "CAKE", name: "Cake", address: address(12), decimals: 18, riskApproved: true, routeDexIds: [id] };
+    assert.throws(() => buildAppConfig(reviewed({ ...valid, riskApproved: false })), /not risk-approved/);
+    assert.throws(() => buildAppConfig(reviewed({ ...valid, symbol: "BAD TOKEN" })), /invalid symbol/);
+    assert.throws(() => buildAppConfig(reviewed({ ...valid, decimals: 37 })), /invalid decimals/);
+    assert.throws(() => buildAppConfig(reviewed({ ...valid, routeDexIds: [] })), /no approved DEX routes/);
+    assert.throws(() => buildAppConfig(reviewed({ ...valid, routeDexIds: [`0x${"22".repeat(32)}`] })), /invalid or duplicate DEX route/);
+    assert.throws(() => buildAppConfig(reviewed({ ...valid, symbol: "LQC" })), /duplicates a symbol/);
+    assert.throws(() => buildAppConfig(reviewed({ ...valid, address: address(9) })), /duplicates an address/);
   });
 });
