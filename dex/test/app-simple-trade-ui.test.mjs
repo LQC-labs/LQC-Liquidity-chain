@@ -75,10 +75,21 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /unverifiedTransactionHash=tx\.hash/);
     assert.match(script, /unverifiedTransactionHash=finalTransactionHash/);
     assert.match(script, /rememberExecutionEvidence\(evidence\);unverifiedTransactionHash=''/);
-    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)unverifiedTransactionHash=''/);
+    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)\{unverifiedTransactionHash='';renderExecutionEvidence\(\)\}/);
     assert.match(script, /if\(unverifiedTransactionHash\)\{status\(`제출된 거래/);
     assert.match(script, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
+  });
+
+  it("links submitted and replacement hashes to the configured explorer immediately", function () {
+    assert.match(script, /function renderSubmittedTransaction\(transactionHash\)/);
+    assert.match(script, /ethers\.isHexString\(transactionHash,32\)/);
+    assert.match(script, /cfg\.blockExplorerUrls\[0\]\}\/tx\/\$\{transactionHash\}/);
+    assert.match(script, /lastSettledOutput\.textContent='확인 중'/);
+    assert.match(script, /lastEvidenceHash\.textContent='검증 대기'/);
+    assert.match(script, /unverifiedTransactionHash=tx\.hash;renderSubmittedTransaction\(unverifiedTransactionHash\)/);
+    assert.match(script, /unverifiedTransactionHash=finalTransactionHash;renderSubmittedTransaction\(unverifiedTransactionHash\)/);
+    assert.match(script, /unverifiedTransactionHash='';renderExecutionEvidence\(\)/);
   });
 
   it("offers a market-first order and familiar balance percentage controls", function () {

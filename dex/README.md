@@ -408,6 +408,9 @@ After a transaction hash exists, an RPC or settlement-consensus failure keeps th
 locked and shows a do-not-resubmit warning with the hash prefix. The lock clears automatically only
 after verified evidence is saved, a replacement is explicitly cancelled, or an on-chain receipt
 proves that the submitted transaction failed.
+The Trade Details explorer link appears as soon as the wallet returns a valid transaction hash and
+shows `확인 중 / 검증 대기` until settlement evidence is complete. A successful speed-up updates the
+link to the replacement hash; a confirmed cancellation or failure restores the latest verified trade.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match
