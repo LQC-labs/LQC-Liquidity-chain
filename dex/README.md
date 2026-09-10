@@ -127,7 +127,15 @@ npm run prepare:roles -- ./deployments/bsc-testnet-97.json
 The output validates all four recorded Safe policies, their exact role addresses, role separation,
 the reviewed source revision, and a deterministic deployment fingerprint, then encodes
 `EmergencyController.setGuardian(guardian, true)`. It never signs or sends a transaction and marks
-the Treasury as recorded but unfunded.
+the Treasury as recorded but unfunded. Save and independently verify the bundle before Safe review:
+
+```bash
+npm run prepare:roles -- ./deployments/bsc-testnet-97.json > ./deployments/role-activation.local.json
+npm run verify:role-activation -- ./deployments/role-activation.local.json ./deployments/bsc-testnet-97.json
+```
+
+The verifier recomputes the source-bound deployment fingerprint, action calldata, and SHA-256 bundle
+digest and rejects any modified field.
 
 `deploy:testnet` runs a non-transactional preflight first. It refuses non-chain-97 RPCs, missing or
 unsafe governance settings, timelocks outside 1 hour to 7 days, invalid daily/transaction limits,
