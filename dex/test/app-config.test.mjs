@@ -31,12 +31,15 @@ describe("LQC DEX app deployment configuration", function () {
     const withTokens = { ...deployment, reviewedTokens: [
       { symbol: "CAKE", name: "PancakeSwap Token", address: address(12), decimals: 18, riskApproved: true, routeDexIds: [id] },
       { symbol: "USDC", name: "USD Coin", address: address(13), decimals: 6, riskApproved: true, routeDexIds: [id] }
+    ], reviewedPairs: [
+      { tokenA: address(12), tokenB: address(9), dexIds: [id] },
+      { tokenA: address(13), tokenB: address(9), dexIds: [id] }
     ] };
     const config = buildAppConfig(withTokens);
     assert.deepEqual(config.tokens.slice(-2).map(token => [token.symbol, token.decimals, token.reviewed, token.routeDexIds]), [
       ["CAKE", 18, true, [id]], ["USDC", 6, true, [id]]
     ]);
-    assert.notEqual(buildAppConfig({ ...withTokens, reviewedTokens: withTokens.reviewedTokens.slice(0, 1) }).deploymentFingerprint,
+    assert.notEqual(buildAppConfig({ ...withTokens, reviewedTokens: withTokens.reviewedTokens.slice(0, 1), reviewedPairs: withTokens.reviewedPairs.slice(0, 1) }).deploymentFingerprint,
       config.deploymentFingerprint);
     assert.notEqual(buildAppConfig({ ...withTokens, reviewedTokens: [{ ...withTokens.reviewedTokens[0], name: "CAKE Token" }, withTokens.reviewedTokens[1]] }).deploymentFingerprint,
       config.deploymentFingerprint);
@@ -51,5 +54,17 @@ describe("LQC DEX app deployment configuration", function () {
     assert.throws(() => buildAppConfig(reviewed({ ...valid, routeDexIds: [`0x${"22".repeat(32)}`] })), /invalid or duplicate DEX route/);
     assert.throws(() => buildAppConfig(reviewed({ ...valid, symbol: "LQC" })), /duplicates a symbol/);
     assert.throws(() => buildAppConfig(reviewed({ ...valid, address: address(9) })), /duplicates an address/);
+  });
+  it("requires exact reviewed token pairs bounded by token and DEX approvals", function () {
+    const token = { symbol: "CAKE", name: "Cake", address: address(12), decimals: 18, riskApproved: true, routeDexIds: [id] };
+    const make = reviewedPairs => ({ ...deployment, reviewedTokens: [token], reviewedPairs });
+    assert.doesNotThrow(() => buildAppConfig(make([{ tokenA: address(12), tokenB: address(9), dexIds: [id] }])));
+    assert.throws(() => buildAppConfig(make([])), /no approved token pair/);
+    assert.throws(() => buildAppConfig(make([{ tokenA: address(12), tokenB: address(14), dexIds: [id] }])), /unknown or identical tokens/);
+    assert.throws(() => buildAppConfig(make([{ tokenA: address(12), tokenB: address(9), dexIds: [`0x${"22".repeat(32)}`] }])), /invalid or duplicate DEX route/);
+    assert.throws(() => buildAppConfig(make([
+      { tokenA: address(12), tokenB: address(9), dexIds: [id] },
+      { tokenA: address(9), tokenB: address(12), dexIds: [id] }
+    ])), /duplicates a token pair/);
   });
 });
