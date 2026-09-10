@@ -46,5 +46,9 @@
     if(snapshot.sources.some(item=>!item||!Number.isSafeInteger(item.failures)||item.failures<0||item.failures>2||!Number.isFinite(item.quarantinedUntil)||item.quarantinedUntil<0||item.quarantinedUntil>snapshot.savedAt+60000))return null;
     return Object.freeze(snapshot.sources.map(item=>item.quarantinedUntil>now?Object.freeze({failures:item.failures,quarantinedUntil:item.quarantinedUntil}):Object.freeze({failures:item.quarantinedUntil?0:item.failures,quarantinedUntil:0})));
   }
-  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead,consensusHash,sourceHealth,sourceHealthSnapshot,restoreSourceHealth});
+  function rankCanonicalSources(observations,canonicalHead,canonicalHash,maxSpread=3){
+    if(!Array.isArray(observations)||!Number.isSafeInteger(canonicalHead)||canonicalHead<0||typeof canonicalHash!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(canonicalHash)||!Number.isSafeInteger(maxSpread)||maxSpread<0||observations.some(item=>!item||!Number.isSafeInteger(item.index)||item.index<0||!Number.isSafeInteger(item.head)||item.head<0||!Number.isFinite(item.latencyMs)||item.latencyMs<0||typeof item.blockHash!=='string')||new Set(observations.map(item=>item.index)).size!==observations.length)throw new Error('Chart RPC source ranking input is invalid');
+    const hash=canonicalHash.toLowerCase();return Object.freeze(observations.filter(item=>item.head>=canonicalHead&&item.head<=canonicalHead+maxSpread&&item.blockHash.toLowerCase()===hash).sort((a,b)=>a.latencyMs-b.latencyMs||a.index-b.index).map(item=>item.index));
+  }
+  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead,consensusHash,sourceHealth,sourceHealthSnapshot,restoreSourceHealth,rankCanonicalSources});
 })(typeof window==='undefined'?globalThis:window);

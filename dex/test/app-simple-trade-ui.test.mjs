@@ -54,7 +54,7 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /예시 차트 · 실시간 히스토리 연동 전/);
     assert.match(script, /function approvedRoutesFor\(inputToken,outputToken,path\)/);
     assert.match(script, /async function refreshMarketPrice\(\)/);
-    assert.match(script, /marketQuoteRouter\.quoteBest/);
+    assert.match(script, /readOnlyBestQuote\(path\[0\],path\[1\],unit,routes\)/);
     assert.doesNotMatch(html, /\$0\.091138/);
   });
 
@@ -162,6 +162,9 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /chartHealth\.consensusHead\(heads,readProviders\.length\)/);
     assert.match(script, /getBlock\(headConsensus\.head\)/);
     assert.match(script, /chartHealth\.consensusHash\(hashes,readProviders\.length\)/);
+    assert.match(script, /chartHealth\.rankCanonicalSources/);
+    assert.match(script, /for\(const index of trustedReadProviderIndexes\)/);
+    assert.match(script, /RPC 합의 대기/);
     assert.match(script, /chartHealth\.restoreSourceHealth\(JSON\.parse\(localStorage\.getItem\(rpcHealthMemoryKey\)/);
     assert.match(script, /chartHealth\.sourceHealthSnapshot\(rpcSourceHealth,cfg\.deploymentFingerprint,now\)/);
     assert.match(script, /rpcSourceHealth\[index\]=chartHealth\.sourceHealth/);

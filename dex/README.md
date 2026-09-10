@@ -70,7 +70,9 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
   that fails transport, height-cluster, or canonical-hash checks three consecutive times is isolated for 60 seconds,
   then admitted only through a fresh health check without ever reducing the configured majority threshold. Bounded
   health state survives browser restarts only for the exact deployment fingerprint; records older than five minutes,
-  expired quarantines, provider-count changes, and forged long isolation periods are discarded
+  expired quarantines, provider-count changes, and forged long isolation periods are discarded. Read-only Router
+  quotes use only canonical height-and-hash participants, prefer the lowest measured latency, and fail over through
+  the remaining canonical providers; no quote is shown before an RPC quorum is established
 - Native BNB settlement verification authenticates the reviewed Native Router event and reconciles its exact execution amounts
 - Deterministic execution-proof fuzzing exercises varied route economics and tamper attempts reproducibly
 - Dependency-free V8 coverage gate requires 100% Router SDK function coverage and reports executed ranges honestly
