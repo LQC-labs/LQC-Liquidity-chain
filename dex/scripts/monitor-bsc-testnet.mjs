@@ -107,6 +107,18 @@ export function buildIncidentResponse(checks) {
       { order: 5, gate: "POST_CHECK", action: "Rerun deployment validation and monitoring before closing the incident." }
     ]
   };
+  const pendingOwnership = checks.filter(check =>
+    check.id.startsWith("ownership.") && check.id.endsWith(".pending") && check.status === "WARNING");
+  if (pendingOwnership.length) return {
+    code: "OWNERSHIP_TRANSFER_REVIEW", severity: "WARNING", automaticTransactions: false,
+    triggers: pendingOwnership.map(check => check.id),
+    actions: [
+      { order: 1, gate: "EVIDENCE_REVIEW", action: "Pin the detection block, current owner, pending owner, transfer event, initiating transaction, and deployment record." },
+      { order: 2, gate: "GOVERNANCE_MULTISIG", action: "Verify that every pending owner is the reviewed governance target and that the transfer has an approved proposal." },
+      { order: 3, gate: "OWNERSHIP_DECISION", action: "Accept an approved transfer from the pending owner or cancel an unauthorized transfer from the current owner; never use an unreviewed EOA." },
+      { order: 4, gate: "POST_CHECK", action: "Rerun deployment validation and monitoring, then update the deployment record only after the intended owner is active and no transfer remains pending." }
+    ]
+  };
   if (warnings.length) return {
     code: "SAFE_POLICY_REVIEW", severity: "WARNING", automaticTransactions: false,
     triggers: warnings.map(check => check.id),

@@ -71,6 +71,12 @@ describe("LQC BSC testnet monitoring report", function () {
     const report = buildMonitoringReport(input);
     assert.equal(report.status, "WARNING");
     assert.equal(report.counts.warning, 2);
+    assert.equal(report.incident.code, "OWNERSHIP_TRANSFER_REVIEW");
+    assert.equal(report.incident.severity, "WARNING");
+    assert.equal(report.incident.automaticTransactions, false);
+    assert.deepEqual(report.incident.triggers, ["ownership.dexRegistry.pending"]);
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["EVIDENCE_REVIEW", "GOVERNANCE_MULTISIG", "OWNERSHIP_DECISION", "POST_CHECK"]);
   });
 
   it("fails closed for Vault insolvency, cap breaches, or backing mismatches", function () {

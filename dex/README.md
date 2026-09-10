@@ -216,8 +216,9 @@ The JSON report verifies block freshness and the strict deployment configuration
 pause and pending-ownership states, and checks that execution, native, and automatic routers retain
 no BNB, LQC, mock-USDT, or WBNB custody. It also compares both Safe owner sets and thresholds with
 the deployment record: a weakened policy is critical, while any other signer or threshold change
-requires governance review. The report emits a deterministic incident-response sequence for Safe
-policy findings, but never signs or sends a pause, signer-change, or recovery transaction. Emergency
+requires governance review. The report emits deterministic incident-response sequences for Safe
+policy findings and pending ownership transfers, but never signs or sends a pause, ownership,
+signer-change, or recovery transaction. Emergency
 pause requires the guardian multisig; recovery remains governance-approved and timelocked. A critical result exits with status `2` for CI/monitoring
 integration. This operational evidence does not replace an independent audit.
 
