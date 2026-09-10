@@ -36,4 +36,16 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /available\*BigInt\(percent\)\/100n/);
     assert.match(script, /tokenIn\.address==='native'\?ethers\.parseEther\('\.01'\):0n/);
   });
+
+  it("restores market selection and hides incompatible token pairs before quoting", function () {
+    assert.match(html, /id="marketSelector"[^>]*aria-haspopup="dialog"/);
+    assert.match(html, /id="marketSearch"[^>]*placeholder="토큰 검색"/);
+    assert.match(script, /function pairApproved\(a,b\)/);
+    assert.match(script, /function preferredQuote\(asset\)/);
+    assert.match(script, /function marketList\(query=''\)/);
+    assert.match(script, /ui\.marketNav\.onclick=ui\.marketSelector\.onclick=openMarkets/);
+    assert.match(script, /tokens=cfg\.tokens\.filter\(t=>pairApproved\(t,other\)/);
+    assert.match(script, /next==='buy'\?\[quoteToken,selectedAsset\]:\[selectedAsset,quoteToken\]/);
+    assert.doesNotMatch(script, /market-row[^\n]*innerHTML/);
+  });
 });
