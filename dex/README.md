@@ -392,6 +392,9 @@ shows the latest transaction link, actual received amount, and evidence hash in 
 Users can open a bounded history dialog for all ten retained records, follow each transaction to the
 configured BSC testnet explorer, and download an individual human-readable JSON evidence file. The
 history and export paths re-run evidence verification and never render untrusted record HTML.
+The trading client also holds a single in-flight submission lock from pre-sign checks through
+settlement verification, so repeated clicks or concurrent UI refreshes cannot submit the same order
+twice. The action remains visibly busy and disabled until the attempt succeeds or fails.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match

@@ -30,6 +30,16 @@ describe("LQC simple trading UI", function () {
     assert.doesNotMatch(script, /token-option[^\n]*innerHTML/);
   });
 
+  it("locks one swap submission until its wallet and settlement flow finishes", function () {
+    assert.match(script, /swapInFlight=false/);
+    assert.match(script, /const disabled=v=>ui\.execute\.disabled=Boolean\(v\)\|\|swapInFlight/);
+    assert.match(script, /function setSwapInFlight\(value\)/);
+    assert.match(script, /setAttribute\('aria-busy',String\(swapInFlight\)\)/);
+    assert.match(script, /if\(swapInFlight\)return status\('이미 거래를 처리하고 있습니다/);
+    assert.match(script, /setSwapInFlight\(true\)/);
+    assert.match(script, /finally\{setSwapInFlight\(false\)\}/);
+  });
+
   it("offers a market-first order and familiar balance percentage controls", function () {
     assert.match(html, /<strong>시장가<\/strong>/);
     for (const percent of [25, 50, 75, 100]) assert.match(html, new RegExp(`data-percent="${percent}"`));
