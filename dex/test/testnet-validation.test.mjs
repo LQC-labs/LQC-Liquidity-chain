@@ -8,6 +8,7 @@ import {
   deploymentContractAddresses,
   validateDeploymentEvidenceRecord,
   validateDeploymentDexRecords,
+  validateOperationalRoles,
   validateRiskAdministrator,
   validateVaultDeploymentRecord,
   validateV3DeploymentRecord
@@ -123,6 +124,17 @@ describe("BSC testnet real-address validation", function () {
     assert.throws(() => validateRiskAdministrator({ owner, riskAdmin: owner }, owner), /not separated/);
     assert.throws(() => validateRiskAdministrator({ owner, riskAdmin }, owner), /does not match/);
     assert.throws(() => validateRiskAdministrator({ owner }, riskAdmin), /missing governance or risk/);
+  });
+
+  it("requires fully separated operational roles and an active emergency Guardian", function () {
+    const address = n => `0x${n.toString(16).padStart(40, "0")}`;
+    const deployment = {
+      deployer: address(1), owner: address(2), riskAdmin: address(3), guardian: address(4), treasury: address(5)
+    };
+    assert.equal(validateOperationalRoles(deployment, true).guardian, ethers.getAddress(deployment.guardian));
+    assert.throws(() => validateOperationalRoles(deployment, false), /not active/);
+    assert.throws(() => validateOperationalRoles({ ...deployment, treasury: deployment.guardian }, true), /not fully separated/);
+    assert.throws(() => validateOperationalRoles({ ...deployment, guardian: ethers.ZeroAddress }, true), /invalid guardian/);
   });
 
   it("rejects unsafe PancakeSwap V3 fee, pool, and multihop records", function () {
