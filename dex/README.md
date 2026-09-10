@@ -80,7 +80,9 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
   same binding covers chain id, Quote Router address, ordered token pair, exact input amount, every encoded route,
   and signing slippage, preventing a valid quote from being replayed for modified trade parameters. The final plan
   additionally binds sender, recipient, exact execution Router, minimum output, deadline, and execution kind; those
-  values are compared again after quote revalidation and immediately before opening the wallet signature request
+  values are compared again after quote revalidation and immediately before opening the wallet signature request.
+  The client then populates the exact transaction once, binds its chain id, destination, calldata, and native value,
+  and sends that same immutable request to the signer; target substitution, calldata mutation, and value injection fail closed
 - Native BNB settlement verification authenticates the reviewed Native Router event and reconciles its exact execution amounts
 - Deterministic execution-proof fuzzing exercises varied route economics and tamper attempts reproducibly
 - Dependency-free V8 coverage gate requires 100% Router SDK function coverage and reports executed ranges honestly

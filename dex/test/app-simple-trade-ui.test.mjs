@@ -176,6 +176,10 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /chartHealth\.bindExecutionPlan\(anchorQuote,request\)/);
     assert.match(script, /chartHealth\.executionPlanMatches\(plan\.anchorQuote,execution\)/);
     assert.match(script, /ExecutionPlanChangedBeforeSigning/);
+    assert.match(script, /method\.populateTransaction\(\.\.\.args\)/);
+    assert.match(script, /chartHealth\.bindTransaction\(anchorQuote,request\)/);
+    assert.match(script, /chartHealth\.transactionMatches\(binding,request\)/);
+    assert.match(script, /signer\.sendTransaction\(prepared\.request\)/);
     assert.match(script, /RPC 합의 대기/);
     assert.match(script, /chartHealth\.restoreSourceHealth\(JSON\.parse\(localStorage\.getItem\(rpcHealthMemoryKey\)/);
     assert.match(script, /chartHealth\.sourceHealthSnapshot\(rpcSourceHealth,cfg\.deploymentFingerprint,now\)/);

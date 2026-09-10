@@ -75,5 +75,11 @@
   }
   function bindExecutionPlan(bound,plan){if(!bound?.request)throw new Error('Chart execution plan binding is invalid');return Object.freeze({...bound,execution:normalizeExecutionPlan(plan)})}
   function executionPlanMatches(bound,plan,nowSeconds=Math.floor(Date.now()/1000)){try{const expected=bound?.execution,actual=normalizeExecutionPlan(plan);return Boolean(expected)&&Number.isSafeInteger(nowSeconds)&&nowSeconds<=actual.deadline&&expected.sender===actual.sender&&expected.recipient===actual.recipient&&expected.router===actual.router&&expected.minimumAmountOut===actual.minimumAmountOut&&expected.deadline===actual.deadline&&expected.kind===actual.kind}catch{return false}}
-  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead,consensusHash,sourceHealth,sourceHealthSnapshot,restoreSourceHealth,rankCanonicalSources,consensusQuote,bindQuote,quoteBindingMatches,bindQuoteRequest,quoteRequestMatches,bindExecutionPlan,executionPlanMatches});
+  function normalizeTransaction(request){
+    if(!request||!Number.isSafeInteger(request.chainId)||request.chainId<1||typeof request.to!=='string'||!/^0x[0-9a-fA-F]{40}$/.test(request.to)||typeof request.data!=='string'||!/^0x(?:[0-9a-fA-F]{2}){4,}$/.test(request.data)||typeof request.value!=='bigint'||request.value<0n)throw new Error('Chart wallet transaction input is invalid');
+    return Object.freeze({chainId:request.chainId,to:request.to.toLowerCase(),data:request.data.toLowerCase(),value:request.value});
+  }
+  function bindTransaction(bound,request){const transaction=normalizeTransaction(request);if(!bound?.execution||!bound?.request||transaction.chainId!==bound.request.chainId||transaction.to!==bound.execution.router||(bound.execution.kind==='native-in'?transaction.value!==bound.request.amountIn:transaction.value!==0n))throw new Error('Chart wallet transaction binding is invalid');return Object.freeze({...bound,transaction})}
+  function transactionMatches(bound,request){try{const expected=bound?.transaction,actual=normalizeTransaction(request);return Boolean(expected)&&expected.chainId===actual.chainId&&expected.to===actual.to&&expected.data===actual.data&&expected.value===actual.value}catch{return false}}
+  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead,consensusHash,sourceHealth,sourceHealthSnapshot,restoreSourceHealth,rankCanonicalSources,consensusQuote,bindQuote,quoteBindingMatches,bindQuoteRequest,quoteRequestMatches,bindExecutionPlan,executionPlanMatches,bindTransaction,transactionMatches});
 })(typeof window==='undefined'?globalThis:window);
