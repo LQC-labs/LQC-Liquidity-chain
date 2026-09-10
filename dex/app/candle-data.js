@@ -1,6 +1,16 @@
 (function(root){
   'use strict';
   const intervals=Object.freeze({"1m":60,"3m":180,"5m":300,"15m":900,"1h":3600,"4h":14400,"1D":86400,"1W":604800,"1M":2592000});
+  class CandleWatermarks{
+    constructor(maxMarkets=200){if(!Number.isInteger(maxMarkets)||maxMarkets<1)throw new Error('Candle watermark limit is invalid');this.maxMarkets=maxMarkets;this.values=new Map()}
+    accept(payload,digest){
+      const key=`${payload.chainId}:${payload.base}:${payload.quote}:${payload.timeframe}`,current=this.values.get(key),next={cursor:payload.cursor,finalizedBlock:payload.finalizedBlock,issuedAt:payload.issuedAt,digest:String(digest).toLowerCase()};
+      if(current&&(next.cursor<current.cursor||next.finalizedBlock<current.finalizedBlock||next.issuedAt<current.issuedAt))throw new Error('Candle data replay or rollback detected');
+      if(current&&next.cursor===current.cursor&&next.finalizedBlock===current.finalizedBlock&&next.issuedAt===current.issuedAt&&next.digest!==current.digest)throw new Error('Conflicting candle data revision detected');
+      this.values.delete(key);this.values.set(key,next);if(this.values.size>this.maxMarkets)this.values.delete(this.values.keys().next().value);return true;
+    }
+  }
+  const defaultWatermarks=new CandleWatermarks();
   function normalize(raw){
     const rows=Array.isArray(raw)?raw:Array.isArray(raw?.candles)?raw.candles:[];
     const byTime=new Map();
@@ -23,7 +33,7 @@
   function verify(raw,expectedSigner,ethersLib=root.ethers,now=Math.floor(Date.now()/1000)){
     try{if(!ethersLib?.isAddress(expectedSigner)||raw?.proof?.scheme!=='EIP-191')return false;const payload=signedPayload(raw),digest=ethersLib.keccak256(ethersLib.toUtf8Bytes(JSON.stringify(payload)));if(digest.toLowerCase()!==String(raw.proof.digest).toLowerCase()||now>payload.expiresAt||now<payload.issuedAt-30)return false;return ethersLib.verifyMessage(ethersLib.getBytes(digest),raw.proof.signature).toLowerCase()===expectedSigner.toLowerCase()&&String(raw.proof.signer).toLowerCase()===expectedSigner.toLowerCase()}catch{return false}
   }
-  async function load(baseUrl,params,{fetcher=root.fetch,timeoutMs=8000,expectedSigner='',ethersLib=root.ethers}={}){
+  async function load(baseUrl,params,{fetcher=root.fetch,timeoutMs=8000,expectedSigner='',ethersLib=root.ethers,watermarks=defaultWatermarks}={}){
     if(!baseUrl)return [];
     const controller=typeof AbortController==='function'?new AbortController():null,timer=controller?setTimeout(()=>controller.abort(),timeoutMs):null;
     try{
@@ -33,8 +43,10 @@
       const payload=signedPayload(raw);if(payload.chainId!==Number(params.chainId)||payload.base!==String(params.base).toLowerCase()||payload.quote!==String(params.quote).toLowerCase()||payload.timeframe!==params.timeframe)throw new Error('Candle data context is invalid');
       const candles=normalize(payload.candles);
       if(candles.length<2)throw new Error('Candle history is incomplete');
+      if(!watermarks||typeof watermarks.accept!=='function')throw new Error('Candle watermark policy is invalid');
+      watermarks.accept(payload,raw.proof.digest);
       return candles;
     }finally{if(timer)clearTimeout(timer)}
   }
-  root.LQCCandleData=Object.freeze({intervals,normalize,requestUrl,verify,load});
+  root.LQCCandleData=Object.freeze({intervals,normalize,requestUrl,verify,CandleWatermarks,load});
 })(typeof window==='undefined'?globalThis:window);

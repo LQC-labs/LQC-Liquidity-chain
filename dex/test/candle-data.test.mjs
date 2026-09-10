@@ -36,6 +36,26 @@ describe("LQC candle data boundary",function(){
     await assert.rejects(()=>api.load("https://charts.example",{chainId:97,base:quote,quote:base,timeframe:"1m"},{fetcher,expectedSigner:wallet.address,ethersLib:ethers}),/context/);
     const changed=structuredClone(raw);changed.candles[1][4]=99;await assert.rejects(()=>api.load("https://charts.example",{chainId:97,base,quote,timeframe:"1m"},{fetcher:async()=>({ok:true,json:async()=>changed}),expectedSigner:wallet.address,ethersLib:ethers}),/signature/);
   });
+
+  it("rejects signed replay, rollback, and conflicting same-revision responses",async function(){
+    const wallet=ethers.Wallet.createRandom(),base=address(11),quote=address(12),now=Math.floor(Date.now()/1000),watermarks=new api.CandleWatermarks(2),params={chainId:97,base,quote,timeframe:"5m"};
+    const sign=(overrides={})=>signCandlePayload({chainId:97,base,quote,timeframe:"5m",candles:[[1,1,2,1,2,3],[2,2,3,2,3,4]],issuedAt:now,expiresAt:now+30,cursor:101,finalizedBlock:100,...overrides},wallet);
+    const load=raw=>api.load("https://charts.example",params,{fetcher:async()=>({ok:true,json:async()=>raw}),expectedSigner:wallet.address,ethersLib:ethers,watermarks});
+    const current=await sign();await load(current);await load(current);
+    const oldCursor=await sign({cursor:100}),oldBlock=await sign({finalizedBlock:99}),oldIssue=await sign({issuedAt:now-1,expiresAt:now+29});
+    await assert.rejects(()=>load(oldCursor),/replay or rollback/);
+    await assert.rejects(()=>load(oldBlock),/replay or rollback/);
+    await assert.rejects(()=>load(oldIssue),/replay or rollback/);
+    const conflicting=await sign({candles:[[1,1,2,1,2,3],[2,2,4,2,4,5]]});
+    await assert.rejects(()=>load(conflicting),/Conflicting/);
+    await load(await sign({issuedAt:now+1,expiresAt:now+31,cursor:102,finalizedBlock:101}));
+  });
+
+  it("bounds remembered market watermarks",function(){
+    const watermarks=new api.CandleWatermarks(1),payload={chainId:97,base:address(21),quote:address(22),timeframe:"1m",cursor:2,finalizedBlock:1,issuedAt:1};
+    watermarks.accept(payload,"0x01");watermarks.accept({...payload,base:address(23)},"0x02");assert.equal(watermarks.values.size,1);
+    assert.throws(()=>new api.CandleWatermarks(0),/limit/);
+  });
 });
 
 function address(number){return`0x${number.toString(16).padStart(40,'0')}`}
