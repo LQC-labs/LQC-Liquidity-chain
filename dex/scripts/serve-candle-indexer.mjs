@@ -2,7 +2,7 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { ethers } from "ethers";
-import { aggregateCandles, approvedPool, swapToTrade, TIMEFRAME_SECONDS } from "./candle-indexer-core.mjs";
+import { aggregateCandles, approvedPool, createIndexerCheckpoint, restoreIndexerCheckpoint, swapToTrade, TIMEFRAME_SECONDS } from "./candle-indexer-core.mjs";
 
 const root = path.resolve(import.meta.dirname, "..");
 const deploymentFile = path.resolve(process.env.DEPLOYMENT_FILE || path.join(root, "deployments/bsc-testnet-97.json"));
@@ -11,6 +11,7 @@ if (!rpcUrl) throw new Error("BSC_TESTNET_RPC_URL is required.");
 if (!fs.existsSync(deploymentFile)) throw new Error("DEPLOYMENT_FILE must point to a completed deployment record.");
 const deployment = JSON.parse(fs.readFileSync(deploymentFile, "utf8"));
 if (Number(deployment?.network?.chainId) !== 97) throw new Error("Candle indexer only accepts BSC testnet chain 97.");
+const stateFile = path.resolve(process.env.INDEXER_STATE_FILE || path.join(root, ".data/candle-indexer-97.json"));
 const pools = deployment.pools || [];
 if (!pools.length || pools.some(pool => !ethers.isAddress(pool.address))) throw new Error("Deployment record has no valid approved pools.");
 
@@ -36,6 +37,13 @@ async function timestamp(blockNumber) {
   return blockTimes.get(blockNumber);
 }
 let cursor = Math.max(0, Number(process.env.START_BLOCK || 0));
+if (fs.existsSync(stateFile)) cursor = restoreIndexerCheckpoint(JSON.parse(fs.readFileSync(stateFile, "utf8")), state.values());
+function persistCheckpoint() {
+  fs.mkdirSync(path.dirname(stateFile), { recursive: true });
+  const temporary = `${stateFile}.${process.pid}.tmp`;
+  fs.writeFileSync(temporary, JSON.stringify(createIndexerCheckpoint(cursor, state.values())));
+  fs.renameSync(temporary, stateFile);
+}
 async function sync() {
   const head = await provider.getBlockNumber(), confirmations = Math.max(2, Number(process.env.FINALITY_BLOCKS || 12)), latest = head - confirmations;
   if (latest < 0) return;
@@ -53,6 +61,7 @@ async function sync() {
       if (pool.trades.length > 200000) pool.trades.splice(0, pool.trades.length - 200000);
     }
     cursor = toBlock + 1;
+    persistCheckpoint();
   }
 }
 
