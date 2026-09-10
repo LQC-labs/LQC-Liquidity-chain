@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { ethers } from "ethers";
 import { buildMonitoringReport } from "../scripts/monitor-bsc-testnet.mjs";
 
+const vaultOwner = "0x0000000000000000000000000000000000000001";
+const vaultPauseAdmin = "0x0000000000000000000000000000000000000002";
+const vaultStrategyAdmin = "0x0000000000000000000000000000000000000003";
+
 const healthyInput = () => ({
   checkedAt: "2026-09-09T00:02:00.000Z", block: { number: 123, timestamp: 1788912060 }, maxBlockAgeSeconds: 180,
   validation: { lqc: { contractCount: 6, dexCount: 3, swapsPaused: false } }, validationError: null,
@@ -13,7 +17,9 @@ const healthyInput = () => ({
     threshold: 4, expectedThreshold: 4, minimumOwners: 7, minimumThreshold: 4 }],
   vaultState: { accountedAssets: "1000", strategyDebt: "100", strategyCap: "200", expectedStrategyCap: "200",
     maxLossBps: "100", expectedMaxLossBps: "100", idleBalance: "900",
-    adapterManagedAssets: "100", adapterBalance: "100", depositsPaused: false, allocationsPaused: false, insolvent: false }
+    adapterManagedAssets: "100", adapterBalance: "100", depositsPaused: false, allocationsPaused: false, insolvent: false,
+    owner: vaultOwner, expectedOwner: vaultOwner, pauseAdmin: vaultPauseAdmin, expectedPauseAdmin: vaultPauseAdmin,
+    strategyAdmin: vaultStrategyAdmin, expectedStrategyAdmin: vaultStrategyAdmin }
 });
 
 describe("LQC BSC testnet monitoring report", function () {
@@ -124,6 +130,19 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.incident.automaticTransactions, false);
     assert.deepEqual(report.incident.actions.map(action => action.gate),
       ["RISK_MULTISIG", "EVIDENCE_REVIEW", "RISK_REVIEW", "TIMELOCK", "POST_CHECK"]);
+  });
+
+  it("fails closed on Vault role drift and emits a governed access-recovery response", function () {
+    const input = healthyInput();
+    input.vaultState.strategyAdmin = "0x0000000000000000000000000000000000000099";
+    const report = buildMonitoringReport(input);
+
+    assert.equal(report.status, "CRITICAL");
+    assert.equal(report.checks.find(check => check.id === "vault.role_integrity").status, "CRITICAL");
+    assert.equal(report.incident.code, "VAULT_ROLE_DRIFT");
+    assert.equal(report.incident.automaticTransactions, false);
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["GUARDIAN_MULTISIG", "EVIDENCE_REVIEW", "ACCESS_REVIEW", "TIMELOCK", "POST_CHECK"]);
   });
 
   it("warns on safer Strategy limit drift until governance records the new baseline", function () {

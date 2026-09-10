@@ -36,6 +36,18 @@ export function buildIncidentResponse(checks) {
       { order: 5, gate: "POST_CHECK", action: "Confirm zero Router and Adapter custody, zero residual approvals, and passing deployment validation before resuming swaps." }
     ]
   };
+  const roleDrift = checks.find(check => check.id === "vault.role_integrity" && check.status === "CRITICAL");
+  if (roleDrift) return {
+    code: "VAULT_ROLE_DRIFT", severity: "CRITICAL", automaticTransactions: false,
+    triggers: [roleDrift.id],
+    actions: [
+      { order: 1, gate: "GUARDIAN_MULTISIG", action: "Pause Vault deposits and allocations with the authorized multisig where authority remains available." },
+      { order: 2, gate: "EVIDENCE_REVIEW", action: "Pin the detection block, current and expected roles, ownership events, pending transfers, and governance transactions." },
+      { order: 3, gate: "ACCESS_REVIEW", action: "Identify the unauthorized role change and rotate any compromised signer or administrator credentials." },
+      { order: 4, gate: "TIMELOCK", action: "Restore the reviewed owner, pause administrator, and Strategy administrator only through approved governance." },
+      { order: 5, gate: "POST_CHECK", action: "Rerun role validation and monitoring before reopening Vault operations." }
+    ]
+  };
   const backingIds = new Set([
     "vault.solvency", "vault.strategy_exposure", "vault.idle_backing", "vault.adapter_backing"
   ]);
@@ -136,6 +148,14 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     const accounted = BigInt(vaultState.accountedAssets), debt = BigInt(vaultState.strategyDebt);
     const cap = BigInt(vaultState.strategyCap), idle = BigInt(vaultState.idleBalance);
     const managed = BigInt(vaultState.adapterManagedAssets), adapterBalance = BigInt(vaultState.adapterBalance);
+    if (vaultState.expectedOwner && vaultState.expectedPauseAdmin && vaultState.expectedStrategyAdmin) {
+      const matches = ethers.getAddress(vaultState.owner) === ethers.getAddress(vaultState.expectedOwner) &&
+        ethers.getAddress(vaultState.pauseAdmin) === ethers.getAddress(vaultState.expectedPauseAdmin) &&
+        ethers.getAddress(vaultState.strategyAdmin) === ethers.getAddress(vaultState.expectedStrategyAdmin);
+      add("vault.role_integrity", matches ? "PASS" : "CRITICAL", matches
+        ? "Vault owner, pause administrator, and Strategy administrator match the deployment record"
+        : `live roles ${vaultState.owner}/${vaultState.pauseAdmin}/${vaultState.strategyAdmin}; expected ${vaultState.expectedOwner}/${vaultState.expectedPauseAdmin}/${vaultState.expectedStrategyAdmin}`);
+    }
     const solventAccounting = debt <= accounted;
     add("vault.solvency", vaultState.insolvent || !solventAccounting ? "CRITICAL" : "PASS",
       vaultState.insolvent ? "vault reports insolvency" : solventAccounting ? "vault accounting is solvent" : "strategy debt exceeds accounted assets");
@@ -223,18 +243,24 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
       "function accountedAssets() view returns(uint256)", "function strategyDebt() view returns(uint256)",
       "function strategyCap() view returns(uint256)", "function maxLossBps() view returns(uint256)",
       "function depositsPaused() view returns(bool)",
-      "function allocationsPaused() view returns(bool)", "function isInsolvent() view returns(bool)"
+      "function allocationsPaused() view returns(bool)", "function isInsolvent() view returns(bool)",
+      "function owner() view returns(address)", "function pauseAdmin() view returns(address)",
+      "function strategyAdmin() view returns(address)"
     ], provider);
     const adapter = new ethers.Contract(adapterAddress, ["function totalManagedAssets() view returns(uint256)"], provider);
     const asset = new ethers.Contract(assetAddress, BALANCE_ABI, provider);
     const values = await Promise.all([
       vault.accountedAssets(), vault.strategyDebt(), vault.strategyCap(), vault.maxLossBps(),
       vault.depositsPaused(), vault.allocationsPaused(), vault.isInsolvent(), adapter.totalManagedAssets(),
-      asset.balanceOf(vaultAddress), asset.balanceOf(adapterAddress)
+      asset.balanceOf(vaultAddress), asset.balanceOf(adapterAddress), vault.owner(), vault.pauseAdmin(), vault.strategyAdmin()
     ]);
     vaultState = { accountedAssets: values[0], strategyDebt: values[1], strategyCap: values[2], maxLossBps: values[3],
       depositsPaused: values[4], allocationsPaused: values[5], insolvent: values[6],
       adapterManagedAssets: values[7], idleBalance: values[8], adapterBalance: values[9],
+      owner: values[10], pauseAdmin: values[11], strategyAdmin: values[12],
+      expectedOwner: deployment.liquidityVaultRoles?.owner,
+      expectedPauseAdmin: deployment.liquidityVaultRoles?.pauseAdmin,
+      expectedStrategyAdmin: deployment.liquidityVaultRoles?.strategyAdmin,
       expectedStrategyCap: deployment.contracts.liquidityVault.strategyCap,
       expectedMaxLossBps: deployment.contracts.liquidityVault.maxLossBps,
       expectedAllocationsPaused: deployment.contracts.liquidityVault.allocationsPaused };
