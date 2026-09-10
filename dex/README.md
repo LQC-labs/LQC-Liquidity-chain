@@ -313,9 +313,15 @@ export CORS_ORIGIN="https://lqc-labs.github.io"
 npm run serve:candles
 ```
 
+The indexer atomically checkpoints its next finalized block and bounded trade history to
+`.data/candle-indexer-97.json`, so a normal restart resumes without losing history or replaying
+already committed blocks. Set `INDEXER_STATE_FILE` to a durable absolute path in production.
+Startup fails closed if the checkpoint network or pool identities differ from the reviewed
+deployment record; do not copy a checkpoint between deployments.
+
 Deploy this process behind HTTPS and set the deployment record's `ui.candleDataUrl` to its
-`/candles` URL before running `npm run configure:app`. The in-memory testnet service is a validation
-foundation; durable production indexing, redundant RPCs, finality/reorg recovery, and monitoring
+`/candles` URL before running `npm run configure:app`. This checkpointed testnet service is a
+validation foundation; redundant storage and RPCs, deeper finality/reorg recovery, and monitoring
 remain required before any mainnet pilot.
 
 Never commit private keys or `.env` files.
