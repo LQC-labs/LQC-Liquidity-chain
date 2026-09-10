@@ -11,7 +11,8 @@ const healthyInput = () => ({
     owners: Array.from({ length: 7 }, (_, index) => `0x${(index + 10).toString(16).padStart(40, "0")}`),
     expectedOwners: Array.from({ length: 7 }, (_, index) => `0x${(index + 10).toString(16).padStart(40, "0")}`),
     threshold: 4, expectedThreshold: 4, minimumOwners: 7, minimumThreshold: 4 }],
-  vaultState: { accountedAssets: "1000", strategyDebt: "100", strategyCap: "200", idleBalance: "900",
+  vaultState: { accountedAssets: "1000", strategyDebt: "100", strategyCap: "200", expectedStrategyCap: "200",
+    maxLossBps: "100", expectedMaxLossBps: "100", idleBalance: "900",
     adapterManagedAssets: "100", adapterBalance: "100", depositsPaused: false, allocationsPaused: false, insolvent: false }
 });
 
@@ -96,6 +97,33 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.incident.automaticTransactions, false);
     assert.deepEqual(report.incident.actions.map(action => action.gate),
       ["RISK_MULTISIG", "EVIDENCE_REVIEW", "RISK_REVIEW", "TIMELOCK", "POST_CHECK"]);
+  });
+
+  it("fails closed on Strategy limit expansion and emits a non-automatic response", function () {
+    const input = healthyInput();
+    input.vaultState.strategyCap = "201";
+    input.vaultState.maxLossBps = "101";
+    const report = buildMonitoringReport(input);
+
+    assert.equal(report.status, "CRITICAL");
+    assert.equal(report.checks.find(check => check.id === "vault.strategy_limits").status, "CRITICAL");
+    assert.equal(report.incident.code, "VAULT_STRATEGY_LIMIT_EXPANSION");
+    assert.equal(report.incident.automaticTransactions, false);
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["RISK_MULTISIG", "EVIDENCE_REVIEW", "RISK_REVIEW", "TIMELOCK", "POST_CHECK"]);
+  });
+
+  it("warns on safer Strategy limit drift until governance records the new baseline", function () {
+    const input = healthyInput();
+    input.vaultState.strategyCap = "150";
+    input.vaultState.maxLossBps = "50";
+    const report = buildMonitoringReport(input);
+
+    assert.equal(report.status, "WARNING");
+    assert.equal(report.checks.find(check => check.id === "vault.strategy_limits").status, "WARNING");
+    assert.equal(report.incident.code, "VAULT_STRATEGY_LIMIT_REVIEW");
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["EVIDENCE_REVIEW", "GOVERNANCE_MULTISIG", "POST_CHECK"]);
   });
 
   it("fails closed when a Safe threshold or signer count drops below policy", function () {

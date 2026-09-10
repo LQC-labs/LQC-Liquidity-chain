@@ -40,6 +40,24 @@ export function buildIncidentResponse(checks) {
   };
   const allocationDrift = checks.find(check =>
     check.id === "vault.allocation_status" && check.status === "CRITICAL");
+  const strategyLimitDrift = checks.find(check =>
+    check.id === "vault.strategy_limits" && check.status !== "PASS");
+  if (strategyLimitDrift) return {
+    code: strategyLimitDrift.status === "CRITICAL" ? "VAULT_STRATEGY_LIMIT_EXPANSION" : "VAULT_STRATEGY_LIMIT_REVIEW",
+    severity: strategyLimitDrift.status, automaticTransactions: false,
+    triggers: [strategyLimitDrift.id],
+    actions: strategyLimitDrift.status === "CRITICAL" ? [
+      { order: 1, gate: "RISK_MULTISIG", action: "Approve and submit LiquidityVault.pauseAllocations immediately; do not use a single EOA." },
+      { order: 2, gate: "EVIDENCE_REVIEW", action: "Pin the detection block, Strategy limits, debt, events, Timelock operations, and deployment record." },
+      { order: 3, gate: "RISK_REVIEW", action: "Confirm no exposure was added under the unapproved limits and reduce limits if authorization is absent." },
+      { order: 4, gate: "TIMELOCK", action: "Approve any intended higher baseline only through a reviewed governance operation." },
+      { order: 5, gate: "POST_CHECK", action: "Rerun deployment validation and monitoring before allocations resume." }
+    ] : [
+      { order: 1, gate: "EVIDENCE_REVIEW", action: "Verify the reduced Strategy limits against an approved governance transaction." },
+      { order: 2, gate: "GOVERNANCE_MULTISIG", action: "Approve the safer baseline before updating the deployment record." },
+      { order: 3, gate: "POST_CHECK", action: "Rerun validation and monitoring before closing the review." }
+    ]
+  };
   if (allocationDrift) return {
     code: "VAULT_ALLOCATION_STATE_DRIFT", severity: "CRITICAL", automaticTransactions: false,
     triggers: [allocationDrift.id],
@@ -109,6 +127,15 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     add("vault.solvency", vaultState.insolvent || !solventAccounting ? "CRITICAL" : "PASS",
       vaultState.insolvent ? "vault reports insolvency" : solventAccounting ? "vault accounting is solvent" : "strategy debt exceeds accounted assets");
     add("vault.strategy_exposure", debt <= cap ? "PASS" : "CRITICAL", `${debt} strategy debt (cap ${cap})`);
+    if (vaultState.expectedStrategyCap != null && vaultState.expectedMaxLossBps != null) {
+      const expectedCap = BigInt(vaultState.expectedStrategyCap);
+      const maxLossBps = BigInt(vaultState.maxLossBps);
+      const expectedMaxLossBps = BigInt(vaultState.expectedMaxLossBps);
+      const expanded = cap > expectedCap || maxLossBps > expectedMaxLossBps;
+      const matches = cap === expectedCap && maxLossBps === expectedMaxLossBps;
+      add("vault.strategy_limits", matches ? "PASS" : expanded ? "CRITICAL" : "WARNING",
+        `${cap} cap / ${maxLossBps} loss bps; deployment baseline ${expectedCap} cap / ${expectedMaxLossBps} loss bps`);
+    }
     add("vault.idle_backing", solventAccounting && idle >= accounted - debt ? "PASS" : "CRITICAL",
       `${idle} idle base units backing ${solventAccounting ? accounted - debt : 0n} accounted idle units`);
     add("vault.adapter_backing", managed === debt && adapterBalance >= managed ? "PASS" : "CRITICAL",
@@ -181,19 +208,22 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
   if (ethers.isAddress(vaultAddress) && ethers.isAddress(adapterAddress) && ethers.isAddress(assetAddress)) {
     const vault = new ethers.Contract(vaultAddress, [
       "function accountedAssets() view returns(uint256)", "function strategyDebt() view returns(uint256)",
-      "function strategyCap() view returns(uint256)", "function depositsPaused() view returns(bool)",
+      "function strategyCap() view returns(uint256)", "function maxLossBps() view returns(uint256)",
+      "function depositsPaused() view returns(bool)",
       "function allocationsPaused() view returns(bool)", "function isInsolvent() view returns(bool)"
     ], provider);
     const adapter = new ethers.Contract(adapterAddress, ["function totalManagedAssets() view returns(uint256)"], provider);
     const asset = new ethers.Contract(assetAddress, BALANCE_ABI, provider);
     const values = await Promise.all([
-      vault.accountedAssets(), vault.strategyDebt(), vault.strategyCap(), vault.depositsPaused(),
-      vault.allocationsPaused(), vault.isInsolvent(), adapter.totalManagedAssets(),
+      vault.accountedAssets(), vault.strategyDebt(), vault.strategyCap(), vault.maxLossBps(),
+      vault.depositsPaused(), vault.allocationsPaused(), vault.isInsolvent(), adapter.totalManagedAssets(),
       asset.balanceOf(vaultAddress), asset.balanceOf(adapterAddress)
     ]);
-    vaultState = { accountedAssets: values[0], strategyDebt: values[1], strategyCap: values[2],
-      depositsPaused: values[3], allocationsPaused: values[4], insolvent: values[5],
-      adapterManagedAssets: values[6], idleBalance: values[7], adapterBalance: values[8],
+    vaultState = { accountedAssets: values[0], strategyDebt: values[1], strategyCap: values[2], maxLossBps: values[3],
+      depositsPaused: values[4], allocationsPaused: values[5], insolvent: values[6],
+      adapterManagedAssets: values[7], idleBalance: values[8], adapterBalance: values[9],
+      expectedStrategyCap: deployment.contracts.liquidityVault.strategyCap,
+      expectedMaxLossBps: deployment.contracts.liquidityVault.maxLossBps,
       expectedAllocationsPaused: deployment.contracts.liquidityVault.allocationsPaused };
   }
   return buildMonitoringReport({ checkedAt, block: latest, maxBlockAgeSeconds, validation, validationError,
