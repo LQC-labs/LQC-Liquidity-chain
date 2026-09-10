@@ -25,4 +25,12 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /ui\.tokenSearch\.oninput=/);
     assert.doesNotMatch(script, /token-option[^\n]*innerHTML/);
   });
+
+  it("offers a market-first order and familiar balance percentage controls", function () {
+    assert.match(html, /<strong>시장가<\/strong>/);
+    for (const percent of [25, 50, 75, 100]) assert.match(html, new RegExp(`data-percent="${percent}"`));
+    assert.match(script, /async function applyBalancePercent\(percent\)/);
+    assert.match(script, /available\*BigInt\(percent\)\/100n/);
+    assert.match(script, /tokenIn\.address==='native'\?ethers\.parseEther\('\.01'\):0n/);
+  });
 });
