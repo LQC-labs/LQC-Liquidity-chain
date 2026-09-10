@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **48 Solidity sources** and reports **174 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **48 Solidity sources** and reports **175 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -57,7 +57,7 @@ The current suite compiles **48 Solidity sources** and reports **174 passing tes
 | Vault isolation from Router, Risk, and DEX adapters | `test/vault-router-risk-integration.test.mjs` | Successful swaps and rejected cap/disabled-route paths must leave Vault principal, shares, accounting, approvals, active strategy debt, and deployed strategy assets unchanged. A reported Strategy loss fails Vault entry points closed; shutdown-only reconciliation, full recall, and withdrawal recovery complete without contaminating reviewed Router settlement, Risk usage, or Router/adapter custody. |
 | Vault total-loss insolvency fail-closed behavior | `test/liquidity-vault.test.mjs` | A zero-asset vault with outstanding shares rejects share quotes and deposit reopening; recapitalization requires a separately reviewed recovery mechanism. |
 | Testnet Vault deployment record and on-chain linkage | `test/testnet-validation.test.mjs`, `test/testnet-bootstrap.test.mjs` | Vault/adapter bytecode, asset binding, roles, caps, empty initial accounting, insolvency state, and the mandatory allocation pause are validated before smoke tests. A missing, false, or mismatched initial allocation-pause record fails closed. |
-| Testnet Vault solvency and backing monitoring | `test/monitoring.test.mjs` | Strategy debt/cap, idle backing, adapter backing, insolvency, and pause states produce fail-closed monitoring results. |
+| Testnet Vault solvency and backing monitoring | `test/monitoring.test.mjs` | Strategy debt/cap, idle backing, adapter backing, insolvency, and pause states produce fail-closed monitoring results. The expected initial allocation pause is healthy only while it matches the deployment record; any drift is critical. |
 | Reproducible deployment evidence completeness | `test/testnet-validation.test.mjs`, `test/verification-bundle.test.mjs` | Full source SHA, exact compiler settings, separated governance/risk roles, and every required deployment transaction hash are mandatory. |
 | Reviewed-source deployment binding | `test/testnet-preflight.test.mjs` | Preflight and deployment reject missing/mismatched source SHAs and any dirty worktree before a transaction can be sent. |
 | Safe signer and threshold validation | `test/testnet-preflight.test.mjs` | Preflight reads on-chain Safe owners and thresholds, rejects malformed signer sets, and enforces the reviewed governance 4-of-7 and risk 3-of-5 minimum policies. |

@@ -87,8 +87,15 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
       `${adapterBalance} adapter base units backing ${managed} managed units and ${debt} vault debt`);
     add("vault.deposit_status", vaultState.depositsPaused ? "WARNING" : "PASS",
       vaultState.depositsPaused ? "vault deposits are paused" : "vault deposits are enabled");
-    add("vault.allocation_status", vaultState.allocationsPaused ? "WARNING" : "PASS",
-      vaultState.allocationsPaused ? "vault allocations are paused" : "vault allocations are enabled");
+    if (typeof vaultState.expectedAllocationsPaused === "boolean") {
+      const matches = vaultState.allocationsPaused === vaultState.expectedAllocationsPaused;
+      add("vault.allocation_status", matches ? "PASS" : "CRITICAL", matches
+        ? `vault allocation state matches deployment record (${vaultState.allocationsPaused ? "paused" : "enabled"})`
+        : `vault allocation state changed from ${vaultState.expectedAllocationsPaused ? "paused" : "enabled"} to ${vaultState.allocationsPaused ? "paused" : "enabled"}`);
+    } else {
+      add("vault.allocation_status", vaultState.allocationsPaused ? "WARNING" : "PASS",
+        vaultState.allocationsPaused ? "vault allocations are paused" : "vault allocations are enabled");
+    }
   }
   const counts = Object.fromEntries(["PASS", "WARNING", "CRITICAL"].map(status =>
     [status.toLowerCase(), checks.filter(check => check.status === status).length]));
@@ -158,7 +165,8 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
     ]);
     vaultState = { accountedAssets: values[0], strategyDebt: values[1], strategyCap: values[2],
       depositsPaused: values[3], allocationsPaused: values[4], insolvent: values[5],
-      adapterManagedAssets: values[6], idleBalance: values[7], adapterBalance: values[8] };
+      adapterManagedAssets: values[6], idleBalance: values[7], adapterBalance: values[8],
+      expectedAllocationsPaused: deployment.contracts.liquidityVault.allocationsPaused };
   }
   return buildMonitoringReport({ checkedAt, block: latest, maxBlockAgeSeconds, validation, validationError,
     custody, ownership, vaultState, safeState });

@@ -57,6 +57,20 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.counts.warning, 2);
   });
 
+  it("treats the recorded initial allocation pause as healthy and fails closed on drift", function () {
+    const expected = healthyInput();
+    expected.vaultState.allocationsPaused = true;
+    expected.vaultState.expectedAllocationsPaused = true;
+    const healthy = buildMonitoringReport(expected);
+    assert.equal(healthy.checks.find(check => check.id === "vault.allocation_status").status, "PASS");
+    assert.equal(healthy.status, "HEALTHY");
+
+    expected.vaultState.allocationsPaused = false;
+    const drifted = buildMonitoringReport(expected);
+    assert.equal(drifted.checks.find(check => check.id === "vault.allocation_status").status, "CRITICAL");
+    assert.equal(drifted.status, "CRITICAL");
+  });
+
   it("fails closed when a Safe threshold or signer count drops below policy", function () {
     const input = healthyInput();
     input.safeState[0].owners = input.safeState[0].owners.slice(0, 5);
