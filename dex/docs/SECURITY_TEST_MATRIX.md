@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **48 Solidity sources** and reports **180 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **48 Solidity sources** and reports **181 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -19,7 +19,7 @@ The current suite compiles **48 Solidity sources** and reports **180 passing tes
 | Exact-input, exact-output, multi-hop, and native BNB flows | `test/amm.test.mjs`, `test/native-router.test.mjs` | Covered for supported standard ERC-20 behavior. |
 | Deadline, minimum-output, slippage, and invalid-path rejection | `test/amm.test.mjs`, `test/router-v2.test.mjs`, `test/native-router.test.mjs` | Covered. |
 | Pair/router reentrancy resistance | `test/amm.test.mjs`, `test/router-v2.test.mjs` | Lock and adversarial callback behavior covered; independent review pending. |
-| Exact temporary approvals and zero router/adapter custody | `test/router-v2.test.mjs`, `test/native-router.test.mjs` | Success, revert residue, and adversarial partial-spend rollback checks covered across Router and Adapter boundaries. |
+| Exact temporary approvals and zero router/adapter custody | `test/router-v2.test.mjs`, `test/native-router.test.mjs`, `test/monitoring.test.mjs` | Success, revert residue, and adversarial partial-spend rollback checks covered across Router and Adapter boundaries. Any monitored retained balance is critical and produces a non-automatic multisig pause, evidence, custody review, Timelock recovery, and zero-balance post-check plan. |
 | Registry adapter bytecode and interface validation | `test/router-v2.test.mjs` | EOA and incompatible-contract registration or replacement is rejected without mutating an approved DEX entry. |
 | Disable-before-change DEX lifecycle | `test/router-v2.test.mjs` | Adapter replacement and DEX removal revert while enabled; changes succeed only after governance-visible disablement. |
 | Adapter downstream endpoint bytecode validation | `test/router-v2.test.mjs` | LQC Flow and Pancake V2/V3 adapters reject undeployed Router or Quoter endpoints at construction. |

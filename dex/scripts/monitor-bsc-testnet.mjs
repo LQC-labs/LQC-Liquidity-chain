@@ -23,6 +23,19 @@ export function buildIncidentResponse(checks) {
       { order: 5, gate: "POST_CHECK", action: "Execute recovery after the timelock, rerun monitoring, and publish the incident disposition." }
     ]
   };
+  const custodyBreaches = checks.filter(check =>
+    check.id.startsWith("custody.") && check.status === "CRITICAL");
+  if (custodyBreaches.length) return {
+    code: "ROUTER_CUSTODY_BREACH", severity: "CRITICAL", automaticTransactions: false,
+    triggers: custodyBreaches.map(check => check.id),
+    actions: [
+      { order: 1, gate: "GUARDIAN_MULTISIG", action: "Approve and submit EmergencyController.pauseAllSwaps immediately; never use a single EOA." },
+      { order: 2, gate: "EVIDENCE_REVIEW", action: "Pin the detection block, retained balances, affected contracts and assets, related transactions, and deployment record." },
+      { order: 3, gate: "CUSTODY_REVIEW", action: "Identify the failed settlement path and verify a reviewed recovery operation without granting new standing approvals." },
+      { order: 4, gate: "TIMELOCK", action: "Schedule and execute the reviewed recovery only after governance approval and the configured delay." },
+      { order: 5, gate: "POST_CHECK", action: "Confirm zero Router and Adapter custody, zero residual approvals, and passing deployment validation before resuming swaps." }
+    ]
+  };
   const backingIds = new Set([
     "vault.solvency", "vault.strategy_exposure", "vault.idle_backing", "vault.adapter_backing"
   ]);

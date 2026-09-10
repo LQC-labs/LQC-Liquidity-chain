@@ -33,6 +33,19 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.counts.critical, 3);
   });
 
+  it("creates a pause and governed recovery response for retained Router funds", function () {
+    const input = healthyInput();
+    input.custody[0].balance = "1";
+    const report = buildMonitoringReport(input);
+
+    assert.equal(report.incident.code, "ROUTER_CUSTODY_BREACH");
+    assert.equal(report.incident.severity, "CRITICAL");
+    assert.equal(report.incident.automaticTransactions, false);
+    assert.deepEqual(report.incident.triggers, ["custody.executionRouter.BNB"]);
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["GUARDIAN_MULTISIG", "EVIDENCE_REVIEW", "CUSTODY_REVIEW", "TIMELOCK", "POST_CHECK"]);
+  });
+
   it("surfaces emergency pauses and pending ownership transfers as warnings", function () {
     const input = healthyInput(); input.validation.lqc.swapsPaused = true;
     input.ownership[0].pendingOwner = "0x0000000000000000000000000000000000000002";
