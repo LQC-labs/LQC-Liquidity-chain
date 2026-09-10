@@ -11,6 +11,8 @@ const {
   WBNB_ADDRESS,
   FACTORY_OWNER,
   RISK_ADMIN,
+  GUARDIAN_ADDRESS,
+  TREASURY_ADDRESS,
   PANCAKE_V2_ROUTER_ADDRESS = "",
   PANCAKE_V3_QUOTER_ADDRESS = "",
   PANCAKE_V3_ROUTER_ADDRESS = "",
@@ -57,6 +59,11 @@ const owner = FACTORY_OWNER || wallet.address;
 if (!ethers.isAddress(owner)) throw new Error("FACTORY_OWNER must be a valid address.");
 if (!ethers.isAddress(RISK_ADMIN)) throw new Error("RISK_ADMIN must be a valid separate risk-management address.");
 const riskAdmin = ethers.getAddress(RISK_ADMIN);
+if (!ethers.isAddress(GUARDIAN_ADDRESS) || !ethers.isAddress(TREASURY_ADDRESS)) {
+  throw new Error("GUARDIAN_ADDRESS and TREASURY_ADDRESS must be valid reviewed multisig addresses.");
+}
+const guardian = ethers.getAddress(GUARDIAN_ADDRESS);
+const treasury = ethers.getAddress(TREASURY_ADDRESS);
 const governanceMinimumOwners = BigInt(process.env.GOVERNANCE_MIN_OWNERS || "7");
 const governanceMinimumThreshold = BigInt(process.env.GOVERNANCE_MIN_THRESHOLD || "4");
 const riskMinimumOwners = BigInt(process.env.RISK_MIN_OWNERS || "5");
@@ -74,6 +81,10 @@ const governanceSafePolicy = await captureSafePolicy(owner, "FACTORY_OWNER", gov
   governanceMinimumThreshold, process.env.ALLOW_EOA_OWNER === "true");
 const riskSafePolicy = await captureSafePolicy(riskAdmin, "RISK_ADMIN", riskMinimumOwners,
   riskMinimumThreshold, process.env.ALLOW_EOA_RISK_ADMIN === "true");
+const guardianSafePolicy = await captureSafePolicy(guardian, "GUARDIAN_ADDRESS",
+  BigInt(process.env.GUARDIAN_MIN_OWNERS || "5"), BigInt(process.env.GUARDIAN_MIN_THRESHOLD || "3"), false);
+const treasurySafePolicy = await captureSafePolicy(treasury, "TREASURY_ADDRESS",
+  BigInt(process.env.TREASURY_MIN_OWNERS || "5"), BigInt(process.env.TREASURY_MIN_THRESHOLD || "3"), false);
 const checkpointFile = path.resolve(process.env.DEPLOYMENT_CHECKPOINT_FILE ||
   path.join(root, `deployments/bsc-testnet-${network.chainId}.checkpoint.local.json`));
 const checkpoint = loadDeploymentCheckpoint(checkpointFile, network.chainId, wallet.address);
@@ -260,7 +271,10 @@ const record = {
   deployer: wallet.address,
   owner,
   riskAdmin,
-  multisigPolicies: { governance: governanceSafePolicy, risk: riskSafePolicy },
+  guardian,
+  treasury,
+  multisigPolicies: { governance: governanceSafePolicy, risk: riskSafePolicy,
+    guardian: guardianSafePolicy, treasury: treasurySafePolicy },
   sourceRevision,
   compiler: { version: "0.8.30", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
   externalContracts: {
