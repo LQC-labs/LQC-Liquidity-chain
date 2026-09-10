@@ -5,7 +5,7 @@ const contractAddress = (deployment, name) => deployment?.contracts?.[name]?.add
 const same = (a, b) => ethers.getAddress(a) === ethers.getAddress(b);
 const MAX_REVIEWED_TOKENS = 500;
 
-function validateReviewedToken(token, index) {
+function validateReviewedToken(token, index, dexIds) {
   if (!token || typeof token !== "object") throw new Error(`Reviewed token ${index} is invalid.`);
   const symbol = String(token.symbol || "").trim();
   const name = String(token.name || "").trim();
@@ -15,7 +15,12 @@ function validateReviewedToken(token, index) {
   if (!ethers.isAddress(token.address)) throw new Error(`Reviewed token ${index} has an invalid address.`);
   if (!Number.isInteger(decimals) || decimals < 0 || decimals > 36) throw new Error(`Reviewed token ${index} has invalid decimals.`);
   if (token.riskApproved !== true) throw new Error(`Reviewed token ${index} is not risk-approved.`);
-  return { symbol, name, address: ethers.getAddress(token.address), decimals, reviewed: true };
+  if (!Array.isArray(token.routeDexIds) || token.routeDexIds.length === 0) throw new Error(`Reviewed token ${index} has no approved DEX routes.`);
+  const routeDexIds = token.routeDexIds.map(value => String(value).toLowerCase());
+  if (new Set(routeDexIds).size !== routeDexIds.length || routeDexIds.some(value => !dexIds.has(value))) {
+    throw new Error(`Reviewed token ${index} references an invalid or duplicate DEX route.`);
+  }
+  return { symbol, name, address: ethers.getAddress(token.address), decimals, reviewed: true, routeDexIds };
 }
 
 export function buildAppConfig(deployment) {
@@ -46,7 +51,7 @@ export function buildAppConfig(deployment) {
   if (!Array.isArray(reviewedTokens) || reviewedTokens.length > MAX_REVIEWED_TOKENS) {
     throw new Error(`Deployment reviewedTokens must be an array of at most ${MAX_REVIEWED_TOKENS} entries.`);
   }
-  tokens.push(...reviewedTokens.map(validateReviewedToken));
+  tokens.push(...reviewedTokens.map((token, index) => validateReviewedToken(token, index, seen)));
   const seenTokenAddresses = new Set(), seenSymbols = new Set();
   for (const [index, token] of tokens.entries()) {
     const addressKey = token.address === "native" ? "native" : ethers.getAddress(token.address).toLowerCase();
@@ -56,8 +61,8 @@ export function buildAppConfig(deployment) {
     seenTokenAddresses.add(addressKey); seenSymbols.add(symbolKey);
   }
   const fingerprintPayload = { chainId: 97, contracts: mapped, dexes: dexes.map(({ id, adapter }) => ({ id, adapter })),
-    tokens: tokens.filter(token => token.address !== "native").map(({ symbol, name, address, decimals, reviewed = false }) =>
-      ({ symbol, name, address, decimals, reviewed })) };
+    tokens: tokens.filter(token => token.address !== "native").map(({ symbol, name, address, decimals, reviewed = false, routeDexIds = [] }) =>
+      ({ symbol, name, address, decimals, reviewed, routeDexIds })) };
   return { chainId: 97, chainIdHex: "0x61", chainName: "BSC Testnet",
     rpcUrls: ["https://data-seed-prebsc-1-s1.bnbchain.org:8545"], blockExplorerUrls: ["https://testnet.bscscan.com"],
     nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 }, routerAddress: mapped.router,
