@@ -60,15 +60,55 @@ export function buildAppConfig(deployment) {
     if (seenSymbols.has(symbolKey)) throw new Error(`UI token ${index} duplicates a symbol.`);
     seenTokenAddresses.add(addressKey); seenSymbols.add(symbolKey);
   }
+  const reviewedPairsInput = deployment.reviewedPairs ?? [];
+  if (!Array.isArray(reviewedPairsInput) || reviewedPairsInput.length > MAX_REVIEWED_TOKENS * 4) {
+    throw new Error("Deployment reviewedPairs is invalid or exceeds the configured limit.");
+  }
+  const knownTokenAddresses = new Set(tokens.filter(token => token.address !== "native")
+    .map(token => ethers.getAddress(token.address).toLowerCase()));
+  const reviewedByAddress = new Map(tokens.filter(token => token.reviewed)
+    .map(token => [ethers.getAddress(token.address).toLowerCase(), token]));
+  const seenPairs = new Set();
+  const reviewedPairs = reviewedPairsInput.map((pair, index) => {
+    if (!ethers.isAddress(pair?.tokenA) || !ethers.isAddress(pair?.tokenB)) throw new Error(`Reviewed pair ${index} has invalid token addresses.`);
+    const tokenA = ethers.getAddress(pair.tokenA), tokenB = ethers.getAddress(pair.tokenB);
+    const endpoints = [tokenA.toLowerCase(), tokenB.toLowerCase()].sort();
+    if (endpoints[0] === endpoints[1] || endpoints.some(value => !knownTokenAddresses.has(value))) {
+      throw new Error(`Reviewed pair ${index} has unknown or identical tokens.`);
+    }
+    if (!reviewedByAddress.has(endpoints[0]) && !reviewedByAddress.has(endpoints[1])) {
+      throw new Error(`Reviewed pair ${index} must include a reviewed token.`);
+    }
+    const pairKey = endpoints.join(":");
+    if (seenPairs.has(pairKey)) throw new Error(`Reviewed pair ${index} duplicates a token pair.`);
+    seenPairs.add(pairKey);
+    if (!Array.isArray(pair.dexIds) || pair.dexIds.length === 0) throw new Error(`Reviewed pair ${index} has no approved DEX routes.`);
+    const dexIds = pair.dexIds.map(value => String(value).toLowerCase());
+    if (new Set(dexIds).size !== dexIds.length || dexIds.some(value => !seen.has(value))) {
+      throw new Error(`Reviewed pair ${index} references an invalid or duplicate DEX route.`);
+    }
+    for (const endpoint of endpoints) {
+      const token = reviewedByAddress.get(endpoint);
+      if (token && dexIds.some(dexId => !token.routeDexIds.includes(dexId))) {
+        throw new Error(`Reviewed pair ${index} exceeds its token DEX approval.`);
+      }
+    }
+    return { tokenA, tokenB, dexIds };
+  });
+  for (const address of reviewedByAddress.keys()) {
+    if (!reviewedPairs.some(pair => pair.tokenA.toLowerCase() === address || pair.tokenB.toLowerCase() === address)) {
+      throw new Error(`Reviewed token ${address} has no approved token pair.`);
+    }
+  }
   const fingerprintPayload = { chainId: 97, contracts: mapped, dexes: dexes.map(({ id, adapter }) => ({ id, adapter })),
     tokens: tokens.filter(token => token.address !== "native").map(({ symbol, name, address, decimals, reviewed = false, routeDexIds = [] }) =>
-      ({ symbol, name, address, decimals, reviewed, routeDexIds })) };
+      ({ symbol, name, address, decimals, reviewed, routeDexIds })), reviewedPairs };
   return { chainId: 97, chainIdHex: "0x61", chainName: "BSC Testnet",
     rpcUrls: ["https://data-seed-prebsc-1-s1.bnbchain.org:8545"], blockExplorerUrls: ["https://testnet.bscscan.com"],
     nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 }, routerAddress: mapped.router,
     quoteRouterAddress: mapped.quoteRouter, executionRouterAddress: mapped.executionRouter, nativeRouterAddress: mapped.nativeRouter,
     splitOptimizerAddress: mapped.splitOptimizer, autoRouterAddress: mapped.autoRouter, gasCostOracleAddress: mapped.gasCostOracle,
-    dexes, tokens, deploymentFingerprint: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(fingerprintPayload))) };
+    dexes, tokens, reviewedPairs, deploymentFingerprint: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(fingerprintPayload))) };
 }
 
 export function assertOverridesMatchDeployment(config, env) {
