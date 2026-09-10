@@ -74,6 +74,16 @@ npm install
 npm test
 ```
 
+Before preparing Stage 2, run the complete Stage 1 repository exit gate:
+
+```bash
+npm run gate:stage1
+```
+
+This repeats the browser syntax checks, compiles all Solidity sources, runs the complete security
+suite, and enforces the Router SDK coverage baseline. It does not deploy contracts or authorize use
+of real funds.
+
 To deploy after compilation:
 
 ```bash
