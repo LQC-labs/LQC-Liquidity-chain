@@ -73,5 +73,10 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /id="volume24hStat"/);
     assert.match(script, /function renderMarketStats\(candles,asset,quote\)/);
     assert.match(script, /timeframe:'1h',limit:26/);
+    assert.match(html, /id="chartDataBadge"[^>]*aria-live="polite"/);
+    assert.match(script, /function scheduleChartRefresh\(\)/);
+    assert.match(script, /document\.hidden/);
+    assert.match(script, /visibilitychange/);
+    assert.match(script, /\?60000:15000/);
   });
 });
