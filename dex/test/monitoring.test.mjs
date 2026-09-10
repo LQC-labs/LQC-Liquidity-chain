@@ -93,6 +93,20 @@ describe("LQC BSC testnet monitoring report", function () {
       ["EVIDENCE_REVIEW", "GOVERNANCE_MULTISIG", "OWNERSHIP_DECISION", "POST_CHECK"]);
   });
 
+  it("requires governed review before an emergency swap pause is lifted", function () {
+    const input = healthyInput();
+    input.validation.lqc.swapsPaused = true;
+    const report = buildMonitoringReport(input);
+
+    assert.equal(report.status, "WARNING");
+    assert.equal(report.incident.code, "SWAP_PAUSE_REVIEW");
+    assert.equal(report.incident.severity, "WARNING");
+    assert.equal(report.incident.automaticTransactions, false);
+    assert.deepEqual(report.incident.triggers, ["protocol.swap_status"]);
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["EVIDENCE_REVIEW", "INCIDENT_CLASSIFICATION", "RISK_REVIEW", "TIMELOCK", "POST_CHECK"]);
+  });
+
   it("fails closed for Vault insolvency, cap breaches, or backing mismatches", function () {
     const input = healthyInput();
     input.vaultState = { ...input.vaultState, strategyDebt: "300", idleBalance: "1", adapterManagedAssets: "299", insolvent: true };

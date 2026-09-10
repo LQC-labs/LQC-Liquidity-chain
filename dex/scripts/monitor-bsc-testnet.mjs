@@ -131,6 +131,19 @@ export function buildIncidentResponse(checks) {
       { order: 4, gate: "POST_CHECK", action: "Rerun deployment validation and monitoring, then update the deployment record only after the intended owner is active and no transfer remains pending." }
     ]
   };
+  const swapPause = checks.find(check =>
+    check.id === "protocol.swap_status" && check.status === "WARNING");
+  if (swapPause) return {
+    code: "SWAP_PAUSE_REVIEW", severity: "WARNING", automaticTransactions: false,
+    triggers: [swapPause.id],
+    actions: [
+      { order: 1, gate: "EVIDENCE_REVIEW", action: "Pin the detection block, pause transaction, guardian approvals, affected DEX routes, risk limits, and monitoring evidence." },
+      { order: 2, gate: "INCIDENT_CLASSIFICATION", action: "Confirm whether the pause is a planned exercise, operational precaution, or active security incident and assign an accountable reviewer." },
+      { order: 3, gate: "RISK_REVIEW", action: "Verify Router custody, Vault backing, contract roles, adapter configuration, route probes, and the original pause condition before proposing recovery." },
+      { order: 4, gate: "TIMELOCK", action: "Resume swaps only through the reviewed governance operation and configured delay; guardians must never bypass recovery governance." },
+      { order: 5, gate: "POST_CHECK", action: "Rerun full deployment validation and monitoring, then record the recovery transaction and incident disposition." }
+    ]
+  };
   if (warnings.length) return {
     code: "SAFE_POLICY_REVIEW", severity: "WARNING", automaticTransactions: false,
     triggers: warnings.map(check => check.id),
