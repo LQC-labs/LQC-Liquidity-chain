@@ -190,7 +190,8 @@ After deployment, run the read-only real-address validator before any smoke swap
 chain except BSC testnet `97`, checks deployed bytecode, verifies PancakeSwap V2/V3 Router-to-Factory
 and WBNB links, and confirms LQC timelock ownership, emergency pause authority, executor, DEX count,
 registry order, adapter addresses, active route status, Router/Emergency module linkage, and minimum
-timelock delay. For PancakeSwap V3 it also matches the recorded maximum hop count, canonical fee-tier
+timelock delay. It also refuses smoke-test readiness unless the reviewed Guardian Safe is active
+on-chain and every operational role remains separated. For PancakeSwap V3 it matches the recorded maximum hop count, canonical fee-tier
 subset, and every reviewed pool against the deployed adapter allowlist. A deployment record pins each
 registered adapter address and V3 policy for this comparison. The gas-cost oracle is also transferred
 to the timelock during bootstrap; validation rejects deployer-owned or wrong-WBNB oracle instances.
