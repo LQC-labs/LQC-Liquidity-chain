@@ -278,6 +278,9 @@ all other adapters receive an invalid isolated probe and cannot be
 selected for execution. Configuration generation rejects duplicate symbols
 or addresses, malformed metadata, unapproved entries, and lists above 500 tokens. This keeps token
 search convenient without turning it into an unsafe arbitrary-contract importer.
+The Markets dialog and both token selectors apply the same exact-pair registry before selection, so
+users see only assets that have a reviewed quote market with the current counter-token. Unsupported
+pair errors are prevented before an RPC quote or wallet approval is requested.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match
