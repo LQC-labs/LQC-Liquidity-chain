@@ -84,6 +84,7 @@ any route smoke swap. The generator never signs or broadcasts the action.
 - [ ] Confirm the activation bundle source revision and deployment fingerprint match the reviewed deployment.
 - [ ] Confirm every Safe policy address in the bundle matches its recorded governance, risk, guardian, or treasury role.
 - [ ] Run `verify:role-activation` against the saved bundle and deployment record before Safe submission.
+- [ ] Run `verify:guardian-activation-tx` after Safe execution and archive the verified transaction evidence.
 - [ ] Both GitHub DEX workflows pass on the selected source commit.
 - [ ] Local compilation and all automated tests pass.
 - [ ] Production dependency audit reports zero vulnerabilities.
