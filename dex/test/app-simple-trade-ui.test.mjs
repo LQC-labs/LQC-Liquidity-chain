@@ -37,7 +37,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /setAttribute\('aria-busy',String\(swapInFlight\)\)/);
     assert.match(script, /if\(swapInFlight\)return status\('이미 거래를 처리하고 있습니다/);
     assert.match(script, /setSwapInFlight\(true\)/);
-    assert.match(script, /finally\{setSwapInFlight\(false\)\}/);
+    assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
   });
 
   it("freezes every order control while a wallet signature is pending", function () {
@@ -68,6 +68,17 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /const finalTransactionHash=await waitForFinalTransactionHash\(tx\)/);
     assert.match(script, /verifySubmittedTransaction\(finalTransactionHash,settlementContext\)/);
     assert.doesNotMatch(script, /await tx\.wait\(\);status\('거래 포함 완료/);
+  });
+
+  it("keeps trading locked when a submitted settlement cannot be verified", function () {
+    assert.match(script, /unverifiedTransactionHash=''/);
+    assert.match(script, /unverifiedTransactionHash=tx\.hash/);
+    assert.match(script, /unverifiedTransactionHash=finalTransactionHash/);
+    assert.match(script, /rememberExecutionEvidence\(evidence\);unverifiedTransactionHash=''/);
+    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)unverifiedTransactionHash=''/);
+    assert.match(script, /if\(unverifiedTransactionHash\)\{status\(`제출된 거래/);
+    assert.match(script, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
+    assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
   });
 
   it("offers a market-first order and familiar balance percentage controls", function () {

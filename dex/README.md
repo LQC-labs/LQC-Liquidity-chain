@@ -404,6 +404,10 @@ failed, or malformed replacements fail closed and are never recorded as complete
 While a signature or settlement is pending, the amount, slippage, token, market, direction, balance
 preset, and route-affecting controls are disabled together. Open token or market selectors close at
 submission start, preventing the visible order from diverging from the transaction being verified.
+After a transaction hash exists, an RPC or settlement-consensus failure keeps the order controls
+locked and shows a do-not-resubmit warning with the hash prefix. The lock clears automatically only
+after verified evidence is saved, a replacement is explicitly cancelled, or an on-chain receipt
+proves that the submitted transaction failed.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match
