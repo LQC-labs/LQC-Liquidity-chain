@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="LQC Flow DEX — BNB Smart Chain testnet trading interface">
   <title>LQC Flow DEX</title>
-  <link rel="stylesheet" href="styles.css?v=20260910a">
+  <link rel="stylesheet" href="styles.css?v=20260910b">
   <link rel="stylesheet" href="token-search.css?v=20260910a">
 </head>
 <body>
@@ -22,6 +22,7 @@
 
   <main class="exchange">
     <section class="market" aria-label="LQC 시장 차트">
+      <button class="market-selector" id="marketSelector" type="button" aria-haspopup="dialog"><span class="market-token-icon">L</span><strong id="marketPair">LQC / BNB</strong><span>⌄</span><small>검토된 마켓</small></button>
       <div class="ticker-row">
         <div class="price-block"><span class="price-label">Price ⇌</span><strong class="ticker-price">$0.091138</strong><span class="ticker-change negative">-0.59%</span></div>
         <dl class="quick-stats">
@@ -104,8 +105,9 @@
   <nav class="mobile-nav" aria-label="주요 메뉴"><a href="../../index.html"><span>⌂</span>Home</a><button id="marketNav" type="button"><span>⌁</span>Market</button><button class="active" id="tradeNav" type="button"><span>⇄</span>Trade</button><button id="walletNav" type="button"><span>▣</span>Wallet</button></nav>
 
   <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><div><h2>토큰 선택</h2><span class="token-count" id="tokenCount">0개 등록</span></div><button value="cancel" aria-label="닫기">×</button></div><label class="token-search"><span aria-hidden="true">⌕</span><input id="tokenSearch" type="search" autocomplete="off" spellcheck="false" placeholder="이름, 심볼 또는 컨트랙트 주소" aria-label="거래 토큰 검색"></label><p class="token-policy">검증된 배포 목록과 Router 위험 정책에 등록된 토큰만 표시됩니다.</p><div class="token-list" id="tokenList" role="listbox"></div><p class="token-empty" id="tokenEmpty" hidden>일치하는 등록 토큰이 없습니다.</p></form></dialog>
+  <dialog class="market-dialog" id="marketDialog"><form method="dialog"><div class="dialog-head"><div><h2>Markets</h2><span class="token-count" id="marketCount">0개 마켓</span></div><button value="cancel" aria-label="마켓 닫기">×</button></div><label class="token-search"><span aria-hidden="true">⌕</span><input id="marketSearch" type="search" autocomplete="off" spellcheck="false" placeholder="토큰 검색" aria-label="마켓 토큰 검색"></label><div class="market-filter" aria-label="마켓 필터"><button class="active" type="button">All</button><span>배포·위험 검토 완료 토큰만 표시</span></div><div class="market-table-head"><span># · Token</span><span>Price</span><span>Status</span></div><div class="market-list" id="marketList" role="listbox"></div><p class="token-empty" id="marketEmpty" hidden>일치하는 활성 마켓이 없습니다.</p></form></dialog>
   <dialog id="walletDialog"><form method="dialog"><div class="dialog-head"><h2>지갑 선택</h2><button value="cancel" aria-label="닫기">×</button></div><p class="wallet-help">기기에 설치되었거나 앱 내부에서 제공되는 비수탁형 지갑을 선택하세요.</p><div class="wallet-list" id="walletList" role="listbox"></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js?v=20260906m"></script><script src="router-sdk.js?v=20260906n"></script><script src="app.js?v=20260910a"></script>
+  <script src="config.js?v=20260906m"></script><script src="router-sdk.js?v=20260906n"></script><script src="app.js?v=20260910b"></script>
 </body>
 </html>

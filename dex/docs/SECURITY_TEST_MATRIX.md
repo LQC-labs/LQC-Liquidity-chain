@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **48 Solidity sources** and reports **187 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **48 Solidity sources** and reports **190 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
