@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { aggregateCandles, approvedPool, swapToTrade } from "../scripts/candle-indexer-core.mjs";
+import { aggregateCandles, approvedPool, createIndexerCheckpoint, restoreIndexerCheckpoint, swapToTrade } from "../scripts/candle-indexer-core.mjs";
 
 describe("LQC Flow candle indexer", function () {
   const token0 = "0x0000000000000000000000000000000000000001", token1 = "0x0000000000000000000000000000000000000002";
@@ -24,5 +24,18 @@ describe("LQC Flow candle indexer", function () {
     const deployment = { pools: [{ address: token0 }] };
     assert.equal(approvedPool(deployment, token0.toUpperCase()), true);
     assert.equal(approvedPool(deployment, token1), false);
+  });
+  it("restores a bounded checkpoint only for the exact approved pool identity", function () {
+    const trades = [
+      { base: token0, quote: token1, timestamp: 60, price: 2, baseVolume: 1, quoteVolume: 2 },
+      { base: token1, quote: token0, timestamp: 60, price: 0.5, baseVolume: 2, quoteVolume: 1 }
+    ];
+    const source = [{ address: token0, token0, token1, trades }];
+    const checkpoint = createIndexerCheckpoint(123, source, 1);
+    const target = [{ address: token0, token0, token1, trades: [] }];
+    assert.equal(restoreIndexerCheckpoint(checkpoint, target, 1), 123);
+    assert.deepEqual(target[0].trades, trades.slice(-1));
+    assert.throws(() => restoreIndexerCheckpoint({ ...checkpoint, chainId: 56 }, target), /incompatible/);
+    assert.throws(() => restoreIndexerCheckpoint(checkpoint, [{ address: token0, token0: token1, token1, trades: [] }]), /approved pools/);
   });
 });
