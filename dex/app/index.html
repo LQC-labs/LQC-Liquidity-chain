@@ -47,7 +47,7 @@
 
       <div class="chart-wrap">
         <span class="chart-data-badge" id="chartDataBadge" aria-live="polite">1m 예시 차트 · 실시간 히스토리 연동 전</span>
-        <div class="ma-legend"><span>MA5: 0.09199</span><span>MA10: 0.09153</span><span>MA20: 0.09112</span></div>
+        <div class="ma-legend"><span id="ma5Legend">MA5: —</span><span id="ma10Legend">MA10: —</span><span id="ma20Legend">MA20: —</span></div>
         <div class="pnl-strip"><b>PnL -0.4817</b><span>68.4199</span><em>0.09564</em></div>
         <svg class="chart" viewBox="0 0 760 390" role="img" aria-label="LQC 테스트넷 예시 캔들 차트">
           <defs>
@@ -59,10 +59,10 @@
           <path class="ma ma-b" d="M0 112C95 120 100 225 165 205S260 165 330 235S410 180 490 265S565 170 640 220S710 205 760 220"/>
           <path class="ma ma-c" d="M0 91C110 135 105 190 178 192S280 182 345 218S435 205 500 232S590 200 660 214S720 205 760 211"/>
           <g id="candles"></g>
-          <line class="current-line" x1="0" x2="760" y1="286" y2="286"/><text class="current-label" x="687" y="280">0.09135</text>
-          <g class="axis"><text x="697" y="48">0.09500</text><text x="697" y="98">0.09450</text><text x="697" y="148">0.09400</text><text x="697" y="198">0.09350</text><text x="697" y="248">0.09300</text><text x="697" y="298">0.09250</text><text x="697" y="348">0.09200</text></g>
+          <line class="current-line" id="currentPriceLine" x1="0" x2="760" y1="286" y2="286"/><text class="current-label" id="currentPriceLabel" x="687" y="280">—</text>
+          <g class="axis" id="priceAxis"><text x="697" y="48">—</text><text x="697" y="98">—</text><text x="697" y="148">—</text><text x="697" y="198">—</text><text x="697" y="248">—</text><text x="697" y="298">—</text><text x="697" y="348">—</text></g>
         </svg>
-        <div class="time-axis" aria-hidden="true"><span>09/03, 20:38</span><span>09/04, 01:39</span><span>09/04, 22:27</span><span>09/05, 10:43</span></div>
+        <div class="time-axis" id="timeAxis" aria-hidden="true"><span>—</span><span>—</span><span>—</span><span>—</span></div>
       </div>
 
       <div class="volume"><span>VOL (LQC): 108.5751</span><div class="volume-bars" id="volumeBars"></div></div>
@@ -110,6 +110,6 @@
   <dialog class="market-dialog" id="marketDialog"><form method="dialog"><div class="dialog-head"><div><h2>Markets</h2><span class="token-count" id="marketCount">0개 마켓</span></div><button value="cancel" aria-label="마켓 닫기">×</button></div><label class="token-search"><span aria-hidden="true">⌕</span><input id="marketSearch" type="search" autocomplete="off" spellcheck="false" placeholder="토큰 검색" aria-label="마켓 토큰 검색"></label><div class="market-filter" aria-label="마켓 필터"><button class="active" type="button">All</button><span>배포·위험 검토 완료 토큰만 표시</span></div><div class="market-table-head"><span># · Token</span><span>Price</span><span>Status</span></div><div class="market-list" id="marketList" role="listbox"></div><p class="token-empty" id="marketEmpty" hidden>일치하는 활성 마켓이 없습니다.</p></form></dialog>
   <dialog id="walletDialog"><form method="dialog"><div class="dialog-head"><h2>지갑 선택</h2><button value="cancel" aria-label="닫기">×</button></div><p class="wallet-help">기기에 설치되었거나 앱 내부에서 제공되는 비수탁형 지갑을 선택하세요.</p><div class="wallet-list" id="walletList" role="listbox"></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js?v=20260910d"></script><script src="router-sdk.js?v=20260906n"></script><script src="candle-data.js?v=20260910a"></script><script src="app.js?v=20260910e"></script>
+  <script src="config.js?v=20260910d"></script><script src="router-sdk.js?v=20260906n"></script><script src="candle-data.js?v=20260910a"></script><script src="app.js?v=20260910f"></script>
 </body>
 </html>

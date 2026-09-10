@@ -131,6 +131,17 @@
     const refreshedAt=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
     g.replaceChildren();bars.replaceChildren();$('chartDataBadge').textContent=`${timeframe} 실시간 · ${refreshedAt}`;
     recent.forEach((item,index)=>{const x=index*step+3,open=y(item.open),close=y(item.close),high=y(item.high),low=y(item.low),up=item.close>=item.open,wick=document.createElementNS(ns,'line'),body=document.createElementNS(ns,'rect'),bar=document.createElement('i');wick.setAttribute('x1',x+width/2);wick.setAttribute('x2',x+width/2);wick.setAttribute('y1',high);wick.setAttribute('y2',low);wick.setAttribute('class',`wick ${up?'up':'down'}`);body.setAttribute('x',x);body.setAttribute('y',Math.min(open,close));body.setAttribute('width',width);body.setAttribute('height',Math.max(2,Math.abs(open-close)));body.setAttribute('rx','.5');body.setAttribute('class',`candle ${up?'up':'down'}`);g.append(wick,body);bar.style.height=`${Math.max(3,item.volume/maxVolume*66)}px`;if(!up)bar.className='hot';bars.append(bar)});
+    renderLiveChartLabels(recent,min,max,y,timeframe);
+  }
+  function chartPrice(value){return Number(value).toLocaleString(undefined,{maximumSignificantDigits:7})}
+  function movingAverage(items,period){if(items.length<period)return null;return items.slice(-period).reduce((sum,item)=>sum+item.close,0)/period}
+  function renderLiveChartLabels(candles,min,max,y,timeframe){
+    const last=candles.at(-1),axis=$('priceAxis').querySelectorAll('text'),line=$('currentPriceLine'),label=$('currentPriceLabel'),timeLabels=$('timeAxis').querySelectorAll('span');
+    axis.forEach((node,index)=>node.textContent=chartPrice(max-(max-min)*(index/(axis.length-1))));
+    const currentY=Math.max(16,Math.min(366,y(last.close)));line.setAttribute('y1',currentY);line.setAttribute('y2',currentY);label.setAttribute('y',Math.max(14,currentY-6));label.textContent=chartPrice(last.close);
+    [5,10,20].forEach(period=>{const value=movingAverage(candles,period),node=$(`ma${period}Legend`);node.textContent=`MA${period}: ${value===null?'—':chartPrice(value)}`});
+    const indexes=[0,Math.floor((candles.length-1)/3),Math.floor((candles.length-1)*2/3),candles.length-1],options=['1D','1W','1M'].includes(timeframe)?{month:'2-digit',day:'2-digit'}:{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'};
+    timeLabels.forEach((node,index)=>node.textContent=new Date(candles[indexes[index]].time*1000).toLocaleString('ko-KR',options));
   }
   function clearMarketStats(){ui.tickerChange.textContent='24h —';ui.tickerChange.classList.remove('negative');ui.high24h.textContent='—';ui.low24h.textContent='—';ui.volume24h.textContent='—'}
   function renderMarketStats(candles,asset,quote){

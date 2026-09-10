@@ -78,5 +78,12 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /document\.hidden/);
     assert.match(script, /visibilitychange/);
     assert.match(script, /\?60000:15000/);
+    assert.match(html, /id="priceAxis"/);
+    assert.match(html, /id="currentPriceLine"/);
+    assert.match(html, /id="currentPriceLabel"/);
+    assert.match(html, /id="ma5Legend"/);
+    assert.match(html, /id="timeAxis"/);
+    assert.match(script, /function renderLiveChartLabels\(candles,min,max,y,timeframe\)/);
+    assert.match(script, /function movingAverage\(items,period\)/);
   });
 });
