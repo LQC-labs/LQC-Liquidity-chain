@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
 import { ethers } from "ethers";
 import { buildAppConfig } from "./app-config.mjs";
@@ -64,7 +65,7 @@ export function buildOperationalRoleActivation(deployment) {
     deployment?.contracts?.emergencyController?.address,
     "emergencyController",
   );
-  return {
+  const bundle = {
     schemaVersion: 1,
     network: { name: "BSC Testnet", chainId: 97 },
     sourceRevision: deployment.sourceRevision,
@@ -82,6 +83,24 @@ export function buildOperationalRoleActivation(deployment) {
     }],
     treasuryStatus: "RECORDED_NOT_FUNDED",
     warning: "Review in the Governance Safe. This bundle does not sign or send transactions.",
+  };
+  return {
+    ...bundle,
+    bundleDigest: `sha256:${createHash("sha256").update(JSON.stringify(bundle)).digest("hex")}`,
+  };
+}
+
+export function verifyOperationalRoleActivation(bundle, deployment) {
+  const expected = buildOperationalRoleActivation(deployment);
+  if (!bundle || bundle.bundleDigest !== expected.bundleDigest || JSON.stringify(bundle) !== JSON.stringify(expected)) {
+    throw new Error("Operational role activation bundle does not match the reviewed deployment record.");
+  }
+  return {
+    status: "VERIFIED",
+    network: expected.network,
+    sourceRevision: expected.sourceRevision,
+    deploymentFingerprint: expected.deploymentFingerprint,
+    bundleDigest: expected.bundleDigest,
   };
 }
 

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
-import { buildOperationalRoleActivation } from "../scripts/prepare-operational-role-activation.mjs";
+import {
+  buildOperationalRoleActivation,
+  verifyOperationalRoleActivation,
+} from "../scripts/prepare-operational-role-activation.mjs";
 
 const address = (value) => `0x${value.toString(16).padStart(40, "0")}`;
 const policy = (start, owners, threshold) => ({
@@ -36,7 +39,9 @@ describe("LQC operational role activation bundle", function () {
     assert.deepEqual(bundle.governanceActions[0].arguments, [ethers.getAddress(deployment.guardian), true]);
     assert.match(bundle.governanceActions[0].data, /^0x[0-9a-f]+$/);
     assert.match(bundle.deploymentFingerprint, /^0x[0-9a-f]{64}$/);
+    assert.match(bundle.bundleDigest, /^sha256:[0-9a-f]{64}$/);
     assert.equal(bundle.treasuryStatus, "RECORDED_NOT_FUNDED");
+    assert.equal(verifyOperationalRoleActivation(bundle, deployment).status, "VERIFIED");
   });
 
   it("rejects the wrong network, shared roles, and weak or missing Safe evidence", function () {
@@ -51,5 +56,8 @@ describe("LQC operational role activation bundle", function () {
     assert.throws(() => buildOperationalRoleActivation(wrongPolicyAddress), /does not match/);
     assert.throws(() => buildOperationalRoleActivation({ ...deployment, sourceRevision: "draft" }), /40-character/);
     assert.throws(() => buildOperationalRoleActivation({ ...deployment, deploymentFingerprint: ethers.ZeroHash }), /fingerprint/);
+    const tampered = buildOperationalRoleActivation(deployment);
+    tampered.governanceActions[0].arguments[1] = false;
+    assert.throws(() => verifyOperationalRoleActivation(tampered, deployment), /does not match/);
   });
 });
