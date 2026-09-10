@@ -76,7 +76,9 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
   evaluated at the same consensus-pinned block and must match exactly across a configured-source majority (DEX id,
   adapter, output amount, and priority), so a split or manipulated quote is rejected before trade preparation. The
   accepted quote is bound to that block number and hash for at most 10 seconds; immediately before wallet signing,
-  the browser rechecks both the canonical hash and exact Router result with the full configured quorum policy
+  the browser rechecks both the canonical hash and exact Router result with the full configured quorum policy. The
+  same binding covers chain id, Quote Router address, ordered token pair, exact input amount, every encoded route,
+  and signing slippage, preventing a valid quote from being replayed for modified trade parameters
 - Native BNB settlement verification authenticates the reviewed Native Router event and reconciles its exact execution amounts
 - Deterministic execution-proof fuzzing exercises varied route economics and tamper attempts reproducibly
 - Dependency-free V8 coverage gate requires 100% Router SDK function coverage and reports executed ranges honestly
