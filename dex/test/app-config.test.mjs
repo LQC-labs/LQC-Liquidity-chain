@@ -16,6 +16,11 @@ describe("LQC DEX app deployment configuration", function () {
     assert.equal(first.deploymentFingerprint, second.deploymentFingerprint);
     assert.equal(first.tokens.find(token => token.symbol === "LQC").address, address(9));
     assert.equal(first.dexes[0].adapter, address(11));
+    assert.equal(first.candleDataUrl, "");
+  });
+  it("accepts only a secure configured candle indexer", function () {
+    assert.equal(buildAppConfig({ ...deployment, ui: { candleDataUrl: "https://indexer.lqc.example/candles" } }).candleDataUrl, "https://indexer.lqc.example/candles");
+    assert.throws(() => buildAppConfig({ ...deployment, ui: { candleDataUrl: "http://indexer.lqc.example/candles" } }), /must use HTTPS/);
   });
   it("rejects wrong chains, missing contracts, and duplicate DEX ids", function () {
     assert.throws(() => buildAppConfig({ ...deployment, network: { chainId: 56 } }), /chain 97/);

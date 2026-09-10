@@ -18,7 +18,7 @@
     "package:review-evidence": "node scripts/build-review-evidence-package.mjs",
     "render:review-summary": "node scripts/render-review-evidence-markdown.mjs",
     "build:review-bundle": "node scripts/build-review-bundle.mjs",
-    "check:app": "node --check app/config.js && node --check app/router-sdk.js && node --check app/app.js"
+    "check:app": "node --check app/config.js && node --check app/router-sdk.js && node --check app/candle-data.js && node --check app/app.js"
   },
   "devDependencies": {
     "ethers": "^6.15.0",

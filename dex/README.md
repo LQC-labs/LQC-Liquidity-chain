@@ -288,6 +288,15 @@ the record exactly or generation fails, preventing mixed-deployment addresses fr
 
 The interface remains visibly disabled until all required Router 2.0 addresses are configured.
 
+Historical candles use a separate, read-only indexer boundary because a spot Router quote cannot
+prove past OHLCV values. Set `candleDataUrl` in the generated app configuration to an endpoint that
+accepts `chainId`, `base`, `quote`, `timeframe`, and `limit` query parameters and returns
+`{ "candles": [{ "time", "open", "high", "low", "close", "volume" }] }`. The browser rejects
+malformed OHLCV rows, sorts and deduplicates timestamps, caps history at 300 candles, discards stale
+responses after market or interval changes, and labels the chart as verified history only after a
+valid response. If the endpoint is absent or fails, the UI remains honest and displays the clearly
+labelled example chart; it never presents a spot quote as historical market data.
+
 Never commit private keys or `.env` files.
 
 ## Gasless policy foundation
