@@ -15,6 +15,7 @@ window.LQC_FLOW_CONFIG = Object.freeze({
   // Optional signed indexer endpoint; candleSignerAddress must identify its dedicated signer.
   candleDataUrl: "",
   candleSignerAddress: "",
+  candleFinalityBlocks: 12,
   dexes: [],
   tokens: [
     { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },
