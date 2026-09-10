@@ -23,7 +23,10 @@ This is the official dependency-ordered development sequence for LQC. It priorit
 
 ## Current position
 
-Stage 1 is active. The repository already contains Router 2.0, risk controls, Vault and Strategy Adapter foundations, multi-wallet UX, route readiness guidance, and Gasless Policy V1. Gasless Policy V1 is an isolated safety foundation; actual sponsorship integration remains Stage 5 and must not bypass Stages 2-4.
+Stage 1 repository evidence has a reproducible exit gate. Stage 2 preparation is active, while live
+deployment remains blocked until reviewed BSC testnet Governance, Risk, Guardian, Treasury, and
+deployer addresses are supplied and pass on-chain validation. Gasless Policy V1 is an isolated safety
+foundation; actual sponsorship integration remains Stage 5 and must not bypass Stages 2-4.
 
 ## Efficiency rules
 
