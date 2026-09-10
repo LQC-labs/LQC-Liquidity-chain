@@ -57,6 +57,8 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
   cursor, finalized-block, or issuance-time rollback plus conflicting same-revision responses
 - Live charts preserve the last verified view during indexer failures, expose loading, delayed, and
   offline states, retry with bounded exponential backoff, and recover immediately when connectivity returns
+- Chart health reports verified round-trip latency: responses up to 1.5 seconds are healthy, slower
+  responses are delayed, and offline state or three consecutive failures are interrupted
 - Native BNB settlement verification authenticates the reviewed Native Router event and reconciles its exact execution amounts
 - Deterministic execution-proof fuzzing exercises varied route economics and tamper attempts reproducibly
 - Dependency-free V8 coverage gate requires 100% Router SDK function coverage and reports executed ranges honestly

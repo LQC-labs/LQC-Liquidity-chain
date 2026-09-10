@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const cfg=window.LQC_FLOW_CONFIG,{ethers,LQCRouterSDK:sdk,LQCCandleData:candleData,LQCChartIndicators:indicatorMath}=window,$=id=>document.getElementById(id);
+  const cfg=window.LQC_FLOW_CONFIG,{ethers,LQCRouterSDK:sdk,LQCCandleData:candleData,LQCChartIndicators:indicatorMath,LQCChartHealth:chartHealth}=window,$=id=>document.getElementById(id);
   const routerAbi=['function getAmountsOut(uint256,address[]) view returns (uint256[])','function swapExactTokensForTokens(uint256,uint256,address[],address,uint256) returns (uint256[])','function swapExactBNBForTokens(uint256,address[],address,uint256) payable returns (uint256[])','function swapExactTokensForBNB(uint256,uint256,address[],address,uint256) returns (uint256[])'];
   const quoteRouterAbi=['function quoteBest(address,address,uint256,bytes[]) view returns ((bytes32 dexId,address adapter,uint256 amountOut,uint32 priority))'];
   const executionRouterAbi=['function swapExactInput(bytes32,address,address,uint256,uint256,address,uint256,bytes) returns (uint256)'];
@@ -193,16 +193,16 @@
     chartRefreshTimer=setTimeout(()=>{loadChartHistory();refreshMarketPrice()},wait);
   }
   async function loadChartHistory(){
-    const request=++chartRequest,asset=selectedAsset,quote=quoteToken,timeframe=selectedTimeframe,chartKey=`${cfg.chainId}:${address(asset)}:${address(quote)}:${timeframe}`;let retryDelay;
+    const request=++chartRequest,asset=selectedAsset,quote=quoteToken,timeframe=selectedTimeframe,chartKey=`${cfg.chainId}:${address(asset)}:${address(quote)}:${timeframe}`,startedAt=performance.now();let retryDelay;
     clearMarketStats();if(!cfg.candleDataUrl||!candleData)return chart(chartSeries[timeframe],timeframe);
-    if(navigator.onLine===false){chartState(`${timeframe} 오프라인 · 연결되면 자동복구`,'offline');return}
+    if(navigator.onLine===false){const quality=chartHealth.classify({online:false});chartState(`${timeframe} ${quality.label} · 연결되면 자동복구`,quality.level);return}
     chartState(`${timeframe} 히스토리 불러오는 중`,'loading');
     try{
       const params={chainId:cfg.chainId,base:address(asset),quote:address(quote)},proof={expectedSigner:cfg.candleSignerAddress,ethersLib:ethers},[candles,stats]=await Promise.all([candleData.load(cfg.candleDataUrl,{...params,timeframe,limit:120},proof),candleData.load(cfg.candleDataUrl,{...params,timeframe:'1h',limit:26},proof)]);
       if(request!==chartRequest||asset!==selectedAsset||quote!==quoteToken||timeframe!==selectedTimeframe)return;
-      chartFailureCount=0;verifiedChartKey=chartKey;chartLive(candles,timeframe);$('chartDataBadge').dataset.state='live';
+      const latencyMs=Math.max(0,Math.round(performance.now()-startedAt)),quality=chartHealth.classify({latencyMs});chartFailureCount=0;verifiedChartKey=chartKey;chartLive(candles,timeframe);chartState(`${timeframe} ${quality.label} · ${latencyMs}ms`,quality.level);
       renderMarketStats(stats,asset,quote);
-    }catch{if(request===chartRequest){chartFailureCount++;retryDelay=chartRetryDelay();if(verifiedChartKey===chartKey)chartState(`${timeframe} 연결 지연 · ${retryDelay/1000}초 후 자동복구`,'retrying');else{chart(chartSeries[timeframe],timeframe);chartState(`${timeframe} 연결 실패 · 예시 차트 · ${retryDelay/1000}초 후 재시도`,'retrying')}}}
+    }catch{if(request===chartRequest){chartFailureCount++;retryDelay=chartRetryDelay();const quality=chartHealth.classify({consecutiveFailures:chartFailureCount});if(verifiedChartKey===chartKey)chartState(`${timeframe} ${quality.label} · ${retryDelay/1000}초 후 자동복구`,quality.level);else{chart(chartSeries[timeframe],timeframe);chartState(`${timeframe} ${quality.label} · 예시 차트 · ${retryDelay/1000}초 후 재시도`,quality.level)}}}
     finally{if(request===chartRequest)scheduleChartRefresh(retryDelay)}
   }
   function saveChartPreferences(){try{localStorage.setItem(chartMemoryKey,JSON.stringify({timeframe:selectedTimeframe,indicators:[...document.querySelectorAll('.indicators [data-indicator][aria-pressed="true"]')].map(button=>button.dataset.indicator)}))}catch{}
@@ -241,7 +241,7 @@
   }
   window.addEventListener('eip6963:announceProvider',event=>addWallet(event.detail));
   document.addEventListener('visibilitychange',()=>{clearTimeout(chartRefreshTimer);if(!document.hidden){loadChartHistory();refreshMarketPrice()}});
-  window.addEventListener('offline',()=>{clearTimeout(chartRefreshTimer);chartState(`${selectedTimeframe} 오프라인 · 연결되면 자동복구`,'offline')});
+  window.addEventListener('offline',()=>{clearTimeout(chartRefreshTimer);const quality=chartHealth.classify({online:false});chartState(`${selectedTimeframe} ${quality.label} · 연결되면 자동복구`,quality.level)});
   window.addEventListener('online',()=>{chartFailureCount=0;loadChartHistory();refreshMarketPrice()});
   window.dispatchEvent(new Event('eip6963:requestProvider'));
   if(window.ethereum)setTimeout(()=>{if(wallets.length===0)addWallet({info:{uuid:'legacy-injected',name:'브라우저 지갑',rdns:'legacy.injected'},provider:window.ethereum})},0);

@@ -149,10 +149,12 @@ describe("LQC simple trading UI", function () {
   it("shows candle connection health and retries failures with bounded backoff", function () {
     assert.match(script, /function chartRetryDelay\(\)/);
     assert.match(script, /Math\.min\(60000,3000\*/);
-    assert.match(script, /연결 지연 · \$\{retryDelay\/1000\}초 후 자동복구/);
+    assert.match(script, /chartHealth\.classify\(\{consecutiveFailures:chartFailureCount\}\)/);
     assert.match(script, /window\.addEventListener\('offline'/);
     assert.match(script, /window\.addEventListener\('online'/);
     assert.match(script, /if\(verifiedChartKey===chartKey\)chartState/);
-    assert.match(styles, /data-state="retrying"/);
+    assert.match(script, /performance\.now\(\)-startedAt/);
+    assert.match(html, /chart-health\.js/);
+    assert.match(styles, /data-state="interrupted"/);
   });
 });
