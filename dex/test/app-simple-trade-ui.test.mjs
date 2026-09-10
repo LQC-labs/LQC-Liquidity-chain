@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const html = fs.readFileSync(path.join(root, "app/index.html"), "utf8");
 const script = fs.readFileSync(path.join(root, "app/app.js"), "utf8");
+const styles = fs.readFileSync(path.join(root, "app/styles.css"), "utf8");
 
 describe("LQC simple trading UI", function () {
   it("keeps the primary trade flow simple while preserving optional Router evidence", function () {
@@ -74,7 +75,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function renderMarketStats\(candles,asset,quote\)/);
     assert.match(script, /timeframe:'1h',limit:26/);
     assert.match(html, /id="chartDataBadge"[^>]*aria-live="polite"/);
-    assert.match(script, /function scheduleChartRefresh\(\)/);
+    assert.match(script, /function scheduleChartRefresh\(delay\)/);
     assert.match(script, /document\.hidden/);
     assert.match(script, /visibilitychange/);
     assert.match(script, /\?60000:15000/);
@@ -143,5 +144,15 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function setIndicatorVisibility\(name,visible\)/);
     assert.match(script, /lowerIndicators\.filter\(other=>other!==name\)/);
     assert.match(script, /supportedTimeframes\.includes\(value\.timeframe\)/);
+  });
+
+  it("shows candle connection health and retries failures with bounded backoff", function () {
+    assert.match(script, /function chartRetryDelay\(\)/);
+    assert.match(script, /Math\.min\(60000,3000\*/);
+    assert.match(script, /연결 지연 · \$\{retryDelay\/1000\}초 후 자동복구/);
+    assert.match(script, /window\.addEventListener\('offline'/);
+    assert.match(script, /window\.addEventListener\('online'/);
+    assert.match(script, /if\(verifiedChartKey===chartKey\)chartState/);
+    assert.match(styles, /data-state="retrying"/);
   });
 });

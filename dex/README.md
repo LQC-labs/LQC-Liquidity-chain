@@ -55,6 +55,8 @@ The first cross-DEX extension layer is available in \`contracts/router-v2/\`:
 - Canonical settlement verification rechecks RPC receipts, block finality, reorg safety, and ERC-20 output transfer totals
 - Signed candle clients retain bounded per-market finality watermarks for the browser tab and reject
   cursor, finalized-block, or issuance-time rollback plus conflicting same-revision responses
+- Live charts preserve the last verified view during indexer failures, expose loading, delayed, and
+  offline states, retry with bounded exponential backoff, and recover immediately when connectivity returns
 - Native BNB settlement verification authenticates the reviewed Native Router event and reconciles its exact execution amounts
 - Deterministic execution-proof fuzzing exercises varied route economics and tamper attempts reproducibly
 - Dependency-free V8 coverage gate requires 100% Router SDK function coverage and reports executed ranges honestly

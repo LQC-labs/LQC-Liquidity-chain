@@ -15,7 +15,7 @@
   const chartMemoryKey='lqc-flow-chart-preferences',supportedTimeframes=['1m','3m','5m','15m','1h','4h','1D','1W','1M'],supportedIndicators=['volume','ma','ema','boll','sar','macd','kdj'],lowerIndicators=['volume','macd','kdj'];
   function storedChartPreferences(){try{const value=JSON.parse(localStorage.getItem(chartMemoryKey)||'null');if(!value||!supportedTimeframes.includes(value.timeframe)||!Array.isArray(value.indicators))return null;const indicators=[...new Set(value.indicators.filter(name=>supportedIndicators.includes(name)))],lower=indicators.find(name=>lowerIndicators.includes(name));return{timeframe:value.timeframe,indicators:indicators.filter(name=>!lowerIndicators.includes(name)||name===lower)}}catch{return null}}
   const initialChartPreferences=storedChartPreferences();
-  let walletProvider,provider,signer,account,router,quoteRouter,executionRouter,nativeRouter,splitOptimizer,autoRouter,gasCostOracle,wallets=[],boundWallets=new WeakSet(),side='in',timer,chartRefreshTimer,marketPriceRequest=0,chartRequest=0,selectedTimeframe=initialChartPreferences?.timeframe||'1m',mode='buy',selectedAsset=cfg.tokens.find(t=>t.symbol==='LQC')||cfg.tokens[0],quoteToken=cfg.tokens.find(t=>t.symbol==='USDT')||cfg.tokens.find(t=>t.symbol==='BNB')||cfg.tokens[0],tokenIn=quoteToken,tokenOut=selectedAsset;
+  let walletProvider,provider,signer,account,router,quoteRouter,executionRouter,nativeRouter,splitOptimizer,autoRouter,gasCostOracle,wallets=[],boundWallets=new WeakSet(),side='in',timer,chartRefreshTimer,chartFailureCount=0,verifiedChartKey='',marketPriceRequest=0,chartRequest=0,selectedTimeframe=initialChartPreferences?.timeframe||'1m',mode='buy',selectedAsset=cfg.tokens.find(t=>t.symbol==='LQC')||cfg.tokens[0],quoteToken=cfg.tokens.find(t=>t.symbol==='USDT')||cfg.tokens.find(t=>t.symbol==='BNB')||cfg.tokens[0],tokenIn=quoteToken,tokenOut=selectedAsset;
   const deployed=ethers.isAddress(cfg.quoteRouterAddress)&&ethers.isAddress(cfg.executionRouterAddress)&&ethers.isAddress(cfg.nativeRouterAddress)&&ethers.isAddress(cfg.splitOptimizerAddress)&&ethers.isAddress(cfg.autoRouterAddress)&&ethers.isAddress(cfg.gasCostOracleAddress)&&cfg.tokens.filter(t=>t.address!=='native').every(t=>ethers.isAddress(t.address));
   const readProvider=deployed?new ethers.JsonRpcProvider(cfg.rpcUrls[0],cfg.chainId,{staticNetwork:true}):null,marketQuoteRouter=deployed?new ethers.Contract(cfg.quoteRouterAddress,quoteRouterAbi,readProvider):null;
   const address=t=>t.address==='native'?(cfg.tokens.find(x=>x.symbol==='WBNB')?.address||''):t.address;
@@ -175,6 +175,8 @@
     timeLabels.forEach((node,index)=>node.textContent=new Date(candles[indexes[index]].time*1000).toLocaleString('ko-KR',options));
   }
   function clearMarketStats(){ui.tickerChange.textContent='24h —';ui.tickerChange.classList.remove('negative');ui.high24h.textContent='—';ui.low24h.textContent='—';ui.volume24h.textContent='—'}
+  function chartState(message,state){const badge=$('chartDataBadge');badge.textContent=message;badge.dataset.state=state}
+  function chartRetryDelay(){return Math.min(60000,3000*(2**Math.min(Math.max(0,chartFailureCount-1),4)))}
   function renderMarketStats(candles,asset,quote){
     const last=candles.at(-1),cutoff=last.time-86400,window24h=candles.filter(item=>item.time>=cutoff);
     if(candles[0].time>cutoff||window24h.length<2)return clearMarketStats();
@@ -184,23 +186,24 @@
     ui.low24h.textContent=`${format(Math.min(...window24h.map(item=>item.low)))} ${quote.symbol}`;
     ui.volume24h.textContent=`${format(window24h.reduce((sum,item)=>sum+item.volume,0))} ${asset.symbol}`;
   }
-  function scheduleChartRefresh(){
+  function scheduleChartRefresh(delay){
     clearTimeout(chartRefreshTimer);
-    if(!cfg.candleDataUrl||document.hidden)return;
-    const delay=['1D','1W','1M'].includes(selectedTimeframe)?60000:15000;
-    chartRefreshTimer=setTimeout(()=>{loadChartHistory();refreshMarketPrice()},delay);
+    if(!cfg.candleDataUrl||document.hidden||navigator.onLine===false)return;
+    const wait=delay||(['1D','1W','1M'].includes(selectedTimeframe)?60000:15000);
+    chartRefreshTimer=setTimeout(()=>{loadChartHistory();refreshMarketPrice()},wait);
   }
   async function loadChartHistory(){
-    const request=++chartRequest,asset=selectedAsset,quote=quoteToken,timeframe=selectedTimeframe;
+    const request=++chartRequest,asset=selectedAsset,quote=quoteToken,timeframe=selectedTimeframe,chartKey=`${cfg.chainId}:${address(asset)}:${address(quote)}:${timeframe}`;let retryDelay;
     clearMarketStats();if(!cfg.candleDataUrl||!candleData)return chart(chartSeries[timeframe],timeframe);
-    $('chartDataBadge').textContent=`${timeframe} 히스토리 불러오는 중`;
+    if(navigator.onLine===false){chartState(`${timeframe} 오프라인 · 연결되면 자동복구`,'offline');return}
+    chartState(`${timeframe} 히스토리 불러오는 중`,'loading');
     try{
       const params={chainId:cfg.chainId,base:address(asset),quote:address(quote)},proof={expectedSigner:cfg.candleSignerAddress,ethersLib:ethers},[candles,stats]=await Promise.all([candleData.load(cfg.candleDataUrl,{...params,timeframe,limit:120},proof),candleData.load(cfg.candleDataUrl,{...params,timeframe:'1h',limit:26},proof)]);
       if(request!==chartRequest||asset!==selectedAsset||quote!==quoteToken||timeframe!==selectedTimeframe)return;
-      chartLive(candles,timeframe);
+      chartFailureCount=0;verifiedChartKey=chartKey;chartLive(candles,timeframe);$('chartDataBadge').dataset.state='live';
       renderMarketStats(stats,asset,quote);
-    }catch{if(request===chartRequest)chart(chartSeries[timeframe],timeframe)}
-    finally{if(request===chartRequest)scheduleChartRefresh()}
+    }catch{if(request===chartRequest){chartFailureCount++;retryDelay=chartRetryDelay();if(verifiedChartKey===chartKey)chartState(`${timeframe} 연결 지연 · ${retryDelay/1000}초 후 자동복구`,'retrying');else{chart(chartSeries[timeframe],timeframe);chartState(`${timeframe} 연결 실패 · 예시 차트 · ${retryDelay/1000}초 후 재시도`,'retrying')}}}
+    finally{if(request===chartRequest)scheduleChartRefresh(retryDelay)}
   }
   function saveChartPreferences(){try{localStorage.setItem(chartMemoryKey,JSON.stringify({timeframe:selectedTimeframe,indicators:[...document.querySelectorAll('.indicators [data-indicator][aria-pressed="true"]')].map(button=>button.dataset.indicator)}))}catch{}
   }
@@ -238,6 +241,8 @@
   }
   window.addEventListener('eip6963:announceProvider',event=>addWallet(event.detail));
   document.addEventListener('visibilitychange',()=>{clearTimeout(chartRefreshTimer);if(!document.hidden){loadChartHistory();refreshMarketPrice()}});
+  window.addEventListener('offline',()=>{clearTimeout(chartRefreshTimer);chartState(`${selectedTimeframe} 오프라인 · 연결되면 자동복구`,'offline')});
+  window.addEventListener('online',()=>{chartFailureCount=0;loadChartHistory();refreshMarketPrice()});
   window.dispatchEvent(new Event('eip6963:requestProvider'));
   if(window.ethereum)setTimeout(()=>{if(wallets.length===0)addWallet({info:{uuid:'legacy-injected',name:'브라우저 지갑',rdns:'legacy.injected'},provider:window.ethereum})},0);
   ui.connect.onclick=chooseWallet;ui.buy.onclick=ui.buyTab.onclick=()=>setMode('buy');ui.sell.onclick=ui.sellTab.onclick=()=>setMode('sell');ui.quick.onclick=ui.tradeNav.onclick=()=>setMode(mode);ui.walletNav.onclick=chooseWallet;ui.marketNav.onclick=ui.marketSelector.onclick=openMarkets;ui.marketSearch.oninput=()=>marketList(ui.marketSearch.value);ui.close.onclick=()=>ui.order.classList.remove('open');ui.execute.onclick=swap;ui.tokenInButton.onclick=()=>openTokenDialog('in');ui.tokenOutButton.onclick=()=>openTokenDialog('out');ui.tokenSearch.oninput=()=>tokenList(ui.tokenSearch.value);ui.flip.onclick=()=>{[tokenIn,tokenOut]=[tokenOut,tokenIn];selectedAsset=mode==='buy'?tokenOut:tokenIn;quoteToken=mode==='buy'?tokenIn:tokenOut;render();balances();refreshMarketPrice();loadChartHistory();quoteSoon()};ui.amountIn.oninput=quoteSoon;ui.slippage.oninput=quoteSoon;ui.settings.onclick=()=>{ui.settingsPanel.hidden=!ui.settingsPanel.hidden;ui.order.classList.add('open')};ui.max.onclick=()=>applyBalancePercent(100);
