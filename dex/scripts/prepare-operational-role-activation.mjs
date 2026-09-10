@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { ethers } from "ethers";
+import { buildAppConfig } from "./app-config.mjs";
 
 const emergencyInterface = new ethers.Interface([
   "function setGuardian(address guardian,bool allowed)",
@@ -19,9 +20,13 @@ function normalizedAddress(value, label) {
   return ethers.getAddress(value);
 }
 
-function validatePolicy(policy, label, minimum) {
+function validatePolicy(policy, label, minimum, expectedAddress) {
   if (!policy || !Array.isArray(policy.owners) || !Number.isInteger(policy.threshold)) {
     throw new Error(`${label} Safe policy evidence is missing.`);
+  }
+  const policyAddress = normalizedAddress(policy.address, `${label} Safe`);
+  if (policyAddress !== expectedAddress) {
+    throw new Error(`${label} Safe policy address does not match the recorded operational role.`);
   }
   const owners = policy.owners.map((owner) => normalizedAddress(owner, `${label} signer`));
   if (owners.length < minimum.owners || policy.threshold < minimum.threshold ||
@@ -45,8 +50,15 @@ export function buildOperationalRoleActivation(deployment) {
   if (new Set(Object.values(roles)).size !== Object.values(roles).length) {
     throw new Error("Deployer, governance, risk, guardian, and treasury addresses must be separated.");
   }
+  if (!/^[0-9a-f]{40}$/i.test(deployment.sourceRevision || "")) {
+    throw new Error("Operational role activation must pin a full 40-character source revision.");
+  }
   for (const [name, minimum] of Object.entries(requiredPolicy)) {
-    validatePolicy(deployment?.multisigPolicies?.[name], name, minimum);
+    validatePolicy(deployment?.multisigPolicies?.[name], name, minimum, roles[name]);
+  }
+  const deploymentFingerprint = buildAppConfig(deployment).deploymentFingerprint;
+  if (deployment.deploymentFingerprint && deployment.deploymentFingerprint !== deploymentFingerprint) {
+    throw new Error("Recorded deployment fingerprint does not match the deployment addresses.");
   }
   const emergencyController = normalizedAddress(
     deployment?.contracts?.emergencyController?.address,
@@ -56,7 +68,7 @@ export function buildOperationalRoleActivation(deployment) {
     schemaVersion: 1,
     network: { name: "BSC Testnet", chainId: 97 },
     sourceRevision: deployment.sourceRevision,
-    deploymentFingerprint: deployment.deploymentFingerprint || null,
+    deploymentFingerprint,
     roles,
     governanceActions: [{
       order: 1,
