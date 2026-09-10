@@ -269,6 +269,13 @@ export DEPLOYMENT_FILE="./deployments/bsc-testnet-97.json"
 npm run configure:app
 ```
 
+The generated UI can scale beyond the bootstrap BNB/WBNB/LQC/Mock-USDT set through the deployment
+record's optional `reviewedTokens` array. Every added token must have a valid address, bounded symbol,
+name and decimals, and an explicit `riskApproved: true` marker produced only after its Router risk
+limits and supported DEX routes have been reviewed. Configuration generation rejects duplicate symbols
+or addresses, malformed metadata, unapproved entries, and lists above 500 tokens. This keeps token
+search convenient without turning it into an unsafe arbitrary-contract importer.
+
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match
 the record exactly or generation fails, preventing mixed-deployment addresses from reaching the UI.
