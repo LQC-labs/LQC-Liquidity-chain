@@ -40,6 +40,14 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /finally\{setSwapInFlight\(false\)\}/);
   });
 
+  it("freezes every order control while a wallet signature is pending", function () {
+    assert.match(script, /const tradeControls=\(\)=>\[ui\.amountIn,ui\.slippage,ui\.tokenInButton,ui\.tokenOutButton,ui\.flip,ui\.max,ui\.buy,ui\.sell,ui\.buyTab,ui\.sellTab,ui\.marketSelector/);
+    assert.match(script, /\.amount-presets button,.slippage-option/);
+    assert.match(script, /for\(const control of tradeControls\(\)\)control\.disabled=swapInFlight/);
+    assert.match(script, /if\(ui\.dialog\.open\)ui\.dialog\.close\(\)/);
+    assert.match(script, /if\(ui\.marketDialog\.open\)ui\.marketDialog\.close\(\)/);
+  });
+
   it("invalidates pre-sign execution when the wallet account or chain changes", function () {
     assert.match(script, /walletContextVersion=0/);
     assert.match(script, /function invalidateWalletContext\(\)\{walletContextVersion\+\+\}/);

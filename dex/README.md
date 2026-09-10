@@ -401,6 +401,9 @@ every approval and final Swap signature.
 If a wallet speeds up a pending Swap, the client follows only a successful replacement receipt and
 uses the replacement transaction hash for multi-RPC settlement verification and evidence. Cancelled,
 failed, or malformed replacements fail closed and are never recorded as completed trades.
+While a signature or settlement is pending, the amount, slippage, token, market, direction, balance
+preset, and route-affecting controls are disabled together. Open token or market selectors close at
+submission start, preventing the visible order from diverging from the transaction being verified.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match

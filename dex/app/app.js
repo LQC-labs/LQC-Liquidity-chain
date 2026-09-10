@@ -34,7 +34,8 @@
   const address=t=>t.address==='native'?(cfg.tokens.find(x=>x.symbol==='WBNB')?.address||''):t.address;
   const status=(m,type='')=>{ui.status.className=`status ${type}`.trim();ui.statusText.textContent=m};
   const disabled=v=>ui.execute.disabled=Boolean(v)||swapInFlight;
-  function setSwapInFlight(value){swapInFlight=Boolean(value);ui.execute.setAttribute('aria-busy',String(swapInFlight));disabled(!deployed)}
+  const tradeControls=()=>[ui.amountIn,ui.slippage,ui.tokenInButton,ui.tokenOutButton,ui.flip,ui.max,ui.buy,ui.sell,ui.buyTab,ui.sellTab,ui.marketSelector,...document.querySelectorAll('.amount-presets button,.slippage-option')];
+  function setSwapInFlight(value){swapInFlight=Boolean(value);ui.execute.setAttribute('aria-busy',String(swapInFlight));for(const control of tradeControls())control.disabled=swapInFlight;if(swapInFlight){if(ui.dialog.open)ui.dialog.close();if(ui.marketDialog.open)ui.marketDialog.close()}disabled(!deployed)}
   function invalidateWalletContext(){walletContextVersion++}
   function snapshotWalletContext(){return Object.freeze({version:walletContextVersion,account:String(account||'').toLowerCase(),chainId:cfg.chainId})}
   async function assertWalletContext(context){const[currentAccount,network]=await Promise.all([signer.getAddress(),provider.getNetwork()]);if(context.version!==walletContextVersion||currentAccount.toLowerCase()!==context.account||Number(network.chainId)!==context.chainId)throw new Error('WalletContextChangedDuringSwap')}
