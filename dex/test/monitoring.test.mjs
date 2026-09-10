@@ -71,6 +71,18 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(drifted.status, "CRITICAL");
   });
 
+  it("creates a non-automatic multisig and Timelock response for allocation-state drift", function () {
+    const input = healthyInput();
+    input.vaultState.expectedAllocationsPaused = true;
+    const report = buildMonitoringReport(input);
+
+    assert.equal(report.incident.code, "VAULT_ALLOCATION_STATE_DRIFT");
+    assert.equal(report.incident.severity, "CRITICAL");
+    assert.equal(report.incident.automaticTransactions, false);
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["RISK_MULTISIG", "EVIDENCE_REVIEW", "RISK_REVIEW", "TIMELOCK", "POST_CHECK"]);
+  });
+
   it("fails closed when a Safe threshold or signer count drops below policy", function () {
     const input = healthyInput();
     input.safeState[0].owners = input.safeState[0].owners.slice(0, 5);

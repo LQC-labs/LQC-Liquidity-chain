@@ -23,6 +23,19 @@ export function buildIncidentResponse(checks) {
       { order: 5, gate: "POST_CHECK", action: "Execute recovery after the timelock, rerun monitoring, and publish the incident disposition." }
     ]
   };
+  const allocationDrift = checks.find(check =>
+    check.id === "vault.allocation_status" && check.status === "CRITICAL");
+  if (allocationDrift) return {
+    code: "VAULT_ALLOCATION_STATE_DRIFT", severity: "CRITICAL", automaticTransactions: false,
+    triggers: [allocationDrift.id],
+    actions: [
+      { order: 1, gate: "RISK_MULTISIG", action: "Approve and submit LiquidityVault.pauseAllocations immediately; do not use a single EOA." },
+      { order: 2, gate: "EVIDENCE_REVIEW", action: "Pin the detection block, allocation state, Strategy debt, adapter balance, events, and deployment record." },
+      { order: 3, gate: "RISK_REVIEW", action: "Verify whether Strategy exposure changed and pause deposits if backing or authorization cannot be confirmed." },
+      { order: 4, gate: "TIMELOCK", action: "Restore or approve the intended allocation state only through a reviewed governance operation." },
+      { order: 5, gate: "POST_CHECK", action: "Rerun deployment validation and monitoring before closing the incident." }
+    ]
+  };
   if (warnings.length) return {
     code: "SAFE_POLICY_REVIEW", severity: "WARNING", automaticTransactions: false,
     triggers: warnings.map(check => check.id),
