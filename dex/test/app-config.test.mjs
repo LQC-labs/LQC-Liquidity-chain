@@ -27,4 +27,26 @@ describe("LQC DEX app deployment configuration", function () {
     assert.doesNotThrow(() => assertOverridesMatchDeployment(config, { ROUTER_ADDRESS: address(1) }));
     assert.throws(() => assertOverridesMatchDeployment(config, { ROUTER_ADDRESS: address(12) }), /does not match/);
   });
+  it("adds only validated risk-approved tokens to the searchable UI list", function () {
+    const withTokens = { ...deployment, reviewedTokens: [
+      { symbol: "CAKE", name: "PancakeSwap Token", address: address(12), decimals: 18, riskApproved: true },
+      { symbol: "USDC", name: "USD Coin", address: address(13), decimals: 6, riskApproved: true }
+    ] };
+    const config = buildAppConfig(withTokens);
+    assert.deepEqual(config.tokens.slice(-2).map(token => [token.symbol, token.decimals, token.reviewed]), [
+      ["CAKE", 18, true], ["USDC", 6, true]
+    ]);
+    assert.notEqual(buildAppConfig({ ...withTokens, reviewedTokens: withTokens.reviewedTokens.slice(0, 1) }).deploymentFingerprint,
+      config.deploymentFingerprint);
+    assert.notEqual(buildAppConfig({ ...withTokens, reviewedTokens: [{ ...withTokens.reviewedTokens[0], name: "CAKE Token" }, withTokens.reviewedTokens[1]] }).deploymentFingerprint,
+      config.deploymentFingerprint);
+  });
+  it("rejects unapproved, malformed, or duplicate reviewed tokens", function () {
+    const reviewed = token => ({ ...deployment, reviewedTokens: [token] });
+    assert.throws(() => buildAppConfig(reviewed({ symbol: "CAKE", name: "Cake", address: address(12), decimals: 18 })), /not risk-approved/);
+    assert.throws(() => buildAppConfig(reviewed({ symbol: "BAD TOKEN", name: "Bad", address: address(12), decimals: 18, riskApproved: true })), /invalid symbol/);
+    assert.throws(() => buildAppConfig(reviewed({ symbol: "CAKE", name: "Cake", address: address(12), decimals: 37, riskApproved: true })), /invalid decimals/);
+    assert.throws(() => buildAppConfig(reviewed({ symbol: "LQC", name: "Duplicate", address: address(12), decimals: 18, riskApproved: true })), /duplicates a symbol/);
+    assert.throws(() => buildAppConfig(reviewed({ symbol: "CAKE", name: "Duplicate", address: address(9), decimals: 18, riskApproved: true })), /duplicates an address/);
+  });
 });
