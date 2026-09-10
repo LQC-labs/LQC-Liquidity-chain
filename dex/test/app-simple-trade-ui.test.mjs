@@ -56,4 +56,14 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /marketQuoteRouter\.quoteBest/);
     assert.doesNotMatch(html, /\$0\.091138/);
   });
+
+  it("offers standard intraday through monthly candle intervals and redraws examples", function () {
+    for (const interval of ["1m", "3m", "5m", "15m", "1h", "4h", "1D", "1W", "1M"])
+      assert.match(html, new RegExp(`data-timeframe="${interval}"`));
+    assert.match(html, /id="chartDataBadge"/);
+    assert.match(script, /const chartSeries=/);
+    assert.match(script, /function selectTimeframe\(timeframe\)/);
+    assert.match(script, /chart\(chartSeries\[timeframe\],timeframe\)/);
+    assert.match(script, /dataset\.timeframe/);
+  });
 });

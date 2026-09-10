@@ -41,11 +41,11 @@
       <div class="market-facts"><button type="button" aria-label="시장 검색">⌕</button><span>LP Fee <b>0.30%</b></span><span>Route <b>Optimal Path</b></span><span class="sell-all">TESTNET</span></div>
 
       <div class="timeframes" aria-label="차트 시간 단위">
-        <button type="button">1s</button><button type="button">30s</button><button class="active" type="button">1m</button><button type="button">15m</button><button type="button">More⌄</button><span class="tool-divider"></span><button class="chart-icon" type="button" aria-label="차트 유형">⌁</button><button class="chart-tool" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⬡</button>
+        <button class="active" type="button" data-timeframe="1m">1m</button><button type="button" data-timeframe="3m">3m</button><button type="button" data-timeframe="5m">5m</button><button type="button" data-timeframe="15m">15m</button><button type="button" data-timeframe="1h">1h</button><button type="button" data-timeframe="4h">4h</button><button type="button" data-timeframe="1D">1D</button><button type="button" data-timeframe="1W">1W</button><button type="button" data-timeframe="1M">1M</button><span class="tool-divider"></span><button class="chart-icon" type="button" aria-label="차트 유형">⌁</button><button class="chart-tool" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⬡</button>
       </div>
 
       <div class="chart-wrap">
-        <span class="chart-data-badge">예시 차트 · 실시간 히스토리 연동 전</span>
+        <span class="chart-data-badge" id="chartDataBadge">1m 예시 차트 · 실시간 히스토리 연동 전</span>
         <div class="ma-legend"><span>MA5: 0.09199</span><span>MA10: 0.09153</span><span>MA20: 0.09112</span></div>
         <div class="pnl-strip"><b>PnL -0.4817</b><span>68.4199</span><em>0.09564</em></div>
         <svg class="chart" viewBox="0 0 760 390" role="img" aria-label="LQC 테스트넷 예시 캔들 차트">
