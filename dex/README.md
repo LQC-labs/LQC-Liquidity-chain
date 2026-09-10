@@ -330,6 +330,10 @@ Fees are sourced from the canonical RPC participants rather than trusted to one 
 configured-source majority must agree on the legacy or EIP-1559 model, each fee component must remain
 within a 20% spread, and the highest agreeing value is bound conservatively. The interface replaces
 its preliminary estimate with the resulting maximum BNB network cost before opening the wallet.
+After submission, the UI does not treat the wallet provider's receipt as final evidence. Canonical
+RPC participants independently wait for three confirmations and must form a configured-source
+majority on the transaction hash, successful status, block number, and block hash. A reorg, failed
+receipt, insufficient confirmation, timeout, or split view prevents the UI from reporting success.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match
