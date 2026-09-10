@@ -5,7 +5,9 @@
   "description": "LQC Flow DEX constant-product AMM MVP",
   "scripts": {
     "compile": "node scripts/compile.mjs",
-    "test": "npm run check:app && npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
+    "test": "npm run check:app && npm run test:contracts",
+    "test:contracts": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
+    "gate:stage1": "node scripts/run-stage1-gate.mjs",
     "coverage:router-sdk": "node scripts/check-router-sdk-coverage.mjs",
     "preflight:testnet": "node scripts/preflight-testnet-deploy.mjs",
     "deploy:testnet": "npm run preflight:testnet && npm run compile && node scripts/deploy-testnet.mjs",
