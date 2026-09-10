@@ -411,6 +411,9 @@ proves that the submitted transaction failed.
 The Trade Details explorer link appears as soon as the wallet returns a valid transaction hash and
 shows `확인 중 / 검증 대기` until settlement evidence is complete. A successful speed-up updates the
 link to the replacement hash; a confirmed cancellation or failure restores the latest verified trade.
+The submitted hash, wallet, chain, and deployment fingerprint are also kept in deployment-scoped
+browser storage. Reloading the page therefore restores the explorer link and keeps every order control
+locked until the submitted transaction has a terminal failure or complete verified settlement evidence.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match

@@ -72,10 +72,10 @@ describe("LQC simple trading UI", function () {
 
   it("keeps trading locked when a submitted settlement cannot be verified", function () {
     assert.match(script, /unverifiedTransactionHash=''/);
-    assert.match(script, /unverifiedTransactionHash=tx\.hash/);
-    assert.match(script, /unverifiedTransactionHash=finalTransactionHash/);
-    assert.match(script, /rememberExecutionEvidence\(evidence\);unverifiedTransactionHash=''/);
-    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)\{unverifiedTransactionHash='';renderExecutionEvidence\(\)\}/);
+    assert.match(script, /rememberSubmittedTransaction\(tx\.hash\)/);
+    assert.match(script, /rememberSubmittedTransaction\(finalTransactionHash\)/);
+    assert.match(script, /rememberExecutionEvidence\(evidence\);clearSubmittedTransaction\(\)/);
+    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)clearSubmittedTransaction\(\)/);
     assert.match(script, /if\(unverifiedTransactionHash\)\{status\(`제출된 거래/);
     assert.match(script, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
@@ -87,9 +87,25 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /cfg\.blockExplorerUrls\[0\]\}\/tx\/\$\{transactionHash\}/);
     assert.match(script, /lastSettledOutput\.textContent='확인 중'/);
     assert.match(script, /lastEvidenceHash\.textContent='검증 대기'/);
-    assert.match(script, /unverifiedTransactionHash=tx\.hash;renderSubmittedTransaction\(unverifiedTransactionHash\)/);
-    assert.match(script, /unverifiedTransactionHash=finalTransactionHash;renderSubmittedTransaction\(unverifiedTransactionHash\)/);
-    assert.match(script, /unverifiedTransactionHash='';renderExecutionEvidence\(\)/);
+    assert.match(script, /rememberSubmittedTransaction\(tx\.hash\)/);
+    assert.match(script, /rememberSubmittedTransaction\(finalTransactionHash\)/);
+    assert.match(script, /function clearSubmittedTransaction\(\)/);
+  });
+
+  it("restores a deployment-bound submitted transaction after reload", function () {
+    assert.match(script, /lqc-flow-submitted-transaction:\$\{cfg\.deploymentFingerprint\|\|'unconfigured'\}/);
+    assert.match(script, /function storedSubmittedTransaction\(\)/);
+    assert.match(script, /value\?\.version!==1/);
+    assert.match(script, /value\.deploymentFingerprint!==cfg\.deploymentFingerprint/);
+    assert.match(script, /value\.chainId!==cfg\.chainId/);
+    assert.match(script, /ethers\.isHexString\(value\.transactionHash,32\)/);
+    assert.match(script, /ethers\.isAddress\(value\.account\)/);
+    assert.match(script, /localStorage\.setItem\(submittedTransactionMemoryKey/);
+    assert.match(script, /localStorage\.removeItem\(submittedTransactionMemoryKey\)/);
+    assert.match(script, /const restoredSubmittedTransaction=storedSubmittedTransaction\(\)/);
+    assert.match(script, /setSwapInFlight\(true\);renderSubmittedTransaction\(unverifiedTransactionHash\)/);
+    assert.match(script, /새로고침 전에 제출된 거래/);
+    assert.match(script, /다른 지갑에서 제출한 미확인 거래가 있습니다/);
   });
 
   it("offers a market-first order and familiar balance percentage controls", function () {
