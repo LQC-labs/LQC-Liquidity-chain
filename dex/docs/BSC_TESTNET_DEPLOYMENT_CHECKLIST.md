@@ -63,6 +63,9 @@ and 1% normal-recall loss tolerance. These are testnet configuration limits, not
 
 ## 5. Preflight and deployment
 
+- [ ] Generate `npm run prepare:role-activation -- <deployment.json>` and review the unsigned Guardian action in the Governance Safe.
+- [ ] Confirm Treasury remains unfunded until a separately approved capped-pilot funding proposal.
+
 Run from `dex/`:
 
 ```bash
@@ -72,6 +75,11 @@ npm audit --omit=dev
 npm run preflight:testnet
 npm run deploy:testnet
 ```
+
+After the deployment record is available, generate and independently review the unsigned Guardian
+activation bundle with `npm run prepare:roles -- ./deployments/bsc-testnet-97.json`. Submit its single
+`setGuardian` action through the recorded Governance Safe, then verify the stated postcondition before
+any route smoke swap. The generator never signs or broadcasts the action.
 
 - [ ] Both GitHub DEX workflows pass on the selected source commit.
 - [ ] Local compilation and all automated tests pass.
