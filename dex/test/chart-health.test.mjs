@@ -8,7 +8,7 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..'),sourc
 
 describe('LQC live chart health classification',function(){
   it('marks signed responses at or below 1.5 seconds healthy',function(){assert.equal(health.classify({latencyMs:1500}).level,'healthy')});
-  it('marks slow responses and initial failures delayed',function(){assert.equal(health.classify({latencyMs:1501}).level,'delayed');assert.equal(health.classify({consecutiveFailures:2}).level,'delayed')});
+  it('marks slow, stale, and initially failed responses delayed',function(){assert.equal(health.classify({latencyMs:1501}).level,'delayed');assert.equal(health.classify({ageSeconds:16}).level,'delayed');assert.equal(health.classify({consecutiveFailures:2}).level,'delayed')});
   it('marks offline or three consecutive failures interrupted',function(){assert.equal(health.classify({online:false}).level,'interrupted');assert.equal(health.classify({consecutiveFailures:3}).level,'interrupted')});
-  it('rejects malformed measurements',function(){assert.throws(()=>health.classify({latencyMs:-1}),/invalid/);assert.throws(()=>health.classify({consecutiveFailures:1.5}),/invalid/) });
+  it('rejects malformed measurements',function(){assert.throws(()=>health.classify({latencyMs:-1}),/invalid/);assert.throws(()=>health.classify({ageSeconds:-1}),/invalid/);assert.throws(()=>health.classify({consecutiveFailures:1.5}),/invalid/) });
 });

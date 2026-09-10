@@ -37,6 +37,12 @@ describe("LQC candle data boundary",function(){
     const changed=structuredClone(raw);changed.candles[1][4]=99;await assert.rejects(()=>api.load("https://charts.example",{chainId:97,base,quote,timeframe:"1m"},{fetcher:async()=>({ok:true,json:async()=>changed}),expectedSigner:wallet.address,ethersLib:ethers}),/signature/);
   });
 
+  it("returns signed freshness and finality metadata with normalized candles",async function(){
+    const wallet=ethers.Wallet.createRandom(),base=address(41),quote=address(42),now=Math.floor(Date.now()/1000),raw=await signCandlePayload({chainId:97,base,quote,timeframe:"1h",candles:[[1,1,2,1,2,3],[2,2,3,2,3,4]],issuedAt:now,expiresAt:now+30,cursor:88,finalizedBlock:87},wallet);
+    const result=await api.loadEnvelope("https://charts.example",{chainId:97,base,quote,timeframe:"1h"},{fetcher:async()=>({ok:true,json:async()=>raw}),expectedSigner:wallet.address,ethersLib:ethers,watermarks:new api.CandleWatermarks(1)});
+    assert.equal(result.candles.length,2);assert.equal(result.issuedAt,now);assert.equal(result.cursor,88);assert.equal(result.finalizedBlock,87);assert.ok(Object.isFrozen(result));
+  });
+
   it("rejects signed replay, rollback, and conflicting same-revision responses",async function(){
     const wallet=ethers.Wallet.createRandom(),base=address(11),quote=address(12),now=Math.floor(Date.now()/1000),watermarks=new api.CandleWatermarks(2),params={chainId:97,base,quote,timeframe:"5m"};
     const sign=(overrides={})=>signCandlePayload({chainId:97,base,quote,timeframe:"5m",candles:[[1,1,2,1,2,3],[2,2,3,2,3,4]],issuedAt:now,expiresAt:now+30,cursor:101,finalizedBlock:100,...overrides},wallet);

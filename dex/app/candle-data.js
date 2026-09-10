@@ -42,8 +42,8 @@
   function verify(raw,expectedSigner,ethersLib=root.ethers,now=Math.floor(Date.now()/1000)){
     try{if(!ethersLib?.isAddress(expectedSigner)||raw?.proof?.scheme!=='EIP-191')return false;const payload=signedPayload(raw),digest=ethersLib.keccak256(ethersLib.toUtf8Bytes(JSON.stringify(payload)));if(digest.toLowerCase()!==String(raw.proof.digest).toLowerCase()||now>payload.expiresAt||now<payload.issuedAt-30)return false;return ethersLib.verifyMessage(ethersLib.getBytes(digest),raw.proof.signature).toLowerCase()===expectedSigner.toLowerCase()&&String(raw.proof.signer).toLowerCase()===expectedSigner.toLowerCase()}catch{return false}
   }
-  async function load(baseUrl,params,{fetcher=root.fetch,timeoutMs=8000,expectedSigner='',ethersLib=root.ethers,watermarks=defaultWatermarks}={}){
-    if(!baseUrl)return [];
+  async function loadEnvelope(baseUrl,params,{fetcher=root.fetch,timeoutMs=8000,expectedSigner='',ethersLib=root.ethers,watermarks=defaultWatermarks}={}){
+    if(!baseUrl)return Object.freeze({candles:[],issuedAt:0,expiresAt:0,cursor:0,finalizedBlock:0});
     const controller=typeof AbortController==='function'?new AbortController():null,timer=controller?setTimeout(()=>controller.abort(),timeoutMs):null;
     try{
       const response=await fetcher(requestUrl(baseUrl,params),{headers:{accept:'application/json'},signal:controller?.signal});
@@ -54,8 +54,9 @@
       if(candles.length<2)throw new Error('Candle history is incomplete');
       if(!watermarks||typeof watermarks.accept!=='function')throw new Error('Candle watermark policy is invalid');
       watermarks.accept(payload,raw.proof.digest);
-      return candles;
+      return Object.freeze({candles,issuedAt:payload.issuedAt,expiresAt:payload.expiresAt,cursor:payload.cursor,finalizedBlock:payload.finalizedBlock});
     }finally{if(timer)clearTimeout(timer)}
   }
-  root.LQCCandleData=Object.freeze({intervals,normalize,requestUrl,verify,CandleWatermarks,load});
+  async function load(baseUrl,params,options){return(await loadEnvelope(baseUrl,params,options)).candles}
+  root.LQCCandleData=Object.freeze({intervals,normalize,requestUrl,verify,CandleWatermarks,loadEnvelope,load});
 })(typeof window==='undefined'?globalThis:window);

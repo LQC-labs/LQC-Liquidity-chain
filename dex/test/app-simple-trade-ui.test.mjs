@@ -65,7 +65,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /const chartSeries=/);
     assert.match(script, /function selectTimeframe\(timeframe\)/);
     assert.match(script, /async function loadChartHistory\(\)/);
-    assert.match(script, /candleData\.load\(cfg\.candleDataUrl/);
+    assert.match(script, /candleData\.loadEnvelope\(cfg\.candleDataUrl/);
     assert.match(script, /request!==chartRequest/);
     assert.match(script, /chart\(chartSeries\[timeframe\],timeframe\)/);
     assert.match(script, /dataset\.timeframe/);
@@ -154,6 +154,10 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /window\.addEventListener\('online'/);
     assert.match(script, /if\(verifiedChartKey===chartKey\)chartState/);
     assert.match(script, /performance\.now\(\)-startedAt/);
+    assert.match(script, /candleData\.loadEnvelope/);
+    assert.match(script, /ageSeconds=Math\.max/);
+    assert.match(script, /lastHealthyByChart\.set\(chartKey,updatedAt\)/);
+    assert.match(script, /정상 갱신 \$\{lastHealthyByChart\.get\(chartKey\)\|\|'기록 없음'\}/);
     assert.match(html, /chart-health\.js/);
     assert.match(styles, /data-state="interrupted"/);
   });
