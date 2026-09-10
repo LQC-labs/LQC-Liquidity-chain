@@ -218,7 +218,8 @@ pause and pending-ownership states, and checks that execution, native, and autom
 no BNB, LQC, mock-USDT, or WBNB custody. It also compares both Safe owner sets and thresholds with
 the deployment record: a weakened policy is critical, while any other signer or threshold change
 requires governance review. The report emits deterministic incident-response sequences for Safe
-policy findings, pending ownership transfers, and active emergency swap pauses, but never signs or sends a pause, ownership,
+policy findings, pending ownership transfers, active emergency swap pauses, and Vault operation
+pauses, but never signs or sends a pause, ownership,
 signer-change, or recovery transaction. Emergency
 pause requires the guardian multisig; recovery remains governance-approved and timelocked. A critical result exits with status `2` for CI/monitoring
 integration. This operational evidence does not replace an independent audit.

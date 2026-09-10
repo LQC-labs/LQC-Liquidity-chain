@@ -137,6 +137,12 @@ describe("LQC BSC testnet monitoring report", function () {
     const report = buildMonitoringReport(input);
     assert.equal(report.status, "WARNING");
     assert.equal(report.counts.warning, 2);
+    assert.equal(report.incident.code, "VAULT_OPERATION_PAUSE_REVIEW");
+    assert.equal(report.incident.severity, "WARNING");
+    assert.equal(report.incident.automaticTransactions, false);
+    assert.deepEqual(report.incident.triggers, ["vault.deposit_status", "vault.allocation_status"]);
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["EVIDENCE_REVIEW", "USER_PROTECTION", "STRATEGY_REVIEW", "GOVERNANCE_OWNER", "POST_CHECK"]);
   });
 
   it("treats the recorded initial allocation pause as healthy and fails closed on drift", function () {

@@ -144,6 +144,20 @@ export function buildIncidentResponse(checks) {
       { order: 5, gate: "POST_CHECK", action: "Rerun full deployment validation and monitoring, then record the recovery transaction and incident disposition." }
     ]
   };
+  const vaultPauses = checks.filter(check =>
+    (check.id === "vault.deposit_status" || check.id === "vault.allocation_status") &&
+    check.status === "WARNING");
+  if (vaultPauses.length) return {
+    code: "VAULT_OPERATION_PAUSE_REVIEW", severity: "WARNING", automaticTransactions: false,
+    triggers: vaultPauses.map(check => check.id),
+    actions: [
+      { order: 1, gate: "EVIDENCE_REVIEW", action: "Pin the detection block, pause transactions, administrator approvals, Vault accounting, Strategy debt, and deployment record." },
+      { order: 2, gate: "USER_PROTECTION", action: "Confirm existing users can withdraw within available idle liquidity and publish any temporary operational limitation without promising recovery timing." },
+      { order: 3, gate: "STRATEGY_REVIEW", action: "Verify solvency, idle and adapter backing, Strategy exposure, loss bounds, and the original pause condition before proposing any resume operation." },
+      { order: 4, gate: "GOVERNANCE_OWNER", action: "Resume deposits or allocations only from the reviewed Vault owner after the applicable governance controls approve recovery." },
+      { order: 5, gate: "POST_CHECK", action: "Rerun role, backing, limit, and deployment validation before closing the operational review." }
+    ]
+  };
   if (warnings.length) return {
     code: "SAFE_POLICY_REVIEW", severity: "WARNING", automaticTransactions: false,
     triggers: warnings.map(check => check.id),
