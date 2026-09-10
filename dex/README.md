@@ -117,6 +117,17 @@ export PANCAKE_V3_MAX_HOPS="2" # deployment-specific ceiling; allowed range 1-3
 npm run deploy:testnet
 ```
 
+After deployment evidence is produced, generate the unsigned Governance Safe action that activates
+the reviewed emergency Guardian:
+
+```bash
+npm run prepare:roles -- ./deployments/bsc-testnet-97.json
+```
+
+The output validates all four recorded Safe policies and role separation, then encodes
+`EmergencyController.setGuardian(guardian, true)`. It never signs or sends a transaction and marks
+the Treasury as recorded but unfunded.
+
 `deploy:testnet` runs a non-transactional preflight first. It refuses non-chain-97 RPCs, missing or
 unsafe governance settings, timelocks outside 1 hour to 7 days, invalid daily/transaction limits,
 liquidity above minted test supply, insufficient test BNB, unpinned PancakeSwap endpoints, and
@@ -155,6 +166,16 @@ the preflight rejects a shared governance/risk address unless a testnet-only ove
 The automated test suite also reproduces the complete bootstrap locally and verifies both pool
 creation, exact initial-liquidity approvals with no residual Router allowance, Router 2.0 quoting,
 a capped smoke swap, and rejection when minimum-output protection fails.
+
+After deployment, generate the unsigned Governance Safe action for emergency Guardian activation:
+
+```bash
+npm run prepare:role-activation -- ./deployments/bsc-testnet-97.json
+```
+
+The generator rechecks chain 97, full role separation, and the recorded 4-of-7 / 3-of-5 Safe
+policies before encoding `setGuardian(address,true)`. It records Treasury as unfunded and never signs,
+sends, or funds a transaction.
 
 After deployment, run the read-only real-address validator before any smoke swap. It refuses every
 chain except BSC testnet `97`, checks deployed bytecode, verifies PancakeSwap V2/V3 Router-to-Factory
