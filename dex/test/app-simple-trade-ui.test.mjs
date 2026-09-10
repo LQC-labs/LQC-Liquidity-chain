@@ -160,9 +160,12 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function chainHeadWithin\(timeoutMs=2500\)/);
     assert.match(script, /cfg\.rpcUrls\.map\(url=>new ethers\.JsonRpcProvider/);
     assert.match(script, /chartHealth\.consensusHead\(heads,readProviders\.length\)/);
+    assert.match(script, /getBlock\(headConsensus\.head\)/);
+    assert.match(script, /chartHealth\.consensusHash\(hashes,readProviders\.length\)/);
     assert.match(script, /chartHealth\.chainSync\(primary\.finalizedBlock,consensus\.head,cfg\.candleFinalityBlocks\)/);
     assert.match(script, /sync\.lagBlocks/);
     assert.match(script, /RPC \$\{consensus\.healthySources\}\/\$\{consensus\.configuredSources\}/);
+    assert.match(script, /다중 RPC 블록 해시 합의 실패/);
     assert.match(script, /정상 갱신 \$\{lastHealthyByChart\.get\(chartKey\)\|\|'기록 없음'\}/);
     assert.match(html, /chart-health\.js/);
     assert.match(styles, /data-state="interrupted"/);

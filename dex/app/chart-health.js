@@ -22,5 +22,12 @@
     if(best.length<quorum)return null;
     return Object.freeze({head:best[0],healthySources:best.length,configuredSources,independent:configuredSources>1});
   }
-  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead});
+  function consensusHash(hashes,configuredSources=hashes?.length){
+    if(!Array.isArray(hashes)||!Number.isSafeInteger(configuredSources)||configuredSources<1||configuredSources<hashes.length||hashes.some(hash=>typeof hash!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(hash)))throw new Error('Chart RPC block hash consensus input is invalid');
+    const quorum=Math.floor(configuredSources/2)+1,counts=new Map();let bestHash=null,bestCount=0;
+    for(const value of hashes){const hash=value.toLowerCase(),count=(counts.get(hash)||0)+1;counts.set(hash,count);if(count>bestCount){bestHash=hash;bestCount=count}}
+    if(bestCount<quorum)return null;
+    return Object.freeze({blockHash:bestHash,healthySources:bestCount,configuredSources,independent:configuredSources>1});
+  }
+  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead,consensusHash});
 })(typeof window==='undefined'?globalThis:window);
