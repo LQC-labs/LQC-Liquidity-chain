@@ -36,5 +36,15 @@
     const failures=(current.quarantinedUntil>0?0:current.failures)+1;
     return Object.freeze({failures:failures>=failureThreshold?0:failures,quarantinedUntil:failures>=failureThreshold?now+quarantineMs:0});
   }
-  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead,consensusHash,sourceHealth});
+  function sourceHealthSnapshot(sources,fingerprint,now=Date.now()){
+    if(!Array.isArray(sources)||typeof fingerprint!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(fingerprint)||!Number.isFinite(now)||now<0||sources.some(item=>!item||!Number.isSafeInteger(item.failures)||item.failures<0||item.failures>2||!Number.isFinite(item.quarantinedUntil)||item.quarantinedUntil<0||item.quarantinedUntil>now+60000))throw new Error('Chart RPC health snapshot input is invalid');
+    return Object.freeze({version:1,fingerprint:fingerprint.toLowerCase(),savedAt:now,sources:sources.map(item=>Object.freeze({failures:item.failures,quarantinedUntil:item.quarantinedUntil}))});
+  }
+  function restoreSourceHealth(snapshot,fingerprint,sourceCount,now=Date.now(),maxAgeMs=300000){
+    if(typeof fingerprint!=='string'||!/^0x[0-9a-fA-F]{64}$/.test(fingerprint)||!Number.isSafeInteger(sourceCount)||sourceCount<0||!Number.isFinite(now)||now<0||!Number.isFinite(maxAgeMs)||maxAgeMs<60000)return null;
+    if(!snapshot||snapshot.version!==1||snapshot.fingerprint!==fingerprint.toLowerCase()||!Number.isFinite(snapshot.savedAt)||snapshot.savedAt>now+5000||now-snapshot.savedAt>maxAgeMs||!Array.isArray(snapshot.sources)||snapshot.sources.length!==sourceCount)return null;
+    if(snapshot.sources.some(item=>!item||!Number.isSafeInteger(item.failures)||item.failures<0||item.failures>2||!Number.isFinite(item.quarantinedUntil)||item.quarantinedUntil<0||item.quarantinedUntil>snapshot.savedAt+60000))return null;
+    return Object.freeze(snapshot.sources.map(item=>item.quarantinedUntil>now?Object.freeze({failures:item.failures,quarantinedUntil:item.quarantinedUntil}):Object.freeze({failures:item.quarantinedUntil?0:item.failures,quarantinedUntil:0})));
+  }
+  root.LQCChartHealth=Object.freeze({classify,chainSync,consensusHead,consensusHash,sourceHealth,sourceHealthSnapshot,restoreSourceHealth});
 })(typeof window==='undefined'?globalThis:window);

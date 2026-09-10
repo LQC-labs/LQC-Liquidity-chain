@@ -162,7 +162,9 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /chartHealth\.consensusHead\(heads,readProviders\.length\)/);
     assert.match(script, /getBlock\(headConsensus\.head\)/);
     assert.match(script, /chartHealth\.consensusHash\(hashes,readProviders\.length\)/);
-    assert.match(script, /rpcSourceHealth\[item\.index\]=chartHealth\.sourceHealth/);
+    assert.match(script, /chartHealth\.restoreSourceHealth\(JSON\.parse\(localStorage\.getItem\(rpcHealthMemoryKey\)/);
+    assert.match(script, /chartHealth\.sourceHealthSnapshot\(rpcSourceHealth,cfg\.deploymentFingerprint,now\)/);
+    assert.match(script, /rpcSourceHealth\[index\]=chartHealth\.sourceHealth/);
     assert.match(script, /quarantinedUntil<=now/);
     assert.match(script, /chartHealth\.chainSync\(primary\.finalizedBlock,consensus\.head,cfg\.candleFinalityBlocks\)/);
     assert.match(script, /sync\.lagBlocks/);
