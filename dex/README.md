@@ -317,6 +317,12 @@ The Markets dialog and both token selectors apply the same exact-pair registry b
 users see only assets that have a reviewed quote market with the current counter-token. Unsupported
 pair errors are prevented before an RPC quote or wallet approval is requested.
 
+Before signing, canonical RPC participants simulate the exact populated transaction. A majority of
+all configured sources must return the same call result, agreeing gas estimates must stay within 20%
+of each other and below the reviewed route ceiling, and the bounded estimate is attached as an
+immutable gas limit. Missing quorum, divergent execution, or abnormal gas fails closed before the
+wallet receives the request.
+
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match
 the record exactly or generation fails, preventing mixed-deployment addresses from reaching the UI.

@@ -177,6 +177,11 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /chartHealth\.executionPlanMatches\(plan\.anchorQuote,execution\)/);
     assert.match(script, /ExecutionPlanChangedBeforeSigning/);
     assert.match(script, /method\.populateTransaction\(\.\.\.args\)/);
+    assert.match(script, /function simulateSwapTransaction/);
+    assert.match(script, /blockTag:anchorQuote\.blockNumber/);
+    assert.match(script, /chartHealth\.consensusSimulation\(observations,readProviders\.length,gasCeiling\)/);
+    assert.match(script, /TransactionSimulationConsensusFailed/);
+    assert.match(script, /gasLimit:simulation\.gasLimit/);
     assert.match(script, /chartHealth\.bindTransaction\(anchorQuote,request\)/);
     assert.match(script, /chartHealth\.transactionMatches\(binding,request\)/);
     assert.match(script, /signer\.sendTransaction\(prepared\.request\)/);
