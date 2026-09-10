@@ -322,6 +322,10 @@ all configured sources must return the same call result, agreeing gas estimates 
 of each other and below the reviewed route ceiling, and the bounded estimate is attached as an
 immutable gas limit. Missing quorum, divergent execution, or abnormal gas fails closed before the
 wallet receives the request.
+The connected wallet's pending nonce and one unambiguous fee model (legacy or EIP-1559) are then
+bound into the same immutable request. The pending nonce is checked once more immediately before
+submission, so a parallel transaction or any mutation of the target, calldata, value, gas, fee, or
+nonce stops the swap before signing.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match
