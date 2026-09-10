@@ -51,6 +51,17 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /chainChanged[^\n]*invalidateWalletContext\(\)/);
   });
 
+  it("tracks a successful speed-up replacement and rejects cancelled or malformed replacements", function () {
+    assert.match(script, /async function waitForFinalTransactionHash\(tx\)/);
+    assert.match(script, /error\?\.code!==['"]TRANSACTION_REPLACED['"]/);
+    assert.match(script, /if\(error\.cancelled\)throw new Error\('TransactionReplacementCancelled'\)/);
+    assert.match(script, /throw new Error\('InvalidTransactionReplacement'\)/);
+    assert.match(script, /return replacement\.hash/);
+    assert.match(script, /const finalTransactionHash=await waitForFinalTransactionHash\(tx\)/);
+    assert.match(script, /verifySubmittedTransaction\(finalTransactionHash,settlementContext\)/);
+    assert.doesNotMatch(script, /await tx\.wait\(\);status\('거래 포함 완료/);
+  });
+
   it("offers a market-first order and familiar balance percentage controls", function () {
     assert.match(html, /<strong>시장가<\/strong>/);
     for (const percent of [25, 50, 75, 100]) assert.match(html, new RegExp(`data-percent="${percent}"`));

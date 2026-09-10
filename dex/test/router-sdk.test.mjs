@@ -325,6 +325,7 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.explainSwapError({ message: "RouteChangedDuringApproval" }).code, "ROUTE_CHANGED");
     assert.equal(sdk.explainSwapError({ code: "NETWORK_ERROR" }).code, "NETWORK_ERROR");
     assert.equal(sdk.explainSwapError({ message: "unexpected provider failure" }).code, "UNKNOWN");
+    assert.equal(sdk.explainSwapError({ message: "TransactionReplacementCancelled" }).code, "USER_REJECTED");
   });
 
   it("rejects malformed proof payloads and degraded canonical evidence", async function () {

@@ -398,6 +398,9 @@ twice. The action remains visibly busy and disabled until the attempt succeeds o
 Each attempt also snapshots the connected account, chain, and wallet-context revision. Account or
 network changes invalidate the attempt, and the client rechecks the live signer and chain before
 every approval and final Swap signature.
+If a wallet speeds up a pending Swap, the client follows only a successful replacement receipt and
+uses the replacement transaction hash for multi-RPC settlement verification and evidence. Cancelled,
+failed, or malformed replacements fail closed and are never recorded as completed trades.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match
