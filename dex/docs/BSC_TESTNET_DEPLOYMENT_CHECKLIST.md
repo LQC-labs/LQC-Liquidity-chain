@@ -103,6 +103,7 @@ npm run configure:app
 
 - [ ] Validator confirms contract bytecode, ownership, module linkage, DEX order, adapters, V3 policy,
       Vault roles, Vault limits, and Vault/Strategy linkage.
+- [ ] Validator confirms the reviewed Guardian Safe is active on-chain and all five operational roles remain separated.
 - [ ] Monitor reports a fresh block, no unexplained Router custody, and fully backed Vault accounting.
 - [ ] BscScan verification bundle matches `SOURCE_COMMIT` and compiler settings.
 - [ ] Publish verified source for every deployed LQC contract.
