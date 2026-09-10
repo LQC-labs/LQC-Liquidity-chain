@@ -48,4 +48,12 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /next==='buy'\?\[quoteToken,selectedAsset\]:\[selectedAsset,quoteToken\]/);
     assert.doesNotMatch(script, /market-row[^\n]*innerHTML/);
   });
+  it("uses an approved Router quote for spot price and labels historical candles as examples", function () {
+    assert.match(html, /id="tickerPrice">—<\/strong>/);
+    assert.match(html, /예시 차트 · 실시간 히스토리 연동 전/);
+    assert.match(script, /function approvedRoutesFor\(inputToken,outputToken,path\)/);
+    assert.match(script, /async function refreshMarketPrice\(\)/);
+    assert.match(script, /marketQuoteRouter\.quoteBest/);
+    assert.doesNotMatch(html, /\$0\.091138/);
+  });
 });

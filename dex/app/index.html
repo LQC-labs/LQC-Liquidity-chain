@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="LQC Flow DEX — BNB Smart Chain testnet trading interface">
   <title>LQC Flow DEX</title>
-  <link rel="stylesheet" href="styles.css?v=20260910b">
+  <link rel="stylesheet" href="styles.css?v=20260910c">
   <link rel="stylesheet" href="token-search.css?v=20260910a">
 </head>
 <body>
@@ -24,13 +24,13 @@
     <section class="market" aria-label="LQC 시장 차트">
       <button class="market-selector" id="marketSelector" type="button" aria-haspopup="dialog"><span class="market-token-icon">L</span><strong id="marketPair">LQC / BNB</strong><span>⌄</span><small>검토된 마켓</small></button>
       <div class="ticker-row">
-        <div class="price-block"><span class="price-label">Price ⇌</span><strong class="ticker-price">$0.091138</strong><span class="ticker-change negative">-0.59%</span></div>
+        <div class="price-block"><span class="price-label" id="priceSourceLabel">Router spot price</span><strong class="ticker-price" id="tickerPrice">—</strong><span class="ticker-change" id="tickerChange">24h —</span></div>
         <dl class="quick-stats">
-          <div><dt>Market cap</dt><dd>$191.39M</dd></div>
-          <div><dt>Liquidity</dt><dd>$29.78K</dd></div>
-          <div><dt>24h volume</dt><dd>$513.06</dd></div>
-          <div><dt>Holders</dt><dd>249</dd></div>
-          <div><dt>Top 10</dt><dd>99.93%</dd></div>
+          <div><dt>Quote asset</dt><dd id="quoteAssetStat">—</dd></div>
+          <div><dt>Liquidity</dt><dd>연동 대기</dd></div>
+          <div><dt>24h volume</dt><dd>연동 대기</dd></div>
+          <div><dt>Network</dt><dd>BSC Testnet</dd></div>
+          <div><dt>Price status</dt><dd id="priceStatusStat">배포 대기</dd></div>
         </dl>
       </div>
 
@@ -45,6 +45,7 @@
       </div>
 
       <div class="chart-wrap">
+        <span class="chart-data-badge">예시 차트 · 실시간 히스토리 연동 전</span>
         <div class="ma-legend"><span>MA5: 0.09199</span><span>MA10: 0.09153</span><span>MA20: 0.09112</span></div>
         <div class="pnl-strip"><b>PnL -0.4817</b><span>68.4199</span><em>0.09564</em></div>
         <svg class="chart" viewBox="0 0 760 390" role="img" aria-label="LQC 테스트넷 예시 캔들 차트">
@@ -108,6 +109,6 @@
   <dialog class="market-dialog" id="marketDialog"><form method="dialog"><div class="dialog-head"><div><h2>Markets</h2><span class="token-count" id="marketCount">0개 마켓</span></div><button value="cancel" aria-label="마켓 닫기">×</button></div><label class="token-search"><span aria-hidden="true">⌕</span><input id="marketSearch" type="search" autocomplete="off" spellcheck="false" placeholder="토큰 검색" aria-label="마켓 토큰 검색"></label><div class="market-filter" aria-label="마켓 필터"><button class="active" type="button">All</button><span>배포·위험 검토 완료 토큰만 표시</span></div><div class="market-table-head"><span># · Token</span><span>Price</span><span>Status</span></div><div class="market-list" id="marketList" role="listbox"></div><p class="token-empty" id="marketEmpty" hidden>일치하는 활성 마켓이 없습니다.</p></form></dialog>
   <dialog id="walletDialog"><form method="dialog"><div class="dialog-head"><h2>지갑 선택</h2><button value="cancel" aria-label="닫기">×</button></div><p class="wallet-help">기기에 설치되었거나 앱 내부에서 제공되는 비수탁형 지갑을 선택하세요.</p><div class="wallet-list" id="walletList" role="listbox"></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js?v=20260906m"></script><script src="router-sdk.js?v=20260906n"></script><script src="app.js?v=20260910b"></script>
+  <script src="config.js?v=20260906m"></script><script src="router-sdk.js?v=20260906n"></script><script src="app.js?v=20260910c"></script>
 </body>
 </html>
