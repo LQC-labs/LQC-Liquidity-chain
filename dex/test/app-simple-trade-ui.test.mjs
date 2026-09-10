@@ -147,11 +147,23 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /id="lastTradeLink"/);
     assert.match(html, /id="lastSettledOutput"/);
     assert.match(html, /id="lastEvidenceHash"/);
+    assert.match(html, /id="tradeHistoryButton"/);
+    assert.match(html, /id="tradeHistoryDialog"/);
+    assert.match(html, /id="tradeHistoryList"/);
+    assert.match(html, /id="tradeHistoryCount"/);
     assert.match(script, /function storedExecutionEvidence/);
     assert.match(script, /sdk\.verifyExecutionEvidence/);
     assert.match(script, /function rememberExecutionEvidence/);
     assert.match(script, /sdk\.buildExecutionEvidence\(plan\.anchorQuote,settlement,cfg\.deploymentFingerprint,Date\.now\(\),ethers\)/);
     assert.match(script, /\.slice\(0,10\)/);
+    assert.match(script, /function downloadExecutionEvidence/);
+    assert.match(script, /new Blob\(\[JSON\.stringify\(evidence,null,2\)\]/);
+    assert.match(script, /URL\.createObjectURL\(blob\)/);
+    assert.match(script, /URL\.revokeObjectURL\(url\)/);
+    assert.match(script, /function renderExecutionHistory/);
+    assert.match(script, /tradeHistoryList\.replaceChildren/);
+    assert.match(script, /download\.onclick=\(\)=>downloadExecutionEvidence\(evidence\)/);
+    assert.doesNotMatch(script, /trade-history-item[^\n]*innerHTML/);
   });
 
   it("shows candle connection health and retries failures with bounded backoff", function () {

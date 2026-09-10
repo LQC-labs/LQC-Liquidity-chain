@@ -342,6 +342,9 @@ Each verified swap is reduced to tamper-evident execution evidence that binds th
 canonical quote, approved route request, final execution policy, immutable wallet transaction, and
 confirmed settlement. The browser retains at most ten valid records for the exact deployment and
 shows the latest transaction link, actual received amount, and evidence hash in Trade Details.
+Users can open a bounded history dialog for all ten retained records, follow each transaction to the
+configured BSC testnet explorer, and download an individual human-readable JSON evidence file. The
+history and export paths re-run evidence verification and never render untrusted record HTML.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match
