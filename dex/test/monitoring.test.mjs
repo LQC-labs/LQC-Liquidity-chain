@@ -39,6 +39,20 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.counts.critical, 3);
   });
 
+  it("isolates a stale RPC and requires independent chain confirmation", function () {
+    const input = healthyInput();
+    input.block.timestamp -= 1000;
+    const report = buildMonitoringReport(input);
+
+    assert.equal(report.status, "CRITICAL");
+    assert.equal(report.incident.code, "CHAIN_DATA_STALE");
+    assert.equal(report.incident.severity, "CRITICAL");
+    assert.equal(report.incident.automaticTransactions, false);
+    assert.deepEqual(report.incident.triggers, ["chain.block_freshness"]);
+    assert.deepEqual(report.incident.actions.map(action => action.gate),
+      ["DATA_SOURCE_FAIL_CLOSED", "INDEPENDENT_RPC", "GUARDIAN_MULTISIG", "POST_CHECK"]);
+  });
+
   it("creates a governed response when deployment validation detects configuration drift", function () {
     const input = healthyInput();
     input.validation = null;

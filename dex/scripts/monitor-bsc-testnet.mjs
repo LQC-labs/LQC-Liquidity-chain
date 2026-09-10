@@ -9,6 +9,18 @@ const OWNABLE_ABI = ["function owner() view returns(address)", "function pending
 const SAFE_ABI = ["function getOwners() view returns(address[])", "function getThreshold() view returns(uint256)"];
 
 export function buildIncidentResponse(checks) {
+  const staleBlock = checks.find(check =>
+    check.id === "chain.block_freshness" && check.status === "CRITICAL");
+  if (staleBlock) return {
+    code: "CHAIN_DATA_STALE", severity: "CRITICAL", automaticTransactions: false,
+    triggers: [staleBlock.id],
+    actions: [
+      { order: 1, gate: "DATA_SOURCE_FAIL_CLOSED", action: "Stop route publication and transaction submission from the affected RPC; do not make on-chain decisions from stale data." },
+      { order: 2, gate: "INDEPENDENT_RPC", action: "Compare the latest finalized block, timestamp, chain id, and block hash through at least one independent BSC testnet provider." },
+      { order: 3, gate: "GUARDIAN_MULTISIG", action: "Pause swaps only when an independent fresh provider confirms a chain-level or protocol safety condition requiring intervention." },
+      { order: 4, gate: "POST_CHECK", action: "Restore monitoring and transaction submission only after block freshness and full deployment validation pass on independent providers." }
+    ]
+  };
   const safeChecks = checks.filter(check => check.id.startsWith("multisig."));
   const critical = safeChecks.filter(check => check.status === "CRITICAL");
   const warnings = safeChecks.filter(check => check.status === "WARNING");

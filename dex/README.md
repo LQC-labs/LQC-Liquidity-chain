@@ -212,7 +212,8 @@ npm run build:review-bundle -- <deployment.json> <monitoring.json> <drill.json> 
 The command writes all three outputs only after validation succeeds. It refuses to overwrite an
 existing evidence bundle, preserving the original review record.
 
-The JSON report verifies block freshness and the strict deployment configuration, reports emergency
+The JSON report verifies block freshness and the strict deployment configuration, fails closed with
+independent-provider confirmation steps when RPC data is stale, reports emergency
 pause and pending-ownership states, and checks that execution, native, and automatic routers retain
 no BNB, LQC, mock-USDT, or WBNB custody. It also compares both Safe owner sets and thresholds with
 the deployment record: a weakened policy is critical, while any other signer or threshold change
