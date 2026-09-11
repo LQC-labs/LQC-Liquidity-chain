@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
-import { buildMonitoringReport, fetchIndexerHealth } from "../scripts/monitor-bsc-testnet.mjs";
+import { buildMonitoringReport, fetchIndexerHealth, readSafePolicyAtBlock } from "../scripts/monitor-bsc-testnet.mjs";
 
 const vaultOwner = "0x0000000000000000000000000000000000000001";
 const vaultPauseAdmin = "0x0000000000000000000000000000000000000002";
@@ -291,6 +291,26 @@ describe("LQC BSC testnet monitoring report", function () {
       assert.equal(report.checks.find(item => item.id === `multisig.governance.${extension}`).status, "CRITICAL");
       assert.equal(report.incident.code, "SAFE_POLICY_BREACH");
     }
+  });
+
+  it("reads every Safe policy field from one pinned block", async function () {
+    const observations = [];
+    const record = (name, value) => (...args) => {
+      observations.push({ name, blockTag: args.at(-1)?.blockTag });
+      return Promise.resolve(value);
+    };
+    const safe = {
+      getOwners: record("owners", healthyInput().safeState[0].owners),
+      getThreshold: record("threshold", 4n),
+      getModulesPaginated: record("modules", [[], "0x0000000000000000000000000000000000000001"]),
+      getStorageAt: record("storage", `0x${"00".repeat(32)}`)
+    };
+    const snapshot = await readSafePolicyAtBlock(safe, 123);
+    assert.equal(snapshot.threshold, 4);
+    assert.equal(snapshot.modules.length, 0);
+    assert.equal(observations.length, 6);
+    assert.deepEqual([...new Set(observations.map(item => item.blockTag))], [123]);
+    await assert.rejects(() => readSafePolicyAtBlock(safe, -1), /non-negative integer/);
   });
 
   it("includes a healthy candle indexer in the operational report", function () {

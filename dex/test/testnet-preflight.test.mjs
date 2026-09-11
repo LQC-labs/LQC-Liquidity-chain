@@ -68,7 +68,8 @@ describe("BSC testnet deployment preflight", function () {
     assert.throws(() => assertReviewedSourceCommit("short", "a".repeat(40)), /40-character/);
     assert.throws(() => assertReviewedSourceCommit("a".repeat(40), "b".repeat(40)), /does not match/);
     assert.throws(() => assertReviewedSourceCommit("a".repeat(40), "a".repeat(40), true), /dirty Git worktree/);
-    const provider = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("11"), getCode: async () => "0x6000" };
+    const provider = { getNetwork: async () => ({ chainId: 97n }), getBlockNumber: async () => 123,
+      getBalance: async () => ethers.parseEther("11"), getCode: async () => "0x6000" };
     await assert.rejects(() => runTestnetPreflight(base, provider, { commit: "b".repeat(40), dirty: false }), /does not match/);
   });
 
@@ -114,7 +115,8 @@ describe("BSC testnet deployment preflight", function () {
   });
 
   it("checks the live chain, deployer balance, and configured bytecode", async function () {
-    const provider = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("11"), getCode: async () => "0x6000", call: safeCall };
+    const provider = { getNetwork: async () => ({ chainId: 97n }), getBlockNumber: async () => 123,
+      getBalance: async () => ethers.parseEther("11"), getCode: async () => "0x6000", call: safeCall };
     const result = await runTestnetPreflight(base, provider, null, approvedReview);
     assert.equal(result.chainId, 97);
     assert.equal(result.riskAdmin, riskAdmin);
@@ -125,7 +127,8 @@ describe("BSC testnet deployment preflight", function () {
   });
 
   it("reserves deployment gas and requires a deployed multisig by default", async function () {
-    const funded = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("10.49"), getCode: async () => "0x6000", call: safeCall };
+    const funded = { getNetwork: async () => ({ chainId: 97n }), getBlockNumber: async () => 123,
+      getBalance: async () => ethers.parseEther("10.49"), getCode: async () => "0x6000", call: safeCall };
     await assert.rejects(() => runTestnetPreflight(base, funded), /gas reserve/);
     const eoaOwner = { ...funded, getBalance: async () => ethers.parseEther("11"),
       getCode: async address => ethers.getAddress(address) === owner ? "0x" : "0x6000" };
@@ -140,7 +143,11 @@ describe("BSC testnet deployment preflight", function () {
   });
 
   it("requires the reviewed 4-of-7 governance and 3-of-5 risk Safe policies", async function () {
-    const provider = { call: safeCall };
+    const observedBlocks = [];
+    const provider = { getBlockNumber: async () => 123, call: async request => {
+      observedBlocks.push(request.blockTag);
+      return safeCall(request);
+    } };
     const governance = await assertSafeMultisig(provider, owner, "FACTORY_OWNER", 7n, 4n);
     const risk = await assertSafeMultisig(provider, riskAdmin, "RISK_ADMIN", 5n, 3n);
     assert.equal(governance.owners.length, 7);
@@ -151,8 +158,9 @@ describe("BSC testnet deployment preflight", function () {
     const treasuryPolicy = await assertSafeMultisig(provider, treasury, "TREASURY_ADDRESS", 5n, 3n);
     assert.equal(guardianPolicy.threshold, 3n);
     assert.equal(treasuryPolicy.threshold, 3n);
+    assert.deepEqual([...new Set(observedBlocks)], [123]);
 
-    const weak = { call: async ({ data }) => data.slice(0, 10) === safeInterface.getFunction("getOwners").selector
+    const weak = { getBlockNumber: async () => 123, call: async ({ data }) => data.slice(0, 10) === safeInterface.getFunction("getOwners").selector
       ? safeInterface.encodeFunctionResult("getOwners", [riskOwners])
       : data.slice(0, 10) === safeInterface.getFunction("getThreshold").selector
         ? safeInterface.encodeFunctionResult("getThreshold", [2n])
@@ -160,7 +168,7 @@ describe("BSC testnet deployment preflight", function () {
           ? safeInterface.encodeFunctionResult("getModulesPaginated", [[], safeSentinel])
           : safeInterface.encodeFunctionResult("getStorageAt", [`0x${"00".repeat(32)}`]) };
     await assert.rejects(() => assertSafeMultisig(weak, riskAdmin, "RISK_ADMIN", 5n, 3n), /3-of-5/);
-    const stronger = { call: async ({ data }) => data.slice(0, 10) === safeInterface.getFunction("getOwners").selector
+    const stronger = { getBlockNumber: async () => 123, call: async ({ data }) => data.slice(0, 10) === safeInterface.getFunction("getOwners").selector
       ? safeInterface.encodeFunctionResult("getOwners", [[...riskOwners, ethers.getAddress("0x0000000000000000000000000000000000000063")]])
       : data.slice(0, 10) === safeInterface.getFunction("getThreshold").selector
         ? safeInterface.encodeFunctionResult("getThreshold", [4n])
@@ -168,14 +176,14 @@ describe("BSC testnet deployment preflight", function () {
           ? safeInterface.encodeFunctionResult("getModulesPaginated", [[], safeSentinel])
           : safeInterface.encodeFunctionResult("getStorageAt", [`0x${"00".repeat(32)}`]) };
     await assert.rejects(() => assertSafeMultisig(stronger, riskAdmin, "RISK_ADMIN", 5n, 3n), /exactly match/);
-    const moduleEnabled = { call: async request => request.data.slice(0, 10) === safeInterface.getFunction("getModulesPaginated").selector
+    const moduleEnabled = { getBlockNumber: async () => 123, call: async request => request.data.slice(0, 10) === safeInterface.getFunction("getModulesPaginated").selector
       ? safeInterface.encodeFunctionResult("getModulesPaginated", [[ethers.getAddress("0x0000000000000000000000000000000000000064")], safeSentinel])
       : safeCall(request) };
     await assert.rejects(() => assertSafeMultisig(moduleEnabled, riskAdmin, "RISK_ADMIN", 5n, 3n), /must not enable/);
-    const extensionEnabled = { call: async request => request.data.slice(0, 10) === safeInterface.getFunction("getStorageAt").selector
+    const extensionEnabled = { getBlockNumber: async () => 123, call: async request => request.data.slice(0, 10) === safeInterface.getFunction("getStorageAt").selector
       ? safeInterface.encodeFunctionResult("getStorageAt", [`0x${"00".repeat(12)}${"64".padStart(40, "0")}`])
       : safeCall(request) };
     await assert.rejects(() => assertSafeMultisig(extensionEnabled, riskAdmin, "RISK_ADMIN", 5n, 3n), /guard or fallback handler/);
-    await assert.rejects(() => assertSafeMultisig({ call: async () => "0x" }, owner, "FACTORY_OWNER", 7n, 4n), /Safe/);
+    await assert.rejects(() => assertSafeMultisig({ getBlockNumber: async () => 123, call: async () => "0x" }, owner, "FACTORY_OWNER", 7n, 4n), /Safe/);
   });
 });

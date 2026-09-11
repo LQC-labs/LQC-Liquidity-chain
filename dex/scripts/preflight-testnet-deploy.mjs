@@ -41,14 +41,20 @@ const boundedInteger = (name, value, minimum, maximum) => {
   return parsed;
 };
 
-export async function assertSafeMultisig(provider, address, label, expectedOwners, expectedThreshold) {
+export async function assertSafeMultisig(provider, address, label, expectedOwners, expectedThreshold, blockTag = null) {
   let owners, threshold, modules, next, extensions;
   try {
-    const ownersResult = await provider.call({ to: address, data: SAFE_INTERFACE.encodeFunctionData("getOwners") });
-    const thresholdResult = await provider.call({ to: address, data: SAFE_INTERFACE.encodeFunctionData("getThreshold") });
+    const pinnedBlock = blockTag ?? await provider.getBlockNumber();
+    if (!Number.isInteger(pinnedBlock) || pinnedBlock < 0) throw new Error("invalid block");
+    const ownersResult = await provider.call({ to: address, blockTag: pinnedBlock,
+      data: SAFE_INTERFACE.encodeFunctionData("getOwners") });
+    const thresholdResult = await provider.call({ to: address, blockTag: pinnedBlock,
+      data: SAFE_INTERFACE.encodeFunctionData("getThreshold") });
     const modulesResult = await provider.call({ to: address,
+      blockTag: pinnedBlock,
       data: SAFE_INTERFACE.encodeFunctionData("getModulesPaginated", [SAFE_SENTINEL, 50]) });
     const extensionResults = await Promise.all(SAFE_EXTENSION_SLOTS.map(slot => provider.call({ to: address,
+      blockTag: pinnedBlock,
       data: SAFE_INTERFACE.encodeFunctionData("getStorageAt", [BigInt(slot), 1]) })));
     [owners] = SAFE_INTERFACE.decodeFunctionResult("getOwners", ownersResult);
     [threshold] = SAFE_INTERFACE.decodeFunctionResult("getThreshold", thresholdResult);
@@ -225,6 +231,8 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
   if (gitState) assertReviewedSourceCommit(config.sourceCommit, gitState.commit, gitState.dirty);
   const network = await provider.getNetwork();
   assertBscTestnetChain(network.chainId);
+  const safePolicyBlock = await provider.getBlockNumber();
+  if (!Number.isInteger(safePolicyBlock) || safePolicyBlock < 0) throw new Error("Safe policy snapshot block is invalid.");
   const balance = await provider.getBalance(config.walletAddress);
   if (balance < config.bnbLiquidity + config.gasReserve) {
     throw new Error("Deployer tBNB balance is below initial BNB liquidity plus the required deployment-gas reserve.");
@@ -249,16 +257,16 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
   let treasurySafe = null;
   if (ownerCode !== "0x") {
     governanceSafe = await assertSafeMultisig(provider, config.owner, "FACTORY_OWNER",
-      config.governanceMinimumOwners, config.governanceMinimumThreshold);
+      config.governanceMinimumOwners, config.governanceMinimumThreshold, safePolicyBlock);
   }
   if (riskAdminCode !== "0x") {
     riskSafe = await assertSafeMultisig(provider, config.riskAdmin, "RISK_ADMIN",
-      config.riskMinimumOwners, config.riskMinimumThreshold);
+      config.riskMinimumOwners, config.riskMinimumThreshold, safePolicyBlock);
   }
   guardianSafe = await assertSafeMultisig(provider, config.guardian, "GUARDIAN_ADDRESS",
-    config.guardianMinimumOwners, config.guardianMinimumThreshold);
+    config.guardianMinimumOwners, config.guardianMinimumThreshold, safePolicyBlock);
   treasurySafe = await assertSafeMultisig(provider, config.treasury, "TREASURY_ADDRESS",
-    config.treasuryMinimumOwners, config.treasuryMinimumThreshold);
+    config.treasuryMinimumOwners, config.treasuryMinimumThreshold, safePolicyBlock);
   if(roleReview)assertRoleReviewSafePolicies(roleReview,{governance:{address:config.owner,...governanceSafe},risk:{address:config.riskAdmin,...riskSafe},guardian:{address:config.guardian,...guardianSafe},treasury:{address:config.treasury,...treasurySafe}});
   const named = { governanceOwner: config.owner, riskAdmin: config.riskAdmin, guardian: config.guardian,
     treasury: config.treasury, wbnb: env.WBNB_ADDRESS };

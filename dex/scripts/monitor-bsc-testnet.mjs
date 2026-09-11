@@ -21,6 +21,20 @@ const SAFE_EXTENSION_SLOTS = {
 
 const addressFromSafeStorage = value => ethers.getAddress(ethers.dataSlice(value, 12));
 
+export async function readSafePolicyAtBlock(safe, blockTag) {
+  if (!Number.isInteger(blockTag) || blockTag < 0) throw new Error("Safe policy block must be a non-negative integer");
+  const overrides = { blockTag };
+  const [owners, threshold, modulePage, ...extensionValues] = await Promise.all([
+    safe.getOwners(overrides), safe.getThreshold(overrides),
+    safe.getModulesPaginated(SAFE_SENTINEL, 50, overrides),
+    ...Object.values(SAFE_EXTENSION_SLOTS).map(slot => safe.getStorageAt(BigInt(slot), 1, overrides))
+  ]);
+  if (modulePage[1] !== SAFE_SENTINEL) throw new Error("Safe module list exceeds the 50-module monitoring bound");
+  const extensions = Object.fromEntries(Object.keys(SAFE_EXTENSION_SLOTS).map((extension, index) =>
+    [extension, addressFromSafeStorage(extensionValues[index])]));
+  return { owners, threshold: Number(threshold), modules: [...modulePage[0]], extensions };
+}
+
 export function buildIncidentResponse(checks) {
   const staleBlock = checks.find(check =>
     check.id === "chain.block_freshness" && check.status === "CRITICAL");
@@ -357,14 +371,8 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
     if (!policy) continue;
     try {
       const safe = new ethers.Contract(policy.address, SAFE_ABI, provider);
-      const [owners, threshold, modulePage, ...extensionValues] = await Promise.all([
-        safe.getOwners(), safe.getThreshold(), safe.getModulesPaginated(SAFE_SENTINEL, 50),
-        ...Object.values(SAFE_EXTENSION_SLOTS).map(slot => safe.getStorageAt(BigInt(slot), 1))
-      ]);
-      if (modulePage[1] !== SAFE_SENTINEL) throw new Error("Safe module list exceeds the 50-module monitoring bound");
-      const extensions = Object.fromEntries(Object.keys(SAFE_EXTENSION_SLOTS).map((extension, index) =>
-        [extension, addressFromSafeStorage(extensionValues[index])]));
-      safeState.push({ name, owners, modules: [...modulePage[0]], extensions, threshold: Number(threshold), expectedOwners: policy.owners,
+      const snapshot = await readSafePolicyAtBlock(safe, Number(latest.number));
+      safeState.push({ name, ...snapshot, expectedOwners: policy.owners,
         expectedThreshold: Number(policy.threshold), minimumOwners: Number(policy.minimumOwners),
         minimumThreshold: Number(policy.minimumThreshold) });
     } catch (error) {

@@ -56,6 +56,8 @@ It also requires the standard Safe module list to remain empty, because an enabl
 execute transactions outside the normal owner-signature threshold.
 For the TESTNET MVP baseline, Transaction Guard, Module Guard, and Fallback Handler storage slots
 must also remain empty during preflight and continuous monitoring.
+All Safe policy fields are read against one pinned block during preflight and continuous monitoring
+so signer rotation cannot mix values from different chain states inside a single approval decision.
 
 - [ ] RPC returns BSC testnet chain id `97`.
 - [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.
