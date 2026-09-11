@@ -8,8 +8,10 @@ import { assertRoleReviewSafePolicies, verifyRoleAddressReview } from "./prepare
 
 const SAFE_INTERFACE = new ethers.Interface([
   "function getOwners() view returns (address[])",
-  "function getThreshold() view returns (uint256)"
+  "function getThreshold() view returns (uint256)",
+  "function getModulesPaginated(address start,uint256 pageSize) view returns(address[] array,address next)"
 ]);
+const SAFE_SENTINEL = "0x0000000000000000000000000000000000000001";
 
 const positive = (name, value) => {
   let parsed;
@@ -34,14 +36,17 @@ const boundedInteger = (name, value, minimum, maximum) => {
 };
 
 export async function assertSafeMultisig(provider, address, label, expectedOwners, expectedThreshold) {
-  let owners, threshold;
+  let owners, threshold, modules, next;
   try {
     const ownersResult = await provider.call({ to: address, data: SAFE_INTERFACE.encodeFunctionData("getOwners") });
     const thresholdResult = await provider.call({ to: address, data: SAFE_INTERFACE.encodeFunctionData("getThreshold") });
+    const modulesResult = await provider.call({ to: address,
+      data: SAFE_INTERFACE.encodeFunctionData("getModulesPaginated", [SAFE_SENTINEL, 50]) });
     [owners] = SAFE_INTERFACE.decodeFunctionResult("getOwners", ownersResult);
     [threshold] = SAFE_INTERFACE.decodeFunctionResult("getThreshold", thresholdResult);
+    [modules, next] = SAFE_INTERFACE.decodeFunctionResult("getModulesPaginated", modulesResult);
   } catch {
-    throw new Error(`${label} must expose the Safe getOwners/getThreshold interface.`);
+    throw new Error(`${label} must expose the required Safe policy interfaces.`);
   }
   const normalized = owners.map(owner => ethers.getAddress(owner));
   if (normalized.some(owner => owner === ethers.ZeroAddress) || new Set(normalized).size !== normalized.length) {
@@ -49,6 +54,9 @@ export async function assertSafeMultisig(provider, address, label, expectedOwner
   }
   if (BigInt(normalized.length) !== expectedOwners || threshold !== expectedThreshold) {
     throw new Error(`${label} does not exactly match the reviewed ${expectedThreshold}-of-${expectedOwners} Safe policy.`);
+  }
+  if (modules.length !== 0 || next !== SAFE_SENTINEL) {
+    throw new Error(`${label} must not enable a threshold-bypassing Safe module.`);
   }
   return { owners: normalized, threshold };
 }

@@ -247,6 +247,42 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.incident.actions[0].gate, "EVIDENCE_REVIEW");
   });
 
+  it("fails closed when signer rotation creates cross-Safe threshold control", function () {
+    const input = healthyInput(), shared = input.safeState[0].owners.slice(0, 4);
+    input.safeState.push({ name: "risk", owners: [...shared, "0x0000000000000000000000000000000000000061"], expectedOwners: ["0x0000000000000000000000000000000000000041", "0x0000000000000000000000000000000000000042", "0x0000000000000000000000000000000000000043", "0x0000000000000000000000000000000000000044", "0x0000000000000000000000000000000000000045"], threshold: 3, expectedThreshold: 3, minimumOwners: 5, minimumThreshold: 3 });
+    const report = buildMonitoringReport(input);
+    const check = report.checks.find(item => item.id === "multisig.cross.governance.risk");
+    assert.equal(check.status, "CRITICAL");
+    assert.equal(report.status, "CRITICAL");
+    assert.equal(report.incident.code, "SAFE_POLICY_BREACH");
+  });
+
+  it("detects threshold control shared only by Risk and Guardian Safes", function () {
+    const input = healthyInput();
+    const shared = input.safeState[0].owners.slice(0, 3);
+    input.safeState.push(
+      { name: "risk", owners: [...shared, "0x0000000000000000000000000000000000000061", "0x0000000000000000000000000000000000000062"], expectedOwners: Array.from({ length: 5 }, (_, index) => `0x${(index + 40).toString(16).padStart(40, "0")}`), threshold: 3, expectedThreshold: 3, minimumOwners: 5, minimumThreshold: 3 },
+      { name: "guardian", owners: [...shared, "0x0000000000000000000000000000000000000071", "0x0000000000000000000000000000000000000072"], expectedOwners: Array.from({ length: 5 }, (_, index) => `0x${(index + 50).toString(16).padStart(40, "0")}`), threshold: 3, expectedThreshold: 3, minimumOwners: 5, minimumThreshold: 3 }
+    );
+    const report = buildMonitoringReport(input);
+    const check = report.checks.find(item => item.id === "multisig.cross.risk.guardian");
+    assert.equal(check.status, "CRITICAL");
+    assert.equal(report.incident.code, "SAFE_POLICY_BREACH");
+    assert.equal(report.incident.triggers.includes(check.id), true);
+  });
+
+  it("fails closed when a Safe enables a threshold-bypassing module", function () {
+    const input = healthyInput();
+    input.safeState[0].modules = ["0x0000000000000000000000000000000000000081"];
+    const report = buildMonitoringReport(input);
+    const check = report.checks.find(item => item.id === "multisig.governance.modules");
+    assert.equal(check.status, "CRITICAL");
+    assert.equal(report.status, "CRITICAL");
+    assert.equal(report.incident.code, "SAFE_POLICY_BREACH");
+    assert.equal(report.incident.triggers.includes(check.id), true);
+    assert.equal(report.incident.automaticTransactions, false);
+  });
+
   it("includes a healthy candle indexer in the operational report", function () {
     const input=healthyInput();input.indexerState={ready:true,chainId:97,cursor:100,finalizedHead:99,lagBlocks:0,reorgCount:0,lastReorgAt:null};
     const report=buildMonitoringReport(input);

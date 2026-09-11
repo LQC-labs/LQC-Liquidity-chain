@@ -6,7 +6,12 @@ import { validateBscTestnet } from "./validate-bsc-testnet.mjs";
 
 const BALANCE_ABI = ["function balanceOf(address) view returns(uint256)"];
 const OWNABLE_ABI = ["function owner() view returns(address)", "function pendingOwner() view returns(address)"];
-const SAFE_ABI = ["function getOwners() view returns(address[])", "function getThreshold() view returns(uint256)"];
+const SAFE_ABI = [
+  "function getOwners() view returns(address[])",
+  "function getThreshold() view returns(uint256)",
+  "function getModulesPaginated(address start,uint256 pageSize) view returns(address[] array,address next)"
+];
+const SAFE_SENTINEL = "0x0000000000000000000000000000000000000001";
 
 export function buildIncidentResponse(checks) {
   const staleBlock = checks.find(check =>
@@ -213,6 +218,7 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
   for (const item of ownership) add(`ownership.${item.contract}.pending`,
     item.pendingOwner === ethers.ZeroAddress ? "PASS" : "WARNING",
     item.pendingOwner === ethers.ZeroAddress ? "no pending ownership transfer" : `pending owner ${item.pendingOwner}`);
+  const readableSafes = [];
   for (const safe of safeState) {
     if (safe.error) {
       add(`multisig.${safe.name}.readability`, "CRITICAL", safe.error);
@@ -221,6 +227,11 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     const owners = safe.owners.map(owner => ethers.getAddress(owner));
     const expected = safe.expectedOwners.map(owner => ethers.getAddress(owner));
     const unique = new Set(owners.map(owner => owner.toLowerCase()));
+    readableSafes.push({ name: safe.name, owners: unique, threshold: Number(safe.expectedThreshold) });
+    const modules = (safe.modules || []).map(module => ethers.getAddress(module));
+    add(`multisig.${safe.name}.modules`, modules.length === 0 ? "PASS" : "CRITICAL",
+      modules.length === 0 ? "no threshold-bypassing Safe modules enabled" :
+        `${modules.length} enabled Safe module(s) require explicit security review and baseline approval`);
     const validOwners = owners.length === expected.length && unique.size === owners.length &&
       !owners.some(owner => owner === ethers.ZeroAddress);
     add(`multisig.${safe.name}.policy`, validOwners && safe.threshold === safe.expectedThreshold
@@ -233,6 +244,13 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     add(`multisig.${safe.name}.threshold`, thresholdStatus,
       safe.threshold === safe.expectedThreshold ? "threshold matches deployment record" :
         `threshold changed from ${safe.expectedThreshold} to ${safe.threshold}`);
+  }
+  for (let left = 0; left < readableSafes.length; left++) for (let right = left + 1; right < readableSafes.length; right++) {
+    const a = readableSafes[left], b = readableSafes[right];
+    const overlap = [...a.owners].filter(owner => b.owners.has(owner)).length;
+    const limit = Math.max(a.threshold, b.threshold);
+    add(`multisig.cross.${a.name}.${b.name}`, overlap >= limit ? "CRITICAL" : "PASS",
+      `${overlap} shared signers; must remain below shared-control threshold ${limit}`);
   }
   if (vaultState) {
     const accounted = BigInt(vaultState.accountedAssets), debt = BigInt(vaultState.strategyDebt);
@@ -321,13 +339,16 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
     ownership.push({ contract, owner: await owned.owner(), pendingOwner: await owned.pendingOwner() });
   }
   const safeState = [];
-  for (const name of ["governance", "risk"]) {
+  for (const name of ["governance", "risk", "guardian", "treasury"]) {
     const policy = deployment?.multisigPolicies?.[name];
     if (!policy) continue;
     try {
       const safe = new ethers.Contract(policy.address, SAFE_ABI, provider);
-      const [owners, threshold] = await Promise.all([safe.getOwners(), safe.getThreshold()]);
-      safeState.push({ name, owners, threshold: Number(threshold), expectedOwners: policy.owners,
+      const [owners, threshold, modulePage] = await Promise.all([
+        safe.getOwners(), safe.getThreshold(), safe.getModulesPaginated(SAFE_SENTINEL, 50)
+      ]);
+      if (modulePage[1] !== SAFE_SENTINEL) throw new Error("Safe module list exceeds the 50-module monitoring bound");
+      safeState.push({ name, owners, modules: [...modulePage[0]], threshold: Number(threshold), expectedOwners: policy.owners,
         expectedThreshold: Number(policy.threshold), minimumOwners: Number(policy.minimumOwners),
         minimumThreshold: Number(policy.minimumThreshold) });
     } catch (error) {

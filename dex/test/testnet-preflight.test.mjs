@@ -16,8 +16,10 @@ const base = { BSC_TESTNET_RPC_URL: "https://example.invalid", DEPLOYER_PRIVATE_
   SOURCE_COMMIT: "a".repeat(40) };
 const safeInterface = new ethers.Interface([
   "function getOwners() view returns (address[])",
-  "function getThreshold() view returns (uint256)"
+  "function getThreshold() view returns (uint256)",
+  "function getModulesPaginated(address start,uint256 pageSize) view returns(address[] array,address next)"
 ]);
+const safeSentinel = "0x0000000000000000000000000000000000000001";
 const governanceOwners = Array.from({ length: 7 }, (_, index) => ethers.getAddress(`0x${(index + 10).toString(16).padStart(40, "0")}`));
 const riskOwners = Array.from({ length: 5 }, (_, index) => ethers.getAddress(`0x${(index + 30).toString(16).padStart(40, "0")}`));
 const guardianOwners = Array.from({ length: 5 }, (_, index) => ethers.getAddress(`0x${(index + 40).toString(16).padStart(40, "0")}`));
@@ -32,6 +34,9 @@ const safeCall = async ({ to, data }) => {
   }
   if (selector === safeInterface.getFunction("getThreshold").selector) {
     return safeInterface.encodeFunctionResult("getThreshold", [owners.length === 7 ? 4n : 3n]);
+  }
+  if (selector === safeInterface.getFunction("getModulesPaginated").selector) {
+    return safeInterface.encodeFunctionResult("getModulesPaginated", [[], safeSentinel]);
   }
   throw new Error("unsupported call");
 };
@@ -145,12 +150,20 @@ describe("BSC testnet deployment preflight", function () {
 
     const weak = { call: async ({ data }) => data.slice(0, 10) === safeInterface.getFunction("getOwners").selector
       ? safeInterface.encodeFunctionResult("getOwners", [riskOwners])
-      : safeInterface.encodeFunctionResult("getThreshold", [2n]) };
+      : data.slice(0, 10) === safeInterface.getFunction("getThreshold").selector
+        ? safeInterface.encodeFunctionResult("getThreshold", [2n])
+        : safeInterface.encodeFunctionResult("getModulesPaginated", [[], safeSentinel]) };
     await assert.rejects(() => assertSafeMultisig(weak, riskAdmin, "RISK_ADMIN", 5n, 3n), /3-of-5/);
     const stronger = { call: async ({ data }) => data.slice(0, 10) === safeInterface.getFunction("getOwners").selector
       ? safeInterface.encodeFunctionResult("getOwners", [[...riskOwners, ethers.getAddress("0x0000000000000000000000000000000000000063")]])
-      : safeInterface.encodeFunctionResult("getThreshold", [4n]) };
+      : data.slice(0, 10) === safeInterface.getFunction("getThreshold").selector
+        ? safeInterface.encodeFunctionResult("getThreshold", [4n])
+        : safeInterface.encodeFunctionResult("getModulesPaginated", [[], safeSentinel]) };
     await assert.rejects(() => assertSafeMultisig(stronger, riskAdmin, "RISK_ADMIN", 5n, 3n), /exactly match/);
+    const moduleEnabled = { call: async request => request.data.slice(0, 10) === safeInterface.getFunction("getModulesPaginated").selector
+      ? safeInterface.encodeFunctionResult("getModulesPaginated", [[ethers.getAddress("0x0000000000000000000000000000000000000064")], safeSentinel])
+      : safeCall(request) };
+    await assert.rejects(() => assertSafeMultisig(moduleEnabled, riskAdmin, "RISK_ADMIN", 5n, 3n), /must not enable/);
     await assert.rejects(() => assertSafeMultisig({ call: async () => "0x" }, owner, "FACTORY_OWNER", 7n, 4n), /Safe/);
   });
 });

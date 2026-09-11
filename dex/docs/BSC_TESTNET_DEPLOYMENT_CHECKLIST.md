@@ -49,6 +49,11 @@ entrypoint independently requires deployed Safe contracts for Governance and eve
 override is disabled, and the runtime deployer is separate from all four operational addresses.
 Live preflight and deployment also reject cross-Safe signer overlap large enough for one shared
 coalition to satisfy the approval thresholds of two roles.
+Continuous monitoring repeats this cross-Safe calculation across Governance, Risk, Guardian, and
+Treasury after signer rotations and raises a `SAFE_POLICY_BREACH` incident without sending an
+automatic recovery transaction.
+It also requires the standard Safe module list to remain empty, because an enabled module can
+execute transactions outside the normal owner-signature threshold.
 
 - [ ] RPC returns BSC testnet chain id `97`.
 - [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.
