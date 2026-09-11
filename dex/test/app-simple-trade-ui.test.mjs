@@ -133,6 +133,17 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
   });
 
+  it("proves durable recovery storage before requesting a swap signature", function () {
+    assert.match(script, /pendingExecutionReservationKey/);
+    assert.match(script, /function assertPendingExecutionStorageAvailable\(anchorQuote\)/);
+    assert.match(script, /localStorage\.setItem\(pendingExecutionReservationKey,reservation\)/);
+    assert.match(script, /localStorage\.getItem\(pendingExecutionReservationKey\)!==reservation/);
+    assert.match(script, /localStorage\.removeItem\(pendingExecutionReservationKey\)/);
+    assert.match(script, /throw new Error\('PendingExecutionStorageUnavailable'\)/);
+    assert.match(script, /assertPendingExecutionStorageAvailable\(prepared\.binding\);if\(!chartHealth\.transactionMatches/);
+    assert.match(recoveryLocale, /'error\.storage_unavailable\.message'/);
+  });
+
   it("recovers and verifies a submitted trade after page reload", function () {
     assert.match(script, /lqc-flow-pending-execution:/);
     assert.match(script, /function pendingExecutionState\(\)/);

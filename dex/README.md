@@ -208,6 +208,9 @@ by another tab, invalidate any stale pre-sign wallet context, lock their control
 requiring a reload.
 Browsers without the Web Locks API cannot submit swaps: the UI fails closed rather than falling back to an unsafe
 same-tab-only lock that could permit duplicate signatures from multiple tabs.
+Immediately before requesting a swap signature, the app reserves, reads back, and removes a full-sized recovery
+record. If durable browser storage is unavailable or quota-blocked, execution stops before broadcast and provides
+localized remediation guidance.
 Each operation is bound to a hash of its addresses, limits, amounts, and other settings, so a retry
 cannot silently reuse a successful transaction from a different deployment configuration. Test-token
 minting, exact approvals, and both initial-liquidity transactions are covered by the same recovery flow.

@@ -73,6 +73,7 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.explainSwapError({ message: "execution reverted: InsufficientOutput()" }).code, "PRICE_MOVED");
     assert.equal(sdk.explainSwapError({ message: "daily cap exceeded" }).retryable, false);
     assert.equal(sdk.explainSwapError({ message: "RouteChangedDuringApproval" }).code, "ROUTE_CHANGED");
+    assert.equal(sdk.explainSwapError({ message: "PendingExecutionStorageUnavailable" }).code, "STORAGE_UNAVAILABLE");
   });
 
   it("ranks executable primary and fallback routes by net output and priority", function () {
