@@ -32,6 +32,11 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /TokenAllowanceConsensusFailed/);
   });
 
+  it("requires the approved allowance to equal the requested trade amount", function () {
+    const health = fs.readFileSync(path.resolve(import.meta.dirname, "../app/chart-health.js"), "utf8");
+    assert.match(health, /winner\[0\]\.allowance!==requiredAmount/);
+  });
+
   it("verifies the exact submitted approval and three-block canonical receipt", function () {
     assert.match(app, /chartHealth\.bindTransaction\(\{request:\{chainId:cfg\.chainId,amountIn:value\}/);
     assert.match(app, /consensusSubmittedTransaction\(binding,observations,readProviders\.length,transactionHash\)/);
