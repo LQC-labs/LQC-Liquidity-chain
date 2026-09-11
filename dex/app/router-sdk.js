@@ -55,6 +55,10 @@
     if(typeof allowance!=='bigint'||allowance<0n||typeof amountIn!=='bigint'||amountIn<=0n)throw new Error('Invalid approval state');
     return allowance<amountIn;
   }
+  function isLatestQuote(requestId,currentId){
+    if(!Number.isSafeInteger(requestId)||!Number.isSafeInteger(currentId)||requestId<0||currentId<0)throw new Error('Invalid quote version');
+    return requestId===currentId;
+  }
   function rankRouteQuotes(candidates){
     if(!Array.isArray(candidates))throw new Error('Invalid route quotes');
     return candidates.filter(item=>item&&typeof item.amountOut==='bigint'&&item.amountOut>0n).map(item=>{
@@ -180,5 +184,5 @@
     if(missing.length)throw new Error(`Deployment bytecode missing: ${missing.join(',')}`);
     return{ready:true,chainId:Number(network.chainId),checked:normalized.length};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,isLatestQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
