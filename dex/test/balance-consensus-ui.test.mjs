@@ -19,4 +19,10 @@ describe("LQC DEX pre-trade balance consensus", function () {
     assert.ok(balanceCheck >= 0 && approval > balanceCheck && preparation > balanceCheck);
     assert.match(app, /if\(availableBalance<value\)throw new Error\('InsufficientTradeBalance'\)/);
   });
+
+  it("requires enough BNB for the maximum transaction fee immediately before signing", function () {
+    assert.match(app, /maximumFee=prepared\.request\.gasLimit\*\(prepared\.request\.type===2\?prepared\.request\.maxFeePerGas:prepared\.request\.gasPrice\)/);
+    assert.match(app, /nativeBalance<prepared\.request\.value\+maximumFee/);
+    assert.match(app, /nativeBalance<maximumFee\)throw new Error\('InsufficientGasBalance'\)/);
+  });
 });
