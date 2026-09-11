@@ -4,6 +4,9 @@ Status: **reviewer handoff template — no completed audit is claimed**
 
 ## 1. Pin the review baseline
 
+Use [`AUDIT_SUBMISSION_CHECKLIST.md`](AUDIT_SUBMISSION_CHECKLIST.md) to compare independent
+auditors and track submission, remediation, and retest evidence.
+
 The engagement owner must record the exact Git commit SHA before review begins. Do not audit a moving branch.
 
 ```bash
