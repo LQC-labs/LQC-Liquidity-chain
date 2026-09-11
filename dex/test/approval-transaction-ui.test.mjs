@@ -45,8 +45,25 @@ describe("LQC DEX token approval transaction", function () {
   });
 
   it("binds post-approval allowance verification to the original wallet", function () {
-    assert.match(app, /verifyTokenAllowance\(await token\.getAddress\(\),spender,value,walletContext\.account\);await assertWalletContext\(walletContext\)/);
+    assert.match(app, /verifyTokenAllowance\(tokenAddress,spender,value,walletContext\.account\);await assertWalletContext\(walletContext\)/);
     assert.match(app, /if\(!ethers\.isAddress\(owner\)\)throw new Error\('InvalidAllowanceOwner'\)/);
+  });
+
+  it("persists and recovers approvals before allowing a swap", function () {
+    assert.match(app, /rememberPendingApproval\(submittedHash,prepared\.binding,context\)/);
+    assert.match(app, /if\(transactionHash!==submittedHash\)rememberPendingApproval\(transactionHash,prepared\.binding,context\)/);
+    assert.match(app, /verifyCanonicalApproval\(pending\.transactionHash,pending\.anchorQuote\)/);
+    assert.match(app, /verifyTokenAllowance\(context\.token,context\.spender,context\.amount,context\.owner\)/);
+    assert.match(app, /if\(!clearPendingApproval\(pending\.transactionHash\)\)throw new Error\('PendingApprovalStorageConflict'\)/);
+    assert.match(app, /if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)\)setSwapInFlight\(false\)/);
+  });
+
+  it("fails closed for changed or cancelled persisted approvals", function () {
+    assert.match(app, /approvalInterface\.decodeFunctionData\('approve',binding\.transaction\.data\)/);
+    assert.match(app, /chartHealth\.transactionMatches\(binding,binding\.transaction\)/);
+    assert.match(app, /approvalRecoveryStore\.rememberCancellation\(submittedHash,error\.replacementHash\)/);
+    assert.match(app, /verifyCancelledSubmittedTransaction\(pending\.cancellationHash,pending\.anchorQuote\)/);
+    assert.match(app, /pendingApprovalRecord\.state==='invalid'/);
   });
 
   it("requires the approved allowance to equal the requested trade amount", function () {
