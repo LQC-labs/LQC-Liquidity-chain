@@ -71,7 +71,8 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /const transaction=await signer\.sendTransaction\(request\)/);
     assert.match(app, /rememberPendingApproval\(submittedHash,prepared\.binding,prepared\.context\);if\(!approvalReservationStore\.clear\(prepared\.reservation\)\)/);
     assert.match(app, /error\?\.code==='ACTION_REJECTED'\|\|error\?\.code===4001/);
-    assert.match(app, /approvalReservationRecord\.state!=='none'&&!recoverableReservedApproval/);
+    assert.match(app, /clearedReservedApproval=recoverableReservedApproval&&approvalReservationStore\.clear\(approvalReservationRecord\.serialized\)/);
+    assert.match(app, /approvalReservationRecord\.state!=='none'&&!clearedReservedApproval/);
     assert.match(app, /approvalReservationMatchesPending\(approvalReservationRecord\.value,pendingApprovalRecord\.value\)/);
     assert.match(app, /approvalReservationState\(\)\.state==='none'&&executionReservationState\(\)\.state==='none'/);
     assert.match(app, /else if\(approvalReservationState\(\)\.state!=='none'\)\{const state=approvalReservationState\(\)/);
