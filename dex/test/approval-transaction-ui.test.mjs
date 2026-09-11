@@ -55,7 +55,7 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /verifyCanonicalApproval\(pending\.transactionHash,pending\.anchorQuote\)/);
     assert.match(app, /verifyTokenAllowance\(context\.token,context\.spender,context\.amount,context\.owner\)/);
     assert.match(app, /if\(!clearPendingApproval\(pending\.transactionHash\)\)throw new Error\('PendingApprovalStorageConflict'\)/);
-    assert.match(app, /if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)\)setSwapInFlight\(false\)/);
+    assert.match(app, /if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)&&executionReservationState\(\)\.state==='none'\)setSwapInFlight\(false\)/);
   });
 
   it("fails closed for changed or cancelled persisted approvals", function () {
