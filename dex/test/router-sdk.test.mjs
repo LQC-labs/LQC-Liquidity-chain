@@ -402,6 +402,7 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.validateExecutionQuote(snapshot, current, { maxAgeMs: 999 }), /Invalid quote validation/);
     assert.equal(sdk.explainSwapError(new Error("StaleQuote")).code, "STALE_QUOTE");
     assert.equal(sdk.explainSwapError(new Error("QuotePriceMoved")).code, "PRICE_MOVED");
+    assert.equal(sdk.explainSwapError({ code: "CALL_EXCEPTION" }).code, "SIMULATION_FAILED");
   });
 
 });
