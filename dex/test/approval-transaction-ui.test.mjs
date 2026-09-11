@@ -22,7 +22,10 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /request=Object\.freeze\(\{\.\.\.base,\.\.\.fees,gasLimit:gasProbe\.gasLimit,nonce\}\)/);
     assert.match(app, /transaction=await signer\.sendTransaction\(request\)/);
     assert.match(app, /Object\.freeze\(\{binding,transaction\}\)/);
+    assert.match(app, /approvedSpenders=new Set\(\[cfg\.executionRouterAddress,cfg\.autoRouterAddress,cfg\.nativeRouterAddress\]/);
+    assert.match(app, /!approvedSpenders\.has\(spender\.toLowerCase\(\)\)/);
     assert.equal((app.match(/approveAndVerifyToken\(token,spender,value,walletContext,plan\.anchorQuote\)/g)||[]).length,2);
+    assert.equal((app.match(/if\(allowance>0n\)await approveAndVerifyToken\(token,spender,0n,walletContext,plan\.anchorQuote\)/g)||[]).length,2);
   });
   it("requires a successful receipt and multi-RPC allowance consensus", function () {
     assert.match(app, /verifyCanonicalApproval\(transactionHash,prepared\.binding\)/);
@@ -38,7 +41,7 @@ describe("LQC DEX token approval transaction", function () {
   });
 
   it("verifies the exact submitted approval and three-block canonical receipt", function () {
-    assert.match(app, /chartHealth\.bindTransaction\(\{request:\{chainId:cfg\.chainId,amountIn:value\}/);
+    assert.match(app, /chartHealth\.bindTransaction\(\{request:\{chainId:cfg\.chainId,amountIn:value\|\|1n\}/);
     assert.match(app, /consensusSubmittedTransaction\(binding,observations,readProviders\.length,transactionHash\)/);
     assert.match(app, /consensusTransactionReceipt\(observations\.filter\(item=>indexes\.has\(item\.index\)\),readProviders\.length,transactionHash,requiredConfirmations\)/);
     assert.match(app, /waitForFinalTransactionHash\(prepared\.transaction\)/);
