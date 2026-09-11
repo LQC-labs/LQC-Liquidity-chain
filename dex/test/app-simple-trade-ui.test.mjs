@@ -157,7 +157,9 @@ describe("LQC simple trading UI", function () {
     assert.doesNotMatch(script, /Date\.now\(\)-Number\(value\.submittedAt\)>/);
     assert.match(script, /rememberPendingExecution\(tx\.hash,plan\.anchorQuote,settlementContext\)/);
     assert.match(script, /async function recoverPendingExecution\(pending=storedPendingExecution\(\)\)/);
-    assert.match(script, /function pendingRecoveryDelay\(\)\{const delay=Math\.min\(300000,30000\*\(2\*\*Math\.min\(pendingRecoveryAttempts,4\)\)\)/);
+    assert.match(html, /recovery-backoff\.js[^\n]*app\.js/);
+    assert.match(script, /LQCRecoveryBackoff:recoveryBackoff/);
+    assert.match(script, /function pendingRecoveryDelay\(\)\{const delay=recoveryBackoff\.delay\(pendingRecoveryAttempts\)/);
     assert.match(script, /function schedulePendingRecoveryRetry\(pending,delay=pendingRecoveryDelay\(\)\)/);
     assert.match(script, /schedulePendingRecoveryRetry\(pending\);return false/);
     assert.match(html, /id="recoveryRetryButton"[^>]*data-i18n="recovery\.retry"[^>]*hidden/);
