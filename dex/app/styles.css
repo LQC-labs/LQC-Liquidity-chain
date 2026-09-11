@@ -64,3 +64,5 @@ body{font-family:Roboto,Arial,"Noto Sans KR",sans-serif;letter-spacing:-.012em}.
 .wallet-option img,.wallet-option .wallet-fallback{width:34px;height:34px;border-radius:9px}
 .wallet-option .wallet-fallback{display:grid;place-items:center;background:var(--panel2);color:var(--mint);font-weight:900}
 .wallet-option b{display:block}.wallet-option small{display:block;color:var(--muted);margin-top:2px}
+.language-picker{margin-left:auto}.language-picker select{max-width:92px;height:32px;padding:0 25px 0 9px;border:1px solid var(--line2);border-radius:10px;background:var(--panel2);color:var(--text);font:inherit;font-size:12px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.market-facts i,.position-meta i{font-style:normal}
+@media(max-width:480px){.language-picker select{max-width:72px;padding-left:6px;font-size:11px}.header-icon.favorite{font-size:25px}}
