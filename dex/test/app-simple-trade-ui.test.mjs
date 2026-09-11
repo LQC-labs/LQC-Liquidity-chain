@@ -89,8 +89,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /return executeSwap\(\)/);
     assert.match(script, /window\.addEventListener\('storage',handlePendingExecutionStorage\)/);
     assert.match(script, /event\.storageArea!==localStorage\|\|event\.key!==pendingExecutionMemoryKey\|\|event\.newValue===null/);
-    assert.match(script, /record\.value\.transactionHash===unverifiedTransactionHash/);
-    assert.match(script, /invalidateWalletContext\(\);setSwapInFlight\(true\);setTimeout\(\(\)=>recoverPendingExecution\(\),0\)/);
+    assert.match(script, /record\.value\.transactionHash===unverifiedTransactionHash&&!record\.value\.cancellationHash/);
+    assert.match(script, /invalidateWalletContext\(\);setPendingTradeControls\(record\.value,true\);setSwapInFlight\(true\);setTimeout\(\(\)=>recoverPendingExecution\(\),0\)/);
     assert.match(recoveryLocale, /'status\.lockUnsupported'/);
     assert.match(recoveryLocale, /탭 간 거래 잠금을 안전하게 보장하지 못합니다/);
   });
@@ -175,7 +175,8 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /id="recoveryRetryButton"[^>]*data-i18n="recovery\.retry"[^>]*hidden/);
     assert.match(html, /id="pendingTradeLink"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*data-i18n="recovery\.explorer"[^>]*hidden/);
     assert.match(script, /function setPendingTradeControls\(pending,visible\)/);
-    assert.match(script, /cfg\.blockExplorerUrls\[0\][^\n]*pending\.transactionHash/);
+    assert.match(script, /const activeHash=pending\.cancellationHash\|\|pending\.transactionHash/);
+    assert.match(script, /cfg\.blockExplorerUrls\[0\][^\n]*activeHash/);
     assert.match(script, /pendingTradeLink\.removeAttribute\('href'\)/);
     assert.match(recoveryLocale, /'recovery\.retry':'제출한 거래 다시 확인'/);
     assert.match(recoveryLocale, /'recovery\.explorer':'제출한 거래 탐색기에서 보기'/);
