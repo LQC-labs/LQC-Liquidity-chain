@@ -353,6 +353,9 @@ it confirms path endpoints and restricts V3 routes to the deployment record's fe
 allowlist, and maximum hop count. It then repeats the complete chain/address/governance/V3-policy
 validation and refuses non-BSC-testnet networks, disabled DEXes, adapter mismatches, malformed probes,
 duplicate probes, and zero quotes.
+Every probe endpoint must also be a built-in bootstrap pair or an exact `reviewedPairs` entry approved
+for that DEX. All registry and adapter reads are pinned to one finalized block; configure the bounded
+confirmation distance with `SMOKE_QUOTE_FINALITY_BLOCKS` (default `12`).
 
 ```bash
 export BSC_TESTNET_RPC_URL="https://..."

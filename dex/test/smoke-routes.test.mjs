@@ -2,7 +2,9 @@ import assert from "node:assert/strict";
 import { ethers } from "ethers";
 import {
   assertProbeMatchesDeployment,
+  assertProbePairApproved,
   parseRouteProbes,
+  resolveCanonicalQuoteBlock,
   resolveRouteData
 } from "../scripts/smoke-test-bsc-routes.mjs";
 
@@ -28,9 +30,25 @@ describe("BSC testnet route smoke configuration", function () {
   });
 
   it("requires every probe to match a recorded DEX adapter", function () {
-    const deployment = { dexes: [{ id: dexId, name: "LQC Flow", adapter: tokenOut }] };
+    const deployment = { contracts: { lqc: { address: tokenIn }, mockUsdt: { address: tokenOut } }, dexes: [{ id: dexId, name: "LQC Flow", adapter: tokenOut }] };
     assert.equal(assertProbeMatchesDeployment(valid, deployment), deployment.dexes[0]);
     assert.throws(() => assertProbeMatchesDeployment({ ...valid, dexId: ethers.id("UNKNOWN") }, deployment), /not in/);
+  });
+
+  it("allows only built-in or explicitly reviewed token pairs", function () {
+    const dex = { id: dexId, name: "LQC Flow" };
+    const builtIn = { contracts: { lqc: { address: tokenIn }, wbnb: { address: tokenOut } } };
+    assert.doesNotThrow(() => assertProbePairApproved(valid, builtIn, dex));
+    const reviewed = { reviewedPairs: [{ tokenA: tokenIn, tokenB: tokenOut, dexIds: [dexId] }] };
+    assert.doesNotThrow(() => assertProbePairApproved(valid, reviewed, dex));
+    assert.throws(() => assertProbePairApproved(valid, { reviewedPairs: [{ tokenA: tokenIn, tokenB: tokenOut, dexIds: [ethers.id("OTHER")] }] }, dex), /approval registry/);
+    assert.throws(() => assertProbePairApproved({ ...valid, tokenOut: middle }, reviewed, dex), /approval registry/);
+  });
+
+  it("pins read-only quotes to a bounded finalized block", async function () {
+    assert.equal(await resolveCanonicalQuoteBlock({ getBlockNumber: async () => 1_000 }, 12), 988);
+    await assert.rejects(() => resolveCanonicalQuoteBlock({ getBlockNumber: async () => 1 }, 12), /invalid quote head/);
+    await assert.rejects(() => resolveCanonicalQuoteBlock({ getBlockNumber: async () => 1_000 }, 1), /between 2 and 200/);
   });
 
   it("automatically ABI-encodes V2 and LQC Flow paths", function () {

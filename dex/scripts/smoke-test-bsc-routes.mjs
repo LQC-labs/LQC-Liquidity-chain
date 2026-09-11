@@ -41,8 +41,10 @@ export function parseRouteProbes(value) {
         probe.path.some(token => !ethers.isAddress(token)))) {
       throw new Error(`Probe ${index} has an invalid path.`);
     }
-    const amountIn = BigInt(probe.amountInRaw);
+    let amountIn;
+    try { amountIn = BigInt(probe.amountInRaw); } catch { throw new Error(`Probe ${index} amountInRaw must be an integer.`); }
     if (amountIn <= 0n) throw new Error(`Probe ${index} amountInRaw must be positive.`);
+    if (amountIn > ethers.MaxUint256) throw new Error(`Probe ${index} amountInRaw exceeds uint256.`);
     const key = `${probe.dexId.toLowerCase()}:${ethers.getAddress(probe.tokenIn)}:${ethers.getAddress(probe.tokenOut)}`;
     if (seen.has(key)) throw new Error(`Probe ${index} duplicates a DEX/token route.`);
     seen.add(key);
@@ -102,16 +104,46 @@ export function assertProbeMatchesDeployment(probe, deployment) {
   const dex = deployment.dexes.find(item => item.id.toLowerCase() === probe.dexId.toLowerCase());
   if (!dex) throw new Error(`${probe.label || probe.dexId} is not in the deployment record.`);
   if (!ethers.isAddress(dex.adapter)) throw new Error(`${dex.name || probe.dexId} has no recorded adapter.`);
+  assertProbePairApproved(probe, deployment, dex);
   return dex;
 }
 
-export async function probeRoutes({ provider, deployment, probes }) {
+const normalizedPair = (a, b) => [ethers.getAddress(a), ethers.getAddress(b)].sort().join(":");
+
+export function assertProbePairApproved(probe, deployment, dex) {
+  const builtInPairs = [];
+  const lqc = deployment?.contracts?.lqc?.address;
+  const wbnb = deployment?.contracts?.wbnb?.address;
+  const usdt = deployment?.contracts?.mockUsdt?.address;
+  if (ethers.isAddress(lqc) && ethers.isAddress(wbnb)) builtInPairs.push(normalizedPair(lqc, wbnb));
+  if (ethers.isAddress(lqc) && ethers.isAddress(usdt)) builtInPairs.push(normalizedPair(lqc, usdt));
+  const key = normalizedPair(probe.tokenIn, probe.tokenOut);
+  if (builtInPairs.includes(key)) return;
+  const approved = (deployment.reviewedPairs || []).some(pair =>
+    ethers.isAddress(pair?.tokenA) && ethers.isAddress(pair?.tokenB) &&
+    normalizedPair(pair.tokenA, pair.tokenB) === key && Array.isArray(pair.dexIds) &&
+    pair.dexIds.some(id => String(id).toLowerCase() === probe.dexId.toLowerCase())
+  );
+  if (!approved) throw new Error(`${dex.name || probe.dexId} probe pair is outside the deployment approval registry.`);
+}
+
+export async function resolveCanonicalQuoteBlock(provider, finalityBlocks = 12) {
+  if (!Number.isSafeInteger(finalityBlocks) || finalityBlocks < 2 || finalityBlocks > 200) {
+    throw new Error("Quote finality must be between 2 and 200 blocks.");
+  }
+  const head = await provider.getBlockNumber();
+  if (!Number.isSafeInteger(head) || head < finalityBlocks) throw new Error("RPC returned an invalid quote head block.");
+  return head - finalityBlocks;
+}
+
+export async function probeRoutes({ provider, deployment, probes, finalityBlocks = 12 }) {
   assertBscTestnetChain((await provider.getNetwork()).chainId);
+  const canonicalBlock = await resolveCanonicalQuoteBlock(provider, finalityBlocks);
   const registry = new ethers.Contract(deployment.contracts.dexRegistry.address, REGISTRY_ABI, provider);
   const results = [];
   for (const probe of probes) {
     const recorded = assertProbeMatchesDeployment(probe, deployment);
-    const [adapterAddress, enabled] = await registry.getDex(probe.dexId);
+    const [adapterAddress, enabled] = await registry.getDex(probe.dexId, { blockTag: canonicalBlock });
     if (!enabled) throw new Error(`${recorded.name} is disabled.`);
     if (ethers.getAddress(adapterAddress) !== ethers.getAddress(recorded.adapter)) {
       throw new Error(`${recorded.name} adapter differs from the deployment record.`);
@@ -119,10 +151,10 @@ export async function probeRoutes({ provider, deployment, probes }) {
     const routeData = resolveRouteData(probe, recorded);
     const adapter = new ethers.Contract(adapterAddress, ADAPTER_ABI, provider);
     const amountOut = await adapter.quoteExactInput(
-      probe.tokenIn, probe.tokenOut, BigInt(probe.amountInRaw), routeData
+      probe.tokenIn, probe.tokenOut, BigInt(probe.amountInRaw), routeData, { blockTag: canonicalBlock }
     );
     if (amountOut <= 0n) throw new Error(`${recorded.name} returned a zero quote.`);
-    results.push({ ...probe, routeData, dexName: recorded.name, adapter: adapterAddress, amountOutRaw: amountOut.toString() });
+    results.push({ ...probe, routeData, dexName: recorded.name, adapter: adapterAddress, amountOutRaw: amountOut.toString(), canonicalBlock });
   }
   return results;
 }
@@ -193,7 +225,8 @@ async function main() {
   const probes = parseRouteProbes(fs.readFileSync(path.resolve(probesPath), "utf8"));
   const provider = new ethers.JsonRpcProvider(rpcUrl);
   await validateBscTestnet({ provider, deployment });
-  const quotes = await probeRoutes({ provider, deployment, probes });
+  const quoteFinalityBlocks = Number(process.env.SMOKE_QUOTE_FINALITY_BLOCKS || deployment.ui?.candleFinalityBlocks || 12);
+  const quotes = await probeRoutes({ provider, deployment, probes, finalityBlocks: quoteFinalityBlocks });
 
   const execute = process.env.EXECUTE_SMOKE_SWAP === "true";
   if (!execute) {
