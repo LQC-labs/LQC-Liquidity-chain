@@ -12,6 +12,10 @@ export function buildReviewEvidencePackage({ deployment, monitoring, emergencyDr
     throw new Error("Every technical artifact must target BSC testnet chain 97.");
   }
   if (!SOURCE_REVISION.test(deployment.sourceRevision || "")) throw new Error("Deployment sourceRevision must be a full Git commit SHA.");
+  if (!/^0x[0-9a-fA-F]{64}$/.test(deployment.roleReviewFingerprint || "")) {
+    throw new Error("Deployment must retain a valid role review fingerprint.");
+  }
+  const roleReviewFingerprint = deployment.roleReviewFingerprint.toLowerCase();
   const deploymentFingerprint = buildAppConfig(deployment).deploymentFingerprint;
   if (emergencyDrill.sourceRevision?.toLowerCase() !== deployment.sourceRevision.toLowerCase()) {
     throw new Error("Emergency drill source revision does not match the deployment record.");
@@ -30,7 +34,7 @@ export function buildReviewEvidencePackage({ deployment, monitoring, emergencyDr
   if (!externalEvidence.auditReportHash) pendingExternalEvidence.push("INDEPENDENT_AUDIT");
   if (!externalEvidence.legalPackageReference) pendingExternalEvidence.push("LEGAL_KYB_PACKAGE");
   const artifacts = {
-    deployment: { digest: digest(deployment), sourceRevision: deployment.sourceRevision.toLowerCase(), deploymentFingerprint },
+    deployment: { digest: digest(deployment), sourceRevision: deployment.sourceRevision.toLowerCase(), deploymentFingerprint, roleReviewFingerprint },
     monitoring: { digest: digest(monitoring), checkedAt: monitoring.checkedAt, status: monitoring.status },
     emergencyDrill: { digest: digest(emergencyDrill), drillId: emergencyDrill.drillId,
       completedAt: emergencyDrill.completedAt, evidenceDigest: emergencyDrill.evidenceDigest }
@@ -38,7 +42,7 @@ export function buildReviewEvidencePackage({ deployment, monitoring, emergencyDr
   const manifest = { schemaVersion: 1, packageType: "LQC_CEX_SECURITY_REVIEW_EVIDENCE",
     network: deployment.network, technicalEvidenceStatus: "PASS",
     submissionStatus: pendingExternalEvidence.length ? "INCOMPLETE" : "READY_FOR_REVIEW",
-    sourceRevision: deployment.sourceRevision.toLowerCase(), deploymentFingerprint,
+    sourceRevision: deployment.sourceRevision.toLowerCase(), deploymentFingerprint, roleReviewFingerprint,
     artifacts, pendingExternalEvidence,
     externalEvidence: { auditReportHash: externalEvidence.auditReportHash || null,
       legalPackageReference: externalEvidence.legalPackageReference || null } };

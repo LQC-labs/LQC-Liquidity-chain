@@ -9,6 +9,7 @@ import { buildReviewBundle, writeReviewBundle } from "../scripts/build-review-bu
 const address = number => ethers.getAddress(`0x${number.toString(16).padStart(40, "0")}`);
 const inputs = () => {
   const deployment = { network: { name: "BSC Testnet", chainId: 97 }, sourceRevision: "a".repeat(40),
+    roleReviewFingerprint: `0x${"c".repeat(64)}`,
     contracts: { router: { address: address(1) }, quoteRouter: { address: address(2) }, executionRouter: { address: address(3) },
       nativeRouter: { address: address(4) }, splitOptimizer: { address: address(5) }, autoRouter: { address: address(6) },
       gasCostOracle: { address: address(7) }, wbnb: { address: address(8), decimals: 18 },
@@ -28,6 +29,7 @@ describe("LQC single-command review bundle", function () {
     const bundle = buildReviewBundle(inputs());
     assert.ok(bundle.markdown.includes(bundle.reviewPackage.packageDigest));
     assert.equal(bundle.bundleManifest.packageDigest, bundle.reviewPackage.packageDigest);
+    assert.equal(bundle.reviewPackage.roleReviewFingerprint, `0x${"c".repeat(64)}`);
     assert.match(bundle.bundleManifest.bundleDigest, /^sha256:[0-9a-f]{64}$/);
     assert.equal(Object.keys(bundle.bundleManifest.files).length, 2);
   });

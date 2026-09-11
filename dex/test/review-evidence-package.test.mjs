@@ -6,6 +6,7 @@ import { buildReviewEvidencePackage } from "../scripts/build-review-evidence-pac
 const address = number => ethers.getAddress(`0x${number.toString(16).padStart(40, "0")}`);
 const deployment = () => ({
   network: { name: "BSC Testnet", chainId: 97 }, sourceRevision: "a".repeat(40),
+  roleReviewFingerprint: `0x${"c".repeat(64)}`,
   contracts: { router: { address: address(1) }, quoteRouter: { address: address(2) },
     executionRouter: { address: address(3) }, nativeRouter: { address: address(4) },
     splitOptimizer: { address: address(5) }, autoRouter: { address: address(6) },
@@ -32,6 +33,8 @@ describe("LQC exchange and security review evidence package", function () {
     assert.deepEqual(report.pendingExternalEvidence,
       ["EXPLORER_VERIFIED_SOURCE", "INDEPENDENT_AUDIT", "LEGAL_KYB_PACKAGE"]);
     assert.match(report.packageDigest, /^sha256:[0-9a-f]{64}$/);
+    assert.equal(report.roleReviewFingerprint, `0x${"c".repeat(64)}`);
+    assert.equal(report.artifacts.deployment.roleReviewFingerprint, report.roleReviewFingerprint);
   });
 
   it("rejects mixed deployments, source revisions, and networks", function () {
@@ -41,6 +44,8 @@ describe("LQC exchange and security review evidence package", function () {
     assert.throws(() => buildReviewEvidencePackage(revision), /source revision/);
     const network = inputs(); network.monitoring.network.chainId = 56;
     assert.throws(() => buildReviewEvidencePackage(network), /chain 97/);
+    const roleReview = inputs(); roleReview.deployment.roleReviewFingerprint = "0x1234";
+    assert.throws(() => buildReviewEvidencePackage(roleReview), /role review fingerprint/);
   });
 
   it("rejects unhealthy monitoring and marks complete external evidence ready for review", function () {

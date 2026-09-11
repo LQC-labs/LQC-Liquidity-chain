@@ -12,8 +12,9 @@ export function renderReviewEvidenceMarkdown(reviewPackage) {
   const { packageDigest, ...manifest } = reviewPackage;
   if (digest(manifest) !== packageDigest) throw new Error("Review package digest mismatch.");
   if (!/^[0-9a-f]{40}$/.test(reviewPackage.sourceRevision || "") ||
-      !/^0x[0-9a-fA-F]{64}$/.test(reviewPackage.deploymentFingerprint || "")) {
-    throw new Error("Review package source revision or deployment fingerprint is invalid.");
+      !/^0x[0-9a-fA-F]{64}$/.test(reviewPackage.deploymentFingerprint || "") ||
+      !/^0x[0-9a-fA-F]{64}$/.test(reviewPackage.roleReviewFingerprint || "")) {
+    throw new Error("Review package source revision or fingerprint is invalid.");
   }
   const artifacts = reviewPackage.artifacts || {};
   for (const name of ["deployment", "monitoring", "emergencyDrill"]) {
@@ -43,6 +44,7 @@ export function renderReviewEvidenceMarkdown(reviewPackage) {
     `| Network | ${cell(reviewPackage.network?.name)} (chain ${cell(reviewPackage.network?.chainId)}) |`,
     `| Source revision | \`${cell(reviewPackage.sourceRevision)}\` |`,
     `| Deployment fingerprint | \`${cell(reviewPackage.deploymentFingerprint)}\` |`,
+    `| Role review fingerprint | \`${cell(reviewPackage.roleReviewFingerprint)}\` |`,
     `| Package digest | \`${cell(packageDigest)}\` |`,
     "",
     "## Evidence status",
