@@ -304,7 +304,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function quoteContext\(raw=ui\.amountIn\.value\.trim\(\)\)/);
     assert.match(script, /quoteSessionGuard\.invalidate\(\);clearTimeout\(timer\)/);
     assert.match(script, /ticket=quoteSessionGuard\.begin\(quoteContext\(raw\)\)/);
-    assert.match(script, /if\(!quoteSessionGuard\.isCurrent\(ticket,quoteContext\(\)\)return/);
+    assert.match(script, /if\(!quoteSessionGuard\.isCurrent\(ticket,quoteContext\(\)\)\)return/);
+    assert.match(script, /request!==balanceRequest\|\|owner!==account\|\|input!==tokenIn\|\|output!==tokenOut/);
   });
 
   it("offers standard candle intervals with a validated history boundary and safe examples", function () {
