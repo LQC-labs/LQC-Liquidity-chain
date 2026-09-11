@@ -132,8 +132,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /unverifiedTransactionHash=finalTransactionHash/);
     assert.match(script, /rememberExecutionEvidence\(evidence\);if\(!clearPendingExecution\(finalTransactionHash\)\)throw new Error\('PendingExecutionStorageConflict'\);unverifiedTransactionHash=''/);
     assert.doesNotMatch(script, /Number\(e\?\.receipt\?\.status\)===0\)&&clearPendingExecution\(unverifiedTransactionHash\)\)unverifiedTransactionHash=''/);
-    assert.match(script, /if\(unverifiedTransactionHash\)\{status\(t\('status\.resultUnknown'/);
-    assert.match(script, /status\(t\('status\.resultUnknown'.*schedulePendingRecoveryRetry\(0\)/);
+    assert.match(script, /if\(unverifiedTransactionHash\)\{const pending=storedPendingExecution\(\);status\(t\('status\.resultUnknown'/);
+    assert.match(script, /pending\?\.cancellationHash\|\|unverifiedTransactionHash.*schedulePendingRecoveryRetry\(0\)/);
     assert.match(koreanRuntime, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
   });
@@ -223,6 +223,9 @@ describe("LQC simple trading UI", function () {
     assert.match(recoveryLocale, /'status\.recoveredFailure'/);
     assert.match(recoveryLocale, /여러 RPC가 \{confirmations\}블록 후 실패를 확인/);
     assert.match(script, /verifyCancelledSubmittedTransaction\(e\.replacementHash,plan\.anchorQuote\)/);
+    assert.match(script, /rememberPendingCancellation\(unverifiedTransactionHash,e\.replacementHash\)/);
+    assert.match(script, /if\(pending\.cancellationHash\)\{const cancelled=await verifyCancelledSubmittedTransaction\(pending\.cancellationHash,pending\.anchorQuote\)/);
+    assert.match(script, /status\.recoveredCancellation/);
     assert.match(script, /consensusCancellationTransaction\(anchorQuote,observations,readProviders\.length,transactionHash\)/);
     assert.match(script, /if\(cancelled&&clearPendingExecution\(unverifiedTransactionHash\)\)/);
     assert.doesNotMatch(script, /e\?\.message==='SubmittedTransactionFailed'\|\|Number\(e\?\.receipt\?\.status\)===0/);
