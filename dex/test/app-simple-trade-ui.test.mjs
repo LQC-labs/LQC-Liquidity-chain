@@ -40,6 +40,15 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
   });
 
+  it("serializes swap submission across browser tabs", function () {
+    assert.match(script, /lqc-flow-swap:\$\{cfg\.deploymentFingerprint\|\|'unconfigured'\}/);
+    assert.match(script, /async function executeSwap\(\)/);
+    assert.match(script, /navigator\.locks\?\.request/);
+    assert.match(script, /navigator\.locks\.request\(swapLockName,\{mode:'exclusive',ifAvailable:true\}/);
+    assert.match(script, /if\(!lock\)return status\('다른 탭에서 거래를 처리하고 있습니다/);
+    assert.match(script, /return executeSwap\(\)/);
+  });
+
   it("freezes every order control while a wallet signature is pending", function () {
     assert.match(script, /const tradeControls=\(\)=>\[ui\.amountIn,ui\.slippage,ui\.tokenInButton,ui\.tokenOutButton,ui\.flip,ui\.max,ui\.buy,ui\.sell,ui\.buyTab,ui\.sellTab,ui\.marketSelector/);
     assert.match(script, /\.amount-presets button,.slippage-option/);
