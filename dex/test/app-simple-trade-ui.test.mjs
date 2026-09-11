@@ -121,7 +121,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /throw new Error\('InvalidTransactionReplacement'\)/);
     assert.match(script, /return replacement\.hash/);
     assert.match(script, /const finalTransactionHash=await waitForFinalTransactionHash\(tx\)/);
-    assert.match(script, /verifySubmittedTransaction\(finalTransactionHash,settlementContext\)/);
+    assert.match(script, /verifySubmittedTransaction\(finalTransactionHash,plan\.anchorQuote,settlementContext\)/);
     assert.doesNotMatch(script, /await tx\.wait\(\);status\('거래 포함 완료/);
   });
 
@@ -185,7 +185,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /window\.addEventListener\('offline',[^\n]*clearTimeout\(pendingRecoveryTimer\)/);
     assert.match(script, /window\.addEventListener\('online',[^\n]*pendingRecoveryAttempts=0;schedulePendingRecoveryRetry\(0\)/);
     assert.match(script, /if\(!trustedReadProviderIndexes\.length\)await chainHeadWithin\(\)/);
-    assert.match(script, /verifySubmittedTransaction\(pending\.transactionHash,pending\.settlementContext\)/);
+    assert.match(script, /verifySubmittedTransaction\(pending\.transactionHash,pending\.anchorQuote,pending\.settlementContext\)/);
     assert.match(script, /sdk\.buildExecutionEvidence\(pending\.anchorQuote,settlement/);
     assert.match(script, /if\(pendingRecord\.state==='valid'\)setTimeout\(\(\)=>recoverPendingExecution\(\),0\)/);
     assert.match(recoveryLocale, /'status\.recovering'/);
@@ -209,11 +209,14 @@ describe("LQC simple trading UI", function () {
   });
 
   it("unlocks a recovered failed trade only after canonical RPC consensus", function () {
-    assert.match(script, /async function verifyFailedSubmittedTransaction\(transactionHash,requiredConfirmations=3\)/);
+    assert.match(script, /async function verifyFailedSubmittedTransaction\(transactionHash,anchorQuote,requiredConfirmations=3\)/);
     assert.match(script, /getTransactionReceipt\(transactionHash\)/);
     assert.match(script, /Number\(receipt\.status\)!==0/);
-    assert.match(script, /consensusFailedTransactionReceipt\(observations,readProviders\.length,transactionHash,requiredConfirmations\)/);
-    assert.match(script, /const failure=await verifyFailedSubmittedTransaction\(pending\.transactionHash\)/);
+    assert.match(script, /consensusFailedTransactionReceipt\(observations\.filter\(item=>submittedIndexes\.has\(item\.index\)\),readProviders\.length,transactionHash,requiredConfirmations\)/);
+    assert.match(script, /const failure=await verifyFailedSubmittedTransaction\(pending\.transactionHash,pending\.anchorQuote\)/);
+    assert.match(script, /function verifyFailedSubmittedTransaction\(transactionHash,anchorQuote/);
+    assert.match(script, /getTransaction\(transactionHash\).*getTransactionReceipt\(transactionHash\)/);
+    assert.match(script, /consensusSubmittedTransaction\(anchorQuote,observations,readProviders\.length,transactionHash\)/);
     assert.match(script, /if\(failure&&clearPendingExecution\(pending\.transactionHash\)\)\{setPendingTradeControls\(null,false\);pendingRecoveryAttempts=0;unverifiedTransactionHash=''/);
     assert.match(recoveryLocale, /'status\.recoveredFailure'/);
     assert.match(recoveryLocale, /여러 RPC가 \{confirmations\}블록 후 실패를 확인/);
@@ -408,9 +411,12 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /signer\.sendTransaction\(prepared\.request\)/);
     assert.match(script, /tx=await sendPreparedTransaction\(prepared,walletContext\)/);
     assert.match(script, /function verifySubmittedTransaction/);
+    assert.match(script, /getTransaction\(transactionHash\)/);
+    assert.match(script, /consensusSubmittedTransaction\(anchorQuote,observations,readProviders\.length,transactionHash\)/);
+    assert.match(script, /submittedIndexes\.has\(item\.index\)/);
     assert.match(script, /waitForTransaction\(transactionHash,requiredConfirmations,90000\)/);
-    assert.match(script, /chartHealth\.consensusTransactionReceipt\(observations,readProviders\.length,transactionHash,requiredConfirmations\)/);
-    assert.match(script, /TransactionReceiptConsensusFailed/);
+    assert.match(script, /chartHealth\.consensusTransactionReceipt\(submittedObservations,readProviders\.length,transactionHash,requiredConfirmations\)/);
+    assert.match(script, /TransactionConsensusFailed/);
     assert.match(script, /chartHealth\.decodeSettlementOutput\(receipt,context\)/);
     assert.match(script, /chartHealth\.consensusSettlementOutput/);
     assert.match(script, /kind:'native-out'/);
