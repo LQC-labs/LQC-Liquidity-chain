@@ -79,12 +79,13 @@ describe("LQC simple trading UI", function () {
   });
 
   it("tracks a successful speed-up replacement and rejects cancelled or malformed replacements", function () {
-    assert.match(script, /async function waitForFinalTransactionHash\(tx\)/);
+    assert.match(script, /async function waitForFinalTransaction\(tx\)/);
     assert.match(script, /error\?\.code!==['"]TRANSACTION_REPLACED['"]/);
     assert.match(script, /if\(error\.cancelled\)throw new Error\('TransactionReplacementCancelled'\)/);
     assert.match(script, /throw new Error\('InvalidTransactionReplacement'\)/);
-    assert.match(script, /return replacement\.hash/);
-    assert.match(script, /const finalTransactionHash=await waitForFinalTransactionHash\(tx\)/);
+    assert.match(script, /transactionHash:replacement\.hash,transaction:replacement,replaced:true/);
+    assert.match(script, /const finalTransaction=await waitForFinalTransaction\(tx\),finalTransactionHash=finalTransaction\.transactionHash/);
+    assert.match(script, /if\(finalTransaction\.replaced\)plan\.anchorQuote=chartHealth\.bindReplacementTransaction/);
     assert.match(script, /verifySubmittedTransaction\(finalTransactionHash,settlementContext\)/);
     assert.doesNotMatch(script, /await tx\.wait\(\);status\('거래 포함 완료/);
   });
@@ -92,7 +93,7 @@ describe("LQC simple trading UI", function () {
   it("keeps trading locked when a submitted settlement cannot be verified", function () {
     assert.match(script, /unverifiedTransactionHash=''/);
     assert.match(script, /rememberSubmittedTransaction\(tx\.hash,\{anchorQuote:plan\.anchorQuote,settlementContext\}\)/);
-    assert.match(script, /rememberSubmittedTransaction\(finalTransactionHash\)/);
+    assert.match(script, /rememberSubmittedTransaction\(finalTransactionHash,\{anchorQuote:plan\.anchorQuote,settlementContext\}\)/);
     assert.match(script, /rememberExecutionEvidence\(evidence\);clearSubmittedTransaction\(\)/);
     assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)clearSubmittedTransaction\(\)/);
     assert.match(script, /if\(unverifiedTransactionHash\)\{status\(`제출된 거래/);
@@ -107,7 +108,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /lastSettledOutput\.textContent='확인 중'/);
     assert.match(script, /lastEvidenceHash\.textContent='검증 대기'/);
     assert.match(script, /rememberSubmittedTransaction\(tx\.hash,\{anchorQuote:plan\.anchorQuote,settlementContext\}\)/);
-    assert.match(script, /rememberSubmittedTransaction\(finalTransactionHash\)/);
+    assert.match(script, /rememberSubmittedTransaction\(finalTransactionHash,\{anchorQuote:plan\.anchorQuote,settlementContext\}\)/);
     assert.match(script, /function clearSubmittedTransaction\(\)/);
   });
 
@@ -154,7 +155,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /gasLimit:transaction\.gasLimit,nonce:Number\(transaction\.nonce\)/);
     assert.match(script, /transaction\.hash.*pending\.transactionHash/);
     assert.match(script, /transaction\.from.*pending\.account/);
-    assert.match(script, /chartHealth\.transactionMatches\(pending\.recovery\.anchorQuote,request\)/);
+    assert.match(script, /chartHealth\.transactionMatches\(pending\.recovery\.anchorQuote,walletTransactionRequest\(transaction\)\)/);
     assert.match(script, /source\.getTransaction\(pending\.transactionHash\)/);
     assert.match(script, /Number\(item\.receipt\.status\)===1&&restoredTransactionMatches\(item\.transaction,pending\)/);
   });

@@ -427,6 +427,9 @@ RPC reconciliation in each tab instead of trusting another tab to unlock trading
 Successful reload recovery also fetches the mined transaction independently from each RPC. Evidence is
 completed only when the transaction hash, sender, chain, Router target, calldata, value, nonce, gas limit,
 and legacy or EIP-1559 fee envelope exactly match the proof-bound transaction prepared before signing.
+Wallet speed-up replacements must preserve the chain, Router call, value, gas limit, nonce, and fee model.
+Only non-decreasing legacy or EIP-1559 fees capped at five times the prepared envelope are accepted, and
+the replacement transaction becomes the new persisted proof binding before settlement evidence is built.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match
