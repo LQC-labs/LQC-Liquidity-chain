@@ -11,9 +11,17 @@ describe("LQC DEX pre-submission simulation", function () {
   });
 
   it("simulates and submits the exact same transaction request", function () {
-    assert.match(app, /provider\.call\(\{\.\.\.transaction,from:account\}\)/);
-    assert.match(app, /signer\.sendTransaction\(transaction\)/);
+    assert.match(app, /context\.provider\.call\(\{\.\.\.transaction,from:context\.account\}\)/);
+    assert.match(app, /context\.signer\.sendTransaction\(transaction\)/);
     assert.match(app, /const executionTransaction=await buildExecutionTransaction\(/);
     assert.ok(app.indexOf("await simulateExecution(") < app.indexOf("await submitExecution("));
+  });
+
+  it("revalidates the wallet context after simulation and before submission", function () {
+    assert.match(app, /walletProvider!==context\.walletProvider/);
+    const simulation = app.indexOf("await simulateExecution(executionTransaction,context)");
+    const revalidation = app.indexOf("await validateWalletContext(context)", simulation);
+    const submission = app.indexOf("await submitExecution(executionTransaction,context)", revalidation);
+    assert.ok(simulation < revalidation && revalidation < submission);
   });
 });
