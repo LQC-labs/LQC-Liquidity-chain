@@ -64,6 +64,8 @@ describe("BSC testnet deployment preflight", function () {
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, TEST_LQC_SUPPLY: "1" }), /exceeds/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, TEST_VAULT_DEPOSIT_CAP: "100", TEST_VAULT_STRATEGY_CAP: "101" }), /cannot exceed/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, TEST_VAULT_MAX_LOSS_BPS: "2001" }), /between 0 and 2000/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, GOVERNANCE_MIN_OWNERS: "8", GOVERNANCE_MIN_THRESHOLD: "5" }), /exactly match reviewed/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, GUARDIAN_MIN_THRESHOLD: "4" }), /exactly match reviewed/);
   });
 
   it("requires an explicit override when the temporary deployer owns governance", function () {
@@ -130,6 +132,10 @@ describe("BSC testnet deployment preflight", function () {
       ? safeInterface.encodeFunctionResult("getOwners", [riskOwners])
       : safeInterface.encodeFunctionResult("getThreshold", [2n]) };
     await assert.rejects(() => assertSafeMultisig(weak, riskAdmin, "RISK_ADMIN", 5n, 3n), /3-of-5/);
+    const stronger = { call: async ({ data }) => data.slice(0, 10) === safeInterface.getFunction("getOwners").selector
+      ? safeInterface.encodeFunctionResult("getOwners", [[...riskOwners, ethers.getAddress("0x0000000000000000000000000000000000000063")]])
+      : safeInterface.encodeFunctionResult("getThreshold", [4n]) };
+    await assert.rejects(() => assertSafeMultisig(stronger, riskAdmin, "RISK_ADMIN", 5n, 3n), /exactly match/);
     await assert.rejects(() => assertSafeMultisig({ call: async () => "0x" }, owner, "FACTORY_OWNER", 7n, 4n), /Safe/);
   });
 });

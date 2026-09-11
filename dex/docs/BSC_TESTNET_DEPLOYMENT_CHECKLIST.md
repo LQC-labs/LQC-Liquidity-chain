@@ -40,6 +40,7 @@ The deployment script repeats this check and writes the same `roleReviewFingerpr
 deployment record and BscScan verification manifest, preserving the approval trail after deployment.
 Post-deployment evidence validation recomputes that fingerprint from all five recorded addresses and
 requires the on-chain Safe owner counts and thresholds to exactly match the approved 4-of-7 and 3-of-5 policies.
+Runtime environment overrides cannot weaken or strengthen those exact policies; a changed policy requires a new reviewed governance decision and role-review artifact.
 
 - [ ] RPC returns BSC testnet chain id `97`.
 - [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.

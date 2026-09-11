@@ -31,7 +31,7 @@ const boundedInteger = (name, value, minimum, maximum) => {
   return parsed;
 };
 
-export async function assertSafeMultisig(provider, address, label, minimumOwners, minimumThreshold) {
+export async function assertSafeMultisig(provider, address, label, expectedOwners, expectedThreshold) {
   let owners, threshold;
   try {
     const ownersResult = await provider.call({ to: address, data: SAFE_INTERFACE.encodeFunctionData("getOwners") });
@@ -45,8 +45,8 @@ export async function assertSafeMultisig(provider, address, label, minimumOwners
   if (normalized.some(owner => owner === ethers.ZeroAddress) || new Set(normalized).size !== normalized.length) {
     throw new Error(`${label} contains a zero or duplicate signer.`);
   }
-  if (BigInt(normalized.length) < minimumOwners || threshold < minimumThreshold || threshold > BigInt(normalized.length)) {
-    throw new Error(`${label} does not satisfy the required ${minimumThreshold}-of-${minimumOwners} minimum Safe policy.`);
+  if (BigInt(normalized.length) !== expectedOwners || threshold !== expectedThreshold) {
+    throw new Error(`${label} does not exactly match the reviewed ${expectedThreshold}-of-${expectedOwners} Safe policy.`);
   }
   return { owners: normalized, threshold };
 }
@@ -121,6 +121,12 @@ export function validateTestnetDeploymentConfig(env) {
   const guardianMinimumThreshold = boundedInteger("GUARDIAN_MIN_THRESHOLD", env.GUARDIAN_MIN_THRESHOLD || "3", 2n, guardianMinimumOwners);
   const treasuryMinimumOwners = boundedInteger("TREASURY_MIN_OWNERS", env.TREASURY_MIN_OWNERS || "5", 3n, 20n);
   const treasuryMinimumThreshold = boundedInteger("TREASURY_MIN_THRESHOLD", env.TREASURY_MIN_THRESHOLD || "3", 2n, treasuryMinimumOwners);
+  if (governanceMinimumOwners !== 7n || governanceMinimumThreshold !== 4n ||
+      riskMinimumOwners !== 5n || riskMinimumThreshold !== 3n ||
+      guardianMinimumOwners !== 5n || guardianMinimumThreshold !== 3n ||
+      treasuryMinimumOwners !== 5n || treasuryMinimumThreshold !== 3n) {
+    throw new Error("Safe policy environment must exactly match reviewed governance 4-of-7 and operational 3-of-5 policies.");
+  }
   const delay = BigInt(env.TIMELOCK_DELAY || "3600");
   if (delay < 3600n || delay > 604800n) throw new Error("TIMELOCK_DELAY must be between 3600 and 604800 seconds.");
 
