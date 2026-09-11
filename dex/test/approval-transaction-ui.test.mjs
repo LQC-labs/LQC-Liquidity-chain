@@ -40,6 +40,11 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(health, /winner\[0\]\.allowance!==requiredAmount/);
   });
 
+  it("revokes stale Router allowances whenever approval-time routing changes", function () {
+    assert.match(app, /if\(refreshedSpender\.toLowerCase\(\)!==spender\.toLowerCase\(\)\)\{await approveAndVerifyToken\(token,spender,0n/);
+    assert.match(app, /if\(finalSpender\.toLowerCase\(\)!==spender\.toLowerCase\(\)\)\{await approveAndVerifyToken\(token,spender,0n[\s\S]*RouteChangedDuringApproval/);
+  });
+
   it("verifies the exact submitted approval and three-block canonical receipt", function () {
     assert.match(app, /chartHealth\.bindTransaction\(\{request:\{chainId:cfg\.chainId,amountIn:value\|\|1n\}/);
     assert.match(app, /consensusSubmittedTransaction\(binding,observations,readProviders\.length,transactionHash\)/);
