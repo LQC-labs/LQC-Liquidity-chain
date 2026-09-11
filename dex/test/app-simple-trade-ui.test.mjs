@@ -27,6 +27,14 @@ describe("LQC simple trading UI", function () {
     assert.match(i18n, /replace\(\/\\\{\(\\w\+\)\\\}\/g/);
     assert.match(englishRuntime, /'status\.swapComplete'/);
     assert.match(koreanRuntime, /'status\.swapComplete'/);
+    for (const code of ["user_rejected", "insufficient_gas", "price_moved", "no_route", "risk_blocked", "approval_required", "route_changed", "network_error", "unknown"]) {
+      assert.match(englishRuntime, new RegExp(`'error\\.${code}\\.message'`));
+      assert.match(englishRuntime, new RegExp(`'error\\.${code}\\.action'`));
+      assert.match(koreanRuntime, new RegExp(`'error\\.${code}\\.message'`));
+      assert.match(koreanRuntime, new RegExp(`'error\\.${code}\\.action'`));
+    }
+    assert.match(script, /const translatedSwapError=error=>/);
+    assert.match(script, /guidance\.code\.toLowerCase\(\)/);
   });
   it("keeps the primary trade flow simple while preserving optional Router evidence", function () {
     assert.match(html, /id="buyTab"[^>]*>Buy<\/button>/);
@@ -104,7 +112,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /unverifiedTransactionHash=finalTransactionHash/);
     assert.match(script, /rememberExecutionEvidence\(evidence\);unverifiedTransactionHash=''/);
     assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)unverifiedTransactionHash=''/);
-    assert.match(script, /if\(unverifiedTransactionHash\)\{status\(`제출된 거래/);
+    assert.match(script, /if\(unverifiedTransactionHash\)\{status\(t\('status\.resultUnknown'/);
     assert.match(koreanRuntime, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
   });
