@@ -15,12 +15,14 @@ const koreanRuntime = fs.readFileSync(path.join(root, "app/locales/ko-runtime.js
 const englishTrading = fs.readFileSync(path.join(root, "app/locales/en-trading.js"), "utf8");
 const koreanTrading = fs.readFileSync(path.join(root, "app/locales/ko-trading.js"), "utf8");
 const recoveryLocale = fs.readFileSync(path.join(root, "app/locales/recovery.js"), "utf8");
+const recoveryStoreSource = fs.readFileSync(path.join(root, "app/recovery-store.js"), "utf8");
 
 describe("LQC simple trading UI", function () {
   it("provides an extensible English-first localization boundary", function () {
     assert.match(html, /<html lang="en">/);
     assert.match(html, /id="languageSelect"/);
     assert.match(html, /locales\/en\.js.*locales\/ko\.js.*i18n\.js/);
+    assert.match(html, /recovery-store\.js.*app\.js/);
     assert.match(i18n, /lqc-flow-language/);
     assert.match(i18n, /navigator\.languages/);
     assert.match(i18n, /data-i18n-placeholder/);
@@ -134,12 +136,12 @@ describe("LQC simple trading UI", function () {
   });
 
   it("proves durable recovery storage before requesting a swap signature", function () {
-    assert.match(script, /pendingExecutionReservationKey/);
+    assert.match(script, /recoveryStore\.assertAvailable\(anchorQuote\)/);
     assert.match(script, /function assertPendingExecutionStorageAvailable\(anchorQuote\)/);
-    assert.match(script, /localStorage\.setItem\(pendingExecutionReservationKey,reservation\)/);
-    assert.match(script, /localStorage\.getItem\(pendingExecutionReservationKey\)!==reservation/);
-    assert.match(script, /localStorage\.removeItem\(pendingExecutionReservationKey\)/);
-    assert.match(script, /throw new Error\('PendingExecutionStorageUnavailable'\)/);
+    assert.match(recoveryStoreSource, /storage\.setItem\(reservationKey,reservation\)/);
+    assert.match(recoveryStoreSource, /storage\.getItem\(reservationKey\)!==reservation/);
+    assert.match(recoveryStoreSource, /storage\.removeItem\(reservationKey\)/);
+    assert.match(recoveryStoreSource, /throw new Error\('PendingExecutionStorageUnavailable'\)/);
     assert.match(script, /assertPendingExecutionStorageAvailable\(prepared\.binding\);if\(!chartHealth\.transactionMatches/);
     assert.match(recoveryLocale, /'error\.storage_unavailable\.message'/);
   });
@@ -148,10 +150,10 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /lqc-flow-pending-execution:/);
     assert.match(script, /function pendingExecutionState\(\)/);
     assert.match(script, /function storedPendingExecution\(\)/);
-    assert.match(script, /value\.deploymentFingerprint===cfg\.deploymentFingerprint/);
-    assert.match(script, /value\.version===1/);
-    assert.match(script, /Number\.isSafeInteger\(submittedAt\)/);
-    assert.match(script, /submittedAt<=Date\.now\(\)\+300000/);
+    assert.match(recoveryStoreSource, /value\.deploymentFingerprint===deploymentFingerprint/);
+    assert.match(recoveryStoreSource, /value\.version===1/);
+    assert.match(recoveryStoreSource, /Number\.isSafeInteger\(submittedAt\)/);
+    assert.match(recoveryStoreSource, /submittedAt<=now\(\)\+300000/);
     assert.doesNotMatch(script, /Date\.now\(\)-Number\(value\.submittedAt\)>/);
     assert.match(script, /rememberPendingExecution\(tx\.hash,plan\.anchorQuote,settlementContext\)/);
     assert.match(script, /async function recoverPendingExecution\(pending=storedPendingExecution\(\)\)/);
@@ -171,8 +173,8 @@ describe("LQC simple trading UI", function () {
   });
 
   it("fails closed when the saved submitted-trade record is invalid", function () {
-    assert.match(script, /if\(raw===null\)return Object\.freeze\(\{state:'none'\}\)/);
-    assert.match(script, /Object\.freeze\(\{state:'invalid'\}\)/);
+    assert.match(recoveryStoreSource, /if\(raw===null\)return Object\.freeze\(\{state:'none'\}\)/);
+    assert.match(recoveryStoreSource, /Object\.freeze\(\{state:'invalid'\}\)/);
     assert.match(script, /else if\(pendingRecord\.state==='invalid'\)\{setSwapInFlight\(true\);status\(t\('status\.pendingRecordInvalid'\),'error'\)\}/);
     assert.match(recoveryLocale, /'status\.pendingRecordInvalid'/);
     assert.match(recoveryLocale, /재전송하지 않도록 거래를 잠갔습니다/);

@@ -1,0 +1,16 @@
+(function(root){
+  'use strict';
+  function create({storage,key,deploymentFingerprint,isTransactionHash,now=Date.now}){
+    if(!storage||typeof key!=='string'||!key||typeof deploymentFingerprint!=='string'||typeof isTransactionHash!=='function'||typeof now!=='function')throw new Error('Invalid recovery store configuration');
+    const reservationKey=`${key}:reservation`;
+    const jsonSafe=value=>JSON.parse(JSON.stringify(value,(_,item)=>typeof item==='bigint'?`${item}n`:item));
+    const revive=value=>{if(Array.isArray(value))return value.map(revive);if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([name,item])=>[name,revive(item)]));return typeof value==='string'&&/^\d+n$/.test(value)?BigInt(value.slice(0,-1)):value};
+    const payload=(transactionHash,anchorQuote,settlementContext)=>({version:1,deploymentFingerprint,transactionHash,anchorQuote,settlementContext,submittedAt:now()});
+    function state(){const raw=storage.getItem(key);if(raw===null)return Object.freeze({state:'none'});try{const value=revive(JSON.parse(raw)),submittedAt=Number(value?.submittedAt),valid=value&&value.version===1&&value.deploymentFingerprint===deploymentFingerprint&&isTransactionHash(value.transactionHash)&&value.anchorQuote&&value.settlementContext&&Number.isSafeInteger(submittedAt)&&submittedAt>0&&submittedAt<=now()+300000;return valid?Object.freeze({state:'valid',value}):Object.freeze({state:'invalid'})}catch{return Object.freeze({state:'invalid'})}}
+    function remember(transactionHash,anchorQuote,settlementContext){storage.setItem(key,JSON.stringify(jsonSafe(payload(transactionHash,anchorQuote,settlementContext))))}
+    function clear(){storage.removeItem(key)}
+    function assertAvailable(anchorQuote){const reservation=JSON.stringify(jsonSafe(payload(`0x${'00'.repeat(32)}`,anchorQuote,anchorQuote.execution)));try{storage.setItem(reservationKey,reservation);if(storage.getItem(reservationKey)!==reservation)throw new Error('PendingExecutionStorageUnavailable');storage.removeItem(reservationKey);if(storage.getItem(reservationKey)!==null)throw new Error('PendingExecutionStorageUnavailable')}catch{try{storage.removeItem(reservationKey)}catch{}throw new Error('PendingExecutionStorageUnavailable')}}
+    return Object.freeze({key,reservationKey,state,remember,clear,assertAvailable});
+  }
+  root.LQCRecoveryStore=Object.freeze({create});
+})(typeof window==='undefined'?globalThis:window);

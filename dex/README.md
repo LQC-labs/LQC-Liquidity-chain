@@ -211,6 +211,8 @@ same-tab-only lock that could permit duplicate signatures from multiple tabs.
 Immediately before requesting a swap signature, the app reserves, reads back, and removes a full-sized recovery
 record. If durable browser storage is unavailable or quota-blocked, execution stops before broadcast and provides
 localized remediation guidance.
+The recovery store is isolated from the UI and covered by executable tests for bigint round trips, corruption,
+deployment mismatch, future timestamps, quota rejection, altered readback, and failed reservation removal.
 Each operation is bound to a hash of its addresses, limits, amounts, and other settings, so a retry
 cannot silently reuse a successful transaction from a different deployment configuration. Test-token
 minting, exact approvals, and both initial-liquidity transactions are covered by the same recovery flow.
