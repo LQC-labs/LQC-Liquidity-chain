@@ -161,7 +161,12 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function schedulePendingRecoveryRetry\(pending,delay=pendingRecoveryDelay\(\)\)/);
     assert.match(script, /schedulePendingRecoveryRetry\(pending\);return false/);
     assert.match(html, /id="recoveryRetryButton"[^>]*data-i18n="recovery\.retry"[^>]*hidden/);
+    assert.match(html, /id="pendingTradeLink"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*data-i18n="recovery\.explorer"[^>]*hidden/);
+    assert.match(script, /function setPendingTradeControls\(pending,visible\)/);
+    assert.match(script, /cfg\.blockExplorerUrls\[0\][^\n]*pending\.transactionHash/);
+    assert.match(script, /pendingTradeLink\.removeAttribute\('href'\)/);
     assert.match(recoveryLocale, /'recovery\.retry':'제출한 거래 다시 확인'/);
+    assert.match(recoveryLocale, /'recovery\.explorer':'제출한 거래 탐색기에서 보기'/);
     assert.match(script, /ui\.recoveryRetry\.hidden=false;schedulePendingRecoveryRetry\(pending\)/);
     assert.match(script, /ui\.recoveryRetry\.onclick=\(\)=>\{const pending=storedPendingExecution\(\);if\(pending\)\{pendingRecoveryAttempts=0;schedulePendingRecoveryRetry\(pending,0\)\}\}/);
     assert.match(script, /document\.hidden\|\|navigator\.onLine===false/);
