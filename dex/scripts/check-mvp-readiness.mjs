@@ -15,9 +15,14 @@ export function collectMvpReadiness(env,{currentCommit='',dirty=true}={}){
   const source=env.SOURCE_COMMIT||'',sourceOk=/^[0-9a-fA-F]{40}$/.test(source)&&source.toLowerCase()===currentCommit.toLowerCase()&&!dirty;
   add(items,'REVIEWED_CLEAN_COMMIT',sourceOk,'Commit and review all changes, then set SOURCE_COMMIT to the exact clean HEAD SHA.');
   add(items,'RUNTIME_DEPLOYER_KEY',/^0x[0-9a-fA-F]{64}$/.test(env.DEPLOYER_PRIVATE_KEY||''),'Supply DEPLOYER_PRIVATE_KEY only in the runtime environment.');
+  add(items,'ROLE_REVIEW_FILE',typeof env.ROLE_REVIEW_FILE==='string'&&env.ROLE_REVIEW_FILE.trim().length>0,'Set ROLE_REVIEW_FILE to the approved public role review JSON.');
+  const overrideNames=['ALLOW_EOA_OWNER','ALLOW_EOA_RISK_ADMIN','ALLOW_DEPLOYER_AS_OWNER','ALLOW_DEPLOYER_AS_RISK_ADMIN','ALLOW_SHARED_RISK_ADMIN','ALLOW_DEPLOYER_OPERATIONAL_ROLE'];
+  add(items,'NO_ROLE_OVERRIDES',overrideNames.every(name=>env[name]!=='true'),'Remove every temporary EOA, shared-role, and deployer-role override.');
   for(const name of ['WBNB_ADDRESS','FACTORY_OWNER','RISK_ADMIN','GUARDIAN_ADDRESS','TREASURY_ADDRESS'])add(items,name,address(env[name]),`Set ${name} to a reviewed BSC testnet address.`);
   const roles=['FACTORY_OWNER','RISK_ADMIN','GUARDIAN_ADDRESS','TREASURY_ADDRESS'].map(name=>env[name]).filter(address).map(value=>ethers.getAddress(value));
   add(items,'ROLE_SEPARATION',roles.length===4&&new Set(roles).size===4,'Use four distinct reviewed governance, risk, guardian, and treasury addresses.');
+  let deployerAddress=null;try{deployerAddress=new ethers.Wallet(env.DEPLOYER_PRIVATE_KEY||'').address}catch{}
+  add(items,'DEPLOYER_ROLE_SEPARATION',deployerAddress!==null&&roles.length===4&&!roles.includes(deployerAddress),'Keep the deployer distinct from all four reviewed operational roles.');
   const v2=env.PANCAKE_V2_ROUTER_ADDRESS||'';
   add(items,'PANCAKE_V2_PIN',address(v2)&&ethers.getAddress(v2)===PANCAKE_BSC_TESTNET.v2Router,'Use the pinned PancakeSwap V2 BSC testnet router.');
   const v3Router=env.PANCAKE_V3_ROUTER_ADDRESS||'',v3Quoter=env.PANCAKE_V3_QUOTER_ADDRESS||'';

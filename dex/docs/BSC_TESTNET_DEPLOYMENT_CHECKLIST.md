@@ -45,6 +45,8 @@ The standalone `npm run preflight:testnet` entrypoint also requires `ROLE_REVIEW
 fingerprint and runtime address bindings first, and prints the verified fingerprint in its result.
 When a reviewed role file is present, legacy temporary EOA override flags are ignored; the deployment
 entrypoint independently requires deployed Safe contracts for Governance and every operational role.
+`npm run readiness:mvp` reports BLOCKED unless the role-review path is present, every temporary role
+override is disabled, and the runtime deployer is separate from all four operational addresses.
 
 - [ ] RPC returns BSC testnet chain id `97`.
 - [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.
