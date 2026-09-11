@@ -17,6 +17,7 @@ const base = { BSC_TESTNET_RPC_URL: "https://example.invalid", DEPLOYER_PRIVATE_
 const safeInterface = new ethers.Interface([
   "function getOwners() view returns (address[])",
   "function getThreshold() view returns (uint256)",
+  "function masterCopy() view returns (address)",
   "function getModulesPaginated(address start,uint256 pageSize) view returns(address[] array,address next)",
   "function getStorageAt(uint256 offset,uint256 length) view returns(bytes)"
 ]);
@@ -35,6 +36,9 @@ const safeCall = async ({ to, data }) => {
   }
   if (selector === safeInterface.getFunction("getThreshold").selector) {
     return safeInterface.encodeFunctionResult("getThreshold", [owners.length === 7 ? 4n : 3n]);
+  }
+  if (selector === safeInterface.getFunction("masterCopy").selector) {
+    return safeInterface.encodeFunctionResult("masterCopy", ["0x0000000000000000000000000000000000000099"]);
   }
   if (selector === safeInterface.getFunction("getModulesPaginated").selector) {
     return safeInterface.encodeFunctionResult("getModulesPaginated", [[], safeSentinel]);
@@ -164,6 +168,8 @@ describe("BSC testnet deployment preflight", function () {
       ? safeInterface.encodeFunctionResult("getOwners", [riskOwners])
       : data.slice(0, 10) === safeInterface.getFunction("getThreshold").selector
         ? safeInterface.encodeFunctionResult("getThreshold", [2n])
+        : data.slice(0, 10) === safeInterface.getFunction("masterCopy").selector
+          ? safeInterface.encodeFunctionResult("masterCopy", ["0x0000000000000000000000000000000000000099"])
         : data.slice(0, 10) === safeInterface.getFunction("getModulesPaginated").selector
           ? safeInterface.encodeFunctionResult("getModulesPaginated", [[], safeSentinel])
           : safeInterface.encodeFunctionResult("getStorageAt", [`0x${"00".repeat(32)}`]) };
@@ -172,6 +178,8 @@ describe("BSC testnet deployment preflight", function () {
       ? safeInterface.encodeFunctionResult("getOwners", [[...riskOwners, ethers.getAddress("0x0000000000000000000000000000000000000063")]])
       : data.slice(0, 10) === safeInterface.getFunction("getThreshold").selector
         ? safeInterface.encodeFunctionResult("getThreshold", [4n])
+        : data.slice(0, 10) === safeInterface.getFunction("masterCopy").selector
+          ? safeInterface.encodeFunctionResult("masterCopy", ["0x0000000000000000000000000000000000000099"])
         : data.slice(0, 10) === safeInterface.getFunction("getModulesPaginated").selector
           ? safeInterface.encodeFunctionResult("getModulesPaginated", [[], safeSentinel])
           : safeInterface.encodeFunctionResult("getStorageAt", [`0x${"00".repeat(32)}`]) };

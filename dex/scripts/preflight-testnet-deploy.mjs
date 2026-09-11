@@ -9,6 +9,7 @@ import { assertRoleReviewSafePolicies, verifyRoleAddressReview } from "./prepare
 const SAFE_INTERFACE = new ethers.Interface([
   "function getOwners() view returns (address[])",
   "function getThreshold() view returns (uint256)",
+  "function masterCopy() view returns (address)",
   "function getModulesPaginated(address start,uint256 pageSize) view returns(address[] array,address next)",
   "function getStorageAt(uint256 offset,uint256 length) view returns(bytes)"
 ]);
@@ -42,7 +43,7 @@ const boundedInteger = (name, value, minimum, maximum) => {
 };
 
 export async function assertSafeMultisig(provider, address, label, expectedOwners, expectedThreshold, blockTag = null) {
-  let owners, threshold, modules, next, extensions;
+  let owners, threshold, singleton, modules, next, extensions;
   try {
     const pinnedBlock = blockTag ?? await provider.getBlockNumber();
     if (!Number.isInteger(pinnedBlock) || pinnedBlock < 0) throw new Error("invalid block");
@@ -50,6 +51,8 @@ export async function assertSafeMultisig(provider, address, label, expectedOwner
       data: SAFE_INTERFACE.encodeFunctionData("getOwners") });
     const thresholdResult = await provider.call({ to: address, blockTag: pinnedBlock,
       data: SAFE_INTERFACE.encodeFunctionData("getThreshold") });
+    const singletonResult = await provider.call({ to: address, blockTag: pinnedBlock,
+      data: SAFE_INTERFACE.encodeFunctionData("masterCopy") });
     const modulesResult = await provider.call({ to: address,
       blockTag: pinnedBlock,
       data: SAFE_INTERFACE.encodeFunctionData("getModulesPaginated", [SAFE_SENTINEL, 50]) });
@@ -58,6 +61,7 @@ export async function assertSafeMultisig(provider, address, label, expectedOwner
       data: SAFE_INTERFACE.encodeFunctionData("getStorageAt", [BigInt(slot), 1]) })));
     [owners] = SAFE_INTERFACE.decodeFunctionResult("getOwners", ownersResult);
     [threshold] = SAFE_INTERFACE.decodeFunctionResult("getThreshold", thresholdResult);
+    [singleton] = SAFE_INTERFACE.decodeFunctionResult("masterCopy", singletonResult);
     [modules, next] = SAFE_INTERFACE.decodeFunctionResult("getModulesPaginated", modulesResult);
     extensions = extensionResults.map(result => {
       const [storage] = SAFE_INTERFACE.decodeFunctionResult("getStorageAt", result);
@@ -79,7 +83,10 @@ export async function assertSafeMultisig(provider, address, label, expectedOwner
   if (extensions.some(extension => extension !== ethers.ZeroAddress)) {
     throw new Error(`${label} must not enable an unreviewed Safe guard or fallback handler.`);
   }
-  return { owners: normalized, threshold };
+  if (!ethers.isAddress(singleton) || ethers.getAddress(singleton) === ethers.ZeroAddress) {
+    throw new Error(`${label} must expose a non-zero Safe masterCopy implementation.`);
+  }
+  return { owners: normalized, threshold, singleton: ethers.getAddress(singleton) };
 }
 
 export function assertReviewedSourceCommit(sourceCommit, currentCommit, dirty = false) {
