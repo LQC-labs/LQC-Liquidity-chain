@@ -76,6 +76,8 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.explainSwapError({ message: "QuoteExpiredBeforeSigning" }).code, "PRICE_MOVED");
     assert.equal(sdk.explainSwapError({ message: "PreparedTransactionExpiredBeforeSigning" }).code, "PRICE_MOVED");
     assert.equal(sdk.explainSwapError({ message: "PendingExecutionStorageUnavailable" }).code, "STORAGE_UNAVAILABLE");
+    assert.equal(sdk.explainSwapError({ message: "InsufficientTradeBalance" }).code, "INSUFFICIENT_BALANCE");
+    assert.equal(sdk.explainSwapError({ message: "InsufficientGasBalance" }).code, "INSUFFICIENT_GAS");
   });
 
   it("ranks executable primary and fallback routes by net output and priority", function () {
