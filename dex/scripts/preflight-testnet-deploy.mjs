@@ -1,8 +1,10 @@
 import { pathToFileURL } from "node:url";
 import { execFileSync } from "node:child_process";
+import fs from "node:fs";
 import path from "node:path";
 import { ethers } from "ethers";
 import { PANCAKE_BSC_TESTNET, assertBscTestnetChain, assertPancakeV3PoolsExist } from "./validate-bsc-testnet.mjs";
+import { verifyRoleAddressReview } from "./prepare-role-address-review.mjs";
 
 const SAFE_INTERFACE = new ethers.Interface([
   "function getOwners() view returns (address[])",
@@ -66,6 +68,13 @@ export function readGitSourceState(cwd = path.resolve(import.meta.dirname, "../.
   const commit = execFileSync("git", ["rev-parse", "HEAD"], { cwd, encoding: "utf8" }).trim();
   const status = execFileSync("git", ["status", "--porcelain", "--untracked-files=normal"], { cwd, encoding: "utf8" });
   return { commit, dirty: status.trim().length > 0 };
+}
+
+export function loadVerifiedRoleReview(env,readFile=fs.readFileSync){
+  if(!env.ROLE_REVIEW_FILE)throw new Error("ROLE_REVIEW_FILE must point to the approved public role review JSON.");
+  let review;
+  try{review=JSON.parse(readFile(path.resolve(env.ROLE_REVIEW_FILE),"utf8"))}catch{throw new Error("ROLE_REVIEW_FILE must contain valid approved role review JSON.")}
+  return verifyRoleAddressReview(review,env);
 }
 
 export function validateTestnetDeploymentConfig(env) {
@@ -245,8 +254,9 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
 }
 
 async function main() {
+  const roleReview=loadVerifiedRoleReview(process.env);
   const result = await runTestnetPreflight(process.env, undefined, readGitSourceState());
-  console.log(JSON.stringify({ status: "ready", ...result }, null, 2));
+  console.log(JSON.stringify({ status: "ready", roleReviewFingerprint:roleReview.reviewFingerprint, ...result }, null, 2));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

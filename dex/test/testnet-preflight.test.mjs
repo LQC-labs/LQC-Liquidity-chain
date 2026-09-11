@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
 import { PANCAKE_BSC_TESTNET } from "../scripts/validate-bsc-testnet.mjs";
-import { assertReviewedSourceCommit, assertSafeMultisig, runTestnetPreflight, validateTestnetDeploymentConfig } from "../scripts/preflight-testnet-deploy.mjs";
+import { assertReviewedSourceCommit, assertSafeMultisig, loadVerifiedRoleReview, runTestnetPreflight, validateTestnetDeploymentConfig } from "../scripts/preflight-testnet-deploy.mjs";
+import { prepareRoleAddressReview } from "../scripts/prepare-role-address-review.mjs";
 
 const key = `0x${"11".repeat(32)}`;
 const owner = "0x0000000000000000000000000000000000000001";
@@ -32,6 +33,14 @@ const safeCall = async ({ to, data }) => {
 };
 
 describe("BSC testnet deployment preflight", function () {
+  it("requires the standalone preflight entrypoint to load the approved role review", function(){
+    const deployerAddress=new ethers.Wallet(key).address;
+    const review=prepareRoleAddressReview({schemaVersion:1,network:'bsc-testnet',chainId:97,deployerAddress,roles:{governance:{address:owner,threshold:4,signerCount:7},risk:{address:riskAdmin,threshold:3,signerCount:5},guardian:{address:guardian,threshold:3,signerCount:5},treasury:{address:treasury,threshold:3,signerCount:5}}});
+    assert.equal(loadVerifiedRoleReview({...base,ROLE_REVIEW_FILE:'approved.json'},()=>JSON.stringify(review)).reviewFingerprint,review.reviewFingerprint);
+    assert.throws(()=>loadVerifiedRoleReview(base,()=>JSON.stringify(review)),/ROLE_REVIEW_FILE/);
+    assert.throws(()=>loadVerifiedRoleReview({...base,ROLE_REVIEW_FILE:'approved.json'},()=>'{broken'),/valid approved/);
+    assert.throws(()=>loadVerifiedRoleReview({...base,ROLE_REVIEW_FILE:'approved.json',TREASURY_ADDRESS:owner},()=>JSON.stringify(review)),/treasury address does not match/);
+  });
   it("accepts bounded defaults and a separate governance owner", function () {
     const result = validateTestnetDeploymentConfig(base);
     assert.equal(result.owner, owner);
