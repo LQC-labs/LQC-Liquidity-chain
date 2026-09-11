@@ -134,6 +134,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /throw new Error\('InvalidTransactionReplacement'\)/);
     assert.match(script, /return replacement\.hash/);
     assert.match(script, /const finalTransactionHash=await waitForFinalTransactionHash\(tx\)/);
+    assert.match(script, /rememberPendingExecution\(finalTransactionHash,plan\.anchorQuote,settlementContext,tx\.hash\)/);
     assert.match(script, /verifySubmittedTransaction\(finalTransactionHash,plan\.anchorQuote,settlementContext\)/);
     assert.match(script, /sdk\.buildExecutionEvidence\(verified\.anchorQuote,verified\.settlement/);
     assert.doesNotMatch(script, /await tx\.wait\(\);status\('거래 포함 완료/);
