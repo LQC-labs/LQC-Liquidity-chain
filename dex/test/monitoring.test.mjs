@@ -225,6 +225,18 @@ describe("LQC BSC testnet monitoring report", function () {
       ["GUARDIAN_MULTISIG", "EVIDENCE_REVIEW", "SAFE_MULTISIG", "TIMELOCK", "POST_CHECK"]);
   });
 
+  it("fails closed when a Safe threshold or signer count exceeds the exact approved policy", function () {
+    const threshold = healthyInput(); threshold.safeState[0].threshold = 5;
+    const thresholdReport = buildMonitoringReport(threshold);
+    assert.equal(thresholdReport.status, "CRITICAL");
+    assert.equal(thresholdReport.checks.find(check => check.id === "multisig.governance.threshold").status, "CRITICAL");
+    const signerCount = healthyInput(); signerCount.safeState[0].owners.push("0x0000000000000000000000000000000000000063");
+    const signerReport = buildMonitoringReport(signerCount);
+    assert.equal(signerReport.status, "CRITICAL");
+    assert.equal(signerReport.checks.find(check => check.id === "multisig.governance.policy").status, "CRITICAL");
+    assert.equal(signerReport.incident.code, "SAFE_POLICY_BREACH");
+  });
+
   it("warns when Safe signers change without weakening the approved policy", function () {
     const input = healthyInput();
     input.safeState[0].owners[0] = "0x0000000000000000000000000000000000000063";

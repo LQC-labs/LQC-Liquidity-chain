@@ -221,16 +221,15 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     const owners = safe.owners.map(owner => ethers.getAddress(owner));
     const expected = safe.expectedOwners.map(owner => ethers.getAddress(owner));
     const unique = new Set(owners.map(owner => owner.toLowerCase()));
-    const validOwners = owners.length >= safe.minimumOwners && unique.size === owners.length &&
+    const validOwners = owners.length === expected.length && unique.size === owners.length &&
       !owners.some(owner => owner === ethers.ZeroAddress);
-    add(`multisig.${safe.name}.policy`, validOwners && safe.threshold >= safe.minimumThreshold && safe.threshold <= owners.length
-      ? "PASS" : "CRITICAL", `${safe.threshold}-of-${owners.length}; required minimum ${safe.minimumThreshold}-of-${safe.minimumOwners}`);
+    add(`multisig.${safe.name}.policy`, validOwners && safe.threshold === safe.expectedThreshold
+      ? "PASS" : "CRITICAL", `${safe.threshold}-of-${owners.length}; approved exact policy ${safe.expectedThreshold}-of-${expected.length}`);
     const sameOwners = owners.length === expected.length &&
       [...unique].sort().every((owner, index) => owner === expected.map(item => item.toLowerCase()).sort()[index]);
     add(`multisig.${safe.name}.signers`, sameOwners ? "PASS" : "WARNING",
       sameOwners ? "signer set matches deployment record" : "signer set changed since deployment; governance review required");
-    const thresholdStatus = safe.threshold < safe.expectedThreshold ? "CRITICAL" :
-      safe.threshold === safe.expectedThreshold ? "PASS" : "WARNING";
+    const thresholdStatus = safe.threshold === safe.expectedThreshold ? "PASS" : "CRITICAL";
     add(`multisig.${safe.name}.threshold`, thresholdStatus,
       safe.threshold === safe.expectedThreshold ? "threshold matches deployment record" :
         `threshold changed from ${safe.expectedThreshold} to ${safe.threshold}`);
