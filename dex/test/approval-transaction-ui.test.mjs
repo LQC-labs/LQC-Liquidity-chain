@@ -35,7 +35,9 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /if\(!chartHealth\.transactionMatches\(binding,request\)\)throw new Error\('ApprovalTransactionChangedBeforeSigning'\)/);
   });
   it("requires a successful receipt and multi-RPC allowance consensus", function () {
-    assert.match(app, /verifyCanonicalApproval\(transactionHash,prepared\.binding\)/);
+    assert.match(app, /verifyCanonicalApproval\(transactionHash,prepared\.binding,prepared\.context\)/);
+    assert.match(app, /chartHealth\.decodeApprovalValue\(receipt,eventContext\)/);
+    assert.match(app, /approvalValue!==approvalContext\.amount/);
     assert.match(app, /readProviders\[index\]/);
     assert.match(app, /boundOwner=owner\.toLowerCase\(\)/);
     assert.match(app, /token\.allowance\(boundOwner,spender\)/);
@@ -54,7 +56,7 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /catch\{if\(blockRecoveryForSigningReservation\(\)\)return false;try\{if\(!pending\.cancellationHash\)/);
     assert.match(app, /rememberPendingApproval\(submittedHash,prepared\.binding,prepared\.context\)/);
     assert.match(app, /if\(transactionHash!==submittedHash\)rememberPendingApproval\(transactionHash,prepared\.binding,prepared\.context,submittedHash\)/);
-    assert.match(app, /verifyCanonicalApproval\(pending\.transactionHash,pending\.anchorQuote\)/);
+    assert.match(app, /verifyCanonicalApproval\(pending\.transactionHash,pending\.anchorQuote,pending\.settlementContext\)/);
     assert.match(app, /verifyTokenAllowance\(context\.token,context\.spender,context\.amount,context\.owner\)/);
     assert.match(app, /if\(blockRecoveryForSigningReservation\(\)\|\|!clearPendingApproval\(pending\.transactionHash,pending\)\)throw new Error\('PendingApprovalStorageConflict'\)/);
     assert.match(app, /status\.approvalCancellationRecovered[^\n]*resumeRecoveryAfterSigningReservation\(\);return true/);
