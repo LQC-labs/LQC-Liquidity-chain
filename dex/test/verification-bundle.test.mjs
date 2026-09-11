@@ -26,6 +26,7 @@ describe("BscScan verification bundle", function () {
     const deployment = {
       generatedAt: "2026-09-09T00:00:00.000Z", network: { chainId: 97 }, deployer: address(20),
       owner: address(21), riskAdmin: address(22), sourceRevision: "a".repeat(40),
+      roleReviewFingerprint: `0x${"b".repeat(64)}`,
       compiler: { version: "0.8.30", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
       dexRegistryOwnership: { timelockDelaySeconds: 3600 }, contracts
     };
@@ -40,6 +41,7 @@ describe("BscScan verification bundle", function () {
       const input = JSON.parse(fs.readFileSync(path.join(output, "standard-input.json"), "utf8"));
       assert.equal(manifest.chainId, 97);
       assert.equal(manifest.sourceRevision, "a".repeat(40));
+      assert.equal(manifest.roleReviewFingerprint, `0x${"b".repeat(64)}`);
       assert.equal(manifest.contracts.length, 15);
       assert.ok(manifest.contracts.every(item => /^0x[0-9a-fA-F]{40}$/.test(item.address)));
       assert.ok(manifest.contracts.every(item => /^[0-9a-f]*$/.test(item.constructorArguments)));

@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import { checkpointedDeploy, checkpointedTransaction, loadDeploymentCheckpoint } from "./deployment-checkpoint.mjs";
 import { buildAppConfig } from "./app-config.mjs";
 import { assertReviewedSourceCommit, assertSafeMultisig, readGitSourceState } from "./preflight-testnet-deploy.mjs";
+import { verifyRoleAddressReview } from "./prepare-role-address-review.mjs";
 
 const {
   BSC_TESTNET_RPC_URL,
@@ -64,6 +65,10 @@ if (!ethers.isAddress(GUARDIAN_ADDRESS) || !ethers.isAddress(TREASURY_ADDRESS)) 
 }
 const guardian = ethers.getAddress(GUARDIAN_ADDRESS);
 const treasury = ethers.getAddress(TREASURY_ADDRESS);
+if (!process.env.ROLE_REVIEW_FILE) throw new Error("ROLE_REVIEW_FILE must point to the approved public role review JSON.");
+const roleReview = verifyRoleAddressReview(
+  JSON.parse(fs.readFileSync(path.resolve(process.env.ROLE_REVIEW_FILE), "utf8")), process.env
+);
 const governanceMinimumOwners = BigInt(process.env.GOVERNANCE_MIN_OWNERS || "7");
 const governanceMinimumThreshold = BigInt(process.env.GOVERNANCE_MIN_THRESHOLD || "4");
 const riskMinimumOwners = BigInt(process.env.RISK_MIN_OWNERS || "5");
@@ -273,6 +278,7 @@ const record = {
   riskAdmin,
   guardian,
   treasury,
+  roleReviewFingerprint: roleReview.reviewFingerprint,
   multisigPolicies: { governance: governanceSafePolicy, risk: riskSafePolicy,
     guardian: guardianSafePolicy, treasury: treasurySafePolicy },
   sourceRevision,

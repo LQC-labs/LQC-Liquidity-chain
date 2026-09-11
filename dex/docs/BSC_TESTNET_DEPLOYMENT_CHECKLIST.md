@@ -36,6 +36,8 @@ Save the approved output outside the repository and set `ROLE_REVIEW_FILE` to th
 any live RPC check, `npm run verify:role-review` recalculates the fingerprint and requires the runtime
 deployer, Governance, Risk, Guardian, and Treasury addresses to match it exactly. The Stage 2
 predeployment gate runs this binding check first and fails closed on any substitution.
+The deployment script repeats this check and writes the same `roleReviewFingerprint` into both the
+deployment record and BscScan verification manifest, preserving the approval trail after deployment.
 
 - [ ] RPC returns BSC testnet chain id `97`.
 - [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.

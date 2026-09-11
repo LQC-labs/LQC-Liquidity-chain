@@ -60,5 +60,5 @@ const contracts = specs.map(([key, contract, types, args]) => {
 const out = path.join(root, "verification", "bsc-testnet-97");
 fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, "standard-input.json"), JSON.stringify(standardInput, null, 2) + "\n");
-fs.writeFileSync(path.join(out, "manifest.json"), JSON.stringify({ generatedAt: new Date().toISOString(), chainId: 97, compilerVersion, sourceRevision: deployment.sourceRevision || null, contracts }, null, 2) + "\n");
+fs.writeFileSync(path.join(out, "manifest.json"), JSON.stringify({ generatedAt: new Date().toISOString(), chainId: 97, compilerVersion, sourceRevision: deployment.sourceRevision || null, roleReviewFingerprint: deployment.roleReviewFingerprint, contracts }, null, 2) + "\n");
 console.log(`Prepared ${contracts.length} BscScan verification entries in ${out}.`);

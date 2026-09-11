@@ -79,6 +79,9 @@ export function validateDeploymentEvidenceRecord(deployment) {
   if (!/^[0-9a-fA-F]{40}$/.test(deployment?.sourceRevision || "")) {
     throw new Error("Deployment evidence must pin a full 40-character source commit SHA.");
   }
+  if (!ethers.isHexString(deployment?.roleReviewFingerprint, 32)) {
+    throw new Error("Deployment evidence must retain the approved role review fingerprint.");
+  }
   if (typeof deployment?.generatedAt !== "string" || Number.isNaN(Date.parse(deployment.generatedAt))) {
     throw new Error("Deployment evidence has an invalid generation timestamp.");
   }
@@ -95,7 +98,7 @@ export function validateDeploymentEvidenceRecord(deployment) {
     if (!ethers.isAddress(item?.address)) throw new Error(`Deployment evidence is missing ${name} address.`);
     if (!ethers.isHexString(item?.deploymentTx, 32)) throw new Error(`Deployment evidence is missing ${name} transaction hash.`);
   }
-  return { sourceRevision: deployment.sourceRevision.toLowerCase(), contractCount: required.length };
+  return { sourceRevision: deployment.sourceRevision.toLowerCase(), roleReviewFingerprint: deployment.roleReviewFingerprint.toLowerCase(), contractCount: required.length };
 }
 
 export function validateDeploymentDexRecords(records, onchainDexes) {

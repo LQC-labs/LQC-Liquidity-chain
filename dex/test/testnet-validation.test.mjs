@@ -65,13 +65,15 @@ describe("BSC testnet real-address validation", function () {
     const deployment = {
       generatedAt: "2026-09-09T00:00:00.000Z", network: { chainId: 97 },
       deployer: address(100), owner: address(101), riskAdmin: address(102), sourceRevision: "a".repeat(40),
+      roleReviewFingerprint: `0x${"b".repeat(64)}`,
       compiler: { version: "0.8.30", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
       contracts: Object.fromEntries(names.map((name, index) => [name, { address: address(index + 1), deploymentTx: tx(index + 1) }]))
     };
-    assert.deepEqual(validateDeploymentEvidenceRecord(deployment), { sourceRevision: "a".repeat(40), contractCount: 17 });
+    assert.deepEqual(validateDeploymentEvidenceRecord(deployment), { sourceRevision: "a".repeat(40), roleReviewFingerprint: `0x${"b".repeat(64)}`, contractCount: 17 });
     assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, sourceRevision: "short" }), /source commit/);
     assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, riskAdmin: deployment.owner }), /separate/);
     assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, compiler: { ...deployment.compiler, viaIR: false } }), /compiler/);
+    assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, roleReviewFingerprint: "0x1234" }), /role review fingerprint/);
     const missingTx = structuredClone(deployment); missingTx.contracts.liquidityVault.deploymentTx = null;
     assert.throws(() => validateDeploymentEvidenceRecord(missingTx), /liquidityVault transaction/);
   });
