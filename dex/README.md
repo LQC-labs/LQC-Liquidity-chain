@@ -29,6 +29,7 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - A wallet-reported cancellation releases the trade lock only after the configured RPC majority agrees on a successful, different transaction from the same sender and chain using the original nonce
 - Pending cancellation hashes are stored with the original trade identity, so reloads continue canonical cancellation verification instead of losing the replacement trail
 - Cancellation updates propagate across open tabs and the recovery explorer link follows the transaction currently being verified
+- A terminal recovery clear also propagates across tabs without releasing a tab that is still independently verifying its own submitted transaction
 - `LQCLiquidityVault` V1 with exact-asset accounting, permanently locked initial shares,
   donation-resistant share pricing, deposit caps, guardian deposit pause, and two-step ownership
 - Strategy Adapter V1 with vault/asset binding, separate strategy administration, absolute exposure

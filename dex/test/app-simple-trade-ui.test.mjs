@@ -88,7 +88,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /if\(!lock\)return status\(t\('status\.otherTabBusy'\)/);
     assert.match(script, /return executeSwap\(\)/);
     assert.match(script, /window\.addEventListener\('storage',handlePendingExecutionStorage\)/);
-    assert.match(script, /event\.storageArea!==localStorage\|\|event\.key!==pendingExecutionMemoryKey\|\|event\.newValue===null/);
+    assert.match(script, /event\.storageArea!==localStorage\|\|event\.key!==pendingExecutionMemoryKey/);
+    assert.match(script, /if\(event\.newValue===null\)\{clearTimeout\(pendingRecoveryTimer\);pendingRecoveryAttempts=0;setPendingTradeControls\(null,false\);if\(!unverifiedTransactionHash&&!pendingRecoveryActive\)setSwapInFlight\(false\);return\}/);
     assert.match(script, /record\.value\.transactionHash===unverifiedTransactionHash&&!record\.value\.cancellationHash/);
     assert.match(script, /invalidateWalletContext\(\);setPendingTradeControls\(record\.value,true\);setSwapInFlight\(true\);setTimeout\(\(\)=>recoverPendingExecution\(\),0\)/);
     assert.match(recoveryLocale, /'status\.lockUnsupported'/);
