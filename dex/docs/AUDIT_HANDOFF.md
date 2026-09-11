@@ -6,6 +6,7 @@ Status: **reviewer handoff template — no completed audit is claimed**
 
 Use [`AUDIT_SUBMISSION_CHECKLIST.md`](AUDIT_SUBMISSION_CHECKLIST.md) to compare independent
 auditors and track submission, remediation, and retest evidence.
+The current non-binding candidate shortlist is [`AUDITOR_CANDIDATE_COMPARISON.md`](AUDITOR_CANDIDATE_COMPARISON.md).
 
 The engagement owner must record the exact Git commit SHA before review begins. Do not audit a moving branch.
 
