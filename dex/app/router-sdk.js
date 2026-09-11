@@ -53,7 +53,7 @@
   }
   function requiresTokenApproval(allowance,amountIn){
     if(typeof allowance!=='bigint'||allowance<0n||typeof amountIn!=='bigint'||amountIn<=0n)throw new Error('Invalid approval state');
-    return allowance<amountIn;
+    return allowance!==amountIn;
   }
   function rankRouteQuotes(candidates){
     if(!Array.isArray(candidates))throw new Error('Invalid route quotes');
