@@ -144,7 +144,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /unverifiedTransactionHash=''/);
     assert.match(script, /unverifiedTransactionHash=tx\.hash/);
     assert.match(script, /unverifiedTransactionHash=finalTransactionHash/);
-    assert.match(script, /rememberExecutionEvidence\(evidence\);if\(!clearPendingExecution\(finalTransactionHash\)\)throw new Error\('PendingExecutionStorageConflict'\);unverifiedTransactionHash=''/);
+    assert.match(script, /rememberExecutionEvidence\(evidence\);if\(!clearPendingExecution\(finalTransactionHash,expectedPending\)\)throw new Error\('PendingExecutionStorageConflict'\);unverifiedTransactionHash=''/);
     assert.doesNotMatch(script, /Number\(e\?\.receipt\?\.status\)===0\)&&clearPendingExecution\(unverifiedTransactionHash\)\)unverifiedTransactionHash=''/);
     assert.match(script, /if\(unverifiedTransactionHash\)\{const pending=storedPendingExecution\(\);status\(t\('status\.resultUnknown'/);
     assert.match(script, /pending\?\.cancellationHash\|\|unverifiedTransactionHash.*schedulePendingRecoveryRetry\(0\)/);
@@ -262,7 +262,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /if\(pending\.cancellationHash\)\{const cancelled=await verifyCancelledSubmittedTransaction\(pending\.cancellationHash,pending\.anchorQuote\)/);
     assert.match(script, /status\.recoveredCancellation/);
     assert.match(script, /consensusCancellationTransaction\(anchorQuote,observations,readProviders\.length,transactionHash\)/);
-    assert.match(script, /if\(cancelled&&clearPendingExecution\(unverifiedTransactionHash\)\)/);
+    assert.match(script, /if\(cancelled&&clearPendingExecution\(unverifiedTransactionHash,expectedPending\)\)/);
     assert.doesNotMatch(script, /e\?\.message==='SubmittedTransactionFailed'\|\|Number\(e\?\.receipt\?\.status\)===0/);
     assert.match(script, /status\(t\('status\.resultUnknown'.*schedulePendingRecoveryRetry\(0\)/);
   });
@@ -492,5 +492,12 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /정상 갱신 \$\{lastHealthyByChart\.get\(chartKey\)\|\|'기록 없음'\}/);
     assert.match(html, /chart-health\.js/);
     assert.match(styles, /data-state="interrupted"/);
+  });
+
+  it("clears only the execution record captured before settlement verification", function () {
+    assert.match(script, /const expectedPending=storedPendingExecution\(\);if\(!expectedPending\)throw new Error\('PendingExecutionStorageConflict'\);status\(t\('status\.confirming'\)\);const verified=await verifySubmittedTransaction/);
+    assert.match(script, /clearPendingExecution\(finalTransactionHash,expectedPending\)/);
+    assert.match(script, /rememberPendingCancellation\(unverifiedTransactionHash,e\.replacementHash\);const expectedPending=storedPendingExecution\(\)/);
+    assert.match(script, /clearPendingExecution\(unverifiedTransactionHash,expectedPending\)/);
   });
 });
