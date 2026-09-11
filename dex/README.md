@@ -206,6 +206,8 @@ A malformed, corrupted, future-dated, wrong-version, or wrong-deployment pending
 explicit recovery guidance instead of being silently discarded. Existing tabs listen for new pending records written
 by another tab, invalidate any stale pre-sign wallet context, lock their controls, and join canonical recovery without
 requiring a reload.
+Browsers without the Web Locks API cannot submit swaps: the UI fails closed rather than falling back to an unsafe
+same-tab-only lock that could permit duplicate signatures from multiple tabs.
 Each operation is bound to a hash of its addresses, limits, amounts, and other settings, so a retry
 cannot silently reuse a successful transaction from a different deployment configuration. Test-token
 minting, exact approvals, and both initial-liquidity transactions are covered by the same recovery flow.

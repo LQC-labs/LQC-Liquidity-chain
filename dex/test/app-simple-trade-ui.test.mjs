@@ -79,6 +79,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /lqc-flow-swap:\$\{cfg\.deploymentFingerprint\|\|'unconfigured'\}/);
     assert.match(script, /async function executeSwap\(\)/);
     assert.match(script, /navigator\.locks\?\.request/);
+    assert.match(script, /if\(!navigator\.locks\?\.request\)return status\(t\('status\.lockUnsupported'\),'error'\)/);
+    assert.doesNotMatch(script, /if\(!navigator\.locks\?\.request\)return executeSwap\(\)/);
     assert.match(script, /navigator\.locks\.request\(swapLockName,\{mode:'exclusive',ifAvailable:true\}/);
     assert.match(script, /if\(!lock\)return status\(t\('status\.otherTabBusy'\)/);
     assert.match(script, /return executeSwap\(\)/);
@@ -86,6 +88,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /event\.storageArea!==localStorage\|\|event\.key!==pendingExecutionMemoryKey\|\|event\.newValue===null/);
     assert.match(script, /record\.value\.transactionHash===unverifiedTransactionHash/);
     assert.match(script, /invalidateWalletContext\(\);setSwapInFlight\(true\);setTimeout\(\(\)=>recoverPendingExecution\(record\.value\),0\)/);
+    assert.match(recoveryLocale, /'status\.lockUnsupported'/);
+    assert.match(recoveryLocale, /탭 간 거래 잠금을 안전하게 보장하지 못합니다/);
   });
 
   it("freezes every order control while a wallet signature is pending", function () {

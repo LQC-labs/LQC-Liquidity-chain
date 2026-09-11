@@ -165,7 +165,7 @@
   }
   async function swap(){
     if(swapInFlight)return status(t('status.swapBusy'));
-    if(!navigator.locks?.request)return executeSwap();
+    if(!navigator.locks?.request)return status(t('status.lockUnsupported'),'error');
     return navigator.locks.request(swapLockName,{mode:'exclusive',ifAvailable:true},lock=>{
       if(!lock)return status(t('status.otherTabBusy'),'error');
       return executeSwap();
