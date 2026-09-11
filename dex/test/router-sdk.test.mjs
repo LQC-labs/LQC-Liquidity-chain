@@ -108,10 +108,10 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.walletSessionState([tokenA], true, "0x61", "0x61"), "connected");
   });
 
-  it("requires approval only when the selected spender allowance is insufficient", function () {
+  it("requires approval unless the selected spender allowance is exact", function () {
     assert.equal(sdk.requiresTokenApproval(99n, 100n), true);
     assert.equal(sdk.requiresTokenApproval(100n, 100n), false);
-    assert.equal(sdk.requiresTokenApproval(101n, 100n), false);
+    assert.equal(sdk.requiresTokenApproval(101n, 100n), true);
     assert.throws(() => sdk.requiresTokenApproval(-1n, 100n));
     assert.throws(() => sdk.requiresTokenApproval(100n, 0n));
   });
