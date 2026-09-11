@@ -23,7 +23,7 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /<html lang="en">/);
     assert.match(html, /id="languageSelect"/);
     assert.match(html, /locales\/en\.js.*locales\/ko\.js.*i18n\.js/);
-    assert.match(html, /recovery-validator\.js.*recovery-store\.js.*recovery-sync\.js.*app\.js/);
+    assert.match(html, /recovery-validator\.js.*recovery-store\.js.*recovery-sync\.js.*wallet-session-guard\.js.*app\.js/);
     assert.match(i18n, /lqc-flow-language/);
     assert.match(i18n, /navigator\.languages/);
     assert.match(i18n, /data-i18n-placeholder/);
@@ -113,9 +113,11 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /sendPreparedTransaction\(prepared,walletContext\)/);
     assert.match(script, /accountsChanged[^\n]*invalidateWalletContext\(\)/);
     assert.match(script, /chainChanged[^\n]*invalidateWalletContext\(\)/);
-    assert.match(script, /walletConnectionVersion=0/);
     assert.match(script, /function assertCurrentWalletConnection\(target,version\)/);
     assert.match(script, /WalletConnectionSuperseded/);
+    assert.match(script, /walletSessionGuard\.assertCurrent\(target,version\)/);
+    assert.match(script, /walletSessionGuard\.begin\(target\)/);
+    assert.match(script, /walletSessionGuard\.invalidate\(\)/);
     assert.match(script, /const nextProvider=new ethers\.BrowserProvider\(target\),nextSigner=await nextProvider\.getSigner\(\),nextAccount=await nextSigner\.getAddress\(\);assertCurrentWalletConnection\(target,connectionVersion\);provider=nextProvider;signer=nextSigner;account=nextAccount/);
     assert.match(script, /target\.on\('disconnect'/);
     assert.match(script, /function clearConnectedWallet\(\)/);
