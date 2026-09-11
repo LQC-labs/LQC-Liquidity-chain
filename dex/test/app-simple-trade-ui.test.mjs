@@ -14,6 +14,7 @@ const englishRuntime = fs.readFileSync(path.join(root, "app/locales/en-runtime.j
 const koreanRuntime = fs.readFileSync(path.join(root, "app/locales/ko-runtime.js"), "utf8");
 const englishTrading = fs.readFileSync(path.join(root, "app/locales/en-trading.js"), "utf8");
 const koreanTrading = fs.readFileSync(path.join(root, "app/locales/ko-trading.js"), "utf8");
+const recoveryLocale = fs.readFileSync(path.join(root, "app/locales/recovery.js"), "utf8");
 
 describe("LQC simple trading UI", function () {
   it("provides an extensible English-first localization boundary", function () {
@@ -117,11 +118,25 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /unverifiedTransactionHash=''/);
     assert.match(script, /unverifiedTransactionHash=tx\.hash/);
     assert.match(script, /unverifiedTransactionHash=finalTransactionHash/);
-    assert.match(script, /rememberExecutionEvidence\(evidence\);unverifiedTransactionHash=''/);
-    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)unverifiedTransactionHash=''/);
+    assert.match(script, /rememberExecutionEvidence\(evidence\);clearPendingExecution\(\);unverifiedTransactionHash=''/);
+    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)\{clearPendingExecution\(\);unverifiedTransactionHash=''\}/);
     assert.match(script, /if\(unverifiedTransactionHash\)\{status\(t\('status\.resultUnknown'/);
     assert.match(koreanRuntime, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
+  });
+
+  it("recovers and verifies a submitted trade after page reload", function () {
+    assert.match(script, /lqc-flow-pending-execution:/);
+    assert.match(script, /function storedPendingExecution\(\)/);
+    assert.match(script, /deploymentFingerprint!==cfg\.deploymentFingerprint/);
+    assert.match(script, /Date\.now\(\)-Number\(value\.submittedAt\)>86400000/);
+    assert.match(script, /rememberPendingExecution\(tx\.hash,plan\.anchorQuote,settlementContext\)/);
+    assert.match(script, /async function recoverPendingExecution\(\)/);
+    assert.match(script, /verifySubmittedTransaction\(pending\.transactionHash,pending\.settlementContext\)/);
+    assert.match(script, /sdk\.buildExecutionEvidence\(pending\.anchorQuote,settlement/);
+    assert.match(script, /if\(storedPendingExecution\(\)\)setTimeout\(recoverPendingExecution,0\)/);
+    assert.match(recoveryLocale, /'status\.recovering'/);
+    assert.match(recoveryLocale, /'status\.recovered'/);
   });
 
   it("offers a market-first order and familiar balance percentage controls", function () {
