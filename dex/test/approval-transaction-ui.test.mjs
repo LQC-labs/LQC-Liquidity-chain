@@ -31,13 +31,14 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /verifyCanonicalApproval\(transactionHash,prepared\.binding\)/);
     assert.match(app, /readProviders\[index\]/);
     assert.match(app, /token\.allowance\(account,spender\)/);
-    assert.match(app, /chartHealth\.consensusTokenAllowance\(observations,readProviders\.length,requiredAmount\)/);
     assert.match(app, /TokenAllowanceConsensusFailed/);
+    assert.match(app, /chartHealth\.consensusObservedTokenAllowance\(observations,readProviders\.length\)/);
+    assert.equal((app.match(/allowance=await readTokenAllowance\(tokenIn\.address,spender\)/g)||[]).length,2);
   });
 
   it("requires the approved allowance to equal the requested trade amount", function () {
     const health = fs.readFileSync(path.resolve(import.meta.dirname, "../app/chart-health.js"), "utf8");
-    assert.match(health, /winner\[0\]\.allowance!==requiredAmount/);
+    assert.match(health, /consensus\?\.allowance===requiredAmount\?consensus:null/);
   });
 
   it("revokes stale Router allowances whenever approval-time routing changes", function () {
