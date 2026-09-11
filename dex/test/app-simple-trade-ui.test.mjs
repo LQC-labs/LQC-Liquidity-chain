@@ -117,7 +117,7 @@ describe("LQC simple trading UI", function () {
   it("tracks a successful speed-up replacement and rejects cancelled or malformed replacements", function () {
     assert.match(script, /async function waitForFinalTransactionHash\(tx\)/);
     assert.match(script, /error\?\.code!==['"]TRANSACTION_REPLACED['"]/);
-    assert.match(script, /if\(error\.cancelled\)throw new Error\('TransactionReplacementCancelled'\)/);
+    assert.match(script, /if\(error\.cancelled\)\{const cancellation=new Error\('TransactionReplacementCancelled'\);cancellation\.replacementHash=error\.replacement\?\.hash;throw cancellation\}/);
     assert.match(script, /throw new Error\('InvalidTransactionReplacement'\)/);
     assert.match(script, /return replacement\.hash/);
     assert.match(script, /const finalTransactionHash=await waitForFinalTransactionHash\(tx\)/);
@@ -222,7 +222,9 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /if\(failure&&clearPendingExecution\(pending\.transactionHash\)\)\{setPendingTradeControls\(null,false\);pendingRecoveryAttempts=0;unverifiedTransactionHash=''/);
     assert.match(recoveryLocale, /'status\.recoveredFailure'/);
     assert.match(recoveryLocale, /여러 RPC가 \{confirmations\}블록 후 실패를 확인/);
-    assert.match(script, /if\(e\?\.message==='TransactionReplacementCancelled'&&clearPendingExecution\(unverifiedTransactionHash\)\)/);
+    assert.match(script, /verifyCancelledSubmittedTransaction\(e\.replacementHash,plan\.anchorQuote\)/);
+    assert.match(script, /consensusCancellationTransaction\(anchorQuote,observations,readProviders\.length,transactionHash\)/);
+    assert.match(script, /if\(cancelled&&clearPendingExecution\(unverifiedTransactionHash\)\)/);
     assert.doesNotMatch(script, /e\?\.message==='SubmittedTransactionFailed'\|\|Number\(e\?\.receipt\?\.status\)===0/);
     assert.match(script, /status\(t\('status\.resultUnknown'.*schedulePendingRecoveryRetry\(0\)/);
   });

@@ -26,6 +26,7 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - Persisted recovery records are structurally rebound to the reviewed chain, quote and execution routers, transaction envelope, token pair, account, minimum output, and settlement kind before any RPC recovery begins
 - Canonical submitted-transaction consensus verifies the exact sender, Router call data, value, gas envelope, and nonce across the configured RPC majority, including bounded same-call fee replacements, while isolating malformed minority responses; receipt and settlement acceptance is restricted to that same agreeing RPC set
 - A single wallet RPC cannot discard a submitted trade after reporting a reverted receipt; the pending record remains locked until the configured RPC majority canonically confirms failure
+- A wallet-reported cancellation releases the trade lock only after the configured RPC majority agrees on a successful, different transaction from the same sender and chain using the original nonce
 - `LQCLiquidityVault` V1 with exact-asset accounting, permanently locked initial shares,
   donation-resistant share pricing, deposit caps, guardian deposit pause, and two-step ownership
 - Strategy Adapter V1 with vault/asset binding, separate strategy administration, absolute exposure
