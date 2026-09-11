@@ -171,8 +171,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /clearedReservedExecution=recoverableReservedExecution&&executionReservationStore\.clear\(executionReservationRecord\.serialized\)/);
     assert.match(script, /executionReservationRecord\.state!=='none'&&!clearedReservedExecution/);
     assert.match(script, /executionReservationMatchesPending\(executionReservationRecord\.value,pendingRecord\.value\)/);
-    assert.match(script, /else if\(storedPendingExecution\(\)\)\{setSwapInFlight\(true\);setTimeout\(\(\)=>recoverPendingExecution\(\),0\)\}/);
-    assert.match(script, /approvalReservationState\(\)\.state!=='none'\|\|executionReservationState\(\)\.state!=='none'/);
+    assert.match(script, /execution\.state==='invalid'[^\n]*status\(t\('status\.pendingRecordInvalid'\)/);
+    assert.match(script, /execution\.state==='valid'[^\n]*recoverPendingExecution\(\)/);
     assert.match(script, /status\.swapSigningUnknown/);
     assert.match(recoveryLocale, /'status\.swapSigningUnknown'/);
     assert.match(script, /else if\(approvalReservationState\(\)\.state!=='none'\)\{const state=approvalReservationState\(\);status\(t\(state\.state==='valid'\?'status\.approvalSigningUnknown':'status\.approvalReservationInvalid'\),'error'\)\}/);
