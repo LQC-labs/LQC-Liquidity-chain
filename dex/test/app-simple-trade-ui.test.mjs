@@ -127,27 +127,36 @@ describe("LQC simple trading UI", function () {
 
   it("recovers and verifies a submitted trade after page reload", function () {
     assert.match(script, /lqc-flow-pending-execution:/);
+    assert.match(script, /function pendingExecutionState\(\)/);
     assert.match(script, /function storedPendingExecution\(\)/);
-    assert.match(script, /deploymentFingerprint!==cfg\.deploymentFingerprint/);
-    assert.match(script, /value\.version!==1/);
-    assert.match(script, /!Number\.isSafeInteger\(submittedAt\)/);
-    assert.match(script, /submittedAt>Date\.now\(\)\+300000/);
+    assert.match(script, /value\.deploymentFingerprint===cfg\.deploymentFingerprint/);
+    assert.match(script, /value\.version===1/);
+    assert.match(script, /Number\.isSafeInteger\(submittedAt\)/);
+    assert.match(script, /submittedAt<=Date\.now\(\)\+300000/);
     assert.doesNotMatch(script, /Date\.now\(\)-Number\(value\.submittedAt\)>/);
     assert.match(script, /rememberPendingExecution\(tx\.hash,plan\.anchorQuote,settlementContext\)/);
-    assert.match(script, /async function recoverPendingExecution\(\)/);
+    assert.match(script, /async function recoverPendingExecution\(pending=storedPendingExecution\(\)\)/);
     assert.match(script, /if\(!trustedReadProviderIndexes\.length\)await chainHeadWithin\(\)/);
     assert.match(script, /verifySubmittedTransaction\(pending\.transactionHash,pending\.settlementContext\)/);
     assert.match(script, /sdk\.buildExecutionEvidence\(pending\.anchorQuote,settlement/);
-    assert.match(script, /if\(storedPendingExecution\(\)\)setTimeout\(recoverPendingExecution,0\)/);
+    assert.match(script, /if\(pendingRecord\.state==='valid'\)setTimeout\(\(\)=>recoverPendingExecution\(pendingRecord\.value\),0\)/);
     assert.match(recoveryLocale, /'status\.recovering'/);
     assert.match(recoveryLocale, /'status\.recovered'/);
   });
 
   it("never silently expires an unresolved submitted trade", function () {
-    assert.match(script, /const pending=storedPendingExecution\(\);if\(!pending\|\|!deployed\)return false/);
+    assert.match(script, /async function recoverPendingExecution\(pending=storedPendingExecution\(\)\)/);
     assert.match(script, /unverifiedTransactionHash=pending\.transactionHash/);
     assert.match(script, /clearPendingExecution\(\);unverifiedTransactionHash=''/);
     assert.doesNotMatch(script, /submittedAt\)>[0-9]+/);
+  });
+
+  it("fails closed when the saved submitted-trade record is invalid", function () {
+    assert.match(script, /if\(raw===null\)return Object\.freeze\(\{state:'none'\}\)/);
+    assert.match(script, /Object\.freeze\(\{state:'invalid'\}\)/);
+    assert.match(script, /else if\(pendingRecord\.state==='invalid'\)\{setSwapInFlight\(true\);status\(t\('status\.pendingRecordInvalid'\),'error'\)\}/);
+    assert.match(recoveryLocale, /'status\.pendingRecordInvalid'/);
+    assert.match(recoveryLocale, /재전송하지 않도록 거래를 잠갔습니다/);
   });
 
   it("unlocks a recovered failed trade only after canonical RPC consensus", function () {
