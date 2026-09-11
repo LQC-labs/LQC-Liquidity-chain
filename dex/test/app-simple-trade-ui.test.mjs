@@ -128,8 +128,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /unverifiedTransactionHash=''/);
     assert.match(script, /unverifiedTransactionHash=tx\.hash/);
     assert.match(script, /unverifiedTransactionHash=finalTransactionHash/);
-    assert.match(script, /rememberExecutionEvidence\(evidence\);clearPendingExecution\(\);unverifiedTransactionHash=''/);
-    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)\{clearPendingExecution\(\);unverifiedTransactionHash=''\}/);
+    assert.match(script, /rememberExecutionEvidence\(evidence\);if\(!clearPendingExecution\(finalTransactionHash\)\)throw new Error\('PendingExecutionStorageConflict'\);unverifiedTransactionHash=''/);
+    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)&&clearPendingExecution\(unverifiedTransactionHash\)\)unverifiedTransactionHash=''/);
     assert.match(script, /if\(unverifiedTransactionHash\)\{status\(t\('status\.resultUnknown'/);
     assert.match(koreanRuntime, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
@@ -168,7 +168,7 @@ describe("LQC simple trading UI", function () {
   it("never silently expires an unresolved submitted trade", function () {
     assert.match(script, /async function recoverPendingExecution\(pending=storedPendingExecution\(\)\)/);
     assert.match(script, /unverifiedTransactionHash=pending\.transactionHash/);
-    assert.match(script, /clearPendingExecution\(\);unverifiedTransactionHash=''/);
+    assert.match(script, /clearPendingExecution\(pending\.transactionHash\)/);
     assert.doesNotMatch(script, /submittedAt\)>[0-9]+/);
   });
 
@@ -187,7 +187,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /Number\(receipt\.status\)!==0/);
     assert.match(script, /consensusFailedTransactionReceipt\(observations,readProviders\.length,transactionHash,requiredConfirmations\)/);
     assert.match(script, /const failure=await verifyFailedSubmittedTransaction\(pending\.transactionHash\)/);
-    assert.match(script, /if\(failure\)\{clearPendingExecution\(\);unverifiedTransactionHash=''/);
+    assert.match(script, /if\(failure&&clearPendingExecution\(pending\.transactionHash\)\)\{unverifiedTransactionHash=''/);
     assert.match(recoveryLocale, /'status\.recoveredFailure'/);
     assert.match(recoveryLocale, /여러 RPC가 \{confirmations\}블록 후 실패를 확인/);
   });
