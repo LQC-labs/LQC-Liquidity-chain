@@ -23,7 +23,7 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /<html lang="en">/);
     assert.match(html, /id="languageSelect"/);
     assert.match(html, /locales\/en\.js.*locales\/ko\.js.*i18n\.js/);
-    assert.match(html, /recovery-validator\.js.*recovery-store\.js.*recovery-sync\.js.*wallet-session-guard\.js.*trade-gate\.js.*quote-session-guard\.js.*app\.js/);
+    assert.match(html, /recovery-validator\.js.*recovery-store\.js.*approval-reservation-store\.js.*recovery-sync\.js.*wallet-session-guard\.js.*trade-gate\.js.*quote-session-guard\.js.*app\.js/);
     assert.match(i18n, /lqc-flow-language/);
     assert.match(i18n, /navigator\.languages/);
     assert.match(i18n, /data-i18n-placeholder/);
