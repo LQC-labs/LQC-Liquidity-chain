@@ -6,7 +6,8 @@
   "scripts": {
     "compile": "node scripts/compile.mjs",
     "check:chart-locale": "node --check app/locales/chart.js",
-    "test": "npm run check:chart-locale && npm run check:app && npm run test:contracts",
+    "check:accessibility-locale": "node --check app/locales/accessibility.js",
+    "test": "npm run check:chart-locale && npm run check:accessibility-locale && npm run check:app && npm run test:contracts",
     "test:contracts": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
     "gate:stage1": "node scripts/run-stage1-gate.mjs",
     "gate:stage2-predeploy": "node scripts/run-stage2-predeploy-gate.mjs",

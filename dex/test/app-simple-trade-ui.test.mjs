@@ -22,6 +22,7 @@ const englishTrading = fs.readFileSync(path.join(root, "app/locales/en-trading.j
 const koreanTrading = fs.readFileSync(path.join(root, "app/locales/ko-trading.js"), "utf8");
 const recoveryLocale = fs.readFileSync(path.join(root, "app/locales/recovery.js"), "utf8");
 const chartLocale = fs.readFileSync(path.join(root, "app/locales/chart.js"), "utf8");
+const accessibilityLocale = fs.readFileSync(path.join(root, "app/locales/accessibility.js"), "utf8");
 const recoveryStoreSource = fs.readFileSync(path.join(root, "app/recovery-store.js"), "utf8");
 const recoveryValidatorSource = fs.readFileSync(path.join(root, "app/recovery-validator.js"), "utf8");
 
@@ -86,6 +87,13 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /locales\/chart\.js[\s\S]*locales\/en\.js.*i18n\.js/);
     assert.match(i18n, /LQCChartLocales/);
     assert.match(script, /renderWallets\(\);setMode\(mode,false\);loadChartHistory\(\)/);
+    for (const locale of ["en", "ko", "ja", "zh"])
+      assert.match(accessibilityLocale, new RegExp(`${locale}:\\{`));
+    for (const key of ["aria.homeBack", "aria.candleChart", "aria.tradeDirection", "aria.amountIn", "aria.mainMenu", "aria.closeHistory"])
+      assert.equal([...accessibilityLocale.matchAll(new RegExp(`'${key.replaceAll(".", "\\.")}'`, "g"))].length, 4);
+    assert.match(html, /locales\/accessibility\.js/);
+    assert.match(i18n, /LQCAccessibilityLocales/);
+    assert.doesNotMatch(html, /aria-label="[^"]*[가-힣]/);
   });
   it("keeps the primary trade flow simple while preserving optional Router evidence", function () {
     assert.match(html, /id="buyTab"[^>]*>Buy<\/button>/);
@@ -95,7 +103,7 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /data-i18n="trade\.bestPrice"/);
     assert.match(html, /data-i18n="trade\.nonCustodial"/);
     assert.match(html, /data-i18n="trade\.gasless"/);
-    assert.match(html, /<nav class="mobile-nav" aria-label="주요 메뉴">/);
+    assert.match(html, /<nav class="mobile-nav" aria-label="Main menu" data-i18n-aria-label="aria\.mainMenu">/);
     assert.match(html, /id="tokenSearch"[^>]*data-i18n-placeholder="dialog\.tokenSearch"/);
     assert.match(html, /data-i18n="dialog\.tokenPolicy"/);
     assert.match(script, /ui\.buy\.onclick=ui\.buyTab\.onclick/);
