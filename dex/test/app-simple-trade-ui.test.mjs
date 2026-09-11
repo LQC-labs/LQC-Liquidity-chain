@@ -129,7 +129,10 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /lqc-flow-pending-execution:/);
     assert.match(script, /function storedPendingExecution\(\)/);
     assert.match(script, /deploymentFingerprint!==cfg\.deploymentFingerprint/);
-    assert.match(script, /Date\.now\(\)-Number\(value\.submittedAt\)>86400000/);
+    assert.match(script, /value\.version!==1/);
+    assert.match(script, /!Number\.isSafeInteger\(submittedAt\)/);
+    assert.match(script, /submittedAt>Date\.now\(\)\+300000/);
+    assert.doesNotMatch(script, /Date\.now\(\)-Number\(value\.submittedAt\)>/);
     assert.match(script, /rememberPendingExecution\(tx\.hash,plan\.anchorQuote,settlementContext\)/);
     assert.match(script, /async function recoverPendingExecution\(\)/);
     assert.match(script, /if\(!trustedReadProviderIndexes\.length\)await chainHeadWithin\(\)/);
@@ -138,6 +141,13 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /if\(storedPendingExecution\(\)\)setTimeout\(recoverPendingExecution,0\)/);
     assert.match(recoveryLocale, /'status\.recovering'/);
     assert.match(recoveryLocale, /'status\.recovered'/);
+  });
+
+  it("never silently expires an unresolved submitted trade", function () {
+    assert.match(script, /const pending=storedPendingExecution\(\);if\(!pending\|\|!deployed\)return false/);
+    assert.match(script, /unverifiedTransactionHash=pending\.transactionHash/);
+    assert.match(script, /clearPendingExecution\(\);unverifiedTransactionHash=''/);
+    assert.doesNotMatch(script, /submittedAt\)>[0-9]+/);
   });
 
   it("unlocks a recovered failed trade only after canonical RPC consensus", function () {

@@ -199,7 +199,9 @@ Registry configuration, DEX registration, token/DEX caps, and ownership-transfer
 checkpointed. Transaction hashes are saved before confirmation; retries inspect pending receipts and
 skip only operations proven successful on-chain. Missing or reverted receipts stop the deployment.
 Previously confirmed operations are also rechecked against the canonical receipt on every retry;
-missing receipts or changed block evidence stop recovery instead of trusting stale local state.
+missing receipts or changed block evidence stop recovery instead of trusting stale local state. An unresolved
+submitted swap never expires merely because time passed: the browser remains fail-closed until independent RPCs
+canonically confirm either success or failure, preventing a delayed transaction from being duplicated after reload.
 Each operation is bound to a hash of its addresses, limits, amounts, and other settings, so a retry
 cannot silently reuse a successful transaction from a different deployment configuration. Test-token
 minting, exact approvals, and both initial-liquidity transactions are covered by the same recovery flow.
