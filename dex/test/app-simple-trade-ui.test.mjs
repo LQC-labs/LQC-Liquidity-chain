@@ -261,6 +261,18 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /else if\(pendingRecord\.state==='invalid'\)\{setSwapInFlight\(true\);status\(t\('status\.pendingRecordInvalid'\),'error'\)\}/);
     assert.match(recoveryLocale, /'status\.pendingRecordInvalid'/);
     assert.match(recoveryLocale, /재전송하지 않도록 거래를 잠갔습니다/);
+    assert.match(recoveryLocale, /root\.LQCLocales\.ja=Object\.freeze/);
+    assert.match(recoveryLocale, /root\.LQCLocales\.zh=Object\.freeze/);
+    for (const key of [
+      "status.recovering", "status.recovered", "status.recoveredFailure", "status.recoveredCancellation",
+      "recovery.retry", "recovery.explorer", "status.pendingRecordInvalid", "status.approvalRecovering",
+      "status.approvalRecovered", "status.approvalFailureRecovered", "status.approvalCancellationRecovered",
+      "status.approvalResultUnknown", "status.pendingApprovalInvalid", "status.approvalSigningUnknown",
+      "status.approvalReservationInvalid", "status.swapSigningUnknown", "status.swapReservationInvalid",
+      "status.lockUnsupported", "error.storage_unavailable.message", "error.storage_unavailable.action"
+    ]) {
+      assert.equal((recoveryLocale.match(new RegExp(`'${key.replaceAll(".", "\\.")}'\\s*:`, "g")) || []).length, 4);
+    }
     assert.match(script, /if\(action==='invalid'\)\{invalidateWalletContext\(\);setSwapInFlight\(true\);status\(t\('status\.pendingRecordInvalid'\),'error'\);return\}/);
   });
 
