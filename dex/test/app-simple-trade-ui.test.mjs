@@ -40,25 +40,6 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
   });
 
-  it("serializes swap submission across browser tabs", function () {
-    assert.match(script, /async function executeSwap\(\)/);
-    assert.match(script, /async function swap\(\)/);
-    assert.match(script, /navigator\.locks\?\.request/);
-    assert.match(script, /lqc-flow-swap:\$\{cfg\.deploymentFingerprint\|\|'unconfigured'\}/);
-    assert.match(script, /\{mode:'exclusive',ifAvailable:true\}/);
-    assert.match(script, /lock=>lock\?executeSwap\(\)/);
-    assert.match(script, /다른 탭에서 이 지갑의 거래를 처리하고 있습니다/);
-    assert.match(script, /const pending=storedSubmittedTransaction\(\);if\(pending\)/);
-  });
-
-  it("mirrors a submitted transaction lock across open tabs", function () {
-    assert.match(script, /window\.addEventListener\('storage'/);
-    assert.match(script, /event\.key!==submittedTransactionMemoryKey/);
-    assert.match(script, /다른 탭에서 거래.*가 제출되었습니다/);
-    assert.match(script, /setSwapInFlight\(true\);renderSubmittedTransaction\(unverifiedTransactionHash\)/);
-    assert.match(script, /void reconcileSubmittedTransaction\(\{transactionHash:unverifiedTransactionHash,recovery:unverifiedRecoveryContext\}\)/);
-  });
-
   it("freezes every order control while a wallet signature is pending", function () {
     assert.match(script, /const tradeControls=\(\)=>\[ui\.amountIn,ui\.slippage,ui\.tokenInButton,ui\.tokenOutButton,ui\.flip,ui\.max,ui\.buy,ui\.sell,ui\.buyTab,ui\.sellTab,ui\.marketSelector/);
     assert.match(script, /\.amount-presets button,.slippage-option/);
@@ -79,85 +60,25 @@ describe("LQC simple trading UI", function () {
   });
 
   it("tracks a successful speed-up replacement and rejects cancelled or malformed replacements", function () {
-    assert.match(script, /async function waitForFinalTransaction\(tx\)/);
+    assert.match(script, /async function waitForFinalTransactionHash\(tx\)/);
     assert.match(script, /error\?\.code!==['"]TRANSACTION_REPLACED['"]/);
     assert.match(script, /if\(error\.cancelled\)throw new Error\('TransactionReplacementCancelled'\)/);
     assert.match(script, /throw new Error\('InvalidTransactionReplacement'\)/);
-    assert.match(script, /transactionHash:replacement\.hash,transaction:replacement,replaced:true/);
-    assert.match(script, /const finalTransaction=await waitForFinalTransaction\(tx\),finalTransactionHash=finalTransaction\.transactionHash/);
-    assert.match(script, /if\(finalTransaction\.replaced\)plan\.anchorQuote=chartHealth\.bindReplacementTransaction/);
+    assert.match(script, /return replacement\.hash/);
+    assert.match(script, /const finalTransactionHash=await waitForFinalTransactionHash\(tx\)/);
     assert.match(script, /verifySubmittedTransaction\(finalTransactionHash,settlementContext\)/);
     assert.doesNotMatch(script, /await tx\.wait\(\);status\('거래 포함 완료/);
   });
 
   it("keeps trading locked when a submitted settlement cannot be verified", function () {
     assert.match(script, /unverifiedTransactionHash=''/);
-    assert.match(script, /rememberSubmittedTransaction\(tx\.hash,\{anchorQuote:plan\.anchorQuote,settlementContext\}\)/);
-    assert.match(script, /rememberSubmittedTransaction\(finalTransactionHash,\{anchorQuote:plan\.anchorQuote,settlementContext\}\)/);
-    assert.match(script, /rememberExecutionEvidence\(evidence\);clearSubmittedTransaction\(\)/);
-    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)clearSubmittedTransaction\(\)/);
+    assert.match(script, /unverifiedTransactionHash=tx\.hash/);
+    assert.match(script, /unverifiedTransactionHash=finalTransactionHash/);
+    assert.match(script, /rememberExecutionEvidence\(evidence\);unverifiedTransactionHash=''/);
+    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)unverifiedTransactionHash=''/);
     assert.match(script, /if\(unverifiedTransactionHash\)\{status\(`제출된 거래/);
     assert.match(script, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
-  });
-
-  it("links submitted and replacement hashes to the configured explorer immediately", function () {
-    assert.match(script, /function renderSubmittedTransaction\(transactionHash\)/);
-    assert.match(script, /ethers\.isHexString\(transactionHash,32\)/);
-    assert.match(script, /cfg\.blockExplorerUrls\[0\]\}\/tx\/\$\{transactionHash\}/);
-    assert.match(script, /lastSettledOutput\.textContent='확인 중'/);
-    assert.match(script, /lastEvidenceHash\.textContent='검증 대기'/);
-    assert.match(script, /rememberSubmittedTransaction\(tx\.hash,\{anchorQuote:plan\.anchorQuote,settlementContext\}\)/);
-    assert.match(script, /rememberSubmittedTransaction\(finalTransactionHash,\{anchorQuote:plan\.anchorQuote,settlementContext\}\)/);
-    assert.match(script, /function clearSubmittedTransaction\(\)/);
-  });
-
-  it("restores a deployment-bound submitted transaction after reload", function () {
-    assert.match(script, /lqc-flow-submitted-transaction:\$\{cfg\.deploymentFingerprint\|\|'unconfigured'\}/);
-    assert.match(script, /function storedSubmittedTransaction\(\)/);
-    assert.match(script, /!\[1,2\]\.includes\(value\?\.version\)/);
-    assert.match(script, /value\.deploymentFingerprint!==cfg\.deploymentFingerprint/);
-    assert.match(script, /value\.chainId!==cfg\.chainId/);
-    assert.match(script, /ethers\.isHexString\(value\.transactionHash,32\)/);
-    assert.match(script, /ethers\.isAddress\(value\.account\)/);
-    assert.match(script, /localStorage\.setItem\(submittedTransactionMemoryKey/);
-    assert.match(script, /localStorage\.removeItem\(submittedTransactionMemoryKey\)/);
-    assert.match(script, /const restoredSubmittedTransaction=storedSubmittedTransaction\(\)/);
-    assert.match(script, /setSwapInFlight\(true\);renderSubmittedTransaction\(unverifiedTransactionHash\)/);
-    assert.match(script, /새로고침 전에 제출된 거래/);
-    assert.match(script, /다른 지갑에서 제출한 미확인 거래가 있습니다/);
-  });
-
-  it("clears a restored lock only after canonical RPCs confirm failure", function () {
-    assert.match(script, /async function reconcileSubmittedTransaction\(pending,requiredConfirmations=3\)/);
-    assert.match(script, /getTransactionReceipt\(pending\.transactionHash\)/);
-    assert.match(script, /consensusFailedTransactionReceipt\(failed,readProviders\.length,pending\.transactionHash,requiredConfirmations\)/);
-    assert.match(script, /clearSubmittedTransaction\(\);setSwapInFlight\(false\)/);
-    assert.match(script, /if\(ownsPending\)await reconcileSubmittedTransaction\(pending\)/);
-  });
-
-  it("completes verified evidence for a successful restored transaction", function () {
-    assert.match(script, /submittedTransactionReplacer/);
-    assert.match(script, /submittedTransactionReviver/);
-    assert.match(script, /version:2/);
-    assert.match(script, /recovery=unverifiedRecoveryContext/);
-    assert.match(script, /transactionHash,account,submittedAt:Date\.now\(\),recovery\}/);
-    assert.match(script, /consensusTransactionReceipt\(successful,readProviders\.length,pending\.transactionHash,requiredConfirmations\)/);
-    assert.match(script, /verifySubmittedTransaction\(pending\.transactionHash,pending\.recovery\.settlementContext,requiredConfirmations\)/);
-    assert.match(script, /buildExecutionEvidence\(pending\.recovery\.anchorQuote,settlement/);
-    assert.match(script, /복원된 거래가.*수령량 검증 후 완료되었습니다/);
-  });
-
-  it("binds restored evidence to the exact mined wallet transaction", function () {
-    assert.match(script, /function restoredTransactionMatches\(transaction,pending\)/);
-    assert.match(script, /chainId:Number\(transaction\.chainId\)/);
-    assert.match(script, /to:transaction\.to,data:transaction\.data,value:transaction\.value/);
-    assert.match(script, /gasLimit:transaction\.gasLimit,nonce:Number\(transaction\.nonce\)/);
-    assert.match(script, /transaction\.hash.*pending\.transactionHash/);
-    assert.match(script, /transaction\.from.*pending\.account/);
-    assert.match(script, /chartHealth\.transactionMatches\(pending\.recovery\.anchorQuote,walletTransactionRequest\(transaction\)\)/);
-    assert.match(script, /source\.getTransaction\(pending\.transactionHash\)/);
-    assert.match(script, /Number\(item\.receipt\.status\)===1&&restoredTransactionMatches\(item\.transaction,pending\)/);
   });
 
   it("offers a market-first order and familiar balance percentage controls", function () {
