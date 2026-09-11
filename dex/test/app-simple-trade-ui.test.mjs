@@ -156,7 +156,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /recoveryStore\.assertAvailable\(anchorQuote\)/);
     assert.match(script, /function assertPendingExecutionStorageAvailable\(anchorQuote\)/);
     assert.match(recoveryStoreSource, /storage\.setItem\(reservationKey,reservation\)/);
-    assert.match(recoveryStoreSource, /storage\.getItem\(reservationKey\)!==reservation/);
+    assert.match(recoveryStoreSource, /stored!==reservation\|\|storage\.getItem\(reservationKey\)!==stored/);
+    assert.match(recoveryStoreSource, /observed!==reservation\|\|storage\.getItem\(reservationKey\)!==observed/);
     assert.match(recoveryStoreSource, /storage\.removeItem\(reservationKey\)/);
     assert.match(recoveryStoreSource, /throw new Error\('PendingExecutionStorageUnavailable'\)/);
     assert.match(script, /assertPendingExecutionStorageAvailable\(prepared\.binding\)/);
