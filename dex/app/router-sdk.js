@@ -164,5 +164,21 @@
     if(code==='NETWORK_ERROR'||message.includes('network')||message.includes('chain'))return{code:'NETWORK_ERROR',message:'BSC 테스트넷 연결을 확인할 수 없습니다.',action:'지갑 네트워크를 BSC Testnet으로 전환하세요.',retryable:true};
     return{code:'UNKNOWN',message:'거래를 실행하지 못했습니다.',action:'최신 견적과 지갑 상태를 확인한 뒤 다시 시도하세요.',retryable:true};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  async function verifyUiDeployment(provider,config,ethers){
+    if(!provider||typeof provider.getNetwork!=='function'||typeof provider.getCode!=='function'||!config||!ethers)throw new Error('Invalid deployment verifier');
+    const network=await provider.getNetwork();
+    if(BigInt(network.chainId)!==BigInt(config.chainId))throw new Error('Deployment chain mismatch');
+    const named={routerAddress:config.routerAddress,quoteRouterAddress:config.quoteRouterAddress,executionRouterAddress:config.executionRouterAddress,nativeRouterAddress:config.nativeRouterAddress,splitOptimizerAddress:config.splitOptimizerAddress,autoRouterAddress:config.autoRouterAddress,gasCostOracleAddress:config.gasCostOracleAddress};
+    for(const token of config.tokens||[])if(token.address!=='native')named[`token:${token.symbol}`]=token.address;
+    for(const dex of config.dexes||[])named[`adapter:${dex.id}`]=dex.adapter;
+    const entries=Object.entries(named);
+    if(entries.length<10)throw new Error('Deployment configuration incomplete');
+    const normalized=entries.map(([name,address])=>{if(!ethers.isAddress(address)||address===ethers.ZeroAddress)throw new Error(`Invalid deployment address ${name}`);return[name,address.toLowerCase()]});
+    if(new Set(normalized.map(([,address])=>address)).size!==normalized.length)throw new Error('Duplicate deployment address');
+    const codes=await Promise.all(normalized.map(([,address])=>provider.getCode(address)));
+    const missing=normalized.filter((_,index)=>!codes[index]||codes[index]==='0x').map(([name])=>name);
+    if(missing.length)throw new Error(`Deployment bytecode missing: ${missing.join(',')}`);
+    return{ready:true,chainId:Number(network.chainId),checked:normalized.length};
+  }
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
