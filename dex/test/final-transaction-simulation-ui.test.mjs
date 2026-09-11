@@ -22,4 +22,14 @@ describe("LQC DEX final transaction simulation", function () {
     const submission = app.indexOf("signer.sendTransaction(prepared.request)", binding);
     assert.ok(finalSimulation >= 0 && binding > finalSimulation && submission > binding);
   });
+  it("rechecks quote and execution expiry both before and after asynchronous nonce reads", function () {
+    assert.match(app, /Date\.now\(\)>prepared\.binding\.expiresAt/);
+    assert.match(app, /chartHealth\.executionPlanMatches\(prepared\.binding,prepared\.binding\.execution\)/);
+    assert.match(app, /PreparedTransactionExpiredBeforeSigning/);
+    const nonceRead = app.indexOf("const[nonce,walletNonce]=await Promise.all");
+    const finalExpiryCheck = app.indexOf("PreparedTransactionExpiredBeforeSigning", nonceRead);
+    const submission = app.indexOf("signer.sendTransaction(prepared.request)", finalExpiryCheck);
+    assert.ok(nonceRead >= 0 && finalExpiryCheck > nonceRead && submission > finalExpiryCheck);
+  });
+
 });
