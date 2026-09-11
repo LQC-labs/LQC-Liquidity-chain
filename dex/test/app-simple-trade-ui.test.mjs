@@ -21,6 +21,7 @@ const koreanRuntime = fs.readFileSync(path.join(root, "app/locales/ko-runtime.js
 const englishTrading = fs.readFileSync(path.join(root, "app/locales/en-trading.js"), "utf8");
 const koreanTrading = fs.readFileSync(path.join(root, "app/locales/ko-trading.js"), "utf8");
 const recoveryLocale = fs.readFileSync(path.join(root, "app/locales/recovery.js"), "utf8");
+const chartLocale = fs.readFileSync(path.join(root, "app/locales/chart.js"), "utf8");
 const recoveryStoreSource = fs.readFileSync(path.join(root, "app/recovery-store.js"), "utf8");
 const recoveryValidatorSource = fs.readFileSync(path.join(root, "app/recovery-validator.js"), "utf8");
 
@@ -78,6 +79,13 @@ describe("LQC simple trading UI", function () {
         assert.match(source, new RegExp(`'${key.replace(".", "\\.")}'`));
     }
     assert.match(script, /addEventListener\('lqc:languagechange'/);
+    for (const locale of ["en", "ko", "ja", "zh"])
+      assert.match(chartLocale, new RegExp(`${locale}:\\{`));
+    for (const key of ["chart.status", "chart.rpcConsensusFailed", "chart.retryLive", "wallet.nonCustodial", "wallet.browser"])
+      assert.equal([...chartLocale.matchAll(new RegExp(`'${key.replaceAll(".", "\\.")}'`, "g"))].length, 4);
+    assert.match(html, /locales\/chart\.js[\s\S]*locales\/en\.js.*i18n\.js/);
+    assert.match(i18n, /LQCChartLocales/);
+    assert.match(script, /renderWallets\(\);setMode\(mode,false\);loadChartHistory\(\)/);
   });
   it("keeps the primary trade flow simple while preserving optional Router evidence", function () {
     assert.match(html, /id="buyTab"[^>]*>Buy<\/button>/);
@@ -541,10 +549,11 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /quarantinedUntil<=now/);
     assert.match(script, /chartHealth\.chainSync\(primary\.finalizedBlock,consensus\.head,cfg\.candleFinalityBlocks\)/);
     assert.match(script, /sync\.lagBlocks/);
-    assert.match(script, /RPC \$\{consensus\.healthySources\}\/\$\{consensus\.configuredSources\}/);
-    assert.match(script, /다중 RPC 블록 해시 합의 실패/);
-    assert.match(script, /격리 \$\{consensus\.quarantinedSources\}/);
-    assert.match(script, /정상 갱신 \$\{lastHealthyByChart\.get\(chartKey\)\|\|'기록 없음'\}/);
+    assert.match(script, /t\('chart\.syncDetail'/);
+    assert.match(script, /t\('chart\.rpcConsensusFailed'\)/);
+    assert.match(script, /t\('chart\.isolated'/);
+    assert.match(script, /t\('chart\.status'/);
+    assert.doesNotMatch(script, /[가-힣]/);
     assert.match(html, /chart-health\.js/);
     assert.match(styles, /data-state="interrupted"/);
   });
