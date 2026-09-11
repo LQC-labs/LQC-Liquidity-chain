@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const cfg=window.LQC_FLOW_CONFIG,{ethers,LQCRouterSDK:sdk,LQCCandleData:candleData,LQCChartIndicators:indicatorMath,LQCChartHealth:chartHealth,LQCRecoveryBackoff:recoveryBackoff,LQCRecoverySync:recoverySync,LQCWalletSessionGuard:walletSessionGuardFactory}=window,$=id=>document.getElementById(id),walletSessionGuard=walletSessionGuardFactory.create();
+  const cfg=window.LQC_FLOW_CONFIG,{ethers,LQCRouterSDK:sdk,LQCCandleData:candleData,LQCChartIndicators:indicatorMath,LQCChartHealth:chartHealth,LQCRecoveryBackoff:recoveryBackoff,LQCRecoverySync:recoverySync,LQCWalletSessionGuard:walletSessionGuardFactory,LQCTradeGate:tradeGate}=window,$=id=>document.getElementById(id),walletSessionGuard=walletSessionGuardFactory.create();
   const routerAbi=['function getAmountsOut(uint256,address[]) view returns (uint256[])','function swapExactTokensForTokens(uint256,uint256,address[],address,uint256) returns (uint256[])','function swapExactBNBForTokens(uint256,address[],address,uint256) payable returns (uint256[])','function swapExactTokensForBNB(uint256,uint256,address[],address,uint256) returns (uint256[])'];
   const quoteRouterAbi=['function quoteBest(address,address,uint256,bytes[]) view returns ((bytes32 dexId,address adapter,uint256 amountOut,uint32 priority))'];
   const executionRouterAbi=['function swapExactInput(bytes32,address,address,uint256,uint256,address,uint256,bytes) returns (uint256)'];
@@ -45,7 +45,7 @@
   const status=(m,type='')=>{ui.status.className=`status ${type}`.trim();ui.statusText.textContent=m};
   const t=(key,values={})=>window.LQCI18n.t(key,values);
   const translatedSwapError=error=>{const guidance=sdk.explainSwapError(error),key=`error.${guidance.code.toLowerCase()}`;return`${t(`${key}.message`)} ${t(`${key}.action`)}`};
-  const disabled=v=>ui.execute.disabled=Boolean(v)||swapInFlight;
+  const disabled=v=>ui.execute.disabled=tradeGate.disabled({requestedDisabled:Boolean(v),deployed,account,swapInFlight});
   const tradeControls=()=>[ui.amountIn,ui.slippage,ui.tokenInButton,ui.tokenOutButton,ui.flip,ui.max,ui.buy,ui.sell,ui.buyTab,ui.sellTab,ui.marketSelector,...document.querySelectorAll('.amount-presets button,.slippage-option')];
   function setSwapInFlight(value){swapInFlight=Boolean(value);ui.execute.setAttribute('aria-busy',String(swapInFlight));for(const control of tradeControls())control.disabled=swapInFlight;if(swapInFlight){if(ui.dialog.open)ui.dialog.close();if(ui.marketDialog.open)ui.marketDialog.close()}disabled(!deployed)}
   function invalidateWalletContext(){walletContextVersion++}

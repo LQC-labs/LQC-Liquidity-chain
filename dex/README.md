@@ -33,6 +33,7 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - Cross-tab recovery decisions are isolated and behavior-tested so an external clear cannot hide recovery controls for a locally verified pending trade
 - Wallet account, chain, and disconnect events invalidate in-flight signing context; superseded asynchronous connection attempts cannot restore a stale signer or Router session
 - Wallet connection epochs are isolated and behavior-tested across repeated attempts, provider replacement, disconnect, and forged stale-version inputs
+- The execution button is governed by a wallet-aware trade gate, so stale quote or recovery callbacks cannot re-enable trading after disconnect
 - `LQCLiquidityVault` V1 with exact-asset accounting, permanently locked initial shares,
   donation-resistant share pricing, deposit caps, guardian deposit pause, and two-step ownership
 - Strategy Adapter V1 with vault/asset binding, separate strategy administration, absolute exposure

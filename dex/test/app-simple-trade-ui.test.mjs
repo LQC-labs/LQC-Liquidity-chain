@@ -23,7 +23,7 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /<html lang="en">/);
     assert.match(html, /id="languageSelect"/);
     assert.match(html, /locales\/en\.js.*locales\/ko\.js.*i18n\.js/);
-    assert.match(html, /recovery-validator\.js.*recovery-store\.js.*recovery-sync\.js.*wallet-session-guard\.js.*app\.js/);
+    assert.match(html, /recovery-validator\.js.*recovery-store\.js.*recovery-sync\.js.*wallet-session-guard\.js.*trade-gate\.js.*app\.js/);
     assert.match(i18n, /lqc-flow-language/);
     assert.match(i18n, /navigator\.languages/);
     assert.match(i18n, /data-i18n-placeholder/);
@@ -70,7 +70,7 @@ describe("LQC simple trading UI", function () {
 
   it("locks one swap submission until its wallet and settlement flow finishes", function () {
     assert.match(script, /swapInFlight=false/);
-    assert.match(script, /const disabled=v=>ui\.execute\.disabled=Boolean\(v\)\|\|swapInFlight/);
+    assert.match(script, /const disabled=v=>ui\.execute\.disabled=tradeGate\.disabled\(\{requestedDisabled:Boolean\(v\),deployed,account,swapInFlight\}\)/);
     assert.match(script, /function setSwapInFlight\(value\)/);
     assert.match(script, /setAttribute\('aria-busy',String\(swapInFlight\)\)/);
     assert.match(script, /if\(swapInFlight\)return status\(t\('status\.swapBusy'\)\)/);
