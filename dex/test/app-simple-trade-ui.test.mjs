@@ -42,6 +42,16 @@ describe("LQC simple trading UI", function () {
     assert.match(japanese, /'wallet\.connect':'ウォレット接続'/);
     assert.match(chinese, /root\.LQCLocales\.zh=Object\.freeze/);
     assert.match(chinese, /'wallet\.connect':'连接钱包'/);
+    for (const key of [
+      "common.network", "market.routerSpotPrice", "market.quoteAsset", "market.high24h",
+      "market.low24h", "market.volume24h", "market.priceStatusLabel", "position.mine",
+      "position.holders", "position.topTraders", "position.activities", "position.lqcBalance",
+      "position.unrealizedPnl", "position.holdings", "nav.home", "nav.market", "nav.trade", "nav.wallet"
+    ]) {
+      for (const source of [english, korean, japanese, chinese])
+        assert.match(source, new RegExp(`'${key.replace(".", "\\.")}'`));
+      assert.match(html, new RegExp(`data-i18n="${key.replace(".", "\\.")}"`));
+    }
     for (const [source, locale] of [[japaneseRuntime, "ja"], [chineseRuntime, "zh"]]) {
       assert.match(source, new RegExp(`root\\.LQCLocales\\.${locale}=Object\\.freeze`));
       for (const key of englishRuntime.matchAll(/'([^']+)'\s*:/g)) assert.match(source, new RegExp(`'${key[1].replaceAll(".", "\\.")}'`));
@@ -326,6 +336,7 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /예시 차트 · 실시간 히스토리 연동 전/);
     assert.match(script, /function approvedRoutesFor\(inputToken,outputToken,path\)/);
     assert.match(script, /async function refreshMarketPrice\(\)/);
+    assert.match(script, /ui\.priceSourceLabel\.textContent=t\('market\.routerSpotPrice'\)/);
     assert.match(script, /readOnlyBestQuote\(path\[0\],path\[1\],unit,routes\)/);
     assert.doesNotMatch(html, /\$0\.091138/);
     assert.match(html, /id="portfolioValue">—<\/strong>/);
