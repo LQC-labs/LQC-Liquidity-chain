@@ -63,6 +63,10 @@ describe("LQC simple trading UI", function () {
       assert.match(japaneseTrading, new RegExp(`'${key.replace(".", "\\.")}'`));
       assert.match(chineseTrading, new RegExp(`'${key.replace(".", "\\.")}'`));
     }
+    for (const key of ["history.count", "history.confirmations", "history.download"]) {
+      for (const source of [englishTrading, koreanTrading, japaneseTrading, chineseTrading])
+        assert.match(source, new RegExp(`'${key.replace(".", "\\.")}'`));
+    }
     assert.match(script, /addEventListener\('lqc:languagechange'/);
   });
   it("keeps the primary trade flow simple while preserving optional Router evidence", function () {
@@ -441,6 +445,10 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /URL\.createObjectURL\(blob\)/);
     assert.match(script, /URL\.revokeObjectURL\(url\)/);
     assert.match(script, /function renderExecutionHistory/);
+    assert.match(script, /t\('history\.count',\{count:values\.length\}\)/);
+    assert.match(script, /toLocaleString\(window\.LQCI18n\.locale\)/);
+    assert.match(script, /t\('history\.confirmations',\{count:evidence\.settlement\.confirmations\}\)/);
+    assert.match(script, /download\.textContent=t\('history\.download'\)/);
     assert.match(script, /tradeHistoryList\.replaceChildren/);
     assert.match(script, /download\.onclick=\(\)=>downloadExecutionEvidence\(evidence\)/);
     assert.doesNotMatch(script, /trade-history-item[^\n]*innerHTML/);
