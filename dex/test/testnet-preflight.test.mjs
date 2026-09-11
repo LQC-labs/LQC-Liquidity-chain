@@ -20,9 +20,13 @@ const safeInterface = new ethers.Interface([
 ]);
 const governanceOwners = Array.from({ length: 7 }, (_, index) => ethers.getAddress(`0x${(index + 10).toString(16).padStart(40, "0")}`));
 const riskOwners = Array.from({ length: 5 }, (_, index) => ethers.getAddress(`0x${(index + 30).toString(16).padStart(40, "0")}`));
+const guardianOwners = Array.from({ length: 5 }, (_, index) => ethers.getAddress(`0x${(index + 40).toString(16).padStart(40, "0")}`));
+const treasuryOwners = Array.from({ length: 5 }, (_, index) => ethers.getAddress(`0x${(index + 50).toString(16).padStart(40, "0")}`));
+const approvedReview=prepareRoleAddressReview({schemaVersion:1,network:'bsc-testnet',chainId:97,deployerAddress:new ethers.Wallet(key).address,roles:{governance:{address:owner,threshold:4,signerCount:7},risk:{address:riskAdmin,threshold:3,signerCount:5},guardian:{address:guardian,threshold:3,signerCount:5},treasury:{address:treasury,threshold:3,signerCount:5}}});
 const safeCall = async ({ to, data }) => {
   const selector = data.slice(0, 10);
-  const owners = ethers.getAddress(to) === owner ? governanceOwners : riskOwners;
+  const target=ethers.getAddress(to);
+  const owners = target === owner ? governanceOwners : target === riskAdmin ? riskOwners : target === guardian ? guardianOwners : treasuryOwners;
   if (selector === safeInterface.getFunction("getOwners").selector) {
     return safeInterface.encodeFunctionResult("getOwners", [owners]);
   }
@@ -102,7 +106,7 @@ describe("BSC testnet deployment preflight", function () {
 
   it("checks the live chain, deployer balance, and configured bytecode", async function () {
     const provider = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("11"), getCode: async () => "0x6000", call: safeCall };
-    const result = await runTestnetPreflight(base, provider);
+    const result = await runTestnetPreflight(base, provider, null, approvedReview);
     assert.equal(result.chainId, 97);
     assert.equal(result.riskAdmin, riskAdmin);
     assert.equal(result.guardian, guardian);

@@ -44,12 +44,19 @@ export function verifyRoleAddressReview(review,env){
 }
 
 export function assertRoleReviewSafePolicies(review,safePolicies){
+  const signerSets={};
   for(const name of roleOrder){
     const expected=review.roles[name],actual=safePolicies?.[name];
     if(!actual||!ethers.isAddress(actual.address)||ethers.getAddress(actual.address)!==expected.address)throw new Error(`${name} Safe policy address does not match the role review`);
-    if(!Array.isArray(actual.owners)||actual.owners.length!==expected.signerCount||actual.threshold!==expected.threshold)throw new Error(`${name} Safe policy does not exactly match the reviewed ${expected.threshold}-of-${expected.signerCount} configuration`);
+    if(!Array.isArray(actual.owners)||actual.owners.length!==expected.signerCount||Number(actual.threshold)!==expected.threshold)throw new Error(`${name} Safe policy does not exactly match the reviewed ${expected.threshold}-of-${expected.signerCount} configuration`);
     const owners=actual.owners.map(owner=>ethers.getAddress(owner));
     if(owners.includes(ethers.ZeroAddress)||new Set(owners).size!==owners.length)throw new Error(`${name} Safe policy contains an invalid signer set`);
+    signerSets[name]=new Set(owners.map(owner=>owner.toLowerCase()));
+  }
+  for(let left=0;left<roleOrder.length;left++)for(let right=left+1;right<roleOrder.length;right++){
+    const a=roleOrder[left],b=roleOrder[right],overlap=[...signerSets[a]].filter(owner=>signerSets[b].has(owner)).length;
+    const sharedControlThreshold=Math.max(review.roles[a].threshold,review.roles[b].threshold);
+    if(overlap>=sharedControlThreshold)throw new Error(`${a} and ${b} Safes share a threshold-controlling signer coalition`);
   }
   return true;
 }

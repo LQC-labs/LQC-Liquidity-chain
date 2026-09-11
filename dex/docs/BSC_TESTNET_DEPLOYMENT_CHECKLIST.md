@@ -47,6 +47,8 @@ When a reviewed role file is present, legacy temporary EOA override flags are ig
 entrypoint independently requires deployed Safe contracts for Governance and every operational role.
 `npm run readiness:mvp` reports BLOCKED unless the role-review path is present, every temporary role
 override is disabled, and the runtime deployer is separate from all four operational addresses.
+Live preflight and deployment also reject cross-Safe signer overlap large enough for one shared
+coalition to satisfy the approval thresholds of two roles.
 
 - [ ] RPC returns BSC testnet chain id `97`.
 - [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.

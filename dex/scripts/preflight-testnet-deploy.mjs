@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { ethers } from "ethers";
 import { PANCAKE_BSC_TESTNET, assertBscTestnetChain, assertPancakeV3PoolsExist } from "./validate-bsc-testnet.mjs";
-import { verifyRoleAddressReview } from "./prepare-role-address-review.mjs";
+import { assertRoleReviewSafePolicies, verifyRoleAddressReview } from "./prepare-role-address-review.mjs";
 
 const SAFE_INTERFACE = new ethers.Interface([
   "function getOwners() view returns (address[])",
@@ -197,7 +197,7 @@ export function validateTestnetDeploymentConfig(env) {
     guardianMinimumOwners, guardianMinimumThreshold, treasuryMinimumOwners, treasuryMinimumThreshold };
 }
 
-export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL), gitState = null) {
+export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL), gitState = null, roleReview = null) {
   const config = validateTestnetDeploymentConfig(env);
   if (gitState) assertReviewedSourceCommit(config.sourceCommit, gitState.commit, gitState.dirty);
   const network = await provider.getNetwork();
@@ -236,6 +236,7 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
     config.guardianMinimumOwners, config.guardianMinimumThreshold);
   treasurySafe = await assertSafeMultisig(provider, config.treasury, "TREASURY_ADDRESS",
     config.treasuryMinimumOwners, config.treasuryMinimumThreshold);
+  if(roleReview)assertRoleReviewSafePolicies(roleReview,{governance:{address:config.owner,...governanceSafe},risk:{address:config.riskAdmin,...riskSafe},guardian:{address:config.guardian,...guardianSafe},treasury:{address:config.treasury,...treasurySafe}});
   const named = { governanceOwner: config.owner, riskAdmin: config.riskAdmin, guardian: config.guardian,
     treasury: config.treasury, wbnb: env.WBNB_ADDRESS };
   if (env.PANCAKE_V2_ROUTER_ADDRESS) named.pancakeV2Router = env.PANCAKE_V2_ROUTER_ADDRESS;
@@ -256,7 +257,7 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
 
 async function main() {
   const roleReview=loadVerifiedRoleReview(process.env);
-  const result = await runTestnetPreflight(process.env, undefined, readGitSourceState());
+  const result = await runTestnetPreflight(process.env, undefined, readGitSourceState(),roleReview);
   console.log(JSON.stringify({ status: "ready", roleReviewFingerprint:roleReview.reviewFingerprint, ...result }, null, 2));
 }
 
