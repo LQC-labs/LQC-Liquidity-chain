@@ -10,36 +10,37 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="back" href="../../index.html" aria-label="홈으로 돌아가기">‹</a>
+    <a class="back" href="../../index.html" aria-label="홈으로 돌아가기" data-i18n-aria="backHome">‹</a>
     <div class="asset-title">
       <span class="asset-logo"><img src="../../lqc-token-symbol.png" alt="LQC"></span>
-      <span><strong>LQC FLOW <i>⌄</i></strong><button class="address-connect" id="connectButton" type="button">지갑 연결 <b>▣</b></button></span>
+      <span><strong>LQC FLOW <i>⌄</i></strong><button class="address-connect" id="connectButton" type="button"><span data-i18n="connectWallet">지갑 연결</span> <b>▣</b></button></span>
     </div>
-    <button class="header-icon favorite" type="button" aria-label="즐겨찾기">★</button>
-    <button class="header-icon menu" type="button" aria-label="더보기">•••</button>
+    <label class="language-picker"><span class="sr-only" data-i18n="language">언어</span><select id="languageSelect" aria-label="언어" data-i18n-aria="language"><option value="ko">한국어</option><option value="en">English</option></select></label>
+    <button class="header-icon favorite" type="button" aria-label="즐겨찾기" data-i18n-aria="favorite">★</button>
+    <button class="header-icon menu" type="button" aria-label="더보기" data-i18n-aria="more">•••</button>
   </header>
 
   <main class="exchange">
-    <section class="market" aria-label="LQC 시장 차트">
+    <section class="market" aria-label="LQC 시장 차트" data-i18n-aria="marketChart">
       <div class="ticker-row">
-        <div class="price-block"><span class="price-label">Price ⇌</span><strong class="ticker-price">$0.091138</strong><span class="ticker-change negative">-0.59%</span></div>
+        <div class="price-block"><span class="price-label" data-i18n="price">가격 ⇌</span><strong class="ticker-price">$0.091138</strong><span class="ticker-change negative">-0.59%</span></div>
         <dl class="quick-stats">
-          <div><dt>Market cap</dt><dd>$191.39M</dd></div>
-          <div><dt>Liquidity</dt><dd>$29.78K</dd></div>
-          <div><dt>24h volume</dt><dd>$513.06</dd></div>
-          <div><dt>Holders</dt><dd>249</dd></div>
+          <div><dt data-i18n="marketCap">시가총액</dt><dd>$191.39M</dd></div>
+          <div><dt data-i18n="liquidity">유동성</dt><dd>$29.78K</dd></div>
+          <div><dt data-i18n="volume24h">24시간 거래량</dt><dd>$513.06</dd></div>
+          <div><dt data-i18n="holders">보유자</dt><dd>249</dd></div>
           <div><dt>Top 10</dt><dd>99.93%</dd></div>
         </dl>
       </div>
 
-      <nav class="section-tabs" aria-label="시장 정보">
-        <button class="active" type="button">Charts</button><button type="button">Info</button><button type="button">Data</button><button type="button">Risk</button><button type="button">Routes</button>
+      <nav class="section-tabs" aria-label="시장 정보" data-i18n-aria="marketInfo">
+        <button class="active" type="button" data-i18n="charts">차트</button><button type="button" data-i18n="info">정보</button><button type="button" data-i18n="data">데이터</button><button type="button" data-i18n="risk">위험</button><button type="button" data-i18n="routes">경로</button>
       </nav>
 
-      <div class="market-facts"><button type="button" aria-label="시장 검색">⌕</button><span>LP Fee <b>0.30%</b></span><span>Route <b>Optimal Path</b></span><span class="sell-all">TESTNET</span></div>
+      <div class="market-facts"><button type="button" aria-label="시장 검색" data-i18n-aria="marketSearch">⌕</button><span><i data-i18n="lpFee">LP 수수료</i> <b>0.30%</b></span><span><i data-i18n="route">경로</i> <b data-i18n="optimalPath">최적 경로</b></span><span class="sell-all">TESTNET</span></div>
 
-      <div class="timeframes" aria-label="차트 시간 단위">
-        <button type="button">1s</button><button type="button">30s</button><button class="active" type="button">1m</button><button type="button">15m</button><button type="button">More⌄</button><span class="tool-divider"></span><button class="chart-icon" type="button" aria-label="차트 유형">⌁</button><button class="chart-tool" id="settingsButton" type="button" aria-label="거래 설정" aria-expanded="false">⬡</button>
+      <div class="timeframes" aria-label="차트 시간 단위" data-i18n-aria="chartIntervals">
+        <button type="button">1s</button><button type="button">30s</button><button class="active" type="button">1m</button><button type="button">15m</button><button type="button" data-i18n="moreIntervals">더보기⌄</button><span class="tool-divider"></span><button class="chart-icon" type="button" aria-label="차트 유형" data-i18n-aria="chartType">⌁</button><button class="chart-tool" id="settingsButton" type="button" aria-label="거래 설정" data-i18n-aria="tradeSettings" aria-expanded="false">⬡</button>
       </div>
 
       <div class="chart-wrap">
@@ -64,41 +65,41 @@
       <div class="volume"><span>VOL (LQC): 108.5751</span><div class="volume-bars" id="volumeBars"></div></div>
       <div class="indicators" aria-label="차트 지표"><button class="active">VOL</button><button>MA</button><button>EMA</button><button>BOLL</button><button>SAR</button><button>MACD</button><button>KDJ</button></div>
 
-      <nav class="position-tabs" aria-label="계정 정보"><button class="active">My positions</button><button>Holders <span>(249)</span></button><button>Top traders</button><button>Activities</button></nav>
+      <nav class="position-tabs" aria-label="계정 정보" data-i18n-aria="accountInfo"><button class="active" data-i18n="myPositions">내 포지션</button><button><span data-i18n="holders">보유자</span> <span>(249)</span></button><button data-i18n="topTraders">상위 거래자</button><button data-i18n="activities">활동</button></nav>
       <div class="position-card">
-        <div class="position-label"><span class="mini-logo">L</span><span>LQC balance</span></div>
+        <div class="position-label"><span class="mini-logo">L</span><span data-i18n="lqcBalance">LQC 잔액</span></div>
         <strong id="portfolioValue">$0.00</strong>
-        <p>Unrealized PnL <span>$0.00 (0.00%)</span></p>
-        <div class="position-meta"><span>보유 수량 <b id="positionBalance">—</b></span><span>네트워크 <b>BSC Testnet</b></span></div>
+        <p><span data-i18n="unrealizedPnl">미실현 손익</span> <span>$0.00 (0.00%)</span></p>
+        <div class="position-meta"><span><i data-i18n="holdings">보유 수량</i> <b id="positionBalance">—</b></span><span><i data-i18n="network">네트워크</i> <b>BSC Testnet</b></span></div>
       </div>
     </section>
 
     <section class="order-panel" id="orderPanel" aria-labelledby="orderTitle">
-      <div class="order-head"><div><span class="eyebrow">NON-CUSTODIAL SWAP</span><h1 id="orderTitle">LQC 매수</h1></div><button class="close-order" id="closeOrder" type="button" aria-label="주문창 닫기">×</button></div>
-      <div class="settings" id="settingsPanel" hidden><label for="slippageInput">슬리피지 허용 범위</label><div class="slippage-row"><button class="slippage-option" data-value="0.1">0.1%</button><button class="slippage-option active" data-value="0.5">0.5%</button><button class="slippage-option" data-value="1">1.0%</button><span class="custom-slippage"><input id="slippageInput" inputmode="decimal" value="0.5" aria-label="직접 입력 슬리피지"><b>%</b></span></div></div>
-      <div class="token-panel"><div class="panel-label"><span>보내는 토큰</span><button id="maxButton" type="button">MAX</button></div><div class="amount-row"><input id="amountIn" inputmode="decimal" autocomplete="off" placeholder="0.0" aria-label="보낼 수량"><button class="token-button" id="tokenInButton" type="button"><span class="token-symbol" id="tokenInIcon">BNB</span><b id="tokenInLabel">BNB</b><span>⌄</span></button></div><div class="balance">잔액 <span id="balanceIn">—</span></div></div>
-      <div class="flip-wrap"><button class="flip-button" id="flipButton" type="button" aria-label="토큰 순서 변경">⇅</button></div>
-      <div class="token-panel receive-panel"><div class="panel-label"><span>받는 토큰</span><span>예상 수량</span></div><div class="amount-row"><output id="amountOut">0.0</output><button class="token-button" id="tokenOutButton" type="button"><span class="token-symbol mint" id="tokenOutIcon">LQC</span><b id="tokenOutLabel">LQC</b><span>⌄</span></button></div><div class="balance">잔액 <span id="balanceOut">—</span></div></div>
-      <div class="quote-box"><div><span>최소 수령량</span><b id="minimumReceived">—</b></div><div><span>DEX 수수료</span><b>견적 포함</b></div><div><span>예상 가스비</span><b id="estimatedGas">—</b></div><div><span>가격 영향</span><b id="priceImpact">—</b></div><div><span>경로</span><b id="routeLabel">BNB → LQC</b></div></div>
+      <div class="order-head"><div><span class="eyebrow">NON-CUSTODIAL SWAP</span><h1 id="orderTitle" data-i18n="buyLqc">LQC 매수</h1></div><button class="close-order" id="closeOrder" type="button" aria-label="주문창 닫기" data-i18n-aria="closeOrder">×</button></div>
+      <div class="settings" id="settingsPanel" hidden><label for="slippageInput" data-i18n="slippageTolerance">슬리피지 허용 범위</label><div class="slippage-row"><button class="slippage-option" data-value="0.1">0.1%</button><button class="slippage-option active" data-value="0.5">0.5%</button><button class="slippage-option" data-value="1">1.0%</button><span class="custom-slippage"><input id="slippageInput" inputmode="decimal" value="0.5" aria-label="직접 입력 슬리피지" data-i18n-aria="customSlippage"><b>%</b></span></div></div>
+      <div class="token-panel"><div class="panel-label"><span data-i18n="sendToken">보내는 토큰</span><button id="maxButton" type="button">MAX</button></div><div class="amount-row"><input id="amountIn" inputmode="decimal" autocomplete="off" placeholder="0.0" aria-label="보낼 수량" data-i18n-aria="amountToSend"><button class="token-button" id="tokenInButton" type="button"><span class="token-symbol" id="tokenInIcon">BNB</span><b id="tokenInLabel">BNB</b><span>⌄</span></button></div><div class="balance"><span data-i18n="balance">잔액</span> <span id="balanceIn">—</span></div></div>
+      <div class="flip-wrap"><button class="flip-button" id="flipButton" type="button" aria-label="토큰 순서 변경" data-i18n-aria="flipTokens">⇅</button></div>
+      <div class="token-panel receive-panel"><div class="panel-label"><span data-i18n="receiveToken">받는 토큰</span><span data-i18n="estimatedAmount">예상 수량</span></div><div class="amount-row"><output id="amountOut">0.0</output><button class="token-button" id="tokenOutButton" type="button"><span class="token-symbol mint" id="tokenOutIcon">LQC</span><b id="tokenOutLabel">LQC</b><span>⌄</span></button></div><div class="balance"><span data-i18n="balance">잔액</span> <span id="balanceOut">—</span></div></div>
+      <div class="quote-box"><div><span data-i18n="minimumReceived">최소 수령량</span><b id="minimumReceived">—</b></div><div><span data-i18n="dexFee">DEX 수수료</span><b data-i18n="quoteIncluded">견적 포함</b></div><div><span data-i18n="estimatedGas">예상 가스비</span><b id="estimatedGas">—</b></div><div><span data-i18n="priceImpact">가격 영향</span><b id="priceImpact">—</b></div><div><span data-i18n="route">경로</span><b id="routeLabel">BNB → LQC</b></div></div>
       <div class="route-card" aria-label="LQC 최적 거래 경로">
-        <div class="route-card-head"><span>OPTIMAL PATH</span><b>TESTNET</b></div>
-        <div class="route-source"><span>선택된 DEX</span><strong id="selectedDex">LQC Flow · PancakeSwap 비교 대기</strong></div>
-        <div class="route-source"><span>최적 경로</span><strong id="selectedPath">BNB → LQC</strong></div>
-        <div class="route-source"><span>분할 비율</span><strong id="splitRatio">단일 경로 100%</strong></div><div class="route-source"><span>대체 경로</span><strong id="alternativeRoute">견적 후 표시</strong></div><div class="route-source"><span>실행 준비</span><strong id="preflightState">확인 대기</strong></div>
-        <div class="route-source muted-route"><span>실행 전략</span><strong id="routeStrategy">단일 경로 · 견적 우선</strong></div>
+        <div class="route-card-head"><span data-i18n="optimalPath">최적 경로</span><b>TESTNET</b></div>
+        <div class="route-source"><span data-i18n="selectedDex">선택된 DEX</span><strong id="selectedDex" data-i18n="comparePending">LQC Flow · PancakeSwap 비교 대기</strong></div>
+        <div class="route-source"><span data-i18n="optimalPath">최적 경로</span><strong id="selectedPath">BNB → LQC</strong></div>
+        <div class="route-source"><span data-i18n="splitRatio">분할 비율</span><strong id="splitRatio" data-i18n="singleRoute100">단일 경로 100%</strong></div><div class="route-source"><span data-i18n="alternativeRoute">대체 경로</span><strong id="alternativeRoute" data-i18n="showAfterQuote">견적 후 표시</strong></div><div class="route-source"><span data-i18n="executionReady">실행 준비</span><strong id="preflightState" data-i18n="checkPending">확인 대기</strong></div>
+        <div class="route-source muted-route"><span data-i18n="executionStrategy">실행 전략</span><strong id="routeStrategy" data-i18n="singleQuoteFirst">단일 경로 · 견적 우선</strong></div>
       </div>
-      <div class="status" id="statusBox" role="status"><i></i><span id="statusText">테스트넷 배포 주소를 연결하면 거래가 활성화됩니다.</span></div>
-      <button class="execute-button buy" id="executeButton" type="button" disabled>LQC 매수</button>
-      <p class="risk-note">테스트넷 MVP · 실제 자금을 보내지 마세요. 독립 보안감사 전에는 메인넷에서 사용할 수 없습니다.</p>
-      <span id="contractState" hidden>배포 대기</span>
+      <div class="status" id="statusBox" role="status"><i></i><span id="statusText" data-i18n="deploymentPending">테스트넷 배포 주소를 연결하면 거래가 활성화됩니다.</span></div>
+      <button class="execute-button buy" id="executeButton" type="button" disabled data-i18n="buyLqc">LQC 매수</button>
+      <p class="risk-note" data-i18n="testnetWarning">테스트넷 MVP · 실제 자금을 보내지 마세요. 독립 보안감사 전에는 메인넷에서 사용할 수 없습니다.</p>
+      <span id="contractState" hidden data-i18n="deploymentState">배포 대기</span>
     </section>
   </main>
 
-  <div class="bottom-actions" aria-label="LQC 매수 및 매도"><button class="action-buy active" id="buyAction" type="button">Buy</button><button class="action-sell" id="sellAction" type="button">Sell</button><button class="quick" id="quickTrade" type="button" aria-label="빠른 거래">↯</button></div>
+  <div class="bottom-actions" aria-label="LQC 매수 및 매도"><button class="action-buy active" id="buyAction" type="button" data-i18n="buy">매수</button><button class="action-sell" id="sellAction" type="button" data-i18n="sell">매도</button><button class="quick" id="quickTrade" type="button" aria-label="빠른 거래" data-i18n-aria="quickTrade">↯</button></div>
 
-  <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><h2>토큰 선택</h2><button value="cancel" aria-label="닫기">×</button></div><div class="token-list" id="tokenList" role="listbox"></div></form></dialog>
-  <dialog id="walletDialog"><form method="dialog"><div class="dialog-head"><h2>지갑 선택</h2><button value="cancel" aria-label="닫기">×</button></div><p class="wallet-help">기기에 설치되었거나 앱 내부에서 제공되는 비수탁형 지갑을 선택하세요.</p><div class="wallet-list" id="walletList" role="listbox"></div></form></dialog>
+  <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><h2 data-i18n="selectToken">토큰 선택</h2><button value="cancel" aria-label="닫기" data-i18n-aria="close">×</button></div><div class="token-list" id="tokenList" role="listbox"></div></form></dialog>
+  <dialog id="walletDialog"><form method="dialog"><div class="dialog-head"><h2 data-i18n="selectWallet">지갑 선택</h2><button value="cancel" aria-label="닫기" data-i18n-aria="close">×</button></div><p class="wallet-help" data-i18n="walletHelp">기기에 설치되었거나 앱 내부에서 제공되는 비수탁형 지갑을 선택하세요.</p><div class="wallet-list" id="walletList" role="listbox"></div></form></dialog>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6.17.0/dist/ethers.umd.min.js" integrity="sha384-lApM4ELRuFNT7NgNqnXB2zFWgSDdhVvmnOHov2DPJz/2zuNpZImXBeklFr18ilvi" crossorigin="anonymous"></script>
-  <script src="config.js?v=20260906m"></script><script src="router-sdk.js?v=20260906n"></script><script src="app.js?v=20260906n"></script>
+  <script src="config.js?v=20260911a"></script><script src="router-sdk.js?v=20260911a"></script><script src="i18n.js?v=20260911b"></script><script src="app.js?v=20260911b"></script>
 </body>
 </html>
