@@ -50,11 +50,13 @@ describe("LQC DEX token approval transaction", function () {
   });
 
   it("persists and recovers approvals before allowing a swap", function () {
+    assert.match(app, /pendingApprovalActive\|\|!pending\|\|!deployed\|\|blockRecoveryForSigningReservation\(\)/);
+    assert.match(app, /catch\{if\(blockRecoveryForSigningReservation\(\)\)return false;try\{if\(!pending\.cancellationHash\)/);
     assert.match(app, /rememberPendingApproval\(submittedHash,prepared\.binding,prepared\.context\)/);
     assert.match(app, /if\(transactionHash!==submittedHash\)rememberPendingApproval\(transactionHash,prepared\.binding,prepared\.context,submittedHash\)/);
     assert.match(app, /verifyCanonicalApproval\(pending\.transactionHash,pending\.anchorQuote\)/);
     assert.match(app, /verifyTokenAllowance\(context\.token,context\.spender,context\.amount,context\.owner\)/);
-    assert.match(app, /if\(!clearPendingApproval\(pending\.transactionHash\)\)throw new Error\('PendingApprovalStorageConflict'\)/);
+    assert.match(app, /if\(blockRecoveryForSigningReservation\(\)\|\|!clearPendingApproval\(pending\.transactionHash\)\)throw new Error\('PendingApprovalStorageConflict'\)/);
     assert.match(app, /finally\{pendingApprovalActive=false;if\(canReleaseSwapLock\(\)\)setSwapInFlight\(false\)\}/);
   });
 
