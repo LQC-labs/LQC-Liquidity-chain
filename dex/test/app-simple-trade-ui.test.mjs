@@ -12,6 +12,10 @@ const english = fs.readFileSync(path.join(root, "app/locales/en.js"), "utf8");
 const korean = fs.readFileSync(path.join(root, "app/locales/ko.js"), "utf8");
 const japanese = fs.readFileSync(path.join(root, "app/locales/ja.js"), "utf8");
 const chinese = fs.readFileSync(path.join(root, "app/locales/zh.js"), "utf8");
+const japaneseRuntime = fs.readFileSync(path.join(root, "app/locales/ja-runtime.js"), "utf8");
+const chineseRuntime = fs.readFileSync(path.join(root, "app/locales/zh-runtime.js"), "utf8");
+const japaneseTrading = fs.readFileSync(path.join(root, "app/locales/ja-trading.js"), "utf8");
+const chineseTrading = fs.readFileSync(path.join(root, "app/locales/zh-trading.js"), "utf8");
 const englishRuntime = fs.readFileSync(path.join(root, "app/locales/en-runtime.js"), "utf8");
 const koreanRuntime = fs.readFileSync(path.join(root, "app/locales/ko-runtime.js"), "utf8");
 const englishTrading = fs.readFileSync(path.join(root, "app/locales/en-trading.js"), "utf8");
@@ -26,7 +30,7 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /id="languageSelect"/);
     assert.match(html, /<option value="ja">日本語<\/option>/);
     assert.match(html, /<option value="zh">中文<\/option>/);
-    assert.match(html, /locales\/en\.js.*locales\/ko\.js.*locales\/ja\.js.*locales\/zh\.js.*i18n\.js/);
+    assert.match(html, /locales\/en\.js.*locales\/ko\.js.*locales\/ja\.js.*locales\/ja-runtime\.js.*locales\/ja-trading\.js.*locales\/zh\.js.*locales\/zh-runtime\.js.*locales\/zh-trading\.js.*i18n\.js/);
     assert.match(html, /recovery-validator\.js.*recovery-store\.js.*approval-reservation-store\.js.*recovery-sync\.js.*wallet-session-guard\.js.*trade-gate\.js.*quote-session-guard\.js.*app\.js/);
     assert.match(i18n, /lqc-flow-language/);
     assert.match(i18n, /navigator\.languages/);
@@ -38,6 +42,10 @@ describe("LQC simple trading UI", function () {
     assert.match(japanese, /'wallet\.connect':'ウォレット接続'/);
     assert.match(chinese, /root\.LQCLocales\.zh=Object\.freeze/);
     assert.match(chinese, /'wallet\.connect':'连接钱包'/);
+    for (const [source, locale] of [[japaneseRuntime, "ja"], [chineseRuntime, "zh"]]) {
+      assert.match(source, new RegExp(`root\\.LQCLocales\\.${locale}=Object\\.freeze`));
+      for (const key of englishRuntime.matchAll(/'([^']+)'\s*:/g)) assert.match(source, new RegExp(`'${key[1].replaceAll(".", "\\.")}'`));
+    }
     assert.match(i18n, /replace\(\/\\\{\(\\w\+\)\\\}\/g/);
     assert.match(englishRuntime, /'status\.swapComplete'/);
     assert.match(koreanRuntime, /'status\.swapComplete'/);
@@ -52,6 +60,8 @@ describe("LQC simple trading UI", function () {
     for (const key of ["market.count", "token.count", "trade.action", "quote.strategySplit", "quote.noLiquidity", "quote.maximumGas"]) {
       assert.match(englishTrading, new RegExp(`'${key.replace(".", "\\.")}'`));
       assert.match(koreanTrading, new RegExp(`'${key.replace(".", "\\.")}'`));
+      assert.match(japaneseTrading, new RegExp(`'${key.replace(".", "\\.")}'`));
+      assert.match(chineseTrading, new RegExp(`'${key.replace(".", "\\.")}'`));
     }
     assert.match(script, /addEventListener\('lqc:languagechange'/);
   });
