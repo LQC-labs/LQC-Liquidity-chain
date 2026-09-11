@@ -76,7 +76,9 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /clearedReservedApproval=recoverableReservedApproval&&approvalReservationStore\.clear\(approvalReservationRecord\.serialized\)/);
     assert.match(app, /approvalReservationRecord\.state!=='none'&&!clearedReservedApproval/);
     assert.match(app, /approvalReservationMatchesPending\(approvalReservationRecord\.value,pendingApprovalRecord\.value\)/);
-    assert.match(app, /function resumeRecoveryAfterSigningReservation\(\)[^{]*\{[^\n]*if\(storedPendingApproval\(\)\)\{setSwapInFlight\(true\);setTimeout\(\(\)=>recoverPendingApproval\(\),0\)\}/);
+    assert.match(app, /function resumeRecoveryAfterSigningReservation\(\)[^{]*\{if\(blockRecoveryForSigningReservation\(\)\)return;const approval=pendingApprovalState\(\),execution=pendingExecutionState\(\)/);
+    assert.match(app, /approval\.state==='invalid'[^\n]*status\(t\('status\.pendingApprovalInvalid'\)/);
+    assert.match(app, /approval\.state==='valid'[^\n]*recoverPendingApproval\(\)/);
     assert.match(app, /record\.state==='none'&&event\.newValue===null\)\{resumeRecoveryAfterSigningReservation\(\);return\}/);
     assert.match(app, /approvalReservationState\(\)\.state==='none'&&executionReservationState\(\)\.state==='none'/);
     assert.match(app, /else if\(approvalReservationState\(\)\.state!=='none'\)\{const state=approvalReservationState\(\)/);
