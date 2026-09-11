@@ -132,11 +132,23 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /Date\.now\(\)-Number\(value\.submittedAt\)>86400000/);
     assert.match(script, /rememberPendingExecution\(tx\.hash,plan\.anchorQuote,settlementContext\)/);
     assert.match(script, /async function recoverPendingExecution\(\)/);
+    assert.match(script, /if\(!trustedReadProviderIndexes\.length\)await chainHeadWithin\(\)/);
     assert.match(script, /verifySubmittedTransaction\(pending\.transactionHash,pending\.settlementContext\)/);
     assert.match(script, /sdk\.buildExecutionEvidence\(pending\.anchorQuote,settlement/);
     assert.match(script, /if\(storedPendingExecution\(\)\)setTimeout\(recoverPendingExecution,0\)/);
     assert.match(recoveryLocale, /'status\.recovering'/);
     assert.match(recoveryLocale, /'status\.recovered'/);
+  });
+
+  it("unlocks a recovered failed trade only after canonical RPC consensus", function () {
+    assert.match(script, /async function verifyFailedSubmittedTransaction\(transactionHash,requiredConfirmations=3\)/);
+    assert.match(script, /getTransactionReceipt\(transactionHash\)/);
+    assert.match(script, /Number\(receipt\.status\)!==0/);
+    assert.match(script, /consensusFailedTransactionReceipt\(observations,readProviders\.length,transactionHash,requiredConfirmations\)/);
+    assert.match(script, /const failure=await verifyFailedSubmittedTransaction\(pending\.transactionHash\)/);
+    assert.match(script, /if\(failure\)\{clearPendingExecution\(\);unverifiedTransactionHash=''/);
+    assert.match(recoveryLocale, /'status\.recoveredFailure'/);
+    assert.match(recoveryLocale, /여러 RPC가 \{confirmations\}블록 후 실패를 확인/);
   });
 
   it("offers a market-first order and familiar balance percentage controls", function () {
