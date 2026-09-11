@@ -10,6 +10,8 @@ const styles = fs.readFileSync(path.join(root, "app/styles.css"), "utf8");
 const i18n = fs.readFileSync(path.join(root, "app/i18n.js"), "utf8");
 const english = fs.readFileSync(path.join(root, "app/locales/en.js"), "utf8");
 const korean = fs.readFileSync(path.join(root, "app/locales/ko.js"), "utf8");
+const englishRuntime = fs.readFileSync(path.join(root, "app/locales/en-runtime.js"), "utf8");
+const koreanRuntime = fs.readFileSync(path.join(root, "app/locales/ko-runtime.js"), "utf8");
 
 describe("LQC simple trading UI", function () {
   it("provides an extensible English-first localization boundary", function () {
@@ -22,6 +24,9 @@ describe("LQC simple trading UI", function () {
     assert.match(i18n, /lqc:languagechange/);
     assert.match(english, /'wallet\.connect':'Connect wallet'/);
     assert.match(korean, /'wallet\.connect':'지갑 연결'/);
+    assert.match(i18n, /replace\(\/\\\{\(\\w\+\)\\\}\/g/);
+    assert.match(englishRuntime, /'status\.swapComplete'/);
+    assert.match(koreanRuntime, /'status\.swapComplete'/);
   });
   it("keeps the primary trade flow simple while preserving optional Router evidence", function () {
     assert.match(html, /id="buyTab"[^>]*>Buy<\/button>/);
@@ -49,7 +54,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /const disabled=v=>ui\.execute\.disabled=Boolean\(v\)\|\|swapInFlight/);
     assert.match(script, /function setSwapInFlight\(value\)/);
     assert.match(script, /setAttribute\('aria-busy',String\(swapInFlight\)\)/);
-    assert.match(script, /if\(swapInFlight\)return status\('이미 거래를 처리하고 있습니다/);
+    assert.match(script, /if\(swapInFlight\)return status\(t\('status\.swapBusy'\)\)/);
     assert.match(script, /setSwapInFlight\(true\)/);
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
   });
@@ -59,7 +64,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /async function executeSwap\(\)/);
     assert.match(script, /navigator\.locks\?\.request/);
     assert.match(script, /navigator\.locks\.request\(swapLockName,\{mode:'exclusive',ifAvailable:true\}/);
-    assert.match(script, /if\(!lock\)return status\('다른 탭에서 거래를 처리하고 있습니다/);
+    assert.match(script, /if\(!lock\)return status\(t\('status\.otherTabBusy'\)/);
     assert.match(script, /return executeSwap\(\)/);
   });
 
@@ -100,7 +105,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /rememberExecutionEvidence\(evidence\);unverifiedTransactionHash=''/);
     assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)unverifiedTransactionHash=''/);
     assert.match(script, /if\(unverifiedTransactionHash\)\{status\(`제출된 거래/);
-    assert.match(script, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
+    assert.match(koreanRuntime, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
   });
 
@@ -299,7 +304,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /chartHealth\.consensusSettlementOutput/);
     assert.match(script, /kind:'native-out'/);
     assert.match(script, /kind:'erc20'/);
-    assert.match(script, /수령량과 다중 RPC 확정성을 확인합니다/);
+    assert.match(script, /status\(t\('status\.confirming'\)\)/);
+    assert.match(koreanRuntime, /수령량과 다중 RPC 확정성을 확인합니다/);
     assert.match(script, /settlement\.confirmations/);
     assert.match(script, /RPC 합의 대기/);
     assert.match(script, /chartHealth\.restoreSourceHealth\(JSON\.parse\(localStorage\.getItem\(rpcHealthMemoryKey\)/);
