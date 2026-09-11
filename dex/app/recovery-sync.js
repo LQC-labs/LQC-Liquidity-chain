@@ -1,10 +1,10 @@
 (function(root){
   'use strict';
-  function storageAction({expectedStorage,keyMatches,newValue,record,unverifiedTransactionHash,pendingRecoveryActive}){
+  function storageAction({expectedStorage,keyMatches,record,unverifiedTransactionHash,pendingRecoveryActive}){
     if(!expectedStorage||!keyMatches)return'ignore';
-    if(newValue===null)return unverifiedTransactionHash||pendingRecoveryActive?'retain':'release';
     if(record?.state==='invalid')return'invalid';
-    if(record?.state!=='valid')return'ignore';
+    if(record?.state==='none')return unverifiedTransactionHash||pendingRecoveryActive?'retain':'release';
+    if(record?.state!=='valid')return'invalid';
     if(record.value.transactionHash===unverifiedTransactionHash&&!record.value.cancellationHash)return'ignore';
     return'recover';
   }
