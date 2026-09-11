@@ -36,6 +36,9 @@
     'quote.noAlternative':'대체 경로도 없음',
     'quote.unavailable':'실행 불가',
     'quote.noLiquidity':'이 거래쌍의 유동성을 확인할 수 없습니다. 수량을 줄이거나 다른 토큰을 선택하세요.',
-    'quote.maximumGas':'최대 {amount} BNB · RPC 합의'
+    'quote.maximumGas':'최대 {amount} BNB · RPC 합의',
+    'history.count':'{count}건',
+    'history.confirmations':'{count}블록 확인',
+    'history.download':'JSON 다운로드'
   });
 })(typeof window==='undefined'?globalThis:window);
