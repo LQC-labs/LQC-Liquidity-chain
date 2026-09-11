@@ -36,6 +36,9 @@
     'quote.noAlternative':'No alternative route',
     'quote.unavailable':'Unavailable',
     'quote.noLiquidity':'Liquidity for this market could not be verified. Reduce the amount or choose another token.',
-    'quote.maximumGas':'Maximum {amount} BNB · RPC consensus'
+    'quote.maximumGas':'Maximum {amount} BNB · RPC consensus',
+    'history.count':'{count} trades',
+    'history.confirmations':'Confirmed for {count} blocks',
+    'history.download':'Download JSON'
   });
 })(typeof window==='undefined'?globalThis:window);
