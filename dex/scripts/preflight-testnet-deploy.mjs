@@ -207,11 +207,12 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
     throw new Error("Deployer tBNB balance is below initial BNB liquidity plus the required deployment-gas reserve.");
   }
   const ownerCode = await provider.getCode(config.owner);
-  if (ownerCode === "0x" && env.ALLOW_EOA_OWNER !== "true") {
+  const reviewedRoleMode=Boolean(env.ROLE_REVIEW_FILE);
+  if (ownerCode === "0x" && (reviewedRoleMode || env.ALLOW_EOA_OWNER !== "true")) {
     throw new Error("FACTORY_OWNER has no contract bytecode; use a deployed multisig or explicitly set ALLOW_EOA_OWNER=true for temporary testnet use.");
   }
   const riskAdminCode = await provider.getCode(config.riskAdmin);
-  if (riskAdminCode === "0x" && env.ALLOW_EOA_RISK_ADMIN !== "true") {
+  if (riskAdminCode === "0x" && (reviewedRoleMode || env.ALLOW_EOA_RISK_ADMIN !== "true")) {
     throw new Error("RISK_ADMIN has no contract bytecode; use a deployed risk multisig or explicitly set ALLOW_EOA_RISK_ADMIN=true for temporary testnet use.");
   }
   const guardianCode = await provider.getCode(config.guardian);

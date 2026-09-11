@@ -43,6 +43,8 @@ requires the on-chain Safe owner counts and thresholds to exactly match the appr
 Runtime environment overrides cannot weaken or strengthen those exact policies; a changed policy requires a new reviewed governance decision and role-review artifact.
 The standalone `npm run preflight:testnet` entrypoint also requires `ROLE_REVIEW_FILE`, verifies its
 fingerprint and runtime address bindings first, and prints the verified fingerprint in its result.
+When a reviewed role file is present, legacy temporary EOA override flags are ignored; the deployment
+entrypoint independently requires deployed Safe contracts for Governance and every operational role.
 
 - [ ] RPC returns BSC testnet chain id `97`.
 - [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.

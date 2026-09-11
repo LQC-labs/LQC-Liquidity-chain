@@ -83,9 +83,9 @@ const captureSafePolicy = async (address, label, minimumOwners, minimumThreshold
     minimumOwners: Number(minimumOwners), minimumThreshold: Number(minimumThreshold) };
 };
 const governanceSafePolicy = await captureSafePolicy(owner, "FACTORY_OWNER", governanceMinimumOwners,
-  governanceMinimumThreshold, process.env.ALLOW_EOA_OWNER === "true");
+  governanceMinimumThreshold, false);
 const riskSafePolicy = await captureSafePolicy(riskAdmin, "RISK_ADMIN", riskMinimumOwners,
-  riskMinimumThreshold, process.env.ALLOW_EOA_RISK_ADMIN === "true");
+  riskMinimumThreshold, false);
 const guardianSafePolicy = await captureSafePolicy(guardian, "GUARDIAN_ADDRESS",
   BigInt(process.env.GUARDIAN_MIN_OWNERS || "5"), BigInt(process.env.GUARDIAN_MIN_THRESHOLD || "3"), false);
 const treasurySafePolicy = await captureSafePolicy(treasury, "TREASURY_ADDRESS",

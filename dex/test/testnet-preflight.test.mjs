@@ -118,10 +118,12 @@ describe("BSC testnet deployment preflight", function () {
       getCode: async address => ethers.getAddress(address) === owner ? "0x" : "0x6000" };
     await assert.rejects(() => runTestnetPreflight(base, eoaOwner), /multisig/);
     await assert.doesNotReject(() => runTestnetPreflight({ ...base, ALLOW_EOA_OWNER: "true" }, eoaOwner));
+    await assert.rejects(() => runTestnetPreflight({ ...base, ALLOW_EOA_OWNER: "true", ROLE_REVIEW_FILE: "approved.json" }, eoaOwner), /multisig/);
     const eoaRisk = { ...funded, getBalance: async () => ethers.parseEther("11"),
       getCode: async address => ethers.getAddress(address) === riskAdmin ? "0x" : "0x6000" };
     await assert.rejects(() => runTestnetPreflight(base, eoaRisk), /risk multisig/);
     await assert.doesNotReject(() => runTestnetPreflight({ ...base, ALLOW_EOA_RISK_ADMIN: "true" }, eoaRisk));
+    await assert.rejects(() => runTestnetPreflight({ ...base, ALLOW_EOA_RISK_ADMIN: "true", ROLE_REVIEW_FILE: "approved.json" }, eoaRisk), /risk multisig/);
   });
 
   it("requires the reviewed 4-of-7 governance and 3-of-5 risk Safe policies", async function () {
