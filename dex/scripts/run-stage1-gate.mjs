@@ -4,6 +4,7 @@ const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 const checks = [
   ["Chart locale syntax", ["run", "check:chart-locale"]],
   ["Accessibility locale syntax", ["run", "check:accessibility-locale"]],
+  ["Surface locale syntax", ["run", "check:surface-locale"]],
   ["Browser application syntax", ["run", "check:app"]],
   ["Solidity compilation and complete security suite", ["run", "test:contracts"]],
   ["Router SDK coverage threshold", ["run", "coverage:router-sdk"]],

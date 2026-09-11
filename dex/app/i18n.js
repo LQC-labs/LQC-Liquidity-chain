@@ -2,6 +2,7 @@
   'use strict';
   for(const [locale,values] of Object.entries(root.LQCChartLocales||{}))root.LQCLocales[locale]=Object.freeze({...root.LQCLocales[locale],...values});
   for(const [locale,values] of Object.entries(root.LQCAccessibilityLocales||{}))root.LQCLocales[locale]=Object.freeze({...root.LQCLocales[locale],...values});
+  for(const [locale,values] of Object.entries(root.LQCSurfaceLocales||{}))root.LQCLocales[locale]=Object.freeze({...root.LQCLocales[locale],...values});
   const storageKey='lqc-flow-language',fallback='en',supported=()=>Object.keys(root.LQCLocales||{});
   function normalize(value){return String(value||'').trim().toLowerCase().split('-')[0]}
   function detect(){let saved='';try{saved=localStorage.getItem(storageKey)||''}catch{}const candidates=[saved,...(navigator.languages||[]),navigator.language,fallback].map(normalize);return candidates.find(code=>supported().includes(code))||fallback}

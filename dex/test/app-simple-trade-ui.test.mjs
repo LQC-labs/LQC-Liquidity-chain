@@ -23,6 +23,7 @@ const koreanTrading = fs.readFileSync(path.join(root, "app/locales/ko-trading.js
 const recoveryLocale = fs.readFileSync(path.join(root, "app/locales/recovery.js"), "utf8");
 const chartLocale = fs.readFileSync(path.join(root, "app/locales/chart.js"), "utf8");
 const accessibilityLocale = fs.readFileSync(path.join(root, "app/locales/accessibility.js"), "utf8");
+const surfaceLocale = fs.readFileSync(path.join(root, "app/locales/surface.js"), "utf8");
 const recoveryStoreSource = fs.readFileSync(path.join(root, "app/recovery-store.js"), "utf8");
 const recoveryValidatorSource = fs.readFileSync(path.join(root, "app/recovery-validator.js"), "utf8");
 
@@ -94,6 +95,15 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /locales\/accessibility\.js/);
     assert.match(i18n, /LQCAccessibilityLocales/);
     assert.doesNotMatch(html, /aria-label="[^"]*[가-힣]/);
+    for (const locale of ["en", "ko", "ja", "zh"])
+      assert.match(surfaceLocale, new RegExp(`${locale}:\\{`));
+    for (const key of ["surface.charts", "surface.info", "surface.data", "surface.risk", "surface.routes", "surface.price", "surface.status"])
+      assert.equal([...surfaceLocale.matchAll(new RegExp(`'${key.replaceAll(".", "\\.")}'`, "g"))].length, 4);
+    assert.match(html, /locales\/surface\.js/);
+    assert.match(i18n, /LQCSurfaceLocales/);
+    assert.match(html, /data-i18n="surface\.charts"/);
+    assert.match(html, /data-i18n="surface\.price"/);
+    assert.equal((html.match(/[가-힣]+/g)||[]).join(""), "한국어");
   });
   it("keeps the primary trade flow simple while preserving optional Router evidence", function () {
     assert.match(html, /id="buyTab"[^>]*>Buy<\/button>/);
@@ -349,7 +359,7 @@ describe("LQC simple trading UI", function () {
   });
   it("uses an approved Router quote for spot price and labels historical candles as examples", function () {
     assert.match(html, /id="tickerPrice">—<\/strong>/);
-    assert.match(html, /예시 차트 · 실시간 히스토리 연동 전/);
+    assert.match(html, /example chart · live history pending/);
     assert.match(script, /function approvedRoutesFor\(inputToken,outputToken,path\)/);
     assert.match(script, /async function refreshMarketPrice\(\)/);
     assert.match(script, /ui\.priceSourceLabel\.textContent=t\('market\.routerSpotPrice'\)/);
