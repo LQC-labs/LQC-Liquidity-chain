@@ -295,7 +295,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /readOnlyBestQuote\(path\[0\],path\[1\],unit,routes\)/);
     assert.doesNotMatch(html, /\$0\.091138/);
     assert.match(html, /id="portfolioValue">—<\/strong>/);
-    assert.match(script, /async function refreshLqcPortfolioValue\(lqc,lqcBalance\)/);
+    assert.match(script, /async function refreshLqcPortfolioValue\(lqc,lqcBalance,request,owner\)/);
     assert.match(script, /quote=await readOnlyBestQuote\(path\[0\],path\[1\],unit,routes\)/);
     assert.doesNotMatch(script, /\.091348/);
   });
@@ -304,7 +304,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function quoteContext\(raw=ui\.amountIn\.value\.trim\(\)\)/);
     assert.match(script, /quoteSessionGuard\.invalidate\(\);clearTimeout\(timer\)/);
     assert.match(script, /ticket=quoteSessionGuard\.begin\(quoteContext\(raw\)\)/);
-    assert.match(script, /if\(!quoteSessionGuard\.isCurrent\(ticket,quoteContext\(\)\)\)return/);
+    assert.match(script, /if\(!quoteSessionGuard\.isCurrent\(ticket,quoteContext\(\)\)return/);
   });
 
   it("offers standard candle intervals with a validated history boundary and safe examples", function () {
