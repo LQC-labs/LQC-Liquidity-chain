@@ -232,7 +232,7 @@ describe("LQC simple trading UI", function () {
   it("never silently expires an unresolved submitted trade", function () {
     assert.match(script, /async function recoverPendingExecution\(\)/);
     assert.match(script, /unverifiedTransactionHash=pending\.transactionHash/);
-    assert.match(script, /clearPendingExecution\(pending\.transactionHash\)/);
+    assert.match(script, /clearPendingExecution\(pending\.transactionHash,pending\)/);
     assert.doesNotMatch(script, /submittedAt\)>[0-9]+/);
   });
 
@@ -254,7 +254,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function verifyFailedSubmittedTransaction\(transactionHash,anchorQuote/);
     assert.match(script, /getTransaction\(transactionHash\).*getTransactionReceipt\(transactionHash\)/);
     assert.match(script, /consensusSubmittedTransaction\(anchorQuote,observations,readProviders\.length,transactionHash\)/);
-    assert.match(script, /if\(failure&&clearPendingExecution\(pending\.transactionHash\)\)\{setPendingTradeControls\(null,false\);pendingRecoveryAttempts=0;unverifiedTransactionHash=''/);
+    assert.match(script, /if\(failure&&clearPendingExecution\(pending\.transactionHash,pending\)\)\{setPendingTradeControls\(null,false\);pendingRecoveryAttempts=0;unverifiedTransactionHash=''/);
     assert.match(recoveryLocale, /'status\.recoveredFailure'/);
     assert.match(recoveryLocale, /여러 RPC가 \{confirmations\}블록 후 실패를 확인/);
     assert.match(script, /verifyCancelledSubmittedTransaction\(e\.replacementHash,plan\.anchorQuote\)/);
