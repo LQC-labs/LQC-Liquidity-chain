@@ -1,6 +1,7 @@
 import {pathToFileURL} from 'node:url';
 import {ethers} from 'ethers';
 import {PANCAKE_BSC_TESTNET} from './validate-bsc-testnet.mjs';
+import {validReviewedV3Pools} from './public-testnet-preflight.mjs';
 import {readGitSourceState} from './preflight-testnet-deploy.mjs';
 
 const address=value=>ethers.isAddress(value||'');
@@ -22,7 +23,7 @@ export function collectMvpReadiness(env,{currentCommit='',dirty=true}={}){
   const v3Router=env.PANCAKE_V3_ROUTER_ADDRESS||'',v3Quoter=env.PANCAKE_V3_QUOTER_ADDRESS||'';
   add(items,'PANCAKE_V3_PINS',address(v3Router)&&address(v3Quoter)&&ethers.getAddress(v3Router)===PANCAKE_BSC_TESTNET.v3Router&&ethers.getAddress(v3Quoter)===PANCAKE_BSC_TESTNET.v3Quoter,'Use both pinned PancakeSwap V3 BSC testnet endpoints.');
   let pools=[];try{pools=JSON.parse(env.PANCAKE_V3_ALLOWED_POOLS||'[]')}catch{}
-  add(items,'PANCAKE_V3_POOLS',Array.isArray(pools)&&pools.length>0,'Add at least one reviewed V3 pool descriptor to PANCAKE_V3_ALLOWED_POOLS.');
+  add(items,'PANCAKE_V3_POOLS',validReviewedV3Pools(pools),'Add unique reviewed V3 token-pair descriptors using canonical fee tiers to PANCAKE_V3_ALLOWED_POOLS.');
   add(items,'VAULT_STRATEGY_DISABLED',String(env.TEST_VAULT_STRATEGY_CAP||'0')==='0','Keep TEST_VAULT_STRATEGY_CAP=0 for the first MVP deployment.');
   const blockers=items.filter(item=>item.status==='BLOCKED');
   return Object.freeze({ready:blockers.length===0,passed:items.length-blockers.length,total:items.length,items,blockers});

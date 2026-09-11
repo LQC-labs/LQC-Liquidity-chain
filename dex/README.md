@@ -117,6 +117,7 @@ New DEXs can be added through reviewed adapters without replacing the quote, opt
 
 Before the live Stage 2 preflight, run `npm run readiness:mvp`. It reports every missing BSC testnet MVP input in one pass—without printing the deployer key or configured addresses—covering the reviewed clean commit, role separation, pinned PancakeSwap V2/V3 endpoints, reviewed V3 pools, and the initially disabled Vault strategy.
 The `npm run gate:stage2-predeploy` command now runs that readiness check first, so missing external inputs stop immediately before the full Stage 1 suite and dependency audit consume time.
+Run `npm run preflight:public` as soon as RPC, WBNB, pinned PancakeSwap endpoints, and reviewed V3 pool descriptors are available. It verifies chain 97, deployed bytecode, and canonical V3 pool existence without accepting or requiring a deployer private key, governance address, or treasury role.
 
 Router 2.0 is intentionally protocol-neutral: every EVM DEX can be integrated through the same reviewed adapter interfaces and enabled or paused independently in the registry. A DEX is never treated as compatible until its protocol-specific quote and execution adapter, route validation, tests, and security review are complete. Non-EVM liquidity will be connected later through the cross-chain routing layer rather than unsafe direct assumptions.
 

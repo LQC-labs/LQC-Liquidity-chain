@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {PANCAKE_BSC_TESTNET} from '../scripts/validate-bsc-testnet.mjs';
+import {runPublicTestnetPreflight,validatePublicTestnetConfig,validReviewedV3Pools} from '../scripts/public-testnet-preflight.mjs';
+
+const addr=byte=>`0x${byte.repeat(40)}`,pools=[{tokenA:addr('1'),tokenB:addr('2'),fee:2500}],env={BSC_TESTNET_RPC_URL:'https://bsc-testnet.example',EXPECTED_CHAIN_ID:'97',WBNB_ADDRESS:addr('3'),PANCAKE_V2_ROUTER_ADDRESS:PANCAKE_BSC_TESTNET.v2Router,PANCAKE_V3_ROUTER_ADDRESS:PANCAKE_BSC_TESTNET.v3Router,PANCAKE_V3_QUOTER_ADDRESS:PANCAKE_BSC_TESTNET.v3Quoter,PANCAKE_V3_ALLOWED_POOLS:JSON.stringify(pools)};
+describe('LQC public BSC testnet preflight',function(){
+  it('validates public endpoints without any deployer key or role address',function(){const value=validatePublicTestnetConfig(env);assert.equal(value.pools.length,1);assert.equal('DEPLOYER_PRIVATE_KEY' in value,false)});
+  it('rejects unpinned endpoints, non-HTTPS RPC, wrong chain, and malformed pools',function(){assert.throws(()=>validatePublicTestnetConfig({...env,BSC_TESTNET_RPC_URL:'http://rpc.example'}),/HTTPS/);assert.throws(()=>validatePublicTestnetConfig({...env,EXPECTED_CHAIN_ID:'56'}),/97/);assert.throws(()=>validatePublicTestnetConfig({...env,PANCAKE_V2_ROUTER_ADDRESS:addr('4')}),/pinned/);assert.throws(()=>validatePublicTestnetConfig({...env,PANCAKE_V3_ALLOWED_POOLS:'[]'}),/unique reviewed/)});
+  it('requires canonical unique V3 pool descriptors',function(){assert.equal(validReviewedV3Pools(pools),true);assert.equal(validReviewedV3Pools([{...pools[0],fee:3000}]),false);assert.equal(validReviewedV3Pools([...pools,{tokenA:addr('2'),tokenB:addr('1'),fee:2500}]),false)});
+  it('checks chain, bytecode set, and canonical pool existence through injectable live boundaries',async function(){let codeNames,poolCount;const result=await runPublicTestnetPreflight(env,{provider:{getNetwork:async()=>({chainId:97n})},codeCheck:async(_,contracts)=>{codeNames=Object.keys(contracts)},poolCheck:async(_,items)=>{poolCount=items.length}});assert.equal(result.ok,true);assert.ok(codeNames.includes('v2Factory'));assert.equal(poolCount,1);assert.equal(result.reviewedV3Pools,1)});
+  it('fails closed on a provider connected to another chain',async function(){await assert.rejects(()=>runPublicTestnetPreflight(env,{provider:{getNetwork:async()=>({chainId:56n})},codeCheck:async()=>{},poolCheck:async()=>{}}),/expected BSC testnet 97/)});
+});
