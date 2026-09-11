@@ -71,7 +71,9 @@ security gates, multisig and Timelock policy, audit boundary, or testnet-only re
 
 ## Immediate next milestone
 
-Complete Stage 1 Router-Vault-Risk-Adapter integration evidence. Then prepare Stage 2 without deploying until reviewed BSC testnet governance, risk-admin, guardian, treasury, and deployment addresses are supplied.
+Keep the completed Stage 1 Router-Vault-Risk-Adapter evidence green while preparing Stage 2 without
+deploying. Bind the reviewed public-address fingerprint to the runtime deployer, governance,
+risk-admin, guardian, and treasury addresses before live on-chain Safe verification.
 
 Run the repository-level Stage 1 exit gate from `dex/` with `npm run gate:stage1`. The gate fails
 closed unless browser syntax checks, Solidity compilation, the complete contract/security suite, and

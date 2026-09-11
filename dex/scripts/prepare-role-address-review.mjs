@@ -28,6 +28,21 @@ export function prepareRoleAddressReview(input){
   return Object.freeze({schemaVersion:1,network:'bsc-testnet',chainId:97,deployerAddress,roles:Object.freeze(roles),reviewFingerprint,status:'READY_FOR_ONCHAIN_SAFE_VERIFICATION'});
 }
 
+export function verifyRoleAddressReview(review,env){
+  if(!exactKeys(review,['schemaVersion','network','chainId','deployerAddress','roles','reviewFingerprint','status']))throw new Error('Prepared role review contains unsupported fields');
+  const prepared=prepareRoleAddressReview({schemaVersion:review.schemaVersion,network:review.network,chainId:review.chainId,deployerAddress:review.deployerAddress,roles:review.roles});
+  if(review.status!==prepared.status||review.reviewFingerprint!==prepared.reviewFingerprint)throw new Error('Role review fingerprint or status is invalid');
+  let runtimeDeployer;
+  try{runtimeDeployer=new ethers.Wallet(env.DEPLOYER_PRIVATE_KEY||'').address}catch{throw new Error('Deployment deployer key is missing or invalid')}
+  const expected={deployerAddress:runtimeDeployer,governance:env.FACTORY_OWNER,risk:env.RISK_ADMIN,guardian:env.GUARDIAN_ADDRESS,treasury:env.TREASURY_ADDRESS};
+  for(const [name,value] of Object.entries(expected)){
+    if(!ethers.isAddress(value))throw new Error(`Deployment ${name} address is missing or invalid`);
+    const reviewed=name==='deployerAddress'?prepared.deployerAddress:prepared.roles[name].address;
+    if(ethers.getAddress(value)!==reviewed)throw new Error(`Deployment ${name} address does not match the reviewed role address`);
+  }
+  return prepared;
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   const file=process.argv[2];
   if(!file)throw new Error('Usage: npm run prepare:role-review -- <public-role-addresses.json>');

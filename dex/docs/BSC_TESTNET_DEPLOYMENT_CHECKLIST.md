@@ -32,6 +32,11 @@ requires a separate deployer, Governance, Risk, Guardian, and Treasury address; 
 fingerprint. It does not query the chain, sign, save, or broadcast anything. On-chain Safe bytecode,
 owners, and thresholds must still pass the Stage 2 predeployment and post-deployment validators.
 
+Save the approved output outside the repository and set `ROLE_REVIEW_FILE` to that JSON file. Before
+any live RPC check, `npm run verify:role-review` recalculates the fingerprint and requires the runtime
+deployer, Governance, Risk, Guardian, and Treasury addresses to match it exactly. The Stage 2
+predeployment gate runs this binding check first and fails closed on any substitution.
+
 - [ ] RPC returns BSC testnet chain id `97`.
 - [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.
 - [ ] Pin PancakeSwap V2 Router to `0xD99D1c33F9fC3444f8101754aBC46c52416550D1`.
