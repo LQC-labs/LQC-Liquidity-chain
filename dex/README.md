@@ -21,6 +21,7 @@ This package implements the first testable smart-contract layer for **LQC Flow D
   reserves, and zero Router/adapter custody even after an earlier leg was executable
 - BSC testnet deployment script
 - Static wallet-connected swap interface in `app/`
+- Fail-closed pending-swap recovery that binds the persisted quote sender, quote recipient, and settlement recipient to one valid account
 - `LQCLiquidityVault` V1 with exact-asset accounting, permanently locked initial shares,
   donation-resistant share pricing, deposit caps, guardian deposit pause, and two-step ownership
 - Strategy Adapter V1 with vault/asset binding, separate strategy administration, absolute exposure

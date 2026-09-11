@@ -22,7 +22,8 @@
   const executionEvidenceMemoryKey=`lqc-flow-execution-evidence:${cfg.deploymentFingerprint||'unconfigured'}`;
   const pendingExecutionMemoryKey=`lqc-flow-pending-execution:${cfg.deploymentFingerprint||'unconfigured'}`;
   const swapLockName=`lqc-flow-swap:${cfg.deploymentFingerprint||'unconfigured'}`;
-  const recoveryStore=window.LQCRecoveryStore.create({storage:localStorage,key:pendingExecutionMemoryKey,deploymentFingerprint:cfg.deploymentFingerprint,isTransactionHash:value=>ethers.isHexString(value,32)});
+  function validRecoveryPayload(value){const execution=value?.anchorQuote?.execution,settlement=value?.settlementContext;if(!execution||!settlement||!ethers.isAddress(execution.sender)||!ethers.isAddress(execution.recipient)||!ethers.isAddress(settlement.recipient))return false;const sender=execution.sender.toLowerCase(),recipient=execution.recipient.toLowerCase(),settlementRecipient=settlement.recipient.toLowerCase();return sender===recipient&&recipient===settlementRecipient}
+  const recoveryStore=window.LQCRecoveryStore.create({storage:localStorage,key:pendingExecutionMemoryKey,deploymentFingerprint:cfg.deploymentFingerprint,isTransactionHash:value=>ethers.isHexString(value,32),validatePayload:validRecoveryPayload});
   function pendingExecutionState(){return recoveryStore.state()}
   function storedPendingExecution(){const record=pendingExecutionState();return record.state==='valid'?record.value:null}
   function rememberPendingExecution(transactionHash,anchorQuote,settlementContext){recoveryStore.remember(transactionHash,anchorQuote,settlementContext)}

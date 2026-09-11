@@ -151,6 +151,9 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function pendingExecutionState\(\)/);
     assert.match(script, /function storedPendingExecution\(\)/);
     assert.match(recoveryStoreSource, /value\.deploymentFingerprint===deploymentFingerprint/);
+    assert.match(script, /function validRecoveryPayload\(value\)/);
+    assert.match(script, /sender===recipient&&recipient===settlementRecipient/);
+    assert.match(script, /validatePayload:validRecoveryPayload/);
     assert.match(recoveryStoreSource, /value\.version===1/);
     assert.match(recoveryStoreSource, /Number\.isSafeInteger\(submittedAt\)/);
     assert.match(recoveryStoreSource, /submittedAt<=now\(\)\+300000/);
@@ -169,7 +172,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /pendingTradeLink\.removeAttribute\('href'\)/);
     assert.match(recoveryLocale, /'recovery\.retry':'제출한 거래 다시 확인'/);
     assert.match(recoveryLocale, /'recovery\.explorer':'제출한 거래 탐색기에서 보기'/);
-    assert.match(script, /ui\.recoveryRetry\.hidden=false;schedulePendingRecoveryRetry\(pending\)/);
+    assert.match(script, /setPendingTradeControls\(pending,true\);schedulePendingRecoveryRetry\(pending\)/);
     assert.match(script, /ui\.recoveryRetry\.onclick=\(\)=>\{const pending=storedPendingExecution\(\);if\(pending\)\{pendingRecoveryAttempts=0;schedulePendingRecoveryRetry\(pending,0\)\}\}/);
     assert.match(script, /document\.hidden\|\|navigator\.onLine===false/);
     assert.match(script, /pendingRecoveryActive\|\|!pending\|\|!deployed/);
@@ -206,7 +209,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /Number\(receipt\.status\)!==0/);
     assert.match(script, /consensusFailedTransactionReceipt\(observations,readProviders\.length,transactionHash,requiredConfirmations\)/);
     assert.match(script, /const failure=await verifyFailedSubmittedTransaction\(pending\.transactionHash\)/);
-    assert.match(script, /if\(failure&&clearPendingExecution\(pending\.transactionHash\)\)\{unverifiedTransactionHash=''/);
+    assert.match(script, /if\(failure&&clearPendingExecution\(pending\.transactionHash\)\)\{setPendingTradeControls\(null,false\);pendingRecoveryAttempts=0;unverifiedTransactionHash=''/);
     assert.match(recoveryLocale, /'status\.recoveredFailure'/);
     assert.match(recoveryLocale, /여러 RPC가 \{confirmations\}블록 후 실패를 확인/);
   });
