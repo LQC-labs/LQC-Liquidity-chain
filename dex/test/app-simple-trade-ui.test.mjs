@@ -423,7 +423,9 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /blockTag:anchorQuote\.blockNumber/);
     assert.match(script, /chartHealth\.consensusSimulation\(observations,readProviders\.length,gasCeiling\)/);
     assert.match(script, /TransactionSimulationConsensusFailed/);
-    assert.match(script, /gasLimit:simulation\.gasLimit/);
+    assert.match(script, /gasLimit:gasProbe\.gasLimit/);
+    assert.match(script, /finalSimulation=await simulateSwapTransaction\(anchorQuote,request,gasCeiling\)/);
+    assert.match(script, /FinalTransactionGasLimitInsufficient/);
     assert.match(script, /function fixedFeeFields/);
     assert.match(script, /provider\.getTransactionCount\(account,'pending'\)/);
     assert.match(script, /provider\.getFeeData\(\)/);
