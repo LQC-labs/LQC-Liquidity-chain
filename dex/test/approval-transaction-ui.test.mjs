@@ -57,6 +57,9 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /verifyCanonicalApproval\(pending\.transactionHash,pending\.anchorQuote\)/);
     assert.match(app, /verifyTokenAllowance\(context\.token,context\.spender,context\.amount,context\.owner\)/);
     assert.match(app, /if\(blockRecoveryForSigningReservation\(\)\|\|!clearPendingApproval\(pending\.transactionHash\)\)throw new Error\('PendingApprovalStorageConflict'\)/);
+    assert.match(app, /status\.approvalCancellationRecovered[^\n]*resumeRecoveryAfterSigningReservation\(\);return true/);
+    assert.match(app, /status\.approvalRecovered[^\n]*resumeRecoveryAfterSigningReservation\(\);return true/);
+    assert.match(app, /status\.approvalFailureRecovered[^\n]*resumeRecoveryAfterSigningReservation\(\);return true/);
     assert.match(app, /finally\{pendingApprovalActive=false;if\(canReleaseSwapLock\(\)\)setSwapInFlight\(false\)\}/);
   });
 
