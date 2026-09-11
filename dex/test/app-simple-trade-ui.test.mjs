@@ -177,6 +177,10 @@ describe("LQC simple trading UI", function () {
   });
 
   it("recovers and verifies a submitted trade after page reload", function () {
+    assert.match(script, /function blockRecoveryForSigningReservation\(\)/);
+    assert.match(script, /pendingRecoveryActive\|\|!pending\|\|!deployed\|\|blockRecoveryForSigningReservation\(\)/);
+    assert.match(script, /catch\{if\(blockRecoveryForSigningReservation\(\)\)return false;try\{if\(!pending\.cancellationHash\)/);
+    assert.match(script, /if\(blockRecoveryForSigningReservation\(\)\)throw new Error\('PendingExecutionReservationConflict'\);rememberExecutionEvidence\(evidence\)/);
     assert.match(script, /lqc-flow-pending-execution:/);
     assert.match(script, /function pendingExecutionState\(\)/);
     assert.match(script, /function storedPendingExecution\(\)/);
