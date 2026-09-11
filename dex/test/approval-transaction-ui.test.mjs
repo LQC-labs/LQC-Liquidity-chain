@@ -55,7 +55,7 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /verifyCanonicalApproval\(pending\.transactionHash,pending\.anchorQuote\)/);
     assert.match(app, /verifyTokenAllowance\(context\.token,context\.spender,context\.amount,context\.owner\)/);
     assert.match(app, /if\(!clearPendingApproval\(pending\.transactionHash\)\)throw new Error\('PendingApprovalStorageConflict'\)/);
-    assert.match(app, /if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)&&executionReservationState\(\)\.state==='none'\)setSwapInFlight\(false\)/);
+    assert.match(app, /finally\{pendingApprovalActive=false;if\(canReleaseSwapLock\(\)\)setSwapInFlight\(false\)\}/);
   });
 
   it("fails closed for changed or cancelled persisted approvals", function () {
@@ -73,6 +73,8 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /error\?\.code==='ACTION_REJECTED'\|\|error\?\.code===4001/);
     assert.match(app, /approvalReservationRecord\.state!=='none'&&!recoverableReservedApproval/);
     assert.match(app, /approvalReservationMatchesPending\(approvalReservationRecord\.value,pendingApprovalRecord\.value\)/);
+    assert.match(app, /approvalReservationState\(\)\.state==='none'&&executionReservationState\(\)\.state==='none'/);
+    assert.match(app, /else if\(approvalReservationState\(\)\.state!=='none'\)\{const state=approvalReservationState\(\)/);
   });
 
   it("requires the approved allowance to equal the requested trade amount", function () {
