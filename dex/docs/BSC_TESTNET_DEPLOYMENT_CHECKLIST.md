@@ -25,6 +25,13 @@ defaults to zero until governance explicitly approves a bounded exercise.
 
 ## 2. Network and external-contract verification
 
+Before deployment, place only the five public addresses and reviewed Safe threshold metadata in a
+local JSON file, then run `npm run prepare:role-review -- <public-role-addresses.json>`. The command
+requires a separate deployer, Governance, Risk, Guardian, and Treasury address; enforces the approved
+4-of-7 and 3-of-5 policies; rejects secret-bearing fields; and prints a deterministic review
+fingerprint. It does not query the chain, sign, save, or broadcast anything. On-chain Safe bytecode,
+owners, and thresholds must still pass the Stage 2 predeployment and post-deployment validators.
+
 - [ ] RPC returns BSC testnet chain id `97`.
 - [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.
 - [ ] Pin PancakeSwap V2 Router to `0xD99D1c33F9fC3444f8101754aBC46c52416550D1`.
