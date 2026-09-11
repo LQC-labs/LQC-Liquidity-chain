@@ -75,7 +75,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /setAttribute\('aria-busy',String\(swapInFlight\)\)/);
     assert.match(script, /if\(swapInFlight\)return status\(t\('status\.swapBusy'\)\)/);
     assert.match(script, /setSwapInFlight\(true\)/);
-    assert.match(script, /finally\{if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)&&executionReservationState\(\)\.state==='none'\)setSwapInFlight\(false\)\}/);
+    assert.match(script, /function canReleaseSwapLock\(\)\{return !unverifiedTransactionHash&&pendingApprovalState\(\)\.state==='none'&&pendingExecutionState\(\)\.state==='none'&&approvalReservationState\(\)\.state==='none'&&executionReservationState\(\)\.state==='none'\}/);
+    assert.match(script, /finally\{if\(canReleaseSwapLock\(\)\)setSwapInFlight\(false\)\}/);
   });
 
   it("serializes swap submission across browser tabs", function () {
@@ -90,7 +91,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /window\.addEventListener\('storage',handlePendingExecutionStorage\)/);
     assert.match(script, /recoverySync\.storageAction/);
     assert.match(script, /if\(action==='ignore'\|\|action==='retain'\)return/);
-    assert.match(script, /if\(action==='release'\)\{clearTimeout\(pendingRecoveryTimer\);pendingRecoveryAttempts=0;setPendingTradeControls\(null,false\);setSwapInFlight\(false\);return\}/);
+    assert.match(script, /if\(action==='release'\)\{clearTimeout\(pendingRecoveryTimer\);pendingRecoveryAttempts=0;setPendingTradeControls\(null,false\);if\(canReleaseSwapLock\(\)\)setSwapInFlight\(false\);return\}/);
     assert.match(script, /invalidateWalletContext\(\);setPendingTradeControls\(record\.value,true\);setSwapInFlight\(true\);setTimeout\(\(\)=>recoverPendingExecution\(\),0\)/);
     assert.match(recoveryLocale, /'status\.lockUnsupported'/);
     assert.match(recoveryLocale, /탭 간 거래 잠금을 안전하게 보장하지 못합니다/);
@@ -147,7 +148,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /if\(unverifiedTransactionHash\)\{const pending=storedPendingExecution\(\);status\(t\('status\.resultUnknown'/);
     assert.match(script, /pending\?\.cancellationHash\|\|unverifiedTransactionHash.*schedulePendingRecoveryRetry\(0\)/);
     assert.match(koreanRuntime, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
-    assert.match(script, /finally\{if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)&&executionReservationState\(\)\.state==='none'\)setSwapInFlight\(false\)\}/);
+    assert.match(script, /finally\{if\(canReleaseSwapLock\(\)\)setSwapInFlight\(false\)\}/);
   });
 
   it("proves durable recovery storage before requesting a swap signature", function () {
@@ -170,6 +171,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /executionReservationMatchesPending\(executionReservationRecord\.value,pendingRecord\.value\)/);
     assert.match(script, /status\.swapSigningUnknown/);
     assert.match(recoveryLocale, /'status\.swapSigningUnknown'/);
+    assert.match(script, /else if\(approvalReservationState\(\)\.state!=='none'\)\{const state=approvalReservationState\(\);status\(t\(state\.state==='valid'\?'status\.approvalSigningUnknown':'status\.approvalReservationInvalid'\),'error'\)\}/);
   });
 
   it("recovers and verifies a submitted trade after page reload", function () {
