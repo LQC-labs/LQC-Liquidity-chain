@@ -11,8 +11,9 @@ describe("LQC DEX token approval transaction", function () {
   });
 
   it("uses RPC simulation, fee consensus, and nonce consensus before approval signing", function () {
-    assert.match(app, /gasProbe=await simulateSwapTransaction\(anchorQuote,base,150000n\)/);
-    assert.match(app, /finalSimulation=await simulateSwapTransaction\(anchorQuote,request,150000n\)/);
+    assert.match(app, /gasProbe=await simulateApprovalTransaction\(base,150000n\)/);
+    assert.match(app, /finalSimulation=await simulateApprovalTransaction\(request,150000n\)/);
+    assert.match(app, /readProviders\[index\]\.call\(callRequest\)/);
     assert.match(app, /consensusTransactionCount\(\)/);
     assert.match(app, /consensusFeeFields\(\)/);
     assert.match(app, /ApprovalNonceChangedBeforeSigning/);
@@ -24,8 +25,8 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /Object\.freeze\(\{binding,transaction\}\)/);
     assert.match(app, /approvedSpenders=new Set\(\[cfg\.executionRouterAddress,cfg\.autoRouterAddress,cfg\.nativeRouterAddress\]/);
     assert.match(app, /!approvedSpenders\.has\(spender\.toLowerCase\(\)\)/);
-    assert.equal((app.match(/approveAndVerifyToken\(token,spender,value,walletContext,plan\.anchorQuote\)/g)||[]).length,2);
-    assert.equal((app.match(/if\(allowance>0n\)await approveAndVerifyToken\(token,spender,0n,walletContext,plan\.anchorQuote\)/g)||[]).length,2);
+    assert.equal((app.match(/await approveAndVerifyToken\(token,spender,value,walletContext\)/g)||[]).length,2);
+    assert.equal((app.match(/if\(allowance>0n\)await approveAndVerifyToken\(token,spender,0n,walletContext\)/g)||[]).length,2);
   });
   it("requires a successful receipt and multi-RPC allowance consensus", function () {
     assert.match(app, /verifyCanonicalApproval\(transactionHash,prepared\.binding\)/);
