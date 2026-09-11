@@ -318,8 +318,16 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.explainSwapError({ code: "INSUFFICIENT_FUNDS" }).code, "INSUFFICIENT_GAS");
     assert.equal(sdk.explainSwapError({ message: "allowance too low" }).code, "APPROVAL_REQUIRED");
     assert.equal(sdk.explainSwapError({ message: "RouteChangedDuringApproval" }).code, "ROUTE_CHANGED");
+    assert.equal(sdk.explainSwapError({ message: "WalletContextChanged" }).code, "WALLET_CONTEXT_CHANGED");
     assert.equal(sdk.explainSwapError({ code: "NETWORK_ERROR" }).code, "NETWORK_ERROR");
     assert.equal(sdk.explainSwapError({ message: "unexpected provider failure" }).code, "UNKNOWN");
+  });
+
+  it("binds execution to the reviewed wallet account and chain", function () {
+    const expected = { account: tokenA, chainId: 97 };
+    assert.equal(sdk.validateWalletExecutionContext(expected, { account: tokenA.toUpperCase(), chainId: "0x61" }), true);
+    assert.throws(() => sdk.validateWalletExecutionContext(expected, { account: tokenB, chainId: 97 }), /WalletContextChanged/);
+    assert.throws(() => sdk.validateWalletExecutionContext(expected, { account: tokenA, chainId: 56 }), /WalletContextChanged/);
   });
 
   it("rejects malformed proof payloads and degraded canonical evidence", async function () {
