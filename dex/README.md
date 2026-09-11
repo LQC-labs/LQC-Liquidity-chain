@@ -414,6 +414,9 @@ link to the replacement hash; a confirmed cancellation or failure restores the l
 The submitted hash, wallet, chain, and deployment fingerprint are also kept in deployment-scoped
 browser storage. Reloading the page therefore restores the explorer link and keeps every order control
 locked until the submitted transaction has a terminal failure or complete verified settlement evidence.
+When the original wallet reconnects, every configured browser RPC is queried independently. The lock
+is cleared automatically only when a canonical majority reports the same failed receipt with at least
+three confirmations; pending, successful-but-unverified, conflicting, and unavailable results stay locked.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match

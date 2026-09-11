@@ -108,6 +108,16 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /다른 지갑에서 제출한 미확인 거래가 있습니다/);
   });
 
+  it("clears a restored lock only after canonical RPCs confirm failure", function () {
+    assert.match(script, /async function reconcileFailedSubmittedTransaction\(transactionHash,requiredConfirmations=3\)/);
+    assert.match(script, /getTransactionReceipt\(transactionHash\)/);
+    assert.match(script, /Number\(receipt\.status\)!==0/);
+    assert.match(script, /consensusFailedTransactionReceipt\(observations,readProviders\.length,transactionHash,requiredConfirmations\)/);
+    assert.match(script, /if\(!failure\)return false/);
+    assert.match(script, /clearSubmittedTransaction\(\);setSwapInFlight\(false\)/);
+    assert.match(script, /if\(ownsPending\)await reconcileFailedSubmittedTransaction\(pending\.transactionHash\)/);
+  });
+
   it("offers a market-first order and familiar balance percentage controls", function () {
     assert.match(html, /<strong>시장가<\/strong>/);
     for (const percent of [25, 50, 75, 100]) assert.match(html, new RegExp(`data-percent="${percent}"`));
