@@ -31,6 +31,7 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - Cancellation updates propagate across open tabs and the recovery explorer link follows the transaction currently being verified
 - A terminal recovery clear also propagates across tabs without releasing a tab that is still independently verifying its own submitted transaction
 - Cross-tab recovery decisions are isolated and behavior-tested so an external clear cannot hide recovery controls for a locally verified pending trade
+- Wallet account, chain, and disconnect events invalidate in-flight signing context; superseded asynchronous connection attempts cannot restore a stale signer or Router session
 - `LQCLiquidityVault` V1 with exact-asset accounting, permanently locked initial shares,
   donation-resistant share pricing, deposit caps, guardian deposit pause, and two-step ownership
 - Strategy Adapter V1 with vault/asset binding, separate strategy administration, absolute exposure

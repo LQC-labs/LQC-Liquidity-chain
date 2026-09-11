@@ -113,6 +113,15 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /sendPreparedTransaction\(prepared,walletContext\)/);
     assert.match(script, /accountsChanged[^\n]*invalidateWalletContext\(\)/);
     assert.match(script, /chainChanged[^\n]*invalidateWalletContext\(\)/);
+    assert.match(script, /walletConnectionVersion=0/);
+    assert.match(script, /function assertCurrentWalletConnection\(target,version\)/);
+    assert.match(script, /WalletConnectionSuperseded/);
+    assert.match(script, /const nextProvider=new ethers\.BrowserProvider\(target\),nextSigner=await nextProvider\.getSigner\(\),nextAccount=await nextSigner\.getAddress\(\);assertCurrentWalletConnection\(target,connectionVersion\);provider=nextProvider;signer=nextSigner;account=nextAccount/);
+    assert.match(script, /target\.on\('disconnect'/);
+    assert.match(script, /function clearConnectedWallet\(\)/);
+    assert.match(script, /provider=null;router=null;executionRouter=null;nativeRouter=null;splitOptimizer=null;autoRouter=null;gasCostOracle=null/);
+    assert.match(script, /if\(walletProvider&&target!==walletProvider\)clearConnectedWallet\(\);walletProvider=target/);
+    assert.match(script, /if\(session==='disconnected'\)\{clearConnectedWallet\(\);status\(t\(interactive\?'status\.approveConnection':'status\.disconnected'\)\);return\}/);
   });
 
   it("tracks a successful speed-up replacement and rejects cancelled or malformed replacements", function () {
