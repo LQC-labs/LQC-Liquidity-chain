@@ -16,13 +16,14 @@ const englishTrading = fs.readFileSync(path.join(root, "app/locales/en-trading.j
 const koreanTrading = fs.readFileSync(path.join(root, "app/locales/ko-trading.js"), "utf8");
 const recoveryLocale = fs.readFileSync(path.join(root, "app/locales/recovery.js"), "utf8");
 const recoveryStoreSource = fs.readFileSync(path.join(root, "app/recovery-store.js"), "utf8");
+const recoveryValidatorSource = fs.readFileSync(path.join(root, "app/recovery-validator.js"), "utf8");
 
 describe("LQC simple trading UI", function () {
   it("provides an extensible English-first localization boundary", function () {
     assert.match(html, /<html lang="en">/);
     assert.match(html, /id="languageSelect"/);
     assert.match(html, /locales\/en\.js.*locales\/ko\.js.*i18n\.js/);
-    assert.match(html, /recovery-store\.js.*app\.js/);
+    assert.match(html, /recovery-validator\.js.*recovery-store\.js.*app\.js/);
     assert.match(i18n, /lqc-flow-language/);
     assert.match(i18n, /navigator\.languages/);
     assert.match(i18n, /data-i18n-placeholder/);
@@ -151,8 +152,10 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function pendingExecutionState\(\)/);
     assert.match(script, /function storedPendingExecution\(\)/);
     assert.match(recoveryStoreSource, /value\.deploymentFingerprint===deploymentFingerprint/);
-    assert.match(script, /function validRecoveryPayload\(value\)/);
-    assert.match(script, /sender===recipient&&recipient===settlementRecipient/);
+    assert.match(script, /LQCRecoveryValidator\.create\(\{config:cfg,ethers,chartHealth\}\)/);
+    assert.match(recoveryValidatorSource, /request\.chainId!==config\.chainId/);
+    assert.match(recoveryValidatorSource, /execution\.minimumAmountOut!==settlement\.minimumAmountOut/);
+    assert.match(recoveryValidatorSource, /chartHealth\.transactionMatches\(quote,transaction\)/);
     assert.match(script, /validatePayload:validRecoveryPayload/);
     assert.match(recoveryStoreSource, /value\.version===1/);
     assert.match(recoveryStoreSource, /Number\.isSafeInteger\(submittedAt\)/);

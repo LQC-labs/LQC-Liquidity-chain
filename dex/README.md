@@ -23,6 +23,7 @@ This package implements the first testable smart-contract layer for **LQC Flow D
 - Static wallet-connected swap interface in `app/`
 - Fail-closed pending-swap recovery that binds the persisted quote sender, quote recipient, and settlement recipient to one valid account
 - Cross-tab settlement recovery always reloads the latest persisted transaction, preventing stale timers from following a superseded speed-up hash
+- Persisted recovery records are structurally rebound to the reviewed chain, quote and execution routers, transaction envelope, token pair, account, minimum output, and settlement kind before any RPC recovery begins
 - `LQCLiquidityVault` V1 with exact-asset accounting, permanently locked initial shares,
   donation-resistant share pricing, deposit caps, guardian deposit pause, and two-step ownership
 - Strategy Adapter V1 with vault/asset binding, separate strategy administration, absolute exposure
