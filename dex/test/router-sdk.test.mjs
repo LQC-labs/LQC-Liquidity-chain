@@ -387,4 +387,21 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.isLatestQuote(1.5, 2), /Invalid quote version/);
   });
 
+  it("revalidates trade identity, quote age, block drift, and minimum output before execution", function () {
+    const snapshot = { chainId: 97, tokenIn: "0xaaa", tokenOut: "0xbbb", amountIn: 100n,
+      amountOut: 200n, minimumOut: 198n, blockNumber: 100, quotedAt: 1_000 };
+    const current = { chainId: 97, tokenIn: "0xaaa", tokenOut: "0xbbb", amountIn: 100n,
+      amountOut: 199n, blockNumber: 103, now: 20_000 };
+    const validated = sdk.validateExecutionQuote(snapshot, current);
+    assert.equal(validated.valid, true); assert.equal(validated.ageMs, 19_000);
+    assert.equal(validated.blockDrift, 3); assert.equal(validated.minimumOut, 198n);
+    assert.throws(() => sdk.validateExecutionQuote(snapshot, { ...current, amountIn: 101n }), /QuoteTradeChanged/);
+    assert.throws(() => sdk.validateExecutionQuote(snapshot, { ...current, now: 31_001 }), /StaleQuote/);
+    assert.throws(() => sdk.validateExecutionQuote(snapshot, { ...current, blockNumber: 106 }), /StaleQuote/);
+    assert.throws(() => sdk.validateExecutionQuote(snapshot, { ...current, amountOut: 197n }), /QuotePriceMoved/);
+    assert.throws(() => sdk.validateExecutionQuote(snapshot, current, { maxAgeMs: 999 }), /Invalid quote validation/);
+    assert.equal(sdk.explainSwapError(new Error("StaleQuote")).code, "STALE_QUOTE");
+    assert.equal(sdk.explainSwapError(new Error("QuotePriceMoved")).code, "PRICE_MOVED");
+  });
+
 });
