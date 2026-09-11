@@ -23,7 +23,7 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /<html lang="en">/);
     assert.match(html, /id="languageSelect"/);
     assert.match(html, /locales\/en\.js.*locales\/ko\.js.*i18n\.js/);
-    assert.match(html, /recovery-validator\.js.*recovery-store\.js.*app\.js/);
+    assert.match(html, /recovery-validator\.js.*recovery-store\.js.*recovery-sync\.js.*app\.js/);
     assert.match(i18n, /lqc-flow-language/);
     assert.match(i18n, /navigator\.languages/);
     assert.match(i18n, /data-i18n-placeholder/);
@@ -88,9 +88,9 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /if\(!lock\)return status\(t\('status\.otherTabBusy'\)/);
     assert.match(script, /return executeSwap\(\)/);
     assert.match(script, /window\.addEventListener\('storage',handlePendingExecutionStorage\)/);
-    assert.match(script, /event\.storageArea!==localStorage\|\|event\.key!==pendingExecutionMemoryKey/);
-    assert.match(script, /if\(event\.newValue===null\)\{clearTimeout\(pendingRecoveryTimer\);pendingRecoveryAttempts=0;setPendingTradeControls\(null,false\);if\(!unverifiedTransactionHash&&!pendingRecoveryActive\)setSwapInFlight\(false\);return\}/);
-    assert.match(script, /record\.value\.transactionHash===unverifiedTransactionHash&&!record\.value\.cancellationHash/);
+    assert.match(script, /recoverySync\.storageAction/);
+    assert.match(script, /if\(action==='ignore'\|\|action==='retain'\)return/);
+    assert.match(script, /if\(action==='release'\)\{clearTimeout\(pendingRecoveryTimer\);pendingRecoveryAttempts=0;setPendingTradeControls\(null,false\);setSwapInFlight\(false\);return\}/);
     assert.match(script, /invalidateWalletContext\(\);setPendingTradeControls\(record\.value,true\);setSwapInFlight\(true\);setTimeout\(\(\)=>recoverPendingExecution\(\),0\)/);
     assert.match(recoveryLocale, /'status\.lockUnsupported'/);
     assert.match(recoveryLocale, /탭 간 거래 잠금을 안전하게 보장하지 못합니다/);
@@ -209,7 +209,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /else if\(pendingRecord\.state==='invalid'\)\{setSwapInFlight\(true\);status\(t\('status\.pendingRecordInvalid'\),'error'\)\}/);
     assert.match(recoveryLocale, /'status\.pendingRecordInvalid'/);
     assert.match(recoveryLocale, /재전송하지 않도록 거래를 잠갔습니다/);
-    assert.match(script, /if\(record\.state==='invalid'\)\{invalidateWalletContext\(\);setSwapInFlight\(true\);status\(t\('status\.pendingRecordInvalid'\),'error'\);return\}/);
+    assert.match(script, /if\(action==='invalid'\)\{invalidateWalletContext\(\);setSwapInFlight\(true\);status\(t\('status\.pendingRecordInvalid'\),'error'\);return\}/);
   });
 
   it("unlocks a recovered failed trade only after canonical RPC consensus", function () {
