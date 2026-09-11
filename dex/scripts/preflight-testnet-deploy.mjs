@@ -9,9 +9,15 @@ import { assertRoleReviewSafePolicies, verifyRoleAddressReview } from "./prepare
 const SAFE_INTERFACE = new ethers.Interface([
   "function getOwners() view returns (address[])",
   "function getThreshold() view returns (uint256)",
-  "function getModulesPaginated(address start,uint256 pageSize) view returns(address[] array,address next)"
+  "function getModulesPaginated(address start,uint256 pageSize) view returns(address[] array,address next)",
+  "function getStorageAt(uint256 offset,uint256 length) view returns(bytes)"
 ]);
 const SAFE_SENTINEL = "0x0000000000000000000000000000000000000001";
+const SAFE_EXTENSION_SLOTS = [
+  "0x6c9a6c4a39284e37ed1cf53d337577d14212a4870fb976a4366c693b939918d5",
+  "0x4a204f620c8c5ccdca3fd54d003badd85ba500436a431f0cbda4f558c93c34c8",
+  "0xb104e0b93118902c651344349b610029d694cfdec91c589c91ebafbcd0289947"
+];
 
 const positive = (name, value) => {
   let parsed;
@@ -36,15 +42,21 @@ const boundedInteger = (name, value, minimum, maximum) => {
 };
 
 export async function assertSafeMultisig(provider, address, label, expectedOwners, expectedThreshold) {
-  let owners, threshold, modules, next;
+  let owners, threshold, modules, next, extensions;
   try {
     const ownersResult = await provider.call({ to: address, data: SAFE_INTERFACE.encodeFunctionData("getOwners") });
     const thresholdResult = await provider.call({ to: address, data: SAFE_INTERFACE.encodeFunctionData("getThreshold") });
     const modulesResult = await provider.call({ to: address,
       data: SAFE_INTERFACE.encodeFunctionData("getModulesPaginated", [SAFE_SENTINEL, 50]) });
+    const extensionResults = await Promise.all(SAFE_EXTENSION_SLOTS.map(slot => provider.call({ to: address,
+      data: SAFE_INTERFACE.encodeFunctionData("getStorageAt", [BigInt(slot), 1]) })));
     [owners] = SAFE_INTERFACE.decodeFunctionResult("getOwners", ownersResult);
     [threshold] = SAFE_INTERFACE.decodeFunctionResult("getThreshold", thresholdResult);
     [modules, next] = SAFE_INTERFACE.decodeFunctionResult("getModulesPaginated", modulesResult);
+    extensions = extensionResults.map(result => {
+      const [storage] = SAFE_INTERFACE.decodeFunctionResult("getStorageAt", result);
+      return ethers.getAddress(ethers.dataSlice(storage, 12));
+    });
   } catch {
     throw new Error(`${label} must expose the required Safe policy interfaces.`);
   }
@@ -57,6 +69,9 @@ export async function assertSafeMultisig(provider, address, label, expectedOwner
   }
   if (modules.length !== 0 || next !== SAFE_SENTINEL) {
     throw new Error(`${label} must not enable a threshold-bypassing Safe module.`);
+  }
+  if (extensions.some(extension => extension !== ethers.ZeroAddress)) {
+    throw new Error(`${label} must not enable an unreviewed Safe guard or fallback handler.`);
   }
   return { owners: normalized, threshold };
 }

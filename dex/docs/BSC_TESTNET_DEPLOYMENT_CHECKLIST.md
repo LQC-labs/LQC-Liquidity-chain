@@ -54,6 +54,8 @@ Treasury after signer rotations and raises a `SAFE_POLICY_BREACH` incident witho
 automatic recovery transaction.
 It also requires the standard Safe module list to remain empty, because an enabled module can
 execute transactions outside the normal owner-signature threshold.
+For the TESTNET MVP baseline, Transaction Guard, Module Guard, and Fallback Handler storage slots
+must also remain empty during preflight and continuous monitoring.
 
 - [ ] RPC returns BSC testnet chain id `97`.
 - [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.

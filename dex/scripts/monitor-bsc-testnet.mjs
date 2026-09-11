@@ -9,9 +9,17 @@ const OWNABLE_ABI = ["function owner() view returns(address)", "function pending
 const SAFE_ABI = [
   "function getOwners() view returns(address[])",
   "function getThreshold() view returns(uint256)",
-  "function getModulesPaginated(address start,uint256 pageSize) view returns(address[] array,address next)"
+  "function getModulesPaginated(address start,uint256 pageSize) view returns(address[] array,address next)",
+  "function getStorageAt(uint256 offset,uint256 length) view returns(bytes)"
 ];
 const SAFE_SENTINEL = "0x0000000000000000000000000000000000000001";
+const SAFE_EXTENSION_SLOTS = {
+  fallbackHandler: "0x6c9a6c4a39284e37ed1cf53d337577d14212a4870fb976a4366c693b939918d5",
+  transactionGuard: "0x4a204f620c8c5ccdca3fd54d003badd85ba500436a431f0cbda4f558c93c34c8",
+  moduleGuard: "0xb104e0b93118902c651344349b610029d694cfdec91c589c91ebafbcd0289947"
+};
+
+const addressFromSafeStorage = value => ethers.getAddress(ethers.dataSlice(value, 12));
 
 export function buildIncidentResponse(checks) {
   const staleBlock = checks.find(check =>
@@ -232,6 +240,11 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     add(`multisig.${safe.name}.modules`, modules.length === 0 ? "PASS" : "CRITICAL",
       modules.length === 0 ? "no threshold-bypassing Safe modules enabled" :
         `${modules.length} enabled Safe module(s) require explicit security review and baseline approval`);
+    for (const [extension, address] of Object.entries(safe.extensions || {})) {
+      const enabled = ethers.getAddress(address) !== ethers.ZeroAddress;
+      add(`multisig.${safe.name}.${extension}`, enabled ? "CRITICAL" : "PASS",
+        enabled ? `unapproved Safe ${extension} is enabled` : `Safe ${extension} is disabled`);
+    }
     const validOwners = owners.length === expected.length && unique.size === owners.length &&
       !owners.some(owner => owner === ethers.ZeroAddress);
     add(`multisig.${safe.name}.policy`, validOwners && safe.threshold === safe.expectedThreshold
@@ -344,11 +357,14 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
     if (!policy) continue;
     try {
       const safe = new ethers.Contract(policy.address, SAFE_ABI, provider);
-      const [owners, threshold, modulePage] = await Promise.all([
-        safe.getOwners(), safe.getThreshold(), safe.getModulesPaginated(SAFE_SENTINEL, 50)
+      const [owners, threshold, modulePage, ...extensionValues] = await Promise.all([
+        safe.getOwners(), safe.getThreshold(), safe.getModulesPaginated(SAFE_SENTINEL, 50),
+        ...Object.values(SAFE_EXTENSION_SLOTS).map(slot => safe.getStorageAt(BigInt(slot), 1))
       ]);
       if (modulePage[1] !== SAFE_SENTINEL) throw new Error("Safe module list exceeds the 50-module monitoring bound");
-      safeState.push({ name, owners, modules: [...modulePage[0]], threshold: Number(threshold), expectedOwners: policy.owners,
+      const extensions = Object.fromEntries(Object.keys(SAFE_EXTENSION_SLOTS).map((extension, index) =>
+        [extension, addressFromSafeStorage(extensionValues[index])]));
+      safeState.push({ name, owners, modules: [...modulePage[0]], extensions, threshold: Number(threshold), expectedOwners: policy.owners,
         expectedThreshold: Number(policy.threshold), minimumOwners: Number(policy.minimumOwners),
         minimumThreshold: Number(policy.minimumThreshold) });
     } catch (error) {

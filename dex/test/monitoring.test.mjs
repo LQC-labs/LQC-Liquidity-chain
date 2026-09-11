@@ -283,6 +283,16 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(report.incident.automaticTransactions, false);
   });
 
+  it("fails closed when a Safe enables an unapproved guard or fallback handler", function () {
+    for (const extension of ["fallbackHandler", "transactionGuard", "moduleGuard"]) {
+      const input = healthyInput();
+      input.safeState[0].extensions = { [extension]: "0x0000000000000000000000000000000000000082" };
+      const report = buildMonitoringReport(input);
+      assert.equal(report.checks.find(item => item.id === `multisig.governance.${extension}`).status, "CRITICAL");
+      assert.equal(report.incident.code, "SAFE_POLICY_BREACH");
+    }
+  });
+
   it("includes a healthy candle indexer in the operational report", function () {
     const input=healthyInput();input.indexerState={ready:true,chainId:97,cursor:100,finalizedHead:99,lagBlocks:0,reorgCount:0,lastReorgAt:null};
     const report=buildMonitoringReport(input);
