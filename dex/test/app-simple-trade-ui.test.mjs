@@ -28,12 +28,12 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /id="sellTab"[^>]*>Sell<\/button>/);
     assert.match(html, /<details class="trade-details"/);
     assert.match(html, /id="routeSummary"[^>]*>Best route selected automatically/);
-    assert.match(html, /최적가 자동/);
-    assert.match(html, /비수탁 거래/);
-    assert.match(html, /Gasless 조건 확인/);
+    assert.match(html, /data-i18n="trade\.bestPrice"/);
+    assert.match(html, /data-i18n="trade\.nonCustodial"/);
+    assert.match(html, /data-i18n="trade\.gasless"/);
     assert.match(html, /<nav class="mobile-nav" aria-label="주요 메뉴">/);
-    assert.match(html, /id="tokenSearch"[^>]*placeholder="이름, 심볼 또는 컨트랙트 주소"/);
-    assert.match(html, /Router 위험 정책에 등록된 토큰만 표시/);
+    assert.match(html, /id="tokenSearch"[^>]*data-i18n-placeholder="dialog\.tokenSearch"/);
+    assert.match(html, /data-i18n="dialog\.tokenPolicy"/);
     assert.match(script, /ui\.buy\.onclick=ui\.buyTab\.onclick/);
     assert.match(script, /ui\.walletNav\.onclick=chooseWallet/);
     assert.match(script, /\[t\.symbol,t\.name,t\.address\]/);
@@ -114,7 +114,7 @@ describe("LQC simple trading UI", function () {
 
   it("restores market selection and hides incompatible token pairs before quoting", function () {
     assert.match(html, /id="marketSelector"[^>]*aria-haspopup="dialog"/);
-    assert.match(html, /id="marketSearch"[^>]*placeholder="토큰 검색"/);
+    assert.match(html, /id="marketSearch"[^>]*data-i18n-placeholder="dialog\.marketSearch"/);
     assert.match(script, /function pairApproved\(a,b\)/);
     assert.match(script, /function preferredQuote\(asset\)/);
     assert.match(script, /function marketList\(query=''\)/);
