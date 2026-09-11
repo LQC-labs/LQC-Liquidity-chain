@@ -104,4 +104,9 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /waitForFinalTransactionHash\(prepared\.transaction\)/);
   });
 
+  it("clears only the approval record captured before receipt verification", function () {
+    assert.match(app, /const expectedPending=storedPendingApproval\(\);if\(!expectedPending\)throw new Error\('PendingApprovalStorageConflict'\);const receipt=await verifyCanonicalApproval/);
+    assert.match(app, /clearPendingApproval\(transactionHash,expectedPending\)/);
+  });
+
 });
