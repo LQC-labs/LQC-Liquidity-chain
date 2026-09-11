@@ -22,7 +22,7 @@ describe("LQC DEX token approval transaction", function () {
   it("submits only the immutable prepared approval request", function () {
     assert.match(app, /request=Object\.freeze\(\{\.\.\.base,\.\.\.fees,gasLimit:gasProbe\.gasLimit,nonce\}\)/);
     assert.match(app, /transaction=await signer\.sendTransaction\(request\)/);
-    assert.match(app, /Object\.freeze\(\{binding,transaction\}\)/);
+    assert.match(app, /Object\.freeze\(\{binding,context,reservation,transaction\}\)/);
     assert.match(app, /approvedSpenders=new Set\(\[cfg\.executionRouterAddress,cfg\.autoRouterAddress,cfg\.nativeRouterAddress\]/);
     assert.match(app, /!approvedSpenders\.has\(spender\.toLowerCase\(\)\)/);
     assert.equal((app.match(/await approveAndVerifyToken\(token,spender,value,walletContext\)/g)||[]).length,2);
@@ -50,8 +50,8 @@ describe("LQC DEX token approval transaction", function () {
   });
 
   it("persists and recovers approvals before allowing a swap", function () {
-    assert.match(app, /rememberPendingApproval\(submittedHash,prepared\.binding,context\)/);
-    assert.match(app, /if\(transactionHash!==submittedHash\)rememberPendingApproval\(transactionHash,prepared\.binding,context\)/);
+    assert.match(app, /rememberPendingApproval\(submittedHash,prepared\.binding,prepared\.context\)/);
+    assert.match(app, /if\(transactionHash!==submittedHash\)rememberPendingApproval\(transactionHash,prepared\.binding,prepared\.context\)/);
     assert.match(app, /verifyCanonicalApproval\(pending\.transactionHash,pending\.anchorQuote\)/);
     assert.match(app, /verifyTokenAllowance\(context\.token,context\.spender,context\.amount,context\.owner\)/);
     assert.match(app, /if\(!clearPendingApproval\(pending\.transactionHash\)\)throw new Error\('PendingApprovalStorageConflict'\)/);
@@ -64,6 +64,15 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /approvalRecoveryStore\.rememberCancellation\(submittedHash,error\.replacementHash\)/);
     assert.match(app, /verifyCancelledSubmittedTransaction\(pending\.cancellationHash,pending\.anchorQuote\)/);
     assert.match(app, /pendingApprovalRecord\.state==='invalid'/);
+  });
+
+  it("durably reserves an approval before opening the wallet", function () {
+    assert.match(app, /approvalReservationStore\.reserve\(binding,context\)/);
+    assert.match(app, /const transaction=await signer\.sendTransaction\(request\)/);
+    assert.match(app, /rememberPendingApproval\(submittedHash,prepared\.binding,prepared\.context\);if\(!approvalReservationStore\.clear\(prepared\.reservation\)\)/);
+    assert.match(app, /error\?\.code==='ACTION_REJECTED'\|\|error\?\.code===4001/);
+    assert.match(app, /approvalReservationRecord\.state!=='none'&&!recoverableReservedApproval/);
+    assert.match(app, /approvalReservationMatchesPending\(approvalReservationRecord\.value,pendingApprovalRecord\.value\)/);
   });
 
   it("requires the approved allowance to equal the requested trade amount", function () {
