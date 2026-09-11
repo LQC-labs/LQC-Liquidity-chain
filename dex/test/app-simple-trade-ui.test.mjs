@@ -168,7 +168,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /executionReservationStore\.reserve\(prepared\.binding,settlementContext\)/);
     assert.match(script, /return Object\.freeze\(\{transaction,reservation\}\)/);
     assert.match(script, /rememberPendingExecution\(tx\.hash,plan\.anchorQuote,settlementContext\);if\(!executionReservationStore\.clear\(submission\.reservation\)\)/);
-    assert.match(script, /executionReservationRecord\.state!=='none'&&!recoverableReservedExecution/);
+    assert.match(script, /clearedReservedExecution=recoverableReservedExecution&&executionReservationStore\.clear\(executionReservationRecord\.serialized\)/);
+    assert.match(script, /executionReservationRecord\.state!=='none'&&!clearedReservedExecution/);
     assert.match(script, /executionReservationMatchesPending\(executionReservationRecord\.value,pendingRecord\.value\)/);
     assert.match(script, /status\.swapSigningUnknown/);
     assert.match(recoveryLocale, /'status\.swapSigningUnknown'/);
