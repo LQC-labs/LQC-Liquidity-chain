@@ -131,8 +131,9 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /unverifiedTransactionHash=tx\.hash/);
     assert.match(script, /unverifiedTransactionHash=finalTransactionHash/);
     assert.match(script, /rememberExecutionEvidence\(evidence\);if\(!clearPendingExecution\(finalTransactionHash\)\)throw new Error\('PendingExecutionStorageConflict'\);unverifiedTransactionHash=''/);
-    assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)&&clearPendingExecution\(unverifiedTransactionHash\)\)unverifiedTransactionHash=''/);
+    assert.doesNotMatch(script, /Number\(e\?\.receipt\?\.status\)===0\)&&clearPendingExecution\(unverifiedTransactionHash\)\)unverifiedTransactionHash=''/);
     assert.match(script, /if\(unverifiedTransactionHash\)\{status\(t\('status\.resultUnknown'/);
+    assert.match(script, /status\(t\('status\.resultUnknown'.*schedulePendingRecoveryRetry\(0\)/);
     assert.match(koreanRuntime, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
   });
@@ -221,6 +222,9 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /if\(failure&&clearPendingExecution\(pending\.transactionHash\)\)\{setPendingTradeControls\(null,false\);pendingRecoveryAttempts=0;unverifiedTransactionHash=''/);
     assert.match(recoveryLocale, /'status\.recoveredFailure'/);
     assert.match(recoveryLocale, /여러 RPC가 \{confirmations\}블록 후 실패를 확인/);
+    assert.match(script, /if\(e\?\.message==='TransactionReplacementCancelled'&&clearPendingExecution\(unverifiedTransactionHash\)\)/);
+    assert.doesNotMatch(script, /e\?\.message==='SubmittedTransactionFailed'\|\|Number\(e\?\.receipt\?\.status\)===0/);
+    assert.match(script, /status\(t\('status\.resultUnknown'.*schedulePendingRecoveryRetry\(0\)/);
   });
 
   it("offers a market-first order and familiar balance percentage controls", function () {
