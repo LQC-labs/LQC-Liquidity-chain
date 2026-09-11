@@ -159,6 +159,10 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /async function recoverPendingExecution\(pending=storedPendingExecution\(\)\)/);
     assert.match(script, /function schedulePendingRecoveryRetry\(pending,delay=30000\)/);
     assert.match(script, /schedulePendingRecoveryRetry\(pending\);return false/);
+    assert.match(html, /id="recoveryRetryButton"[^>]*data-i18n="recovery\.retry"[^>]*hidden/);
+    assert.match(recoveryLocale, /'recovery\.retry':'제출한 거래 다시 확인'/);
+    assert.match(script, /ui\.recoveryRetry\.hidden=false;schedulePendingRecoveryRetry\(pending\)/);
+    assert.match(script, /ui\.recoveryRetry\.onclick=\(\)=>\{const pending=storedPendingExecution\(\);if\(pending\)schedulePendingRecoveryRetry\(pending,0\)\}/);
     assert.match(script, /document\.hidden\|\|navigator\.onLine===false/);
     assert.match(script, /pendingRecoveryActive\|\|!pending\|\|!deployed/);
     assert.match(script, /clearTimeout\(pendingRecoveryTimer\);if\(!document\.hidden\)/);
