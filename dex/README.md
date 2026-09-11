@@ -420,6 +420,10 @@ three confirmations; pending, successful-but-unverified, conflicting, and unavai
 Version 2 pending records also retain the proof-bound execution plan and settlement decoder context with
 lossless integer encoding. If the same successful receipt, canonical block, and decoded output reach RPC
 majority after a reload, the app rebuilds and verifies the execution evidence before unlocking trading.
+Browsers that support the Web Locks API serialize swap submission by deployment and connected wallet.
+The deployment-scoped pending record is checked again inside the lock, and storage events immediately
+mirror a submitted-transaction lock into other open tabs. A clearing event still triggers independent
+RPC reconciliation in each tab instead of trusting another tab to unlock trading.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match

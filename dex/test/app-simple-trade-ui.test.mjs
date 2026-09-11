@@ -40,6 +40,25 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
   });
 
+  it("serializes swap submission across browser tabs", function () {
+    assert.match(script, /async function executeSwap\(\)/);
+    assert.match(script, /async function swap\(\)/);
+    assert.match(script, /navigator\.locks\?\.request/);
+    assert.match(script, /lqc-flow-swap:\$\{cfg\.deploymentFingerprint\|\|'unconfigured'\}/);
+    assert.match(script, /\{mode:'exclusive',ifAvailable:true\}/);
+    assert.match(script, /lock=>lock\?executeSwap\(\)/);
+    assert.match(script, /다른 탭에서 이 지갑의 거래를 처리하고 있습니다/);
+    assert.match(script, /const pending=storedSubmittedTransaction\(\);if\(pending\)/);
+  });
+
+  it("mirrors a submitted transaction lock across open tabs", function () {
+    assert.match(script, /window\.addEventListener\('storage'/);
+    assert.match(script, /event\.key!==submittedTransactionMemoryKey/);
+    assert.match(script, /다른 탭에서 거래.*가 제출되었습니다/);
+    assert.match(script, /setSwapInFlight\(true\);renderSubmittedTransaction\(unverifiedTransactionHash\)/);
+    assert.match(script, /void reconcileSubmittedTransaction\(\{transactionHash:unverifiedTransactionHash,recovery:unverifiedRecoveryContext\}\)/);
+  });
+
   it("freezes every order control while a wallet signature is pending", function () {
     assert.match(script, /const tradeControls=\(\)=>\[ui\.amountIn,ui\.slippage,ui\.tokenInButton,ui\.tokenOutButton,ui\.flip,ui\.max,ui\.buy,ui\.sell,ui\.buyTab,ui\.sellTab,ui\.marketSelector/);
     assert.match(script, /\.amount-presets button,.slippage-option/);
