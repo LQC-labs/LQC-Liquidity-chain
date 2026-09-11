@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";
 
 export const STAGE2_PREDEPLOY_CHECKS = Object.freeze([
+  Object.freeze({ label: "MVP deployment input readiness", args: Object.freeze(["run", "readiness:mvp"]) }),
   Object.freeze({ label: "Stage 1 repository exit gate", args: Object.freeze(["run", "gate:stage1"]) }),
   Object.freeze({ label: "Production dependency audit", args: Object.freeze(["audit", "--omit=dev", "--audit-level=high"]) }),
   Object.freeze({ label: "BSC testnet live preflight", args: Object.freeze(["run", "preflight:testnet"]) }),
