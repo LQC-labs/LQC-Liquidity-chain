@@ -157,6 +157,8 @@ describe("LQC simple trading UI", function () {
     assert.doesNotMatch(script, /Date\.now\(\)-Number\(value\.submittedAt\)>/);
     assert.match(script, /rememberPendingExecution\(tx\.hash,plan\.anchorQuote,settlementContext\)/);
     assert.match(script, /async function recoverPendingExecution\(pending=storedPendingExecution\(\)\)/);
+    assert.match(script, /function schedulePendingRecoveryRetry\(pending,delay=30000\)/);
+    assert.match(script, /schedulePendingRecoveryRetry\(pending\);return false/);
     assert.match(script, /if\(!trustedReadProviderIndexes\.length\)await chainHeadWithin\(\)/);
     assert.match(script, /verifySubmittedTransaction\(pending\.transactionHash,pending\.settlementContext\)/);
     assert.match(script, /sdk\.buildExecutionEvidence\(pending\.anchorQuote,settlement/);
