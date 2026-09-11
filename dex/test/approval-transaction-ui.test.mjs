@@ -28,6 +28,12 @@ describe("LQC DEX token approval transaction", function () {
     assert.equal((app.match(/await approveAndVerifyToken\(token,spender,value,walletContext\)/g)||[]).length,2);
     assert.equal((app.match(/if\(allowance>0n\)await approveAndVerifyToken\(token,spender,0n,walletContext\)/g)||[]).length,2);
   });
+
+  it("revalidates the bound wallet immediately before approval signing", function () {
+    assert.match(app, /provider\.getTransactionCount\(walletContext\.account,'pending'\)\]\);await assertWalletContext\(walletContext\);if\(finalNonce!==request\.nonce/);
+    assert.match(app, /execution:\{sender:walletContext\.account,router:tokenAddress\.toLowerCase\(\),kind:'single'\}/);
+    assert.match(app, /if\(!chartHealth\.transactionMatches\(binding,request\)\)throw new Error\('ApprovalTransactionChangedBeforeSigning'\)/);
+  });
   it("requires a successful receipt and multi-RPC allowance consensus", function () {
     assert.match(app, /verifyCanonicalApproval\(transactionHash,prepared\.binding\)/);
     assert.match(app, /readProviders\[index\]/);
