@@ -82,6 +82,10 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /navigator\.locks\.request\(swapLockName,\{mode:'exclusive',ifAvailable:true\}/);
     assert.match(script, /if\(!lock\)return status\(t\('status\.otherTabBusy'\)/);
     assert.match(script, /return executeSwap\(\)/);
+    assert.match(script, /window\.addEventListener\('storage',handlePendingExecutionStorage\)/);
+    assert.match(script, /event\.storageArea!==localStorage\|\|event\.key!==pendingExecutionMemoryKey\|\|event\.newValue===null/);
+    assert.match(script, /record\.value\.transactionHash===unverifiedTransactionHash/);
+    assert.match(script, /invalidateWalletContext\(\);setSwapInFlight\(true\);setTimeout\(\(\)=>recoverPendingExecution\(record\.value\),0\)/);
   });
 
   it("freezes every order control while a wallet signature is pending", function () {
@@ -157,6 +161,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /else if\(pendingRecord\.state==='invalid'\)\{setSwapInFlight\(true\);status\(t\('status\.pendingRecordInvalid'\),'error'\)\}/);
     assert.match(recoveryLocale, /'status\.pendingRecordInvalid'/);
     assert.match(recoveryLocale, /재전송하지 않도록 거래를 잠갔습니다/);
+    assert.match(script, /if\(record\.state==='invalid'\)\{invalidateWalletContext\(\);setSwapInFlight\(true\);status\(t\('status\.pendingRecordInvalid'\),'error'\);return\}/);
   });
 
   it("unlocks a recovered failed trade only after canonical RPC consensus", function () {
