@@ -9,6 +9,7 @@ const OWNABLE_ABI = ["function owner() view returns(address)", "function pending
 const SAFE_ABI = [
   "function getOwners() view returns(address[])",
   "function getThreshold() view returns(uint256)",
+  "function masterCopy() view returns(address)",
   "function getModulesPaginated(address start,uint256 pageSize) view returns(address[] array,address next)",
   "function getStorageAt(uint256 offset,uint256 length) view returns(bytes)"
 ];
@@ -24,15 +25,15 @@ const addressFromSafeStorage = value => ethers.getAddress(ethers.dataSlice(value
 export async function readSafePolicyAtBlock(safe, blockTag) {
   if (!Number.isInteger(blockTag) || blockTag < 0) throw new Error("Safe policy block must be a non-negative integer");
   const overrides = { blockTag };
-  const [owners, threshold, modulePage, ...extensionValues] = await Promise.all([
-    safe.getOwners(overrides), safe.getThreshold(overrides),
+  const [owners, threshold, singleton, modulePage, ...extensionValues] = await Promise.all([
+    safe.getOwners(overrides), safe.getThreshold(overrides), safe.masterCopy(overrides),
     safe.getModulesPaginated(SAFE_SENTINEL, 50, overrides),
     ...Object.values(SAFE_EXTENSION_SLOTS).map(slot => safe.getStorageAt(BigInt(slot), 1, overrides))
   ]);
   if (modulePage[1] !== SAFE_SENTINEL) throw new Error("Safe module list exceeds the 50-module monitoring bound");
   const extensions = Object.fromEntries(Object.keys(SAFE_EXTENSION_SLOTS).map((extension, index) =>
     [extension, addressFromSafeStorage(extensionValues[index])]));
-  return { owners, threshold: Number(threshold), modules: [...modulePage[0]], extensions };
+  return { owners, threshold: Number(threshold), singleton: ethers.getAddress(singleton), modules: [...modulePage[0]], extensions };
 }
 
 export function buildIncidentResponse(checks) {
@@ -249,7 +250,8 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     const owners = safe.owners.map(owner => ethers.getAddress(owner));
     const expected = safe.expectedOwners.map(owner => ethers.getAddress(owner));
     const unique = new Set(owners.map(owner => owner.toLowerCase()));
-    readableSafes.push({ name: safe.name, owners: unique, threshold: Number(safe.expectedThreshold) });
+    readableSafes.push({ name: safe.name, owners: unique, threshold: Number(safe.expectedThreshold), singleton: safe.singleton });
+    if (safe.singleton !== undefined) add(`multisig.${safe.name}.singleton`, safe.singleton && ethers.getAddress(safe.singleton) !== ethers.ZeroAddress ? "PASS" : "CRITICAL", "Safe proxy implementation must be readable and non-zero");
     const modules = (safe.modules || []).map(module => ethers.getAddress(module));
     add(`multisig.${safe.name}.modules`, modules.length === 0 ? "PASS" : "CRITICAL",
       modules.length === 0 ? "no threshold-bypassing Safe modules enabled" :

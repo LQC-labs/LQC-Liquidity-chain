@@ -302,13 +302,14 @@ describe("LQC BSC testnet monitoring report", function () {
     const safe = {
       getOwners: record("owners", healthyInput().safeState[0].owners),
       getThreshold: record("threshold", 4n),
+      masterCopy: record("singleton", "0x0000000000000000000000000000000000000099"),
       getModulesPaginated: record("modules", [[], "0x0000000000000000000000000000000000000001"]),
       getStorageAt: record("storage", `0x${"00".repeat(32)}`)
     };
     const snapshot = await readSafePolicyAtBlock(safe, 123);
     assert.equal(snapshot.threshold, 4);
     assert.equal(snapshot.modules.length, 0);
-    assert.equal(observations.length, 6);
+    assert.equal(observations.length, 7);
     assert.deepEqual([...new Set(observations.map(item => item.blockTag))], [123]);
     await assert.rejects(() => readSafePolicyAtBlock(safe, -1), /non-negative integer/);
   });
