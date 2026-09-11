@@ -20,15 +20,23 @@ describe("LQC DEX token approval transaction", function () {
 
   it("submits only the immutable prepared approval request", function () {
     assert.match(app, /request=Object\.freeze\(\{\.\.\.base,\.\.\.fees,gasLimit:gasProbe\.gasLimit,nonce\}\)/);
-    assert.match(app, /return signer\.sendTransaction\(request\)/);
+    assert.match(app, /transaction=await signer\.sendTransaction\(request\)/);
+    assert.match(app, /Object\.freeze\(\{binding,transaction\}\)/);
     assert.equal((app.match(/approveAndVerifyToken\(token,spender,value,walletContext,plan\.anchorQuote\)/g)||[]).length,2);
   });
   it("requires a successful receipt and multi-RPC allowance consensus", function () {
-    assert.match(app, /Number\(receipt\.status\)!==1/);
+    assert.match(app, /verifyCanonicalApproval\(transactionHash,prepared\.binding\)/);
     assert.match(app, /readProviders\[index\]/);
     assert.match(app, /token\.allowance\(account,spender\)/);
     assert.match(app, /chartHealth\.consensusTokenAllowance\(observations,readProviders\.length,requiredAmount\)/);
     assert.match(app, /TokenAllowanceConsensusFailed/);
+  });
+
+  it("verifies the exact submitted approval and three-block canonical receipt", function () {
+    assert.match(app, /chartHealth\.bindTransaction\(\{request:\{chainId:cfg\.chainId,amountIn:value\}/);
+    assert.match(app, /consensusSubmittedTransaction\(binding,observations,readProviders\.length,transactionHash\)/);
+    assert.match(app, /consensusTransactionReceipt\(observations\.filter\(item=>indexes\.has\(item\.index\)\),readProviders\.length,transactionHash,requiredConfirmations\)/);
+    assert.match(app, /waitForFinalTransactionHash\(prepared\.transaction\)/);
   });
 
 });
