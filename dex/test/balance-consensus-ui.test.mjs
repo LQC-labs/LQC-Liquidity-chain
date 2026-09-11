@@ -10,6 +10,8 @@ describe("LQC DEX pre-trade balance consensus", function () {
     assert.match(app, /asset\.address==='native'\?await readProviders\[index\]\.getBalance\(boundOwner\)/);
     assert.match(app, /new ethers\.Contract\(asset\.address,tokenAbi,readProviders\[index\]\)\.balanceOf\(boundOwner\)/);
     assert.match(app, /chartHealth\.consensusAssetBalance\(observations,readProviders\.length\)/);
+    assert.match(app, /async function balance\(t,owner=account\)[^\n]*readAssetBalance\(t,owner\)/);
+    assert.doesNotMatch(app, /async function balance\(t[^\n]*provider\.getBalance/);
   });
 
   it("fails closed before approval or swap preparation when funds are insufficient", function () {
