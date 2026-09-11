@@ -380,4 +380,11 @@ describe("LQC Router browser SDK", function () {
     await assert.rejects(sdk.verifyUiDeployment(provider, { ...config, nativeRouterAddress: config.routerAddress }, ethers), /Duplicate deployment address/);
   });
 
+  it("accepts only the newest asynchronous quote response", function () {
+    assert.equal(sdk.isLatestQuote(7, 7), true);
+    assert.equal(sdk.isLatestQuote(6, 7), false);
+    assert.throws(() => sdk.isLatestQuote(-1, 0), /Invalid quote version/);
+    assert.throws(() => sdk.isLatestQuote(1.5, 2), /Invalid quote version/);
+  });
+
 });
