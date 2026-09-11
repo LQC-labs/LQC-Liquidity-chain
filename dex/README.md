@@ -424,6 +424,9 @@ Browsers that support the Web Locks API serialize swap submission by deployment 
 The deployment-scoped pending record is checked again inside the lock, and storage events immediately
 mirror a submitted-transaction lock into other open tabs. A clearing event still triggers independent
 RPC reconciliation in each tab instead of trusting another tab to unlock trading.
+Successful reload recovery also fetches the mined transaction independently from each RPC. Evidence is
+completed only when the transaction hash, sender, chain, Router target, calldata, value, nonce, gas limit,
+and legacy or EIP-1559 fee envelope exactly match the proof-bound transaction prepared before signing.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match
