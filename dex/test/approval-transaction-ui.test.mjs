@@ -37,10 +37,16 @@ describe("LQC DEX token approval transaction", function () {
   it("requires a successful receipt and multi-RPC allowance consensus", function () {
     assert.match(app, /verifyCanonicalApproval\(transactionHash,prepared\.binding\)/);
     assert.match(app, /readProviders\[index\]/);
-    assert.match(app, /token\.allowance\(account,spender\)/);
+    assert.match(app, /boundOwner=owner\.toLowerCase\(\)/);
+    assert.match(app, /token\.allowance\(boundOwner,spender\)/);
     assert.match(app, /TokenAllowanceConsensusFailed/);
     assert.match(app, /chartHealth\.consensusObservedTokenAllowance\(observations,readProviders\.length\)/);
     assert.equal((app.match(/allowance=await readTokenAllowance\(tokenIn\.address,spender\)/g)||[]).length,2);
+  });
+
+  it("binds post-approval allowance verification to the original wallet", function () {
+    assert.match(app, /verifyTokenAllowance\(await token\.getAddress\(\),spender,value,walletContext\.account\);await assertWalletContext\(walletContext\)/);
+    assert.match(app, /if\(!ethers\.isAddress\(owner\)\)throw new Error\('InvalidAllowanceOwner'\)/);
   });
 
   it("requires the approved allowance to equal the requested trade amount", function () {
