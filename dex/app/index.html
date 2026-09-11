@@ -25,14 +25,14 @@
     <section class="market" aria-label="LQC 시장 차트">
       <button class="market-selector" id="marketSelector" type="button" aria-haspopup="dialog"><span class="market-token-icon">L</span><strong id="marketPair">LQC / BNB</strong><span>⌄</span><small data-i18n="market.reviewed">Reviewed market</small></button>
       <div class="ticker-row">
-        <div class="price-block"><span class="price-label" id="priceSourceLabel">Router spot price</span><strong class="ticker-price" id="tickerPrice">—</strong><span class="ticker-change" id="tickerChange">24h —</span></div>
+        <div class="price-block"><span class="price-label" id="priceSourceLabel" data-i18n="market.routerSpotPrice">Router spot price</span><strong class="ticker-price" id="tickerPrice">—</strong><span class="ticker-change" id="tickerChange">24h —</span></div>
         <dl class="quick-stats">
-          <div><dt>Quote asset</dt><dd id="quoteAssetStat">—</dd></div>
-          <div><dt>24h High</dt><dd id="high24hStat">—</dd></div>
-          <div><dt>24h Low</dt><dd id="low24hStat">—</dd></div>
-          <div><dt>24h Volume</dt><dd id="volume24hStat">—</dd></div>
-          <div><dt>Network</dt><dd>BSC Testnet</dd></div>
-          <div><dt>Price status</dt><dd id="priceStatusStat" data-i18n="market.priceStatus">Awaiting deployment</dd></div>
+          <div><dt data-i18n="market.quoteAsset">Quote asset</dt><dd id="quoteAssetStat">—</dd></div>
+          <div><dt data-i18n="market.high24h">24h High</dt><dd id="high24hStat">—</dd></div>
+          <div><dt data-i18n="market.low24h">24h Low</dt><dd id="low24hStat">—</dd></div>
+          <div><dt data-i18n="market.volume24h">24h Volume</dt><dd id="volume24hStat">—</dd></div>
+          <div><dt data-i18n="common.network">Network</dt><dd>BSC Testnet</dd></div>
+          <div><dt data-i18n="market.priceStatusLabel">Price status</dt><dd id="priceStatusStat" data-i18n="market.priceStatus">Awaiting deployment</dd></div>
         </dl>
       </div>
 
@@ -80,12 +80,12 @@
       <div class="kdj-indicator indicator-hidden" id="kdjIndicator"><span id="kdjLabel">KDJ (9, 3, 3): —</span><svg viewBox="0 0 680 76" role="img" aria-label="KDJ 보조지표"><path class="kdj-guide" d="M0 20H680M0 56H680"/><path class="kdj-line k-line" id="kdjKLine" d=""/><path class="kdj-line d-line" id="kdjDLine" d=""/><path class="kdj-line j-line" id="kdjJLine" d=""/></svg></div>
       <div class="indicators" aria-label="차트 지표"><button class="active" type="button" data-indicator="volume" aria-pressed="true">VOL</button><button class="active" type="button" data-indicator="ma" aria-pressed="true">MA</button><button type="button" data-indicator="ema" aria-pressed="false">EMA</button><button type="button" data-indicator="boll" aria-pressed="false">BOLL</button><button type="button" data-indicator="sar" aria-pressed="false">SAR</button><button type="button" data-indicator="macd" aria-pressed="false">MACD</button><button type="button" data-indicator="kdj" aria-pressed="false">KDJ</button></div>
 
-      <nav class="position-tabs" aria-label="계정 정보"><button class="active">My positions</button><button>Holders <span>(249)</span></button><button>Top traders</button><button>Activities</button></nav>
+      <nav class="position-tabs" aria-label="계정 정보"><button class="active" data-i18n="position.mine">My positions</button><button><span data-i18n="position.holders">Holders</span> <span>(249)</span></button><button data-i18n="position.topTraders">Top traders</button><button data-i18n="position.activities">Activities</button></nav>
       <div class="position-card">
-        <div class="position-label"><span class="mini-logo">L</span><span>LQC balance</span></div>
+        <div class="position-label"><span class="mini-logo">L</span><span data-i18n="position.lqcBalance">LQC balance</span></div>
         <strong id="portfolioValue">—</strong>
-        <p>Unrealized PnL <span>$0.00 (0.00%)</span></p>
-        <div class="position-meta"><span>보유 수량 <b id="positionBalance">—</b></span><span>네트워크 <b>BSC Testnet</b></span></div>
+        <p><span data-i18n="position.unrealizedPnl">Unrealized PnL</span> <span>$0.00 (0.00%)</span></p>
+        <div class="position-meta"><span><span data-i18n="position.holdings">Holdings</span> <b id="positionBalance">—</b></span><span><span data-i18n="common.network">Network</span> <b>BSC Testnet</b></span></div>
       </div>
     </section>
 
@@ -121,7 +121,7 @@
   </main>
 
   <div class="bottom-actions" aria-label="LQC 매수 및 매도"><button class="action-buy active" id="buyAction" type="button">Buy</button><button class="action-sell" id="sellAction" type="button">Sell</button><button class="quick" id="quickTrade" type="button" aria-label="빠른 거래">↯</button></div>
-  <nav class="mobile-nav" aria-label="주요 메뉴"><a href="../../index.html"><span>⌂</span>Home</a><button id="marketNav" type="button"><span>⌁</span>Market</button><button class="active" id="tradeNav" type="button"><span>⇄</span>Trade</button><button id="walletNav" type="button"><span>▣</span>Wallet</button></nav>
+  <nav class="mobile-nav" aria-label="주요 메뉴"><a href="../../index.html"><span>⌂</span><span data-i18n="nav.home">Home</span></a><button id="marketNav" type="button"><span>⌁</span><span data-i18n="nav.market">Market</span></button><button class="active" id="tradeNav" type="button"><span>⇄</span><span data-i18n="nav.trade">Trade</span></button><button id="walletNav" type="button"><span>▣</span><span data-i18n="nav.wallet">Wallet</span></button></nav>
 
   <dialog id="tokenDialog"><form method="dialog"><div class="dialog-head"><div><h2 data-i18n="dialog.selectToken">Select token</h2><span class="token-count" id="tokenCount">0개 등록</span></div><button value="cancel" aria-label="닫기">×</button></div><label class="token-search"><span aria-hidden="true">⌕</span><input id="tokenSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Name, symbol, or contract address" data-i18n-placeholder="dialog.tokenSearch" aria-label="거래 토큰 검색"></label><p class="token-policy" data-i18n="dialog.tokenPolicy">Only tokens registered in the verified deployment list and Router risk policy are shown.</p><div class="token-list" id="tokenList" role="listbox"></div><p class="token-empty" id="tokenEmpty" hidden data-i18n="dialog.noToken">No registered token matches.</p></form></dialog>
   <dialog class="market-dialog" id="marketDialog"><form method="dialog"><div class="dialog-head"><div><h2 data-i18n="dialog.markets">Markets</h2><span class="token-count" id="marketCount">0개 마켓</span></div><button value="cancel" aria-label="마켓 닫기">×</button></div><label class="token-search"><span aria-hidden="true">⌕</span><input id="marketSearch" type="search" autocomplete="off" spellcheck="false" placeholder="Search tokens" data-i18n-placeholder="dialog.marketSearch" aria-label="마켓 토큰 검색"></label><div class="market-filter" aria-label="마켓 필터"><button class="active" type="button">All</button><span data-i18n="dialog.marketPolicy">Only deployment- and risk-reviewed tokens are shown</span></div><div class="market-table-head"><span># · Token</span><span>Price</span><span>Status</span></div><div class="market-list" id="marketList" role="listbox"></div><p class="token-empty" id="marketEmpty" hidden data-i18n="dialog.noMarket">No active market matches.</p></form></dialog>
