@@ -58,6 +58,8 @@ For the TESTNET MVP baseline, Transaction Guard, Module Guard, and Fallback Hand
 must also remain empty during preflight and continuous monitoring.
 All Safe policy fields are read against one pinned block during preflight and continuous monitoring
 so signer rotation cannot mix values from different chain states inside a single approval decision.
+Continuous monitoring also compares the implementation address across every readable operational Safe
+and raises a policy breach when proxy implementations diverge.
 
 - [ ] RPC returns BSC testnet chain id `97`.
 - [ ] Use the official BSC testnet WBNB address and independently verify its bytecode.

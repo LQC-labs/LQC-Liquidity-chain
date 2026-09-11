@@ -314,6 +314,18 @@ describe("LQC BSC testnet monitoring report", function () {
     await assert.rejects(() => readSafePolicyAtBlock(safe, -1), /non-negative integer/);
   });
 
+  it("fails closed when operational Safes use different implementations", function () {
+    const input = healthyInput();
+    input.safeState.push({ name: "risk", singleton: "0x0000000000000000000000000000000000000099",
+      owners: ["0x0000000000000000000000000000000000000041", "0x0000000000000000000000000000000000000042", "0x0000000000000000000000000000000000000043"],
+      expectedOwners: [], threshold: 3, expectedThreshold: 3, minimumOwners: 3, minimumThreshold: 3 });
+    input.safeState[0].singleton = "0x0000000000000000000000000000000000000098";
+    const report = buildMonitoringReport(input);
+    const check = report.checks.find(item => item.id === "multisig.cross.governance.risk.singleton");
+    assert.equal(check.status, "CRITICAL");
+    assert.equal(report.incident.code, "SAFE_POLICY_BREACH");
+  });
+
   it("includes a healthy candle indexer in the operational report", function () {
     const input=healthyInput();input.indexerState={ready:true,chainId:97,cursor:100,finalizedHead:99,lagBlocks:0,reorgCount:0,lastReorgAt:null};
     const report=buildMonitoringReport(input);

@@ -276,6 +276,10 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
   }
   for (let left = 0; left < readableSafes.length; left++) for (let right = left + 1; right < readableSafes.length; right++) {
     const a = readableSafes[left], b = readableSafes[right];
+    if (a.singleton !== undefined && b.singleton !== undefined) {
+      add(`multisig.cross.${a.name}.${b.name}.singleton`, a.singleton === b.singleton ? "PASS" : "CRITICAL",
+        a.singleton === b.singleton ? "Safe implementations match" : "Safe implementations differ; review proxy integrity");
+    }
     const overlap = [...a.owners].filter(owner => b.owners.has(owner)).length;
     const limit = Math.max(a.threshold, b.threshold);
     add(`multisig.cross.${a.name}.${b.name}`, overlap >= limit ? "CRITICAL" : "PASS",
