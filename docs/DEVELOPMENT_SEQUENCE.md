@@ -43,6 +43,24 @@ foundation; actual sponsorship integration remains Stage 5 and must not bypass S
 11. Token issuance remains a user/governance decision and is not performed automatically by development tooling.
 12. Every completed stage must leave reproducible code, tests, documentation, and GitHub evidence.
 
+## Safe high-speed development mode
+
+Status: **default operating model for all continuing LQC DEX development**
+
+1. Group two to four non-conflicting UI, SDK, test, or documentation changes into one reviewable work batch.
+2. Run the smallest relevant test after each change so failures are found close to their source.
+3. Run the complete `npm run gate:stage1` once at the end of every completed batch before upload.
+4. Keep smart-contract, security-boundary, governance, and asset-accounting changes in small isolated commits even when this is slower.
+5. Never combine contract-security changes with unrelated UI or documentation changes in one commit.
+6. Upload a verified batch automatically to `codex/dex-active-strategy-isolation`; do not wait for routine intermediate approval.
+7. Require explicit user or governance approval before live deployment, token issuance, fund movement, role activation, ownership transfer, liquidity provisioning, or production configuration changes.
+8. Stop the batch immediately when a relevant test, invariant, compilation, coverage threshold, or deployment validation fails.
+9. Preserve a clean rollback boundary: every uploaded batch must be independently understandable and reversible.
+10. When Stage 2 addresses are unavailable, continue only with independent UI, SDK, test, documentation, and deployment-readiness work that does not invent or reuse operational addresses.
+
+This mode accelerates routine development without weakening the fixed stage order, fail-closed
+security gates, multisig and Timelock policy, audit boundary, or testnet-only restriction.
+
 ## Mainnet portability requirements
 
 - EVM-compatible contracts remain chain-neutral unless a reviewed chain-specific adapter is required.
