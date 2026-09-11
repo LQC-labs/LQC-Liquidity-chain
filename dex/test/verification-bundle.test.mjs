@@ -4,6 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { ethers } from "ethers";
+import { prepareRoleAddressReview } from "../scripts/prepare-role-address-review.mjs";
 
 describe("BscScan verification bundle", function () {
   it("pins compiler settings and constructor arguments for each core deployment", function () {
@@ -25,11 +26,13 @@ describe("BscScan verification bundle", function () {
     }
     const deployment = {
       generatedAt: "2026-09-09T00:00:00.000Z", network: { chainId: 97 }, deployer: address(20),
-      owner: address(21), riskAdmin: address(22), sourceRevision: "a".repeat(40),
-      roleReviewFingerprint: `0x${"b".repeat(64)}`,
+      owner: address(21), riskAdmin: address(22), guardian: address(23), treasury: address(24), sourceRevision: "a".repeat(40),
       compiler: { version: "0.8.30", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
       dexRegistryOwnership: { timelockDelaySeconds: 3600 }, contracts
     };
+    const owners=(start,count)=>Array.from({length:count},(_,index)=>address(start+index));
+    deployment.multisigPolicies={governance:{address:deployment.owner,threshold:4,owners:owners(30,7)},risk:{address:deployment.riskAdmin,threshold:3,owners:owners(40,5)},guardian:{address:deployment.guardian,threshold:3,owners:owners(50,5)},treasury:{address:deployment.treasury,threshold:3,owners:owners(60,5)}};
+    deployment.roleReviewFingerprint=prepareRoleAddressReview({schemaVersion:1,network:'bsc-testnet',chainId:97,deployerAddress:deployment.deployer,roles:{governance:{address:deployment.owner,threshold:4,signerCount:7},risk:{address:deployment.riskAdmin,threshold:3,signerCount:5},guardian:{address:deployment.guardian,threshold:3,signerCount:5},treasury:{address:deployment.treasury,threshold:3,signerCount:5}}}).reviewFingerprint;
     const temp = fs.mkdtempSync(path.join(os.tmpdir(), "lqc-verification-"));
     const record = path.join(temp, "deployment.json");
     fs.writeFileSync(record, JSON.stringify(deployment));
@@ -41,7 +44,7 @@ describe("BscScan verification bundle", function () {
       const input = JSON.parse(fs.readFileSync(path.join(output, "standard-input.json"), "utf8"));
       assert.equal(manifest.chainId, 97);
       assert.equal(manifest.sourceRevision, "a".repeat(40));
-      assert.equal(manifest.roleReviewFingerprint, `0x${"b".repeat(64)}`);
+      assert.equal(manifest.roleReviewFingerprint, deployment.roleReviewFingerprint);
       assert.equal(manifest.contracts.length, 15);
       assert.ok(manifest.contracts.every(item => /^0x[0-9a-fA-F]{40}$/.test(item.address)));
       assert.ok(manifest.contracts.every(item => /^[0-9a-f]*$/.test(item.constructorArguments)));

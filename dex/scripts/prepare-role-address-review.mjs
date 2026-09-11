@@ -43,6 +43,17 @@ export function verifyRoleAddressReview(review,env){
   return prepared;
 }
 
+export function assertRoleReviewSafePolicies(review,safePolicies){
+  for(const name of roleOrder){
+    const expected=review.roles[name],actual=safePolicies?.[name];
+    if(!actual||!ethers.isAddress(actual.address)||ethers.getAddress(actual.address)!==expected.address)throw new Error(`${name} Safe policy address does not match the role review`);
+    if(!Array.isArray(actual.owners)||actual.owners.length!==expected.signerCount||actual.threshold!==expected.threshold)throw new Error(`${name} Safe policy does not exactly match the reviewed ${expected.threshold}-of-${expected.signerCount} configuration`);
+    const owners=actual.owners.map(owner=>ethers.getAddress(owner));
+    if(owners.includes(ethers.ZeroAddress)||new Set(owners).size!==owners.length)throw new Error(`${name} Safe policy contains an invalid signer set`);
+  }
+  return true;
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   const file=process.argv[2];
   if(!file)throw new Error('Usage: npm run prepare:role-review -- <public-role-addresses.json>');

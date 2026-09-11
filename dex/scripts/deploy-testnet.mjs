@@ -4,7 +4,7 @@ import { ethers } from "ethers";
 import { checkpointedDeploy, checkpointedTransaction, loadDeploymentCheckpoint } from "./deployment-checkpoint.mjs";
 import { buildAppConfig } from "./app-config.mjs";
 import { assertReviewedSourceCommit, assertSafeMultisig, readGitSourceState } from "./preflight-testnet-deploy.mjs";
-import { verifyRoleAddressReview } from "./prepare-role-address-review.mjs";
+import { assertRoleReviewSafePolicies, verifyRoleAddressReview } from "./prepare-role-address-review.mjs";
 
 const {
   BSC_TESTNET_RPC_URL,
@@ -90,6 +90,8 @@ const guardianSafePolicy = await captureSafePolicy(guardian, "GUARDIAN_ADDRESS",
   BigInt(process.env.GUARDIAN_MIN_OWNERS || "5"), BigInt(process.env.GUARDIAN_MIN_THRESHOLD || "3"), false);
 const treasurySafePolicy = await captureSafePolicy(treasury, "TREASURY_ADDRESS",
   BigInt(process.env.TREASURY_MIN_OWNERS || "5"), BigInt(process.env.TREASURY_MIN_THRESHOLD || "3"), false);
+assertRoleReviewSafePolicies(roleReview, { governance: governanceSafePolicy, risk: riskSafePolicy,
+  guardian: guardianSafePolicy, treasury: treasurySafePolicy });
 const checkpointFile = path.resolve(process.env.DEPLOYMENT_CHECKPOINT_FILE ||
   path.join(root, `deployments/bsc-testnet-${network.chainId}.checkpoint.local.json`));
 const checkpoint = loadDeploymentCheckpoint(checkpointFile, network.chainId, wallet.address);

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { ethers } from "ethers";
+import { assertRoleReviewSafePolicies, prepareRoleAddressReview } from "./prepare-role-address-review.mjs";
 
 export const PANCAKE_BSC_TESTNET = Object.freeze({
   v2Factory: "0x6725F303b657a9451d8BA641348b6761A6CC7a17",
@@ -70,10 +71,8 @@ export function deploymentContractAddresses(deployment) {
 
 export function validateDeploymentEvidenceRecord(deployment) {
   if (Number(deployment?.network?.chainId) !== 97) throw new Error("Deployment evidence must target BSC testnet chain 97.");
-  if (!/^0x[0-9a-fA-F]{40}$/.test(deployment?.deployer || "") ||
-      !/^0x[0-9a-fA-F]{40}$/.test(deployment?.owner || "") ||
-      !/^0x[0-9a-fA-F]{40}$/.test(deployment?.riskAdmin || "")) {
-    throw new Error("Deployment evidence is missing valid deployer, governance, or risk addresses.");
+  if (![deployment?.deployer,deployment?.owner,deployment?.riskAdmin,deployment?.guardian,deployment?.treasury].every(ethers.isAddress)) {
+    throw new Error("Deployment evidence is missing a valid deployer or operational role address.");
   }
   if (same(deployment.owner, deployment.riskAdmin)) throw new Error("Deployment evidence does not separate governance and risk roles.");
   if (!/^[0-9a-fA-F]{40}$/.test(deployment?.sourceRevision || "")) {
@@ -82,6 +81,12 @@ export function validateDeploymentEvidenceRecord(deployment) {
   if (!ethers.isHexString(deployment?.roleReviewFingerprint, 32)) {
     throw new Error("Deployment evidence must retain the approved role review fingerprint.");
   }
+  const reviewed=prepareRoleAddressReview({schemaVersion:1,network:'bsc-testnet',chainId:97,deployerAddress:deployment.deployer,roles:{
+    governance:{address:deployment.owner,threshold:4,signerCount:7},risk:{address:deployment.riskAdmin,threshold:3,signerCount:5},
+    guardian:{address:deployment.guardian,threshold:3,signerCount:5},treasury:{address:deployment.treasury,threshold:3,signerCount:5}
+  }});
+  if(reviewed.reviewFingerprint.toLowerCase()!==deployment.roleReviewFingerprint.toLowerCase())throw new Error("Deployment role review fingerprint does not match its recorded addresses");
+  assertRoleReviewSafePolicies(reviewed,deployment.multisigPolicies);
   if (typeof deployment?.generatedAt !== "string" || Number.isNaN(Date.parse(deployment.generatedAt))) {
     throw new Error("Deployment evidence has an invalid generation timestamp.");
   }

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
+import { prepareRoleAddressReview } from "../scripts/prepare-role-address-review.mjs";
 import {
   PANCAKE_BSC_TESTNET,
   assertBscTestnetChain,
@@ -64,16 +65,20 @@ describe("BSC testnet real-address validation", function () {
       "gasCostOracle", "flowAdapter", "liquidityVault", "idleStrategyAdapter"];
     const deployment = {
       generatedAt: "2026-09-09T00:00:00.000Z", network: { chainId: 97 },
-      deployer: address(100), owner: address(101), riskAdmin: address(102), sourceRevision: "a".repeat(40),
-      roleReviewFingerprint: `0x${"b".repeat(64)}`,
+      deployer: address(100), owner: address(101), riskAdmin: address(102), guardian: address(103), treasury: address(104), sourceRevision: "a".repeat(40),
       compiler: { version: "0.8.30", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
       contracts: Object.fromEntries(names.map((name, index) => [name, { address: address(index + 1), deploymentTx: tx(index + 1) }]))
     };
-    assert.deepEqual(validateDeploymentEvidenceRecord(deployment), { sourceRevision: "a".repeat(40), roleReviewFingerprint: `0x${"b".repeat(64)}`, contractCount: 17 });
+    const owners=(start,count)=>Array.from({length:count},(_,index)=>address(start+index));
+    deployment.multisigPolicies={governance:{address:deployment.owner,threshold:4,owners:owners(200,7)},risk:{address:deployment.riskAdmin,threshold:3,owners:owners(210,5)},guardian:{address:deployment.guardian,threshold:3,owners:owners(220,5)},treasury:{address:deployment.treasury,threshold:3,owners:owners(230,5)}};
+    deployment.roleReviewFingerprint=prepareRoleAddressReview({schemaVersion:1,network:'bsc-testnet',chainId:97,deployerAddress:deployment.deployer,roles:{governance:{address:deployment.owner,threshold:4,signerCount:7},risk:{address:deployment.riskAdmin,threshold:3,signerCount:5},guardian:{address:deployment.guardian,threshold:3,signerCount:5},treasury:{address:deployment.treasury,threshold:3,signerCount:5}}}).reviewFingerprint;
+    assert.deepEqual(validateDeploymentEvidenceRecord(deployment), { sourceRevision: "a".repeat(40), roleReviewFingerprint: deployment.roleReviewFingerprint.toLowerCase(), contractCount: 17 });
     assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, sourceRevision: "short" }), /source commit/);
     assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, riskAdmin: deployment.owner }), /separate/);
     assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, compiler: { ...deployment.compiler, viaIR: false } }), /compiler/);
     assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, roleReviewFingerprint: "0x1234" }), /role review fingerprint/);
+    assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, treasury: address(105) }), /does not match its recorded addresses/);
+    assert.throws(() => validateDeploymentEvidenceRecord({ ...deployment, multisigPolicies:{...deployment.multisigPolicies,risk:{...deployment.multisigPolicies.risk,threshold:4}} }), /exactly match/);
     const missingTx = structuredClone(deployment); missingTx.contracts.liquidityVault.deploymentTx = null;
     assert.throws(() => validateDeploymentEvidenceRecord(missingTx), /liquidityVault transaction/);
   });

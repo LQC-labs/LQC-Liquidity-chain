@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import {ethers} from 'ethers';
-import {prepareRoleAddressReview,verifyRoleAddressReview} from '../scripts/prepare-role-address-review.mjs';
+import {assertRoleReviewSafePolicies,prepareRoleAddressReview,verifyRoleAddressReview} from '../scripts/prepare-role-address-review.mjs';
 
 const address=byte=>`0x${byte.repeat(40)}`;
+const numberedAddress=value=>`0x${value.toString(16).padStart(40,'0')}`;
 const input={schemaVersion:1,network:'bsc-testnet',chainId:97,deployerAddress:address('1'),roles:{governance:{address:address('2'),threshold:4,signerCount:7},risk:{address:address('3'),threshold:3,signerCount:5},guardian:{address:address('4'),threshold:3,signerCount:5},treasury:{address:address('5'),threshold:3,signerCount:5}}};
 const env={DEPLOYER_PRIVATE_KEY:`0x${'01'.padStart(64,'0')}`,FACTORY_OWNER:address('2'),RISK_ADMIN:address('3'),GUARDIAN_ADDRESS:address('4'),TREASURY_ADDRESS:address('5')};
 
@@ -14,4 +15,5 @@ describe('LQC predeployment public role address review',function(){
   it('refuses secret-bearing input fields',function(){assert.throws(()=>prepareRoleAddressReview({...input,privateKey:'0xdead'}),/secret-bearing/);assert.throws(()=>prepareRoleAddressReview({...input,roles:{...input.roles,risk:{...input.roles.risk,seedPhrase:'never'}}}),/Exactly four/)});
   it('binds the approved fingerprint to every deployment role address',function(){const review=prepareRoleAddressReview({...input,deployerAddress:new ethers.Wallet(env.DEPLOYER_PRIVATE_KEY).address});assert.equal(verifyRoleAddressReview(review,env).reviewFingerprint,review.reviewFingerprint);assert.throws(()=>verifyRoleAddressReview(review,{...env,TREASURY_ADDRESS:address('6')}),/treasury address does not match/)});
   it('rejects a modified fingerprint, status, or prepared-review field',function(){const review=prepareRoleAddressReview({...input,deployerAddress:new ethers.Wallet(env.DEPLOYER_PRIVATE_KEY).address});assert.throws(()=>verifyRoleAddressReview({...review,reviewFingerprint:`0x${'00'.repeat(32)}`},env),/fingerprint or status/);assert.throws(()=>verifyRoleAddressReview({...review,approved:true},env),/unsupported fields/)});
+  it('requires every on-chain Safe policy to exactly match the reviewed configuration',function(){const review=prepareRoleAddressReview(input),owners=count=>Array.from({length:count},(_,i)=>numberedAddress(i+10));const policies=Object.fromEntries(Object.entries(review.roles).map(([name,role])=>[name,{address:role.address,threshold:role.threshold,owners:owners(role.signerCount)}]));assert.equal(assertRoleReviewSafePolicies(review,policies),true);assert.throws(()=>assertRoleReviewSafePolicies(review,{...policies,risk:{...policies.risk,threshold:4}}),/exactly match/);assert.throws(()=>assertRoleReviewSafePolicies(review,{...policies,guardian:{...policies.guardian,owners:owners(4)}}),/exactly match/)});
 });
