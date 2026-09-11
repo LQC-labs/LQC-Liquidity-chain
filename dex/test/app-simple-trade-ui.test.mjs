@@ -75,7 +75,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /setAttribute\('aria-busy',String\(swapInFlight\)\)/);
     assert.match(script, /if\(swapInFlight\)return status\(t\('status\.swapBusy'\)\)/);
     assert.match(script, /setSwapInFlight\(true\)/);
-    assert.match(script, /finally\{if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)\)setSwapInFlight\(false\)\}/);
+    assert.match(script, /finally\{if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)&&executionReservationState\(\)\.state==='none'\)setSwapInFlight\(false\)\}/);
   });
 
   it("serializes swap submission across browser tabs", function () {
@@ -110,7 +110,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function snapshotWalletContext\(\)/);
     assert.match(script, /async function assertWalletContext\(context\)/);
     assert.match(script, /WalletContextChangedDuringSwap/);
-    assert.match(script, /sendPreparedTransaction\(prepared,walletContext\)/);
+    assert.match(script, /sendPreparedTransaction\(prepared,walletContext,settlementContext\)/);
     assert.match(script, /accountsChanged[^\n]*invalidateWalletContext\(\)/);
     assert.match(script, /chainChanged[^\n]*invalidateWalletContext\(\)/);
     assert.match(script, /function assertCurrentWalletConnection\(target,version\)/);
@@ -147,7 +147,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /if\(unverifiedTransactionHash\)\{const pending=storedPendingExecution\(\);status\(t\('status\.resultUnknown'/);
     assert.match(script, /pending\?\.cancellationHash\|\|unverifiedTransactionHash.*schedulePendingRecoveryRetry\(0\)/);
     assert.match(koreanRuntime, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
-    assert.match(script, /finally\{if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)\)setSwapInFlight\(false\)\}/);
+    assert.match(script, /finally\{if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)&&executionReservationState\(\)\.state==='none'\)setSwapInFlight\(false\)\}/);
   });
 
   it("proves durable recovery storage before requesting a swap signature", function () {
@@ -160,6 +160,16 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /assertPendingExecutionStorageAvailable\(prepared\.binding\)/);
     assert.match(script, /if\(!chartHealth\.transactionMatches\(prepared\.binding,prepared\.request\)\)/);
     assert.match(recoveryLocale, /'error\.storage_unavailable\.message'/);
+  });
+
+  it("persists the complete Swap plan before opening the wallet", function () {
+    assert.match(script, /executionReservationStore\.reserve\(prepared\.binding,settlementContext\)/);
+    assert.match(script, /return Object\.freeze\(\{transaction,reservation\}\)/);
+    assert.match(script, /rememberPendingExecution\(tx\.hash,plan\.anchorQuote,settlementContext\);if\(!executionReservationStore\.clear\(submission\.reservation\)\)/);
+    assert.match(script, /executionReservationRecord\.state!=='none'&&!recoverableReservedExecution/);
+    assert.match(script, /executionReservationMatchesPending\(executionReservationRecord\.value,pendingRecord\.value\)/);
+    assert.match(script, /status\.swapSigningUnknown/);
+    assert.match(recoveryLocale, /'status\.swapSigningUnknown'/);
   });
 
   it("recovers and verifies a submitted trade after page reload", function () {
@@ -442,7 +452,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /chartHealth\.bindTransaction\(anchorQuote,request\)/);
     assert.match(script, /chartHealth\.transactionMatches\(binding,request\)/);
     assert.match(script, /signer\.sendTransaction\(prepared\.request\)/);
-    assert.match(script, /tx=await sendPreparedTransaction\(prepared,walletContext\)/);
+    assert.match(script, /submission=await sendPreparedTransaction\(prepared,walletContext,settlementContext\)/);
     assert.match(script, /function verifySubmittedTransaction/);
     assert.match(script, /getTransaction\(transactionHash\)/);
     assert.match(script, /consensusSubmittedTransaction\(anchorQuote,observations,readProviders\.length,transactionHash\)/);
