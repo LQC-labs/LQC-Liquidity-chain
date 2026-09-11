@@ -82,7 +82,9 @@ describe("LQC DEX token approval transaction", function () {
     assert.match(app, /function resumeRecoveryAfterSigningReservation\(\)[^{]*\{if\(blockRecoveryForSigningReservation\(\)\)return;const approval=pendingApprovalState\(\),execution=pendingExecutionState\(\)/);
     assert.match(app, /approval\.state==='invalid'[^\n]*status\(t\('status\.pendingApprovalInvalid'\)/);
     assert.match(app, /approval\.state==='valid'[^\n]*recoverPendingApproval\(\)/);
-    assert.match(app, /record\.state==='none'&&event\.newValue===null\)\{resumeRecoveryAfterSigningReservation\(\);return\}/);
+    assert.match(app, /function handleApprovalReservationStorage\(event\)[^\n]*const record=approvalReservationState\(\);if\(record\.state==='none'\)\{resumeRecoveryAfterSigningReservation\(\);return\}/);
+    assert.match(app, /function handleExecutionReservationStorage\(event\)[^\n]*const record=executionReservationState\(\);if\(record\.state==='none'\)\{resumeRecoveryAfterSigningReservation\(\);return\}/);
+    assert.doesNotMatch(app, /record\.state==='none'&&event\.newValue===null/);
     assert.match(app, /approvalReservationState\(\)\.state==='none'&&executionReservationState\(\)\.state==='none'/);
     assert.match(app, /else if\(approvalReservationState\(\)\.state!=='none'\)\{const state=approvalReservationState\(\)/);
   });
