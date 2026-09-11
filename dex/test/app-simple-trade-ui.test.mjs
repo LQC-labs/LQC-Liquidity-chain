@@ -75,7 +75,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /setAttribute\('aria-busy',String\(swapInFlight\)\)/);
     assert.match(script, /if\(swapInFlight\)return status\(t\('status\.swapBusy'\)\)/);
     assert.match(script, /setSwapInFlight\(true\)/);
-    assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
+    assert.match(script, /finally\{if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)\)setSwapInFlight\(false\)\}/);
   });
 
   it("serializes swap submission across browser tabs", function () {
@@ -147,7 +147,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /if\(unverifiedTransactionHash\)\{const pending=storedPendingExecution\(\);status\(t\('status\.resultUnknown'/);
     assert.match(script, /pending\?\.cancellationHash\|\|unverifiedTransactionHash.*schedulePendingRecoveryRetry\(0\)/);
     assert.match(koreanRuntime, /중복 거래를 보내지 말고 블록 탐색기에서 먼저 확인하세요/);
-    assert.match(script, /finally\{if\(!unverifiedTransactionHash\)setSwapInFlight\(false\)\}/);
+    assert.match(script, /finally\{if\(!unverifiedTransactionHash&&!storedPendingApproval\(\)\)setSwapInFlight\(false\)\}/);
   });
 
   it("proves durable recovery storage before requesting a swap signature", function () {
@@ -197,13 +197,13 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /ui\.recoveryRetry\.onclick=\(\)=>\{if\(storedPendingExecution\(\)\)\{pendingRecoveryAttempts=0;schedulePendingRecoveryRetry\(0\)\}\}/);
     assert.match(script, /document\.hidden\|\|navigator\.onLine===false/);
     assert.match(script, /pendingRecoveryActive\|\|!pending\|\|!deployed/);
-    assert.match(script, /clearTimeout\(pendingRecoveryTimer\);if\(!document\.hidden\)/);
+    assert.match(script, /clearTimeout\(pendingRecoveryTimer\);clearTimeout\(pendingApprovalTimer\);if\(!document\.hidden\)/);
     assert.match(script, /window\.addEventListener\('offline',[^\n]*clearTimeout\(pendingRecoveryTimer\)/);
     assert.match(script, /window\.addEventListener\('online',[^\n]*pendingRecoveryAttempts=0;schedulePendingRecoveryRetry\(0\)/);
     assert.match(script, /if\(!trustedReadProviderIndexes\.length\)await chainHeadWithin\(\)/);
     assert.match(script, /verifySubmittedTransaction\(pending\.transactionHash,pending\.anchorQuote,pending\.settlementContext\)/);
     assert.match(script, /sdk\.buildExecutionEvidence\(verified\.anchorQuote,verified\.settlement/);
-    assert.match(script, /if\(pendingRecord\.state==='valid'\)setTimeout\(\(\)=>recoverPendingExecution\(\),0\)/);
+    assert.match(script, /else if\(pendingRecord\.state==='valid'\)setTimeout\(\(\)=>recoverPendingExecution\(\),0\)/);
     assert.match(recoveryLocale, /'status\.recovering'/);
     assert.match(recoveryLocale, /'status\.recovered'/);
   });
