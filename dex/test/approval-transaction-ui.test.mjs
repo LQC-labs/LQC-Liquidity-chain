@@ -21,6 +21,14 @@ describe("LQC DEX token approval transaction", function () {
   it("submits only the immutable prepared approval request", function () {
     assert.match(app, /request=Object\.freeze\(\{\.\.\.base,\.\.\.fees,gasLimit:gasProbe\.gasLimit,nonce\}\)/);
     assert.match(app, /return signer\.sendTransaction\(request\)/);
-    assert.equal((app.match(/submitTokenApproval\(token,spender,value,walletContext,plan\.anchorQuote\)/g)||[]).length,2);
+    assert.equal((app.match(/approveAndVerifyToken\(token,spender,value,walletContext,plan\.anchorQuote\)/g)||[]).length,2);
   });
+  it("requires a successful receipt and multi-RPC allowance consensus", function () {
+    assert.match(app, /Number\(receipt\.status\)!==1/);
+    assert.match(app, /readProviders\[index\]/);
+    assert.match(app, /token\.allowance\(account,spender\)/);
+    assert.match(app, /chartHealth\.consensusTokenAllowance\(observations,readProviders\.length,requiredAmount\)/);
+    assert.match(app, /TokenAllowanceConsensusFailed/);
+  });
+
 });
