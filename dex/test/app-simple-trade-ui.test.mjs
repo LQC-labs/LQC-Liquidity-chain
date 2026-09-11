@@ -12,6 +12,8 @@ const english = fs.readFileSync(path.join(root, "app/locales/en.js"), "utf8");
 const korean = fs.readFileSync(path.join(root, "app/locales/ko.js"), "utf8");
 const englishRuntime = fs.readFileSync(path.join(root, "app/locales/en-runtime.js"), "utf8");
 const koreanRuntime = fs.readFileSync(path.join(root, "app/locales/ko-runtime.js"), "utf8");
+const englishTrading = fs.readFileSync(path.join(root, "app/locales/en-trading.js"), "utf8");
+const koreanTrading = fs.readFileSync(path.join(root, "app/locales/ko-trading.js"), "utf8");
 
 describe("LQC simple trading UI", function () {
   it("provides an extensible English-first localization boundary", function () {
@@ -35,6 +37,11 @@ describe("LQC simple trading UI", function () {
     }
     assert.match(script, /const translatedSwapError=error=>/);
     assert.match(script, /guidance\.code\.toLowerCase\(\)/);
+    for (const key of ["market.count", "token.count", "trade.action", "quote.strategySplit", "quote.noLiquidity", "quote.maximumGas"]) {
+      assert.match(englishTrading, new RegExp(`'${key.replace(".", "\\.")}'`));
+      assert.match(koreanTrading, new RegExp(`'${key.replace(".", "\\.")}'`));
+    }
+    assert.match(script, /addEventListener\('lqc:languagechange'/);
   });
   it("keeps the primary trade flow simple while preserving optional Router evidence", function () {
     assert.match(html, /id="buyTab"[^>]*>Buy<\/button>/);
@@ -49,7 +56,7 @@ describe("LQC simple trading UI", function () {
     assert.match(html, /data-i18n="dialog\.tokenPolicy"/);
     assert.match(script, /ui\.buy\.onclick=ui\.buyTab\.onclick/);
     assert.match(script, /ui\.walletNav\.onclick=chooseWallet/);
-    assert.match(script, /\[t\.symbol,t\.name,t\.address\]/);
+    assert.match(script, /\[token\.symbol,token\.name,token\.address\]/);
     assert.match(script, /ui\.tokenSearch\.oninput=/);
     assert.match(script, /function approvedRoutes\(path\)/);
     assert.match(script, /No mutually approved DEX route/);
@@ -297,7 +304,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /chartHealth\.consensusFeeData\(observations,readProviders\.length\)/);
     assert.match(script, /TransactionFeeConsensusFailed/);
     assert.match(script, /maximumNetworkFee/);
-    assert.match(script, /BNB · RPC 합의/);
+    assert.match(script, /t\('quote\.maximumGas'/);
+    assert.match(koreanTrading, /BNB · RPC 합의/);
     assert.match(script, /function sendPreparedTransaction/);
     assert.match(script, /WalletNonceChangedBeforeSigning/);
     assert.match(script, /chartHealth\.bindTransaction\(anchorQuote,request\)/);
@@ -315,7 +323,8 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /status\(t\('status\.confirming'\)\)/);
     assert.match(koreanRuntime, /수령량과 다중 RPC 확정성을 확인합니다/);
     assert.match(script, /settlement\.confirmations/);
-    assert.match(script, /RPC 합의 대기/);
+    assert.match(script, /'market\.rpcPending'/);
+    assert.match(koreanTrading, /RPC 합의 대기/);
     assert.match(script, /chartHealth\.restoreSourceHealth\(JSON\.parse\(localStorage\.getItem\(rpcHealthMemoryKey\)/);
     assert.match(script, /chartHealth\.sourceHealthSnapshot\(rpcSourceHealth,cfg\.deploymentFingerprint,now\)/);
     assert.match(script, /rpcSourceHealth\[index\]=chartHealth\.sourceHealth/);
