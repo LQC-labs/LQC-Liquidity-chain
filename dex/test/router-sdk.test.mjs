@@ -360,4 +360,24 @@ describe("LQC Router browser SDK", function () {
       getBlockNumber: async () => 12350 }, tokenA, ethers, 2), /lacks confirmations/);
   });
 
+  it("enables the UI only after every configured deployment address has bytecode", async function () {
+    const address = value => ethers.getAddress(ethers.zeroPadValue(ethers.toBeHex(value), 20));
+    const config = {
+      chainId: 97, routerAddress: address(1), quoteRouterAddress: address(2),
+      executionRouterAddress: address(3), nativeRouterAddress: address(4),
+      splitOptimizerAddress: address(5), autoRouterAddress: address(6), gasCostOracleAddress: address(7),
+      tokens: [{ symbol: "BNB", address: "native" }, { symbol: "WBNB", address: address(8) }, { symbol: "LQC", address: address(9) }],
+      dexes: [{ id: "LQC", adapter: address(10) }, { id: "PCS", adapter: address(11) }]
+    };
+    const provider = { getNetwork: async () => ({ chainId: 97n }), getCode: async () => "0x6000" };
+    const result = await sdk.verifyUiDeployment(provider, config, ethers);
+    assert.equal(result.ready, true); assert.equal(result.chainId, 97); assert.equal(result.checked, 11);
+    await assert.rejects(sdk.verifyUiDeployment(null, config, ethers), /Invalid deployment verifier/);
+    await assert.rejects(sdk.verifyUiDeployment({ ...provider, getNetwork: async () => ({ chainId: 56n }) }, config, ethers), /chain mismatch/);
+    await assert.rejects(sdk.verifyUiDeployment(provider, { ...config, tokens: [], dexes: [] }, ethers), /configuration incomplete/);
+    await assert.rejects(sdk.verifyUiDeployment(provider, { ...config, routerAddress: ethers.ZeroAddress }, ethers), /Invalid deployment address routerAddress/);
+    await assert.rejects(sdk.verifyUiDeployment({ ...provider, getCode: async target => target.toLowerCase() === address(10).toLowerCase() ? "0x" : "0x6000" }, config, ethers), /adapter:LQC/);
+    await assert.rejects(sdk.verifyUiDeployment(provider, { ...config, nativeRouterAddress: config.routerAddress }, ethers), /Duplicate deployment address/);
+  });
+
 });
