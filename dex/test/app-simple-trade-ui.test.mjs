@@ -7,13 +7,27 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const html = fs.readFileSync(path.join(root, "app/index.html"), "utf8");
 const script = fs.readFileSync(path.join(root, "app/app.js"), "utf8");
 const styles = fs.readFileSync(path.join(root, "app/styles.css"), "utf8");
+const i18n = fs.readFileSync(path.join(root, "app/i18n.js"), "utf8");
+const english = fs.readFileSync(path.join(root, "app/locales/en.js"), "utf8");
+const korean = fs.readFileSync(path.join(root, "app/locales/ko.js"), "utf8");
 
 describe("LQC simple trading UI", function () {
+  it("provides an extensible English-first localization boundary", function () {
+    assert.match(html, /<html lang="en">/);
+    assert.match(html, /id="languageSelect"/);
+    assert.match(html, /locales\/en\.js.*locales\/ko\.js.*i18n\.js/);
+    assert.match(i18n, /lqc-flow-language/);
+    assert.match(i18n, /navigator\.languages/);
+    assert.match(i18n, /data-i18n-placeholder/);
+    assert.match(i18n, /lqc:languagechange/);
+    assert.match(english, /'wallet\.connect':'Connect wallet'/);
+    assert.match(korean, /'wallet\.connect':'지갑 연결'/);
+  });
   it("keeps the primary trade flow simple while preserving optional Router evidence", function () {
     assert.match(html, /id="buyTab"[^>]*>Buy<\/button>/);
     assert.match(html, /id="sellTab"[^>]*>Sell<\/button>/);
     assert.match(html, /<details class="trade-details"/);
-    assert.match(html, /id="routeSummary">최적 경로 자동 선택/);
+    assert.match(html, /id="routeSummary"[^>]*>Best route selected automatically/);
     assert.match(html, /최적가 자동/);
     assert.match(html, /비수탁 거래/);
     assert.match(html, /Gasless 조건 확인/);
@@ -91,7 +105,7 @@ describe("LQC simple trading UI", function () {
   });
 
   it("offers a market-first order and familiar balance percentage controls", function () {
-    assert.match(html, /<strong>시장가<\/strong>/);
+    assert.match(html, /data-i18n="trade\.marketOrder">Market order<\/strong>/);
     for (const percent of [25, 50, 75, 100]) assert.match(html, new RegExp(`data-percent="${percent}"`));
     assert.match(script, /async function applyBalancePercent\(percent\)/);
     assert.match(script, /available\*BigInt\(percent\)\/100n/);
