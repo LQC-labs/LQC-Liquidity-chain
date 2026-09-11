@@ -89,7 +89,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /window\.addEventListener\('storage',handlePendingExecutionStorage\)/);
     assert.match(script, /event\.storageArea!==localStorage\|\|event\.key!==pendingExecutionMemoryKey\|\|event\.newValue===null/);
     assert.match(script, /record\.value\.transactionHash===unverifiedTransactionHash/);
-    assert.match(script, /invalidateWalletContext\(\);setSwapInFlight\(true\);setTimeout\(\(\)=>recoverPendingExecution\(record\.value\),0\)/);
+    assert.match(script, /invalidateWalletContext\(\);setSwapInFlight\(true\);setTimeout\(\(\)=>recoverPendingExecution\(\),0\)/);
     assert.match(recoveryLocale, /'status\.lockUnsupported'/);
     assert.match(recoveryLocale, /탭 간 거래 잠금을 안전하게 보장하지 못합니다/);
   });
@@ -159,12 +159,14 @@ describe("LQC simple trading UI", function () {
     assert.match(recoveryStoreSource, /submittedAt<=now\(\)\+300000/);
     assert.doesNotMatch(script, /Date\.now\(\)-Number\(value\.submittedAt\)>/);
     assert.match(script, /rememberPendingExecution\(tx\.hash,plan\.anchorQuote,settlementContext\)/);
-    assert.match(script, /async function recoverPendingExecution\(pending=storedPendingExecution\(\)\)/);
+    assert.match(script, /async function recoverPendingExecution\(\)\{clearTimeout\(pendingRecoveryTimer\);const pending=storedPendingExecution\(\)/);
     assert.match(html, /recovery-backoff\.js[^\n]*app\.js/);
     assert.match(script, /LQCRecoveryBackoff:recoveryBackoff/);
     assert.match(script, /function pendingRecoveryDelay\(\)\{const delay=recoveryBackoff\.delay\(pendingRecoveryAttempts\)/);
-    assert.match(script, /function schedulePendingRecoveryRetry\(pending,delay=pendingRecoveryDelay\(\)\)/);
-    assert.match(script, /schedulePendingRecoveryRetry\(pending\);return false/);
+    assert.match(script, /function schedulePendingRecoveryRetry\(delay=pendingRecoveryDelay\(\)\)/);
+    assert.match(script, /setTimeout\(\(\)=>recoverPendingExecution\(\),delay\)/);
+    assert.match(script, /const latest=storedPendingExecution\(\);if\(!latest\)return false/);
+    assert.match(script, /schedulePendingRecoveryRetry\(\);return false/);
     assert.match(html, /id="recoveryRetryButton"[^>]*data-i18n="recovery\.retry"[^>]*hidden/);
     assert.match(html, /id="pendingTradeLink"[^>]*target="_blank"[^>]*rel="noopener noreferrer"[^>]*data-i18n="recovery\.explorer"[^>]*hidden/);
     assert.match(script, /function setPendingTradeControls\(pending,visible\)/);
@@ -172,23 +174,23 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /pendingTradeLink\.removeAttribute\('href'\)/);
     assert.match(recoveryLocale, /'recovery\.retry':'제출한 거래 다시 확인'/);
     assert.match(recoveryLocale, /'recovery\.explorer':'제출한 거래 탐색기에서 보기'/);
-    assert.match(script, /setPendingTradeControls\(pending,true\);schedulePendingRecoveryRetry\(pending\)/);
-    assert.match(script, /ui\.recoveryRetry\.onclick=\(\)=>\{const pending=storedPendingExecution\(\);if\(pending\)\{pendingRecoveryAttempts=0;schedulePendingRecoveryRetry\(pending,0\)\}\}/);
+    assert.match(script, /setPendingTradeControls\(latest,true\);schedulePendingRecoveryRetry\(\)/);
+    assert.match(script, /ui\.recoveryRetry\.onclick=\(\)=>\{if\(storedPendingExecution\(\)\)\{pendingRecoveryAttempts=0;schedulePendingRecoveryRetry\(0\)\}\}/);
     assert.match(script, /document\.hidden\|\|navigator\.onLine===false/);
     assert.match(script, /pendingRecoveryActive\|\|!pending\|\|!deployed/);
     assert.match(script, /clearTimeout\(pendingRecoveryTimer\);if\(!document\.hidden\)/);
     assert.match(script, /window\.addEventListener\('offline',[^\n]*clearTimeout\(pendingRecoveryTimer\)/);
-    assert.match(script, /window\.addEventListener\('online',[^\n]*pendingRecoveryAttempts=0;schedulePendingRecoveryRetry\(pending,0\)/);
+    assert.match(script, /window\.addEventListener\('online',[^\n]*pendingRecoveryAttempts=0;schedulePendingRecoveryRetry\(0\)/);
     assert.match(script, /if\(!trustedReadProviderIndexes\.length\)await chainHeadWithin\(\)/);
     assert.match(script, /verifySubmittedTransaction\(pending\.transactionHash,pending\.settlementContext\)/);
     assert.match(script, /sdk\.buildExecutionEvidence\(pending\.anchorQuote,settlement/);
-    assert.match(script, /if\(pendingRecord\.state==='valid'\)setTimeout\(\(\)=>recoverPendingExecution\(pendingRecord\.value\),0\)/);
+    assert.match(script, /if\(pendingRecord\.state==='valid'\)setTimeout\(\(\)=>recoverPendingExecution\(\),0\)/);
     assert.match(recoveryLocale, /'status\.recovering'/);
     assert.match(recoveryLocale, /'status\.recovered'/);
   });
 
   it("never silently expires an unresolved submitted trade", function () {
-    assert.match(script, /async function recoverPendingExecution\(pending=storedPendingExecution\(\)\)/);
+    assert.match(script, /async function recoverPendingExecution\(\)/);
     assert.match(script, /unverifiedTransactionHash=pending\.transactionHash/);
     assert.match(script, /clearPendingExecution\(pending\.transactionHash\)/);
     assert.doesNotMatch(script, /submittedAt\)>[0-9]+/);
