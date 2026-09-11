@@ -122,6 +122,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /return replacement\.hash/);
     assert.match(script, /const finalTransactionHash=await waitForFinalTransactionHash\(tx\)/);
     assert.match(script, /verifySubmittedTransaction\(finalTransactionHash,plan\.anchorQuote,settlementContext\)/);
+    assert.match(script, /sdk\.buildExecutionEvidence\(verified\.anchorQuote,verified\.settlement/);
     assert.doesNotMatch(script, /await tx\.wait\(\);status\('거래 포함 완료/);
   });
 
@@ -186,7 +187,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /window\.addEventListener\('online',[^\n]*pendingRecoveryAttempts=0;schedulePendingRecoveryRetry\(0\)/);
     assert.match(script, /if\(!trustedReadProviderIndexes\.length\)await chainHeadWithin\(\)/);
     assert.match(script, /verifySubmittedTransaction\(pending\.transactionHash,pending\.anchorQuote,pending\.settlementContext\)/);
-    assert.match(script, /sdk\.buildExecutionEvidence\(pending\.anchorQuote,settlement/);
+    assert.match(script, /sdk\.buildExecutionEvidence\(verified\.anchorQuote,verified\.settlement/);
     assert.match(script, /if\(pendingRecord\.state==='valid'\)setTimeout\(\(\)=>recoverPendingExecution\(\),0\)/);
     assert.match(recoveryLocale, /'status\.recovering'/);
     assert.match(recoveryLocale, /'status\.recovered'/);
@@ -346,7 +347,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /function storedExecutionEvidence/);
     assert.match(script, /sdk\.verifyExecutionEvidence/);
     assert.match(script, /function rememberExecutionEvidence/);
-    assert.match(script, /sdk\.buildExecutionEvidence\(plan\.anchorQuote,settlement,cfg\.deploymentFingerprint,Date\.now\(\),ethers\)/);
+    assert.match(script, /sdk\.buildExecutionEvidence\(verified\.anchorQuote,verified\.settlement,cfg\.deploymentFingerprint,Date\.now\(\),ethers\)/);
     assert.match(script, /\.slice\(0,10\)/);
     assert.match(script, /function downloadExecutionEvidence/);
     assert.match(script, /new Blob\(\[JSON\.stringify\(evidence,null,2\)\]/);
