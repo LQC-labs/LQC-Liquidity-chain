@@ -16,6 +16,8 @@
     'status.pendingApprovalInvalid':'The saved token-approval record is damaged or does not match this deployment. Trading is locked for manual review.',
     'status.approvalSigningUnknown':'A token approval signature was requested before the app closed, but its broadcast result is unknown. Trading is locked; review wallet activity before continuing.',
     'status.approvalReservationInvalid':'The pre-sign approval record is damaged or belongs to another deployment. Trading is locked for manual review.',
+    'status.swapSigningUnknown':'A Swap signature was requested before the app closed, but its broadcast result is unknown. Trading is locked; review wallet activity before continuing.',
+    'status.swapReservationInvalid':'The pre-sign Swap record is damaged or belongs to another deployment. Trading is locked for manual review.',
     'status.lockUnsupported':'This browser cannot guarantee safe cross-tab trade locking. Update it or use a supported wallet browser.',
     'error.storage_unavailable.message':'The trade recovery record cannot be stored safely.',
     'error.storage_unavailable.action':'Check browser storage and privacy settings, then try again.'
@@ -36,6 +38,8 @@
     'status.pendingApprovalInvalid':'저장된 토큰 승인 기록이 손상되었거나 현재 배포와 일치하지 않습니다. 수동 확인 전까지 거래를 잠급니다.',
     'status.approvalSigningUnknown':'앱이 종료되기 전에 토큰 승인 서명을 요청했지만 전송 결과를 확인할 수 없습니다. 지갑 활동 내역을 확인할 때까지 거래를 잠급니다.',
     'status.approvalReservationInvalid':'서명 전 승인 기록이 손상되었거나 다른 배포의 기록입니다. 수동 확인 전까지 거래를 잠급니다.',
+    'status.swapSigningUnknown':'앱이 종료되기 전에 Swap 서명을 요청했지만 전송 결과를 확인할 수 없습니다. 지갑 활동 내역을 확인할 때까지 거래를 잠급니다.',
+    'status.swapReservationInvalid':'서명 전 Swap 기록이 손상되었거나 다른 배포의 기록입니다. 수동 확인 전까지 거래를 잠급니다.',
     'status.lockUnsupported':'이 브라우저는 탭 간 거래 잠금을 안전하게 보장하지 못합니다. 브라우저를 업데이트하거나 지원되는 지갑 브라우저를 사용하세요.',
     'error.storage_unavailable.message':'거래 복구 기록을 안전하게 저장할 수 없습니다.',
     'error.storage_unavailable.action':'브라우저 저장 공간과 개인정보 보호 설정을 확인한 뒤 다시 시도하세요.'
