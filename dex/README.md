@@ -417,6 +417,9 @@ locked until the submitted transaction has a terminal failure or complete verifi
 When the original wallet reconnects, every configured browser RPC is queried independently. The lock
 is cleared automatically only when a canonical majority reports the same failed receipt with at least
 three confirmations; pending, successful-but-unverified, conflicting, and unavailable results stay locked.
+Version 2 pending records also retain the proof-bound execution plan and settlement decoder context with
+lossless integer encoding. If the same successful receipt, canonical block, and decoded output reach RPC
+majority after a reload, the app rebuilds and verifies the execution evidence before unlocking trading.
 
 The generated configuration derives every Router, token, DEX id, and adapter from that single record
 and includes a deterministic deployment fingerprint. Any optional legacy address override must match

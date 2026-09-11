@@ -72,7 +72,7 @@ describe("LQC simple trading UI", function () {
 
   it("keeps trading locked when a submitted settlement cannot be verified", function () {
     assert.match(script, /unverifiedTransactionHash=''/);
-    assert.match(script, /rememberSubmittedTransaction\(tx\.hash\)/);
+    assert.match(script, /rememberSubmittedTransaction\(tx\.hash,\{anchorQuote:plan\.anchorQuote,settlementContext\}\)/);
     assert.match(script, /rememberSubmittedTransaction\(finalTransactionHash\)/);
     assert.match(script, /rememberExecutionEvidence\(evidence\);clearSubmittedTransaction\(\)/);
     assert.match(script, /Number\(e\?\.receipt\?\.status\)===0\)clearSubmittedTransaction\(\)/);
@@ -87,7 +87,7 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /cfg\.blockExplorerUrls\[0\]\}\/tx\/\$\{transactionHash\}/);
     assert.match(script, /lastSettledOutput\.textContent='확인 중'/);
     assert.match(script, /lastEvidenceHash\.textContent='검증 대기'/);
-    assert.match(script, /rememberSubmittedTransaction\(tx\.hash\)/);
+    assert.match(script, /rememberSubmittedTransaction\(tx\.hash,\{anchorQuote:plan\.anchorQuote,settlementContext\}\)/);
     assert.match(script, /rememberSubmittedTransaction\(finalTransactionHash\)/);
     assert.match(script, /function clearSubmittedTransaction\(\)/);
   });
@@ -95,7 +95,7 @@ describe("LQC simple trading UI", function () {
   it("restores a deployment-bound submitted transaction after reload", function () {
     assert.match(script, /lqc-flow-submitted-transaction:\$\{cfg\.deploymentFingerprint\|\|'unconfigured'\}/);
     assert.match(script, /function storedSubmittedTransaction\(\)/);
-    assert.match(script, /value\?\.version!==1/);
+    assert.match(script, /!\[1,2\]\.includes\(value\?\.version\)/);
     assert.match(script, /value\.deploymentFingerprint!==cfg\.deploymentFingerprint/);
     assert.match(script, /value\.chainId!==cfg\.chainId/);
     assert.match(script, /ethers\.isHexString\(value\.transactionHash,32\)/);
@@ -109,13 +109,23 @@ describe("LQC simple trading UI", function () {
   });
 
   it("clears a restored lock only after canonical RPCs confirm failure", function () {
-    assert.match(script, /async function reconcileFailedSubmittedTransaction\(transactionHash,requiredConfirmations=3\)/);
-    assert.match(script, /getTransactionReceipt\(transactionHash\)/);
-    assert.match(script, /Number\(receipt\.status\)!==0/);
-    assert.match(script, /consensusFailedTransactionReceipt\(observations,readProviders\.length,transactionHash,requiredConfirmations\)/);
-    assert.match(script, /if\(!failure\)return false/);
+    assert.match(script, /async function reconcileSubmittedTransaction\(pending,requiredConfirmations=3\)/);
+    assert.match(script, /getTransactionReceipt\(pending\.transactionHash\)/);
+    assert.match(script, /consensusFailedTransactionReceipt\(failed,readProviders\.length,pending\.transactionHash,requiredConfirmations\)/);
     assert.match(script, /clearSubmittedTransaction\(\);setSwapInFlight\(false\)/);
-    assert.match(script, /if\(ownsPending\)await reconcileFailedSubmittedTransaction\(pending\.transactionHash\)/);
+    assert.match(script, /if\(ownsPending\)await reconcileSubmittedTransaction\(pending\)/);
+  });
+
+  it("completes verified evidence for a successful restored transaction", function () {
+    assert.match(script, /submittedTransactionReplacer/);
+    assert.match(script, /submittedTransactionReviver/);
+    assert.match(script, /version:2/);
+    assert.match(script, /recovery=unverifiedRecoveryContext/);
+    assert.match(script, /transactionHash,account,submittedAt:Date\.now\(\),recovery\}/);
+    assert.match(script, /consensusTransactionReceipt\(successful,readProviders\.length,pending\.transactionHash,requiredConfirmations\)/);
+    assert.match(script, /verifySubmittedTransaction\(pending\.transactionHash,pending\.recovery\.settlementContext,requiredConfirmations\)/);
+    assert.match(script, /buildExecutionEvidence\(pending\.recovery\.anchorQuote,settlement/);
+    assert.match(script, /복원된 거래가.*수령량 검증 후 완료되었습니다/);
   });
 
   it("offers a market-first order and familiar balance percentage controls", function () {
