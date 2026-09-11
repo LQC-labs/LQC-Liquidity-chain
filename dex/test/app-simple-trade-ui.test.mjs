@@ -294,6 +294,10 @@ describe("LQC simple trading UI", function () {
     assert.match(script, /async function refreshMarketPrice\(\)/);
     assert.match(script, /readOnlyBestQuote\(path\[0\],path\[1\],unit,routes\)/);
     assert.doesNotMatch(html, /\$0\.091138/);
+    assert.match(html, /id="portfolioValue">—<\/strong>/);
+    assert.match(script, /async function refreshLqcPortfolioValue\(lqc,lqcBalance\)/);
+    assert.match(script, /quote=await readOnlyBestQuote\(path\[0\],path\[1\],unit,routes\)/);
+    assert.doesNotMatch(script, /\.091348/);
   });
 
   it("prevents stale asynchronous quotes from changing the current market UI", function () {
