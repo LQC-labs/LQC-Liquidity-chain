@@ -91,6 +91,18 @@ describe("BSC testnet deployment preflight", function () {
       PANCAKE_V3_ROUTER_ADDRESS: PANCAKE_BSC_TESTNET.v3Router, PANCAKE_V3_QUOTER_ADDRESS: PANCAKE_BSC_TESTNET.v3Quoter }), /reviewed allowed pool/);
   });
 
+  it("validates V3 fee tiers and the maximum hop limit before deployment", function () {
+    const v3 = { PANCAKE_V3_ROUTER_ADDRESS: PANCAKE_BSC_TESTNET.v3Router,
+      PANCAKE_V3_QUOTER_ADDRESS: PANCAKE_BSC_TESTNET.v3Quoter, PANCAKE_V3_ALLOWED_POOLS: reviewedPool };
+    assert.equal(validateTestnetDeploymentConfig({ ...base, ...v3 }).v3MaxHops, 2);
+    const bounded = validateTestnetDeploymentConfig({ ...base, ...v3, PANCAKE_V3_ALLOWED_FEE_TIERS: "[500,2500]", PANCAKE_V3_MAX_HOPS: "1" });
+    assert.deepEqual(bounded.v3FeeTiers, [500, 2500]);
+    assert.equal(bounded.v3MaxHops, 1);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, ...v3, PANCAKE_V3_ALLOWED_FEE_TIERS: "[3000]" }), /FEE_TIERS/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, ...v3, PANCAKE_V3_ALLOWED_FEE_TIERS: "[500,500]" }), /FEE_TIERS/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, ...v3, PANCAKE_V3_MAX_HOPS: "4" }), /MAX_HOPS/);
+  });
+
   it("checks the live chain, deployer balance, and configured bytecode", async function () {
     const provider = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("11"), getCode: async () => "0x6000", call: safeCall };
     const result = await runTestnetPreflight(base, provider);

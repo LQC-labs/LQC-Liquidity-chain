@@ -177,8 +177,20 @@ export function validateTestnetDeploymentConfig(env) {
   if (!Array.isArray(v3Pools) || (v3Router && v3Pools.length === 0)) {
     throw new Error("PancakeSwap V3 requires at least one reviewed allowed pool.");
   }
+  let v3FeeTiers;
+  try { v3FeeTiers = JSON.parse(env.PANCAKE_V3_ALLOWED_FEE_TIERS || "[100,500,2500,10000]"); }
+  catch { throw new Error("PANCAKE_V3_ALLOWED_FEE_TIERS must be valid JSON."); }
+  const canonicalV3Fees = new Set([100, 500, 2500, 10000]);
+  if (!Array.isArray(v3FeeTiers) || v3FeeTiers.length === 0 || new Set(v3FeeTiers).size !== v3FeeTiers.length ||
+      v3FeeTiers.some(fee => !Number.isInteger(Number(fee)) || !canonicalV3Fees.has(Number(fee)))) {
+    throw new Error("PANCAKE_V3_ALLOWED_FEE_TIERS must be a unique, non-empty subset of 100, 500, 2500, and 10000.");
+  }
+  const v3MaxHops = Number(env.PANCAKE_V3_MAX_HOPS || "2");
+  if (!Number.isInteger(v3MaxHops) || v3MaxHops < 1 || v3MaxHops > 3) {
+    throw new Error("PANCAKE_V3_MAX_HOPS must be an integer from 1 to 3.");
+  }
   return { walletAddress, owner, riskAdmin, guardian, treasury, sourceCommit: env.SOURCE_COMMIT.toLowerCase(), delay, bnbLiquidity, gasReserve,
-    vaultDepositCap, vaultStrategyCap, vaultMaxLossBps, v3Pools,
+    vaultDepositCap, vaultStrategyCap, vaultMaxLossBps, v3Pools, v3FeeTiers: v3FeeTiers.map(Number), v3MaxHops,
     governanceMinimumOwners, governanceMinimumThreshold, riskMinimumOwners, riskMinimumThreshold,
     guardianMinimumOwners, guardianMinimumThreshold, treasuryMinimumOwners, treasuryMinimumThreshold };
 }
@@ -246,4 +258,3 @@ async function main() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch(error => { console.error(error.message); process.exitCode = 1; });
-}
