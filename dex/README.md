@@ -121,6 +121,7 @@ creates LQC/USDT and LQC/WBNB pools, records all addresses, and configures the w
 export BSC_TESTNET_RPC_URL="..."
 export DEPLOYER_PRIVATE_KEY="..." # never commit this value
 export WBNB_ADDRESS="0x..."
+export TEST_LQC_ADDRESS="0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc" # optional prepared BSC Testnet tLQC
 export PANCAKE_V3_QUOTER_ADDRESS="0x..." # optional; set together with the V3 router
 export PANCAKE_V3_ROUTER_ADDRESS="0x..." # optional; token-to-token execution
 export PANCAKE_V3_ALLOWED_FEE_TIERS='[500,2500]' # reviewed canonical tiers only
