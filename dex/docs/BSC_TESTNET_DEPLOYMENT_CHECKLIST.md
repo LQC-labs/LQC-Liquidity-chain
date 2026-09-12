@@ -37,7 +37,7 @@ defaults to zero until governance explicitly approves a bounded exercise.
 
 - [ ] Fund the deployer with testnet tBNB only.
 - [ ] Hold at least configured initial BNB liquidity plus `0.5` tBNB gas reserve.
-- [ ] Reduce the default `10` tBNB initial-liquidity setting if faucet funding is insufficient.
+- [ ] Use the default `0.5` tBNB initial BNB liquidity setting; keep the separate gas reserve configured at `0.5` tBNB.
 - [ ] Supply `DEPLOYER_PRIVATE_KEY` only in the runtime environment.
 - [ ] Confirm `.env`, `*.local.json`, and checkpoint files remain ignored by Git.
 - [ ] Set `SOURCE_COMMIT` to the exact reviewed `main` commit being deployed.
