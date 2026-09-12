@@ -26,6 +26,8 @@ describe("BSC testnet deployment preflight configuration", function () {
     assert.equal(result.sourceCommit, "f1bd6ade99369a5e58ef3d850905afac4538a705");
     assert.notEqual(result.owner, result.riskAdmin);
     assert.equal(result.v3Pools.length, 0);
+    assert.equal(result.maxV3Hops, 3);
+    assert.deepEqual(result.allowedV3FeeTiers, [100, 500, 2500, 10000]);
   });
 
   it("fails closed for missing RPC, wrong chain, or unpinned source", function () {
