@@ -19,6 +19,7 @@
     "validate:testnet": "node scripts/validate-bsc-testnet.mjs",
     "monitor:testnet": "node scripts/monitor-bsc-testnet.mjs",
     "smoke:testnet": "node scripts/smoke-test-bsc-routes.mjs",
+    "preflight:trade": "node scripts/preflight-trade.mjs",
     "configure:app": "node scripts/configure-app.mjs",
     "report:emergency-drill": "node scripts/emergency-drill-report.mjs",
     "package:review-evidence": "node scripts/build-review-evidence-package.mjs",
