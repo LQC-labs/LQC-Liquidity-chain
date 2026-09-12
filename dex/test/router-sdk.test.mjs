@@ -380,6 +380,25 @@ describe("LQC Router browser SDK", function () {
     await assert.rejects(sdk.verifyUiDeployment(provider, { ...config, nativeRouterAddress: config.routerAddress }, ethers), /Duplicate deployment address/);
   });
 
+  it("verifies minimal router bytecode, factory, and WBNB binding before enabling trades", async function () {
+    const address = value => ethers.getAddress(ethers.zeroPadValue(ethers.toBeHex(value), 20));
+    const router = address(1), wbnb = address(2), lqc = address(3), factory = address(4);
+    const config = { deploymentMode: "minimal-testnet-smoke", chainId: 97, routerAddress: router,
+      tokens: [{ symbol: "BNB", address: "native" }, { symbol: "WBNB", address: wbnb }, { symbol: "LQC", address: lqc }] };
+    const iface = new ethers.Interface(["function factory() view returns(address)", "function WBNB() view returns(address)"]);
+    const provider = { getNetwork: async () => ({ chainId: 97n }), getCode: async () => "0x6000",
+      call: async ({ data }) => data === iface.encodeFunctionData("factory")
+        ? iface.encodeFunctionResult("factory", [factory]) : iface.encodeFunctionResult("WBNB", [wbnb]) };
+    const result = await sdk.verifyMinimalUiDeployment(provider, config, ethers);
+    assert.equal(result.ready, true); assert.equal(result.checked, 4); assert.equal(result.factory, factory);
+    await assert.rejects(sdk.verifyMinimalUiDeployment({ ...provider, getNetwork: async () => ({ chainId: 56n }) }, config, ethers), /chain mismatch/);
+    await assert.rejects(sdk.verifyMinimalUiDeployment({ ...provider, getCode: async target => target.toLowerCase() === lqc.toLowerCase() ? "0x" : "0x6000" }, config, ethers), /token:LQC/);
+    await assert.rejects(sdk.verifyMinimalUiDeployment({ ...provider,
+      call: async ({ data }) => data === iface.encodeFunctionData("factory")
+        ? iface.encodeFunctionResult("factory", [factory]) : iface.encodeFunctionResult("WBNB", [address(9)]) }, config, ethers), /WBNB mismatch/);
+    await assert.rejects(sdk.verifyMinimalUiDeployment({ ...provider, getCode: async target => target.toLowerCase() === factory.toLowerCase() ? "0x" : "0x6000" }, config, ethers), /factory/);
+  });
+
   it("accepts only the newest asynchronous quote response", function () {
     assert.equal(sdk.isLatestQuote(7, 7), true);
     assert.equal(sdk.isLatestQuote(6, 7), false);

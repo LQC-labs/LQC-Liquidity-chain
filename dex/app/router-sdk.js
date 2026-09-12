@@ -197,5 +197,28 @@
     if(missing.length)throw new Error(`Deployment bytecode missing: ${missing.join(',')}`);
     return{ready:true,chainId:Number(network.chainId),checked:normalized.length};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  async function verifyMinimalUiDeployment(provider,config,ethers){
+    if(!provider||typeof provider.getNetwork!=='function'||typeof provider.getCode!=='function'||typeof provider.call!=='function'||!config||!ethers)throw new Error('Invalid minimal deployment verifier');
+    const network=await provider.getNetwork();
+    if(BigInt(network.chainId)!==BigInt(config.chainId))throw new Error('Deployment chain mismatch');
+    const wbnb=config.tokens?.find(token=>token.symbol==='WBNB')?.address,lqc=config.tokens?.find(token=>token.symbol==='LQC')?.address;
+    const named={routerAddress:config.routerAddress,'token:WBNB':wbnb,'token:LQC':lqc};
+    const normalized=Object.entries(named).map(([name,address])=>{if(!ethers.isAddress(address)||address===ethers.ZeroAddress)throw new Error(`Invalid deployment address ${name}`);return[name,ethers.getAddress(address)]});
+    if(new Set(normalized.map(([,address])=>address.toLowerCase())).size!==normalized.length)throw new Error('Duplicate deployment address');
+    const codes=await Promise.all(normalized.map(([,address])=>provider.getCode(address)));
+    const missing=normalized.filter((_,index)=>!codes[index]||codes[index]==='0x').map(([name])=>name);
+    if(missing.length)throw new Error(`Deployment bytecode missing: ${missing.join(',')}`);
+    const routerInterface=new ethers.Interface(['function factory() view returns(address)','function WBNB() view returns(address)']);
+    const readAddress=async name=>{
+      const data=routerInterface.encodeFunctionData(name),result=await provider.call({to:config.routerAddress,data});
+      try{return ethers.getAddress(routerInterface.decodeFunctionResult(name,result)[0]);}catch{throw new Error(`Minimal router ${name} read failed`)}
+    };
+    const[factory,routerWbnb]=await Promise.all([readAddress('factory'),readAddress('WBNB')]);
+    if(routerWbnb.toLowerCase()!==ethers.getAddress(wbnb).toLowerCase())throw new Error('Minimal router WBNB mismatch');
+    if(factory===ethers.ZeroAddress||normalized.some(([,address])=>address.toLowerCase()===factory.toLowerCase()))throw new Error('Invalid minimal router factory');
+    const factoryCode=await provider.getCode(factory);
+    if(!factoryCode||factoryCode==='0x')throw new Error('Deployment bytecode missing: factory');
+    return{ready:true,chainId:Number(network.chainId),checked:4,factory};
+  }
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
