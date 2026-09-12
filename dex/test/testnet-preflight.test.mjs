@@ -53,6 +53,8 @@ describe("BSC testnet deployment preflight", function () {
   it("rejects missing governance, wrong chains, weak limits, and excess liquidity", function () {
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, FACTORY_OWNER: "" }), /FACTORY_OWNER/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, SOURCE_COMMIT: "" }), /SOURCE_COMMIT/);
+    assert.throws(() => validateTestnetDeploymentConfig({ ...base, TEST_LQC_ADDRESS: "not-an-address" }), /TEST_LQC_ADDRESS/);
+    assert.doesNotThrow(() => validateTestnetDeploymentConfig({ ...base, TEST_LQC_ADDRESS: owner }));
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, RISK_ADMIN: "" }), /RISK_ADMIN/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, GUARDIAN_ADDRESS: "" }), /GUARDIAN_ADDRESS/);
     assert.throws(() => validateTestnetDeploymentConfig({ ...base, TREASURY_ADDRESS: "" }), /TREASURY_ADDRESS/);
