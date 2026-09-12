@@ -3,7 +3,7 @@ import path from "node:path";
 import { ethers } from "ethers";
 
 const {
-  BSC_TESTNET_RPC_URL,
+  BSC_TESTNET_RPC_URL = "https://data-seed-prebsc-1-s1.bnbchain.org:8545",
   DEPLOYER_PRIVATE_KEY,
   WBNB_ADDRESS: configuredWbnbAddress = "",
   TEST_LQC_ADDRESS = "0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc",
@@ -17,7 +17,7 @@ const {
 if (ALLOW_MINIMAL_TESTNET !== "true") {
   throw new Error("Set ALLOW_MINIMAL_TESTNET=true. This is a test-only minimal deployment.");
 }
-if (!BSC_TESTNET_RPC_URL || !/^0x[0-9a-fA-F]{64}$/.test(DEPLOYER_PRIVATE_KEY || "")) {
+if (!/^0x[0-9a-fA-F]{64}$/.test(DEPLOYER_PRIVATE_KEY || "")) {
   throw new Error("Set BSC_TESTNET_RPC_URL and DEPLOYER_PRIVATE_KEY at runtime.");
 }
 if (!ethers.isAddress(TEST_LQC_ADDRESS)) {
