@@ -6,6 +6,7 @@ const same = (a, b) => ethers.getAddress(a) === ethers.getAddress(b);
 
 export function buildAppConfig(deployment) {
   if (Number(deployment?.network?.chainId) !== 97) throw new Error("UI deployment must target BSC testnet chain 97.");
+  if (deployment?.mode === "minimal-testnet-smoke") return buildMinimalAppConfig(deployment);
   const mapped = { router: contractAddress(deployment, "router"), quoteRouter: contractAddress(deployment, "quoteRouter"),
     executionRouter: contractAddress(deployment, "executionRouter"), nativeRouter: contractAddress(deployment, "nativeRouter"),
     splitOptimizer: contractAddress(deployment, "splitOptimizer"), autoRouter: contractAddress(deployment, "autoRouter"),
@@ -36,6 +37,34 @@ export function buildAppConfig(deployment) {
     quoteRouterAddress: mapped.quoteRouter, executionRouterAddress: mapped.executionRouter, nativeRouterAddress: mapped.nativeRouter,
     splitOptimizerAddress: mapped.splitOptimizer, autoRouterAddress: mapped.autoRouter, gasCostOracleAddress: mapped.gasCostOracle,
     dexes, tokens, deploymentFingerprint: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(fingerprintPayload))) };
+}
+
+function buildMinimalAppConfig(deployment) {
+  const router = deployment?.contracts?.router;
+  const wBNB = deployment?.contracts?.wbnb;
+  const lqc = deployment?.contracts?.tLQC;
+  for (const [name, address] of [["router", router], ["wBNB", wBNB], ["tLQC", lqc]]) {
+    if (!ethers.isAddress(address)) throw new Error(`Minimal deployment record is missing a valid ${name} address.`);
+  }
+  const tokens = [
+    { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },
+    { symbol: "WBNB", name: "Wrapped BNB", address: wBNB, decimals: 18 },
+    { symbol: "LQC", name: "LQC Test Token", address: lqc, decimals: 18 }
+  ];
+  const mapped = { router, wBNB, lqc };
+  const fingerprintPayload = { chainId: 97, mode: "minimal-testnet-smoke", contracts: mapped };
+  return {
+    deploymentMode: "minimal-testnet-smoke",
+    chainId: 97, chainIdHex: "0x61", chainName: "BSC Testnet",
+    rpcUrls: ["https://data-seed-prebsc-1-s1.bnbchain.org:8545"],
+    blockExplorerUrls: ["https://testnet.bscscan.com"],
+    nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 },
+    routerAddress: router,
+    quoteRouterAddress: null, executionRouterAddress: null, nativeRouterAddress: null,
+    splitOptimizerAddress: null, autoRouterAddress: null, gasCostOracleAddress: null,
+    dexes: [], tokens,
+    deploymentFingerprint: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(fingerprintPayload)))
+  };
 }
 
 export function assertOverridesMatchDeployment(config, env) {
