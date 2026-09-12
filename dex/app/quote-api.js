@@ -67,9 +67,21 @@
   }
 
   function isQuoteResponse(value) {
-    return Boolean(value && value.version === 1 && value.type === 'LQC_QUOTE_RESPONSE' &&
+    if (!(value && value.version === 1 && value.type === 'LQC_QUOTE_RESPONSE' &&
       value.chainId === 97 && Number.isSafeInteger(value.requestId) &&
-      Array.isArray(value.quotes) && value.quotes.length > 0);
+      value.requestId >= 0 && Number.isSafeInteger(value.generatedAt) &&
+      value.generatedAt >= 0 && Array.isArray(value.quotes) && value.quotes.length > 0)) return false;
+    try {
+      return value.quotes.every(quote => {
+        const normalized = normalizeQuote(quote, { slippageBps: quote.slippageBps });
+        return quote.version === 1 &&
+          normalized.amountInRaw === quote.amountInRaw &&
+          normalized.amountOutRaw === quote.amountOutRaw &&
+          normalized.minimumOutputRaw === quote.minimumOutputRaw;
+      });
+    } catch {
+      return false;
+    }
   }
 
   const api = Object.freeze({ normalizeQuote, buildQuoteResponse, isQuoteResponse });
