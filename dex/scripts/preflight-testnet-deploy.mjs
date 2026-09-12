@@ -86,7 +86,11 @@ export async function assertSafeMultisig(provider, address, label, expectedOwner
   if (!ethers.isAddress(singleton) || ethers.getAddress(singleton) === ethers.ZeroAddress) {
     throw new Error(`${label} must expose a non-zero Safe masterCopy implementation.`);
   }
-  return { owners: normalized, threshold, singleton: ethers.getAddress(singleton) };
+  const implementationAddress = ethers.getAddress(singleton);
+  if (typeof provider.getCode === "function" && (await provider.getCode(implementationAddress)) === "0x") {
+    throw new Error(`${label} Safe masterCopy implementation has no deployed bytecode.`);
+  }
+  return { owners: normalized, threshold, singleton: implementationAddress };
 }
 
 export function assertReviewedSourceCommit(sourceCommit, currentCommit, dirty = false) {

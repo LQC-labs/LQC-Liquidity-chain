@@ -205,4 +205,12 @@ describe("BSC testnet deployment preflight", function () {
       } };
     await assert.rejects(() => runTestnetPreflight(base, provider, null, approvedReview), /same masterCopy/);
   });
+
+  it("rejects a Safe masterCopy address without deployed bytecode", async function () {
+    const implementation = "0x0000000000000000000000000000000000000099";
+    const provider = { getNetwork: async () => ({ chainId: 97n }), getBlockNumber: async () => 123,
+      getBalance: async () => ethers.parseEther("11"), getCode: async address =>
+        ethers.getAddress(address) === implementation ? "0x" : "0x6000", call: safeCall };
+    await assert.rejects(() => runTestnetPreflight(base, provider), /masterCopy implementation has no deployed bytecode/);
+  });
 });
