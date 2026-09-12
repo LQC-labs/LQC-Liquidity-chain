@@ -13,8 +13,21 @@ export function validateStage2Evidence(record) {
       throw new Error("Quote minimum output is invalid.");
     }
   }
-  if (record.smokeTrade && record.smokeTrade.minimumOutputSatisfied !== true) {
-    throw new Error("Smoke trade did not satisfy minimum output.");
+  if (record.smokeTrade) {
+    if (record.smokeTrade.minimumOutputSatisfied !== true) {
+      throw new Error("Smoke trade did not satisfy minimum output.");
+    }
+    const { transactionHash, blockHash, blockNumber, recipient } = record.smokeTrade;
+    const hash = value => typeof value === "string" && /^0x[0-9a-fA-F]{64}$/.test(value);
+    if (!hash(transactionHash) || !hash(blockHash)) {
+      throw new Error("Smoke trade hashes must be 32-byte hex values.");
+    }
+    if (!Number.isSafeInteger(Number(blockNumber)) || Number(blockNumber) < 0) {
+      throw new Error("Smoke trade block number is invalid.");
+    }
+    if (typeof recipient !== "string" || !/^0x[0-9a-fA-F]{40}$/.test(recipient)) {
+      throw new Error("Smoke trade recipient must be an address.");
+    }
   }
   return { valid: true, chainId: 97 };
 }
