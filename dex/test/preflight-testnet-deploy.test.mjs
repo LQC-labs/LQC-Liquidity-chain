@@ -60,4 +60,14 @@ describe("BSC testnet deployment preflight configuration", function () {
     environment.PANCAKE_V3_QUOTER_ADDRESS = "0xbC203d7f83677c7ed3F7acEc959963E7F4ECC5C2";
     assert.throws(() => validateTestnetDeploymentConfig(environment), /at least one reviewed allowed pool/);
   });
+  it("rejects unsupported V3 fee tiers and out-of-range hop limits", function () {
+    const invalidFee = validEnvironment();
+    invalidFee.PANCAKE_V3_ALLOWED_FEE_TIERS = "[300]";
+    assert.throws(() => validateTestnetDeploymentConfig(invalidFee), /unique, non-empty subset/);
+
+    const invalidHops = validEnvironment();
+    invalidHops.PANCAKE_V3_MAX_HOPS = "4";
+    assert.throws(() => validateTestnetDeploymentConfig(invalidHops), /PANCAKE_V3_MAX_HOPS/);
+  });
+
 });
