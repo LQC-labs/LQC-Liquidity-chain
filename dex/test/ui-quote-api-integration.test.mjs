@@ -15,3 +15,12 @@ describe('UI quote API integration', function () {
     });
   }
 });
+
+
+describe('UI quote calculation binding', function () {
+  it('uses the standard adapter when calculating the minimum output', function () {
+    const app = fs.readFileSync(path.join(appRoot, 'app.js'), 'utf8');
+    assert.ok(app.includes('window.LQCQuoteApi.normalizeQuote'));
+    assert.ok(app.includes('BigInt(standardQuote.minimumOutputRaw)'));
+  });
+});
