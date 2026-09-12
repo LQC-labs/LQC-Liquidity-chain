@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LQC Flow Local Demo</title>
+<style>
+:root{font-family:system-ui,sans-serif;color:#14323a;background:#effcf8}
+body{max-width:520px;margin:0 auto;padding:24px}.card{background:#fff;border:1px solid #cfeee6;border-radius:22px;padding:22px;box-shadow:0 8px 28px #0d776b18}
+h1{margin:0 0 6px;font-size:25px}.note{color:#527078;font-size:14px;margin:0 0 20px}.badge{display:inline-block;background:#d7faef;color:#087561;border-radius:999px;padding:5px 10px;font-size:12px;font-weight:700;margin-bottom:12px}
+label{display:block;font-size:13px;color:#527078;margin:15px 0 6px}select,input{box-sizing:border-box;width:100%;border:1px solid #c9e4df;border-radius:12px;padding:13px;font-size:16px;background:#fbfffe}button{width:100%;border:0;border-radius:13px;padding:14px;margin-top:18px;background:#18a88d;color:white;font-size:16px;font-weight:700}button:active{transform:scale(.99)}.result{margin-top:18px;background:#f2fbf8;border-radius:15px;padding:15px;line-height:1.9}.row{display:flex;justify-content:space-between}.muted{color:#6a858b}.warn{color:#a15c00;font-size:13px;margin-top:14px}
+</style>
+</head>
+<body>
+<div class="card">
+<span class="badge">LOCAL DEMO · 실제 거래 없음</span>
+<h1>LQC Flow Swap 연습</h1>
+<p class="note">tBNB 없이 화면과 계산 흐름만 확인하는 로컬 연습 화면입니다. 토큰을 전송하지 않습니다.</p>
+<label for="from">보내는 토큰</label><select id="from"><option value="BNB">tBNB</option><option value="LQC">tLQC</option></select>
+<label for="amount">수량</label><input id="amount" type="number" min="0" step="any" placeholder="예: 1">
+<label for="to">받는 토큰</label><select id="to"><option value="LQC">tLQC</option><option value="BNB">tBNB</option></select>
+<button id="quote">예상 수량 계산</button>
+<div class="result" id="result" hidden>
+<div class="row"><span class="muted">예상 수령량</span><strong id="out">—</strong></div>
+<div class="row"><span class="muted">예상 수수료</span><span id="fee">—</span></div>
+<div class="row"><span class="muted">거래 상태</span><span>로컬 시뮬레이션</span></div>
+</div>
+<p class="warn">주의: 이 화면은 연습용입니다. 실제 지갑 연결·토큰 전송·가격 형성은 하지 않습니다.</p>
+</div>
+<script>
+const amount=document.querySelector('#amount'),from=document.querySelector('#from'),to=document.querySelector('#to'),result=document.querySelector('#result'),out=document.querySelector('#out'),fee=document.querySelector('#fee');
+document.querySelector('#quote').onclick=()=>{const n=Number(amount.value);if(!Number.isFinite(n)||n<=0){result.hidden=false;out.textContent='수량을 입력하세요';fee.textContent='—';return}const rate=from.value==='BNB'?100000:0.00001;const received=n*rate*.997;out.textContent=received.toLocaleString(undefined,{maximumFractionDigits:6})+' '+to.value;fee.textContent=(n*.003).toLocaleString(undefined,{maximumFractionDigits:6})+' '+from.value;result.hidden=false};
+[from,to].forEach(x=>x.onchange=()=>{if(from.value===to.value)to.value=from.value==='BNB'?'LQC':'BNB'});
+</script>
+</body>
+</html>
