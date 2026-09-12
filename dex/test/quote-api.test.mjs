@@ -47,5 +47,13 @@ describe('standard quote response adapter', function () {
       dexName: 'x', tokenIn: 'A', tokenOut: 'B',
       amountInRaw: '100', amountOutRaw: '100'
     }), /identity/);
+    assert.throws(() => api.normalizeQuote({
+      dexId: 'x', dexName: 'x', tokenIn: 'A', tokenOut: 'A',
+      amountInRaw: '100', amountOutRaw: '100'
+    }), /different/);
+    assert.throws(() => api.normalizeQuote({
+      dexId: 'x', dexName: 'x', tokenIn: 'A', tokenOut: 'B',
+      amountInRaw: '100', amountOutRaw: '100', blockNumber: '-1'
+    }), /blockNumber/);
   });
 });
