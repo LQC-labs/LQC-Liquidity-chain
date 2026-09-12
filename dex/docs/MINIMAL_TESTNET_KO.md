@@ -22,7 +22,7 @@ npm ci
 npm run compile
 
 export ALLOW_MINIMAL_TESTNET=true
-export BSC_TESTNET_RPC_URL="BSC Testnet RPC 주소"
+# export BSC_TESTNET_RPC_URL="다른 BSC Testnet RPC 주소" # 기본값 사용 시 생략 가능
 export DEPLOYER_PRIVATE_KEY="내 지갑 개인키"
 export WBNB_ADDRESS="BSC Testnet WBNB 주소"
 export TEST_LQC_ADDRESS="0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc"
