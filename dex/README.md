@@ -169,7 +169,7 @@ When only a small amount of tBNB is available, a guarded technical smoke deploym
 export ALLOW_MINIMAL_TESTNET=true
 export BSC_TESTNET_RPC_URL="..."
 export DEPLOYER_PRIVATE_KEY="..." # runtime only; never commit
-export WBNB_ADDRESS="..."
+# export WBNB_ADDRESS="..." # optional; auto-resolved from PancakeSwap V2 when omitted
 export TEST_LQC_ADDRESS="0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc"
 export MINIMAL_BNB_LIQUIDITY="0.05"
 npm run deploy:minimal:testnet
