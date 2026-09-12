@@ -176,7 +176,7 @@ Each operation is bound to a hash of its addresses, limits, amounts, and other s
 cannot silently reuse a successful transaction from a different deployment configuration. Test-token
 minting, exact approvals, and both initial-liquidity transactions are covered by the same recovery flow.
 
-The default mock supplies and pool amounts are configurable environment values for testing only;
+The default mock supplies and pool amounts are configurable environment values for testing only; the default initial LQC/tBNB liquidity is 0.5 tBNB, while the required deployment reserve remains configurable;
 they do not define LQC mainnet supply, allocation, valuation, or launch liquidity.
 The deployment transfers registry ownership to the timelock. `FACTORY_OWNER` becomes the governance
 proposer and should be a reviewed multisig address. Emergency guardians may disable a route immediately,
