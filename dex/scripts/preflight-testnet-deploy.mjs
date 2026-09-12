@@ -189,6 +189,19 @@ export function validateTestnetDeploymentConfig(env) {
   if (!Array.isArray(v3Pools) || (v3Router && v3Pools.length === 0)) {
     throw new Error("PancakeSwap V3 requires at least one reviewed allowed pool.");
   }
+  const seenV3Pools = new Set();
+  for (const pool of v3Pools) {
+    if (!pool || !ethers.isAddress(pool.tokenA) || !ethers.isAddress(pool.tokenB) ||
+        ethers.getAddress(pool.tokenA) === ethers.getAddress(pool.tokenB) ||
+        !Number.isInteger(Number(pool.fee)) ||
+        !allowedV3FeeTiers.map(Number).includes(Number(pool.fee))) {
+      throw new Error("Each PancakeSwap V3 pool needs distinct valid tokens and an allowed fee tier.");
+    }
+    const [tokenA, tokenB] = [ethers.getAddress(pool.tokenA), ethers.getAddress(pool.tokenB)].sort();
+    const poolKey = `${tokenA}:${tokenB}:${Number(pool.fee)}`;
+    if (seenV3Pools.has(poolKey)) throw new Error("PancakeSwap V3 reviewed pool configuration contains a duplicate pool.");
+    seenV3Pools.add(poolKey);
+  }
   return { walletAddress, owner, riskAdmin, guardian, treasury, sourceCommit: env.SOURCE_COMMIT.toLowerCase(), delay, bnbLiquidity, gasReserve,
     vaultDepositCap, vaultStrategyCap, vaultMaxLossBps, v3Pools,
     governanceMinimumOwners, governanceMinimumThreshold, riskMinimumOwners, riskMinimumThreshold,
