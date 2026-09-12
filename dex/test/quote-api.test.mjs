@@ -57,3 +57,16 @@ describe('standard quote response adapter', function () {
     }), /blockNumber/);
   });
 });
+
+
+describe('quote response verification', function () {
+  it('rejects tampered or incomplete response envelopes', function () {
+    const response = api.buildQuoteResponse({
+      chainId: 97, requestId: 7, generatedAt: 100,
+      quotes: [{ dexId: '0x1', name: 'LQC Flow', tokenIn: 'A', tokenOut: 'B', amountInRaw: '1000', amountOutRaw: '1100' }]
+    });
+    assert.equal(api.isQuoteResponse(response), true);
+    assert.equal(api.isQuoteResponse({ ...response, generatedAt: -1 }), false);
+    assert.equal(api.isQuoteResponse({ ...response, quotes: [{ ...response.quotes[0], minimumOutputRaw: '1' }] }), false);
+  });
+});
