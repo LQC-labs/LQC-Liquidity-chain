@@ -68,6 +68,12 @@
     const amounts=await router.getAmountsOut(value,path),amountOut=amounts.at(-1),min=sdk.minimumAmountOut(amountOut,ui.slippage.value),blockNumber=await provider.getBlockNumber();
     return {amountOut,min,blockNumber};
   }
+  async function validatedMinimalExecutionPlan(value,path){
+    if(!quoteSnapshot)throw new Error('StaleQuote');
+    const current=await minimalQuote(value,path);
+    sdk.validateExecutionQuote(quoteSnapshot,{chainId:cfg.chainId,tokenIn:path[0].toLowerCase(),tokenOut:path.at(-1).toLowerCase(),amountIn:value,amountOut:current.amountOut,blockNumber:current.blockNumber,now:Date.now()});
+    return{kind:'minimal',amountOut:current.amountOut,minimumOut:current.min};
+  }
   async function planPriceImpact(value,out,probe,path,plan){
     if(plan.kind==='single'){
       const probeOut=await new ethers.Contract(plan.single.dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),probe,plan.single.routeData);
@@ -93,7 +99,7 @@
   }
   const executionSpender=plan=>minimalMode?cfg.routerAddress:tokenOut.address==='native'?cfg.nativeRouterAddress:plan.kind==='split'?cfg.autoRouterAddress:cfg.executionRouterAddress;
   async function buildExecutionTransaction(plan,value,path,deadline,bps){
-    if(minimalMode){const min=sdk.minimumAmountOut(quoteSnapshot.amountOut,ui.slippage.value);if(tokenIn.address==='native')return router.swapExactBNBForTokens.populateTransaction(min,path,account,deadline,{value});if(tokenOut.address==='native')return router.swapExactTokensForBNB.populateTransaction(value,min,path,account,deadline);return router.swapExactTokensForTokens.populateTransaction(value,min,path,account,deadline)}
+    if(minimalMode){const min=plan.minimumOut;if(tokenIn.address==='native')return router.swapExactBNBForTokens.populateTransaction(min,path,account,deadline,{value});if(tokenOut.address==='native')return router.swapExactTokensForBNB.populateTransaction(value,min,path,account,deadline);return router.swapExactTokensForTokens.populateTransaction(value,min,path,account,deadline)}
     if(tokenIn.address==='native'){const min=sdk.minimumAmountOut(plan.single.best.amountOut,ui.slippage.value);return nativeRouter.swapExactNativeForToken.populateTransaction(plan.single.best.dexId,path[1],min,account,deadline,plan.single.routeData,{value})}
     if(tokenOut.address==='native'){const min=sdk.minimumAmountOut(plan.single.best.amountOut,ui.slippage.value);return nativeRouter.swapExactTokenForNative.populateTransaction(plan.single.best.dexId,path[0],value,min,account,deadline,plan.single.routeData)}
     if(plan.kind==='split')return autoRouter.swapOptimizedExactInput.populateTransaction(path[0],path[1],value,account,deadline,plan.routes,plan.costs,10,bps);
@@ -104,8 +110,8 @@
   async function swap(){
     if((minimalMode?!router:!executionRouter)||!account)return connect();const raw=ui.amountIn.value.trim();if(!raw||Number(raw)<=0)return status(t('enterAmount'),'error');
     try{
-      disabled(true);const value=ethers.parseUnits(raw,tokenIn.decimals),path=[address(tokenIn),address(tokenOut)];let plan=minimalMode?{kind:'minimal'}:await validatedExecutionPlan(value,path),deadline=Math.floor(Date.now()/1000)+1200,bps=Math.round(Number(ui.slippage.value)*100);
-      if(tokenIn.address!=='native'){let spender=executionSpender(plan),token=new ethers.Contract(tokenIn.address,tokenAbi,signer),allowance=await token.allowance(account,spender);if(sdk.requiresTokenApproval(allowance,value)){status(t('approveToken',{token:tokenIn.symbol}));await(await token.approve(spender,value)).wait();status(t('approvalComplete'));if(!minimalMode){plan=await validatedExecutionPlan(value,path);const refreshedSpender=executionSpender(plan);if(refreshedSpender.toLowerCase()!==spender.toLowerCase()){spender=refreshedSpender;allowance=await token.allowance(account,spender);if(sdk.requiresTokenApproval(allowance,value)){status(t('newApprovalRequired'));await(await token.approve(spender,value)).wait();plan=await validatedExecutionPlan(value,path);if(executionSpender(plan).toLowerCase()!==spender.toLowerCase())throw new Error('RouteChangedDuringApproval')}}}}}
+      disabled(true);const value=ethers.parseUnits(raw,tokenIn.decimals),path=[address(tokenIn),address(tokenOut)];let plan=minimalMode?await validatedMinimalExecutionPlan(value,path):await validatedExecutionPlan(value,path),deadline=Math.floor(Date.now()/1000)+1200,bps=Math.round(Number(ui.slippage.value)*100);
+      if(tokenIn.address!=='native'){let spender=executionSpender(plan),token=new ethers.Contract(tokenIn.address,tokenAbi,signer),allowance=await token.allowance(account,spender);if(sdk.requiresTokenApproval(allowance,value)){status(t('approveToken',{token:tokenIn.symbol}));await(await token.approve(spender,value)).wait();status(t('approvalComplete'));if(minimalMode)plan=await validatedMinimalExecutionPlan(value,path);else{plan=await validatedExecutionPlan(value,path);const refreshedSpender=executionSpender(plan);if(refreshedSpender.toLowerCase()!==spender.toLowerCase()){spender=refreshedSpender;allowance=await token.allowance(account,spender);if(sdk.requiresTokenApproval(allowance,value)){status(t('newApprovalRequired'));await(await token.approve(spender,value)).wait();plan=await validatedExecutionPlan(value,path);if(executionSpender(plan).toLowerCase()!==spender.toLowerCase())throw new Error('RouteChangedDuringApproval')}}}}}
       deadline=Math.floor(Date.now()/1000)+1200;const executionTransaction=await buildExecutionTransaction(plan,value,path,deadline,bps);status(t('simulatingTrade'));await simulateExecution(executionTransaction);status(t('simulationPassed'),'success');const tx=await submitExecution(executionTransaction);
       status(t(plan.kind==='split'?'splitSubmitted':'tradeSubmitted'));await tx.wait();status(t('tradeComplete',{side:t(mode)}),'success');ui.amountIn.value='';await balances();await quote();
     }catch(e){status(localizedError(e),'error')}finally{disabled(!deploymentReady)}

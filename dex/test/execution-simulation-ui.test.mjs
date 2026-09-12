@@ -16,4 +16,12 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /const executionTransaction=await buildExecutionTransaction\(/);
     assert.ok(app.indexOf("await simulateExecution(") < app.indexOf("await submitExecution("));
   });
+
+  it("revalidates a minimal testnet quote before execution and after token approval", function () {
+    assert.match(app, /async function validatedMinimalExecutionPlan\(value,path\)/);
+    assert.match(app, /sdk\.validateExecutionQuote\(quoteSnapshot/);
+    assert.match(app, /minimalMode\?await validatedMinimalExecutionPlan\(value,path\):await validatedExecutionPlan\(value,path\)/);
+    assert.match(app, /if\(minimalMode\)plan=await validatedMinimalExecutionPlan\(value,path\)/);
+    assert.match(app, /if\(minimalMode\)\{const min=plan\.minimumOut/);
+  });
 });
