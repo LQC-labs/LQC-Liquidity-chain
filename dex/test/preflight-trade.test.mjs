@@ -23,6 +23,8 @@ describe("read-only trade preflight", function () {
     });
     assert.equal(report.mode, "read-only");
     assert.equal(report.quotes[0].minimumOutputRaw, "1980");
+    assert.equal(report.quoteResponse.type, "LQC_QUOTE_RESPONSE");
+    assert.equal(report.quoteResponse.quotes[0].minimumOutputRaw, "1980");
     assert.equal(report.transactionSubmitted, false);
   });
 });
