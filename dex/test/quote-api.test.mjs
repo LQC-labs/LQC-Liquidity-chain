@@ -45,7 +45,7 @@ describe('standard quote response adapter', function () {
     }, { slippageBps: 1001 }), /slippageBps/);
     assert.throws(() => api.normalizeQuote({
       dexName: 'x', tokenIn: 'A', tokenOut: 'B',
-      amountInRaw: '1', amountOutRaw: '1'
+      amountInRaw: '100', amountOutRaw: '100'
     }), /identity/);
   });
 });
