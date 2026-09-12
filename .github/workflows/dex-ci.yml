@@ -37,5 +37,5 @@ jobs:
           cache-dependency-path: dex/package-lock.json
       - name: Install locked dependencies
         run: npm ci
-      - name: Compile and run complete DEX test suite
-        run: npm test
+      - name: Run Stage 1 repository gate
+        run: npm run gate:stage1
