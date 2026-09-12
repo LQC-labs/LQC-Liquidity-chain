@@ -147,6 +147,7 @@ export function validateTestnetDeploymentConfig(env) {
     if (perDay < perTx) throw new Error(`${name}_MAX_DAY must be greater than or equal to ${name}_MAX_TX.`);
   }
 
+  if (env.TEST_LQC_ADDRESS && !ethers.isAddress(env.TEST_LQC_ADDRESS)) throw new Error("TEST_LQC_ADDRESS must be a valid address.");
   const lqcSupply = positive("TEST_LQC_SUPPLY", env.TEST_LQC_SUPPLY || "1000000");
   const usdtSupply = positive("TEST_USDT_SUPPLY", env.TEST_USDT_SUPPLY || "1000000");
   if (vaultDepositCap > usdtSupply) throw new Error("TEST_VAULT_DEPOSIT_CAP cannot exceed the mock USDT supply.");
