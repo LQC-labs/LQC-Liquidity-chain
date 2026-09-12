@@ -35,7 +35,8 @@ const {
   TEST_VAULT_DEPOSIT_CAP = "100000",
   TEST_VAULT_STRATEGY_CAP = "0",
   TEST_VAULT_MAX_LOSS_BPS = "100",
-  EXPECTED_CHAIN_ID = "97"
+  EXPECTED_CHAIN_ID = "97",
+  TEST_LQC_ADDRESS = ""
 } = process.env;
 
 if (!BSC_TESTNET_RPC_URL || !DEPLOYER_PRIVATE_KEY || !ethers.isAddress(WBNB_ADDRESS)) {
@@ -105,7 +106,14 @@ const transact = async (key, config, sendTransaction) => {
   console.error(`${result.reused ? "Reused" : "Confirmed"} operation ${key} (${result.txHash}).`);
 };
 
-const lqc = await deploy("testnet/LQCTestToken", ["LQC Test Token", "LQC", 18, wallet.address]);
+let lqc;
+if (TEST_LQC_ADDRESS) {
+  if (!ethers.isAddress(TEST_LQC_ADDRESS)) throw new Error("TEST_LQC_ADDRESS must be a valid address.");
+  if (await provider.getCode(TEST_LQC_ADDRESS) === "0x") throw new Error("TEST_LQC_ADDRESS has no contract bytecode on BSC testnet.");
+  lqc = new ethers.Contract(TEST_LQC_ADDRESS, load("testnet/LQCTestToken").abi, wallet);
+} else {
+  lqc = await deploy("testnet/LQCTestToken", ["LQC Test Token", "LQC", 18, wallet.address]);
+}
 const usdt = await deploy("testnet/LQCTestToken", ["Mock USDT", "USDT", 18, wallet.address]);
 const vaultDepositCap = ethers.parseUnits(TEST_VAULT_DEPOSIT_CAP, 18);
 const vaultStrategyCap = ethers.parseUnits(TEST_VAULT_STRATEGY_CAP, 18);
@@ -235,7 +243,7 @@ await transact("liquidityVault.acceptOwnership", [liquidityVault.target],
 
 const lqcSupply = ethers.parseUnits(TEST_LQC_SUPPLY, 18);
 const usdtSupply = ethers.parseUnits(TEST_USDT_SUPPLY, 18);
-await transact("token.lqc.mint", [wallet.address, lqcSupply], () => lqc.mint(wallet.address, lqcSupply));
+if (!TEST_LQC_ADDRESS) await transact("token.lqc.mint", [wallet.address, lqcSupply], () => lqc.mint(wallet.address, lqcSupply));
 await transact("token.usdt.mint", [wallet.address, usdtSupply], () => usdt.mint(wallet.address, usdtSupply));
 const routerAddress = await router.getAddress();
 const lqcUsdtLiquidity = ethers.parseUnits(LQC_USDT_LIQUIDITY_LQC, 18);
