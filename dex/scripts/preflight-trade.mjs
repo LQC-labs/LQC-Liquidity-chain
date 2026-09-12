@@ -40,6 +40,9 @@ export function buildTradePreflightReport({ chainId, deploymentPath, policy, fee
     chainId, requestId: 0, generatedAt: Date.now(),
     quotes: checkedQuotes.map(quote => globalThis.LQCQuoteApi.normalizeQuote(quote, { slippageBps: policy.slippageBps }))
   });
+  if (!globalThis.LQCQuoteApi.isQuoteResponse(quoteResponse)) {
+    throw new Error("Standard quote response validation failed.");
+  }
   return { mode: "read-only", chainId, deploymentPath, policy,
     gasPriceWei: gasPriceWei.toString(), gasPriceGwei, quotes: checkedQuotes,
     quoteResponse, transactionSubmitted: false };
