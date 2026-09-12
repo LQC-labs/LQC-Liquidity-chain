@@ -99,7 +99,7 @@ of real funds.
 To deploy after compilation:
 
 ```bash
-export BSC_TESTNET_RPC_URL="..."
+# export BSC_TESTNET_RPC_URL="..." # 기본 RPC를 사용하면 생략 가능
 export DEPLOYER_PRIVATE_KEY="..."
 export WBNB_ADDRESS="0x..." # official WBNB for the selected BSC network
 export EXPECTED_CHAIN_ID="97" # deployment safety check; defaults to BSC testnet
