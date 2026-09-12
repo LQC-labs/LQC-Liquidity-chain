@@ -274,6 +274,11 @@ export async function runTestnetPreflight(env, provider = new ethers.JsonRpcProv
     config.guardianMinimumOwners, config.guardianMinimumThreshold, safePolicyBlock);
   treasurySafe = await assertSafeMultisig(provider, config.treasury, "TREASURY_ADDRESS",
     config.treasuryMinimumOwners, config.treasuryMinimumThreshold, safePolicyBlock);
+  const safeImplementations = [governanceSafe, riskSafe, guardianSafe, treasurySafe]
+    .filter(Boolean).map(policy => policy.singleton);
+  if (new Set(safeImplementations).size > 1) {
+    throw new Error("All reviewed Safe policies must use the same masterCopy implementation.");
+  }
   if(roleReview)assertRoleReviewSafePolicies(roleReview,{governance:{address:config.owner,...governanceSafe},risk:{address:config.riskAdmin,...riskSafe},guardian:{address:config.guardian,...guardianSafe},treasury:{address:config.treasury,...treasurySafe}});
   const named = { governanceOwner: config.owner, riskAdmin: config.riskAdmin, guardian: config.guardian,
     treasury: config.treasury, wbnb: env.WBNB_ADDRESS };

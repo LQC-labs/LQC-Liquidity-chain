@@ -194,4 +194,15 @@ describe("BSC testnet deployment preflight", function () {
     await assert.rejects(() => assertSafeMultisig(extensionEnabled, riskAdmin, "RISK_ADMIN", 5n, 3n), /guard or fallback handler/);
     await assert.rejects(() => assertSafeMultisig({ getBlockNumber: async () => 123, call: async () => "0x" }, owner, "FACTORY_OWNER", 7n, 4n), /Safe/);
   });
+
+  it("rejects divergent Safe masterCopy implementations before deployment", async function () {
+    const provider = { getNetwork: async () => ({ chainId: 97n }), getBlockNumber: async () => 123,
+      getBalance: async () => ethers.parseEther("11"), getCode: async () => "0x6000", call: async request => {
+        if (request.to === riskAdmin && request.data.slice(0, 10) === safeInterface.getFunction("masterCopy").selector) {
+          return safeInterface.encodeFunctionResult("masterCopy", ["0x0000000000000000000000000000000000000098"]);
+        }
+        return safeCall(request);
+      } };
+    await assert.rejects(() => runTestnetPreflight(base, provider, null, approvedReview), /same masterCopy/);
+  });
 });
