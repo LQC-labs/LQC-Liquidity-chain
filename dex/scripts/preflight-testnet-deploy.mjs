@@ -203,7 +203,8 @@ export function validateTestnetDeploymentConfig(env) {
     seenV3Pools.add(poolKey);
   }
   return { walletAddress, owner, riskAdmin, guardian, treasury, sourceCommit: env.SOURCE_COMMIT.toLowerCase(), delay, bnbLiquidity, gasReserve,
-    vaultDepositCap, vaultStrategyCap, vaultMaxLossBps, v3Pools,
+    vaultDepositCap, vaultStrategyCap, vaultMaxLossBps, v3Pools, maxV3Hops,
+    allowedV3FeeTiers: allowedV3FeeTiers.map(Number),
     governanceMinimumOwners, governanceMinimumThreshold, riskMinimumOwners, riskMinimumThreshold,
     guardianMinimumOwners, guardianMinimumThreshold, treasuryMinimumOwners, treasuryMinimumThreshold };
 }
