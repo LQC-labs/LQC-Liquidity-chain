@@ -70,4 +70,19 @@ describe("BSC testnet deployment preflight configuration", function () {
     assert.throws(() => validateTestnetDeploymentConfig(invalidHops), /PANCAKE_V3_MAX_HOPS/);
   });
 
+  it("rejects malformed, self-paired, duplicate, or disallowed-fee V3 pools", function () {
+    const malformed = validEnvironment();
+    malformed.PANCAKE_V3_ALLOWED_POOLS = JSON.stringify([{ tokenA: address("10"), tokenB: address("11"), fee: 300 }]);
+    assert.throws(() => validateTestnetDeploymentConfig(malformed), /distinct valid tokens/);
+
+    const selfPair = validEnvironment();
+    selfPair.PANCAKE_V3_ALLOWED_POOLS = JSON.stringify([{ tokenA: address("10"), tokenB: address("10"), fee: 500 }]);
+    assert.throws(() => validateTestnetDeploymentConfig(selfPair), /distinct valid tokens/);
+
+    const duplicate = validEnvironment();
+    const pool = { tokenA: address("10"), tokenB: address("11"), fee: 500 };
+    duplicate.PANCAKE_V3_ALLOWED_POOLS = JSON.stringify([pool, { ...pool, tokenA: pool.tokenB, tokenB: pool.tokenA }]);
+    assert.throws(() => validateTestnetDeploymentConfig(duplicate), /duplicate pool/);
+  });
+
 });
