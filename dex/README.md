@@ -75,6 +75,17 @@ npm install
 npm test
 ```
 
+### Local testnet mode (no tBNB required)
+
+Use the local Ganache-based test suite while BSC Testnet funding is unavailable:
+
+```bash
+npm install
+npm run test:local
+```
+
+This runs the browser checks, Solidity compilation, AMM/Router/Vault/Risk security tests, and local integration tests with simulated accounts. It does not connect to BSC, use tBNB, deploy contracts publicly, or create real-value tokens. BSC Testnet deployment remains a separate step after the local suite passes and a funded testnet wallet is available.
+
 Before preparing Stage 2, run the complete Stage 1 repository exit gate:
 
 ```bash
