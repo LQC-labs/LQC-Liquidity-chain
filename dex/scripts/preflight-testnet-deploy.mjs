@@ -170,6 +170,19 @@ export function validateTestnetDeploymentConfig(env) {
       ethers.getAddress(v3Quoter) !== PANCAKE_BSC_TESTNET.v3Quoter)) {
     throw new Error("PancakeSwap V3 addresses do not match the pinned BSC testnet endpoints.");
   }
+  const maxV3Hops = Number(env.PANCAKE_V3_MAX_HOPS || "3");
+  if (!Number.isInteger(maxV3Hops) || maxV3Hops < 1 || maxV3Hops > 3) {
+    throw new Error("PANCAKE_V3_MAX_HOPS must be an integer from 1 to 3.");
+  }
+  const canonicalV3FeeTiers = new Set([100, 500, 2500, 10000]);
+  let allowedV3FeeTiers;
+  try { allowedV3FeeTiers = JSON.parse(env.PANCAKE_V3_ALLOWED_FEE_TIERS || "[100,500,2500,10000]"); }
+  catch { throw new Error("PANCAKE_V3_ALLOWED_FEE_TIERS must be valid JSON."); }
+  if (!Array.isArray(allowedV3FeeTiers) || allowedV3FeeTiers.length === 0 ||
+      new Set(allowedV3FeeTiers.map(Number)).size !== allowedV3FeeTiers.length ||
+      allowedV3FeeTiers.some(fee => !Number.isInteger(Number(fee)) || !canonicalV3FeeTiers.has(Number(fee)))) {
+    throw new Error("PANCAKE_V3_ALLOWED_FEE_TIERS must be a unique, non-empty subset of 100, 500, 2500, and 10000.");
+  }
   let v3Pools = [];
   try { v3Pools = JSON.parse(env.PANCAKE_V3_ALLOWED_POOLS || "[]"); }
   catch { throw new Error("PANCAKE_V3_ALLOWED_POOLS must be valid JSON."); }
