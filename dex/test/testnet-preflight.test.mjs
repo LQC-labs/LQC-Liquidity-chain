@@ -101,7 +101,7 @@ describe("BSC testnet deployment preflight", function () {
   });
 
   it("reserves deployment gas and requires a deployed multisig by default", async function () {
-    const funded = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("10.49"), getCode: async () => "0x6000", call: safeCall };
+    const funded = { getNetwork: async () => ({ chainId: 97n }), getBalance: async () => ethers.parseEther("0.99"), getCode: async () => "0x6000", call: safeCall };
     await assert.rejects(() => runTestnetPreflight(base, funded), /gas reserve/);
     const eoaOwner = { ...funded, getBalance: async () => ethers.parseEther("11"),
       getCode: async address => ethers.getAddress(address) === owner ? "0x" : "0x6000" };
