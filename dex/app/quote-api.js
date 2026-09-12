@@ -26,18 +26,25 @@
     if (!dexId || !dexName || !input.tokenIn || !input.tokenOut) {
       throw new Error('Quote identity is incomplete');
     }
+    const tokenIn = String(input.tokenIn).toLowerCase();
+    const tokenOut = String(input.tokenOut).toLowerCase();
+    if (tokenIn === tokenOut) throw new Error('Quote tokens must be different');
+    const quotedAt = Number(input.quotedAt ?? Date.now());
+    const blockNumber = Number(input.blockNumber ?? 0);
+    if (!Number.isSafeInteger(quotedAt) || quotedAt < 0) throw new Error('quotedAt is invalid');
+    if (!Number.isSafeInteger(blockNumber) || blockNumber < 0) throw new Error('blockNumber is invalid');
     return {
       version: 1,
       dexId,
       dexName,
-      tokenIn: String(input.tokenIn).toLowerCase(),
-      tokenOut: String(input.tokenOut).toLowerCase(),
+      tokenIn,
+      tokenOut,
       amountInRaw: amountInRaw.toString(),
       amountOutRaw: amountOutRaw.toString(),
       minimumOutputRaw: minimumOutputRaw.toString(),
       slippageBps,
-      quotedAt: Number(input.quotedAt ?? Date.now()),
-      blockNumber: Number(input.blockNumber ?? 0)
+      quotedAt,
+      blockNumber
     };
   }
 
