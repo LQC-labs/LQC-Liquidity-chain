@@ -161,6 +161,20 @@ npm run verify:guardian-activation-tx
 
 This command is read-only and never signs or sends a transaction.
 
+### Minimal BSC Testnet smoke deployment
+
+When only a small amount of tBNB is available, a guarded technical smoke deployment can deploy the basic LQC Flow Factory and Router, then create one tLQC/tBNB pool. It is not production-ready and intentionally omits Router 2.0, Safe, timelock, risk, guardian, and monitoring modules. It requires `ALLOW_MINIMAL_TESTNET=true` and never changes the full deployment path.
+
+```bash
+export ALLOW_MINIMAL_TESTNET=true
+export BSC_TESTNET_RPC_URL="..."
+export DEPLOYER_PRIVATE_KEY="..." # runtime only; never commit
+export WBNB_ADDRESS="..."
+export TEST_LQC_ADDRESS="0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc"
+export MINIMAL_BNB_LIQUIDITY="0.05"
+npm run deploy:minimal:testnet
+```
+
 `deploy:testnet` runs a non-transactional preflight first. It refuses non-chain-97 RPCs, missing or
 unsafe governance settings, timelocks outside 1 hour to 7 days, invalid daily/transaction limits,
 liquidity above minted test supply, insufficient test BNB, unpinned PancakeSwap endpoints, and
