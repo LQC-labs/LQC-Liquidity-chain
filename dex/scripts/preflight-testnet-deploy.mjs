@@ -170,14 +170,41 @@ export function validateTestnetDeploymentConfig(env) {
       ethers.getAddress(v3Quoter) !== PANCAKE_BSC_TESTNET.v3Quoter)) {
     throw new Error("PancakeSwap V3 addresses do not match the pinned BSC testnet endpoints.");
   }
+  const maxV3Hops = Number(env.PANCAKE_V3_MAX_HOPS || "3");
+  if (!Number.isInteger(maxV3Hops) || maxV3Hops < 1 || maxV3Hops > 3) {
+    throw new Error("PANCAKE_V3_MAX_HOPS must be an integer from 1 to 3.");
+  }
+  const canonicalV3FeeTiers = new Set([100, 500, 2500, 10000]);
+  let allowedV3FeeTiers;
+  try { allowedV3FeeTiers = JSON.parse(env.PANCAKE_V3_ALLOWED_FEE_TIERS || "[100,500,2500,10000]"); }
+  catch { throw new Error("PANCAKE_V3_ALLOWED_FEE_TIERS must be valid JSON."); }
+  if (!Array.isArray(allowedV3FeeTiers) || allowedV3FeeTiers.length === 0 ||
+      new Set(allowedV3FeeTiers.map(Number)).size !== allowedV3FeeTiers.length ||
+      allowedV3FeeTiers.some(fee => !Number.isInteger(Number(fee)) || !canonicalV3FeeTiers.has(Number(fee)))) {
+    throw new Error("PANCAKE_V3_ALLOWED_FEE_TIERS must be a unique, non-empty subset of 100, 500, 2500, and 10000.");
+  }
   let v3Pools = [];
   try { v3Pools = JSON.parse(env.PANCAKE_V3_ALLOWED_POOLS || "[]"); }
   catch { throw new Error("PANCAKE_V3_ALLOWED_POOLS must be valid JSON."); }
   if (!Array.isArray(v3Pools) || (v3Router && v3Pools.length === 0)) {
     throw new Error("PancakeSwap V3 requires at least one reviewed allowed pool.");
   }
+  const seenV3Pools = new Set();
+  for (const pool of v3Pools) {
+    if (!pool || !ethers.isAddress(pool.tokenA) || !ethers.isAddress(pool.tokenB) ||
+        ethers.getAddress(pool.tokenA) === ethers.getAddress(pool.tokenB) ||
+        !Number.isInteger(Number(pool.fee)) ||
+        !allowedV3FeeTiers.map(Number).includes(Number(pool.fee))) {
+      throw new Error("Each PancakeSwap V3 pool needs distinct valid tokens and an allowed fee tier.");
+    }
+    const [tokenA, tokenB] = [ethers.getAddress(pool.tokenA), ethers.getAddress(pool.tokenB)].sort();
+    const poolKey = `${tokenA}:${tokenB}:${Number(pool.fee)}`;
+    if (seenV3Pools.has(poolKey)) throw new Error("PancakeSwap V3 reviewed pool configuration contains a duplicate pool.");
+    seenV3Pools.add(poolKey);
+  }
   return { walletAddress, owner, riskAdmin, guardian, treasury, sourceCommit: env.SOURCE_COMMIT.toLowerCase(), delay, bnbLiquidity, gasReserve,
-    vaultDepositCap, vaultStrategyCap, vaultMaxLossBps, v3Pools,
+    vaultDepositCap, vaultStrategyCap, vaultMaxLossBps, v3Pools, maxV3Hops,
+    allowedV3FeeTiers: allowedV3FeeTiers.map(Number),
     governanceMinimumOwners, governanceMinimumThreshold, riskMinimumOwners, riskMinimumThreshold,
     guardianMinimumOwners, guardianMinimumThreshold, treasuryMinimumOwners, treasuryMinimumThreshold };
 }

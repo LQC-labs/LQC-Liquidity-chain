@@ -19,12 +19,14 @@
     "validate:testnet": "node scripts/validate-bsc-testnet.mjs",
     "monitor:testnet": "node scripts/monitor-bsc-testnet.mjs",
     "smoke:testnet": "node scripts/smoke-test-bsc-routes.mjs",
+    "preflight:trade": "node scripts/preflight-trade.mjs",
     "configure:app": "node scripts/configure-app.mjs",
     "report:emergency-drill": "node scripts/emergency-drill-report.mjs",
     "package:review-evidence": "node scripts/build-review-evidence-package.mjs",
     "render:review-summary": "node scripts/render-review-evidence-markdown.mjs",
     "build:review-bundle": "node scripts/build-review-bundle.mjs",
-    "check:app": "node --check app/config.js && node --check app/router-sdk.js && node --check app/i18n.js && node --check app/app.js"
+    "check:app": "node --check app/config.js && node --check app/router-sdk.js && node --check app/i18n.js && node --check app/app.js",
+    "validate:stage2-evidence": "node scripts/validate-stage2-evidence.mjs"
   },
   "devDependencies": {
     "ethers": "^6.15.0",
