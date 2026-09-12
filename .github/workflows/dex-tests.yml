@@ -42,8 +42,8 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
 
-      - name: Compile and run tests
-        run: npm test
+      - name: Run Stage 1 repository gate
+        run: npm run gate:stage1
 
       - name: Reject production dependency vulnerabilities
         run: npm audit --omit=dev --audit-level=low
