@@ -6,6 +6,7 @@
   "scripts": {
     "compile": "node scripts/compile.mjs",
     "test": "npm run check:app && npm run test:contracts",
+    "test:local": "npm test",
     "test:contracts": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
     "gate:stage1": "node scripts/run-stage1-gate.mjs",
     "coverage:router-sdk": "node scripts/check-router-sdk-coverage.mjs",
