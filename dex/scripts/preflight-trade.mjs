@@ -4,6 +4,7 @@ import { pathToFileURL } from "node:url";
 import { ethers } from "ethers";
 import { assertBscTestnetChain, validateBscTestnet } from "./validate-bsc-testnet.mjs";
 import { parseRouteProbes, probeRoutes } from "./smoke-test-bsc-routes.mjs";
+import { buildQuoteResponse, normalizeQuote } from "../app/quote-api.js";
 
 export function parseTradePolicy(env = process.env) {
   const slippageBps = Number(env.TRADE_SLIPPAGE_BPS || "100");
@@ -35,9 +36,13 @@ export function buildTradePreflightReport({ chainId, deploymentPath, policy, fee
       tokenOut: quote.tokenOut, amountInRaw: quote.amountInRaw,
       amountOutRaw: amountOutRaw.toString(), minimumOutputRaw: minimumOutputRaw.toString() };
   });
+  const quoteResponse = buildQuoteResponse({
+    chainId, requestId: 0, generatedAt: Date.now(),
+    quotes: checkedQuotes.map(quote => normalizeQuote(quote, { slippageBps: policy.slippageBps }))
+  });
   return { mode: "read-only", chainId, deploymentPath, policy,
     gasPriceWei: gasPriceWei.toString(), gasPriceGwei, quotes: checkedQuotes,
-    transactionSubmitted: false };
+    quoteResponse, transactionSubmitted: false };
 }
 
 async function main() {
