@@ -153,7 +153,7 @@ export function validateTestnetDeploymentConfig(env) {
   const lqcLiquidity = positive("LQC_USDT_LIQUIDITY_LQC", env.LQC_USDT_LIQUIDITY_LQC || "100000") +
     positive("LQC_BNB_LIQUIDITY_LQC", env.LQC_BNB_LIQUIDITY_LQC || "100000");
   const usdtLiquidity = positive("LQC_USDT_LIQUIDITY_USDT", env.LQC_USDT_LIQUIDITY_USDT || "100000");
-  const bnbLiquidity = positive("LQC_BNB_LIQUIDITY_BNB", env.LQC_BNB_LIQUIDITY_BNB || "10");
+  const bnbLiquidity = positive("LQC_BNB_LIQUIDITY_BNB", env.LQC_BNB_LIQUIDITY_BNB || "0.5");
   const gasReserve = positive("MIN_DEPLOYER_TBNB_RESERVE", env.MIN_DEPLOYER_TBNB_RESERVE || "0.5");
   if (lqcLiquidity > lqcSupply) throw new Error("Configured LQC liquidity exceeds the test-token supply.");
   if (usdtLiquidity > usdtSupply) throw new Error("Configured USDT liquidity exceeds the test-token supply.");
