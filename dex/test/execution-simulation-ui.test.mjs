@@ -169,11 +169,11 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok(timeoutIndex >= 0 && timeoutIndex < clearIndex);
   });
 
-  it("clears a stale local transaction only when it never reached the network", function () {
-    assert.match(app, /provider\.getTransaction\(pending\.hash\)/);
-    assert.match(app, /!transaction&&Date\.now\(\)-Number\(pending\.createdAt\|\|0\)>300000/);
+  it("clears a stale unconfirmed local record before checking the network pending nonce", function () {
+    assert.match(app, /Date\.now\(\)-Number\(pending\.createdAt\|\|0\)>900000/);
     assert.match(app, /status\(t\('unpropagatedTransactionCleared'\)\)/);
     assert.match(app, /nonce:tx\.nonce/);
+    assert.match(app, /blockIfPendingSwap\(\)\|\|await blockIfNetworkTransactionPending\(\)/);
   });
 
   it("pins the starting account, recipient, signer, and chain through execution", function () {
