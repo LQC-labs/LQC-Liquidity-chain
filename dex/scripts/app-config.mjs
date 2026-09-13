@@ -21,9 +21,9 @@ export function buildAppConfig(deployment) {
     seen.add(key); return dex;
   });
   const tokens = [
-    { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },
+    { symbol: "BNB", displaySymbol: "tBNB", name: "BNB Testnet Native", address: "native", decimals: 18 },
     { symbol: "WBNB", name: "Wrapped BNB", address: mapped.wBNB, decimals: Number(deployment.contracts.wbnb.decimals ?? 18) },
-    { symbol: "LQC", name: "LQC Test Token", address: mapped.lqc, decimals: Number(deployment.contracts.lqc.decimals ?? 18) }
+    { symbol: "LQC", displaySymbol: "tLQC", name: "LQC Test Token", address: mapped.lqc, decimals: Number(deployment.contracts.lqc.decimals ?? 18) }
   ];
   if (deployment.contracts.mockUsdt?.address) {
     if (!ethers.isAddress(deployment.contracts.mockUsdt.address)) throw new Error("Deployment record has an invalid mockUsdt address.");
@@ -47,9 +47,9 @@ function buildMinimalAppConfig(deployment) {
     if (!ethers.isAddress(address)) throw new Error(`Minimal deployment record is missing a valid ${name} address.`);
   }
   const tokens = [
-    { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },
+    { symbol: "BNB", displaySymbol: "tBNB", name: "BNB Testnet Native", address: "native", decimals: 18 },
     { symbol: "WBNB", name: "Wrapped BNB", address: wBNB, decimals: 18 },
-    { symbol: "LQC", name: "LQC Test Token", address: lqc, decimals: 18 }
+    { symbol: "LQC", displaySymbol: "tLQC", name: "LQC Test Token", address: lqc, decimals: 18 }
   ];
   const mapped = { router, wBNB, lqc };
   const fingerprintPayload = { chainId: 97, mode: "minimal-testnet-smoke", contracts: mapped };
