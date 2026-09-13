@@ -4,7 +4,7 @@ import { pathToFileURL } from "node:url";
 import { ethers } from "ethers";
 import { validateBscTestnet } from "./validate-bsc-testnet.mjs";
 
-const BALANCE_ABI = ["function balanceOf(address) view returns(uint256)"];
+const BALANCE_ABI = ["function balanceOf(address) view returns(uint256)", "function allowance(address,address) view returns(uint256)"];
 const OWNABLE_ABI = ["function owner() view returns(address)", "function pendingOwner() view returns(address)"];
 const SAFE_ABI = ["function getOwners() view returns(address[])", "function getThreshold() view returns(uint256)"];
 
@@ -36,7 +36,7 @@ export function buildIncidentResponse(checks) {
 }
 
 export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, validation, validationError,
-  custody, ownership, vaultState = null, safeState = [] }) {
+  custody, allowances = [], ownership, vaultState = null, safeState = [] }) {
   const checks = [];
   const add = (id, status, detail) => checks.push({ id, status, detail });
   const age = Math.max(0, Math.floor(new Date(checkedAt).getTime() / 1000) - Number(block.timestamp));
@@ -48,6 +48,8 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     validation.lqc.swapsPaused ? "swaps are paused" : "swaps are enabled");
   for (const item of custody) add(`custody.${item.contract}.${item.asset}`,
     BigInt(item.balance) === 0n ? "PASS" : "CRITICAL", `${item.balance} base units held`);
+  for (const item of allowances) add(`allowance.${item.owner}.${item.spender}.${item.asset}`,
+    BigInt(item.amount) === 0n ? "PASS" : "CRITICAL", `${item.amount} base units approved`);
   for (const item of ownership) add(`ownership.${item.contract}.pending`,
     item.pendingOwner === ethers.ZeroAddress ? "PASS" : "WARNING",
     item.pendingOwner === ethers.ZeroAddress ? "no pending ownership transfer" : `pending owner ${item.pendingOwner}`);
@@ -107,15 +109,31 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
   catch (error) { validationError = error.message; }
 
   const monitored = ["executionRouter", "nativeRouter", "autoRouter"]
-    .filter(name => ethers.isAddress(deployment?.contracts?.[name]?.address));
+    .filter(name => ethers.isAddress(deployment?.contracts?.[name]?.address))
+    .map(name => ({ name, address: deployment.contracts[name].address }));
+  for (const dex of deployment?.dexes || []) {
+    if (ethers.isAddress(dex?.adapter)) monitored.push({ name: `adapter-${dex.name || dex.id}`, address: dex.adapter });
+  }
   const tokens = ["lqc", "mockUsdt", "wbnb"].filter(name => ethers.isAddress(deployment?.contracts?.[name]?.address));
   const custody = [];
   for (const contract of monitored) {
-    const holder = deployment.contracts[contract].address;
-    custody.push({ contract, asset: "BNB", balance: (await provider.getBalance(holder)).toString() });
+    const holder = contract.address;
+    custody.push({ contract: contract.name, asset: "BNB", balance: (await provider.getBalance(holder)).toString() });
     for (const token of tokens) {
       const erc20 = new ethers.Contract(deployment.contracts[token].address, BALANCE_ABI, provider);
-      custody.push({ contract, asset: token, balance: (await erc20.balanceOf(holder)).toString() });
+      custody.push({ contract: contract.name, asset: token, balance: (await erc20.balanceOf(holder)).toString() });
+    }
+  }
+  const allowances = [];
+  const executionRouter = deployment?.contracts?.executionRouter?.address;
+  if (ethers.isAddress(executionRouter)) {
+    for (const dex of deployment?.dexes || []) {
+      if (!ethers.isAddress(dex?.adapter)) continue;
+      for (const token of tokens) {
+        const erc20 = new ethers.Contract(deployment.contracts[token].address, BALANCE_ABI, provider);
+        allowances.push({ owner: "executionRouter", spender: `adapter-${dex.name || dex.id}`, asset: token,
+          amount: (await erc20.allowance(executionRouter, dex.adapter)).toString() });
+      }
     }
   }
   const ownership = [];
@@ -161,7 +179,7 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
       adapterManagedAssets: values[6], idleBalance: values[7], adapterBalance: values[8] };
   }
   return buildMonitoringReport({ checkedAt, block: latest, maxBlockAgeSeconds, validation, validationError,
-    custody, ownership, vaultState, safeState });
+    custody, allowances, ownership, vaultState, safeState });
 }
 
 async function main() {
