@@ -99,14 +99,15 @@ describe("LQC DEX pre-submission simulation", function () {
   it("persists an unconfirmed swap and blocks accidental resubmission", function () {
     assert.match(app, /rememberPendingSwap\(tx\)/);
     assert.match(app, /if\(await blockIfPendingSwap\(\)\|\|await blockIfNetworkTransactionPending\(\)\)return/);
-    assert.match(app, /executionRpc\('getTransactionReceipt',pending\.hash\)/);
+    assert.match(app, /canonicalRpc\('getTransactionReceipt',pending\.hash\)/);
     assert.match(app, /clearPendingSwap\(tradeAccount\)/);
     assert.match(app, /localStorage\.setItem\(pendingSwapKey\(account\)/);
   });
 
   it("blocks swaps when the network reports an earlier pending nonce", function () {
-    assert.match(app, /executionRpc\('getTransactionCount',account,'latest'\)/);
-    assert.match(app, /executionRpc\('getTransactionCount',account,'pending'\)/);
+    assert.match(app, /canonicalRpc\('getTransactionCount',account,'latest'\)/);
+    assert.match(app, /canonicalRpc\('getTransactionCount',account,'pending'\)/);
+    assert.match(app, /async function canonicalRpc\(method,\.\.\.args\)\{try\{return await provider\[method\]/);
     assert.match(app, /pendingNonce>latestNonce/);
     assert.match(app, /blockIfPendingSwap\(\)\|\|await blockIfNetworkTransactionPending\(\)/);
     assert.match(app, /pendingCheckFailed/);
@@ -154,8 +155,8 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /const pendingBlocked=deploymentReady&&\(await blockIfPendingSwap\(\)\|\|await blockIfNetworkTransactionPending\(\)\)/);
     assert.match(app, /if\(!pendingBlocked\)quoteSoon\(\)/);
     assert.match(app, /pendingGuardActive=true;status\(t\('networkPendingTransaction'/);
-    assert.match(app, /executionRpc\('getTransactionCount',account,'latest'\)/);
-    assert.match(app, /executionRpc\('getTransactionCount',account,'pending'\)/);
+    assert.match(app, /canonicalRpc\('getTransactionCount',account,'latest'\)/);
+    assert.match(app, /canonicalRpc\('getTransactionCount',account,'pending'\)/);
   });
 
   it("keeps the execute control usable for an explicit pending-state recheck", function () {
