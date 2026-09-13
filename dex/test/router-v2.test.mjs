@@ -81,6 +81,132 @@ describe("LQC Router 2.0", function () {
     assert.equal(best.amountOut, expected[1]);
   });
 
+  it("returns a canonical net quote with route-bound metadata", async function () {
+    const dexId = ethers.id("LQC_FLOW");
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    const amountIn = ethers.parseEther("10");
+    const routeData = ethers.AbiCoder.defaultAbiCoder().encode(
+      ["address[]"], [[tokenIn, tokenOut]]
+    );
+    const network = await provider.getNetwork();
+    const block = await provider.getBlock("latest");
+    const request = {
+      chainId: network.chainId,
+      tokenIn,
+      tokenOut,
+      amountIn,
+      recipient: await other.getAddress(),
+      slippageBps: 100,
+      validUntil: BigInt(block.timestamp + 300)
+    };
+    const gasCost = ethers.parseEther("0.01");
+    const protocolFee = ethers.parseEther("0.02");
+    const quote = await quoteRouter.quoteBestNet(
+      request, [routeData], [gasCost], [protocolFee]
+    );
+
+    assert.equal(quote.dexId, dexId);
+    assert.equal(quote.netAmountOut, quote.grossAmountOut - gasCost - protocolFee);
+    assert.equal(quote.minimumAmountOut, quote.grossAmountOut * 9900n / 10000n);
+    assert.notEqual(quote.routeHash, ethers.ZeroHash);
+    assert.ok(quote.quoteBlock > 0n);
+  });
+
+  it("selects the highest net output instead of the highest gross output", async function () {
+    const Factory = new ethers.ContractFactory(
+      artifact("LQCFlowFactory").abi, artifact("LQCFlowFactory").bytecode, owner
+    );
+    const secondFactory = await Factory.deploy(await owner.getAddress());
+    const WBNB = new ethers.ContractFactory(
+      artifact("MockWBNB", "mocks/MockWBNB").abi,
+      artifact("MockWBNB", "mocks/MockWBNB").bytecode,
+      owner
+    );
+    const secondWbnb = await WBNB.deploy();
+    const FlowRouter = new ethers.ContractFactory(
+      artifact("LQCFlowRouter").abi, artifact("LQCFlowRouter").bytecode, owner
+    );
+    const secondRouter = await FlowRouter.deploy(
+      await secondFactory.getAddress(), await secondWbnb.getAddress()
+    );
+    const Adapter = new ethers.ContractFactory(
+      artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").abi,
+      artifact("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter").bytecode,
+      owner
+    );
+    const secondAdapter = await Adapter.deploy(await secondRouter.getAddress());
+    await Promise.all([
+      secondFactory.waitForDeployment(), secondWbnb.waitForDeployment(),
+      secondRouter.waitForDeployment(), secondAdapter.waitForDeployment()
+    ]);
+
+    const amountA = ethers.parseEther("10000");
+    const amountB = ethers.parseEther("10100");
+    await (await tokenA.mint(await owner.getAddress(), amountA)).wait();
+    await (await tokenB.mint(await owner.getAddress(), amountB)).wait();
+    await (await tokenA.approve(await secondRouter.getAddress(), amountA)).wait();
+    await (await tokenB.approve(await secondRouter.getAddress(), amountB)).wait();
+    const block = await provider.getBlock("latest");
+    await (await secondRouter.addLiquidity(
+      await tokenA.getAddress(), await tokenB.getAddress(), amountA, amountB,
+      0, 0, await owner.getAddress(), BigInt(block.timestamp + 3600)
+    )).wait();
+
+    const flowId = ethers.id("LQC_FLOW");
+    const costlyId = ethers.id("COSTLY_FLOW");
+    await (await registry.addDex(flowId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    await (await registry.addDex(costlyId, await secondAdapter.getAddress(), "Costly Flow", 90)).wait();
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    const data = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [[tokenIn, tokenOut]]);
+    const network = await provider.getNetwork();
+    const request = {
+      chainId: network.chainId,
+      tokenIn,
+      tokenOut,
+      amountIn: ethers.parseEther("10"),
+      recipient: await other.getAddress(),
+      slippageBps: 100,
+      validUntil: BigInt(block.timestamp + 300)
+    };
+    const quote = await quoteRouter.quoteBestNet(
+      request,
+      [data, data],
+      [0, ethers.parseEther("1")],
+      [0, 0]
+    );
+    assert.equal(quote.dexId, flowId);
+  });
+
+  it("rejects invalid canonical quote requests and mismatched cost metadata", async function () {
+    const dexId = ethers.id("LQC_FLOW");
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    const tokenIn = await tokenA.getAddress();
+    const tokenOut = await tokenB.getAddress();
+    const data = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [[tokenIn, tokenOut]]);
+    const network = await provider.getNetwork();
+    const block = await provider.getBlock("latest");
+    const valid = {
+      chainId: network.chainId,
+      tokenIn,
+      tokenOut,
+      amountIn: ethers.parseEther("10"),
+      recipient: await other.getAddress(),
+      slippageBps: 100,
+      validUntil: BigInt(block.timestamp + 300)
+    };
+
+    await assert.rejects(quoteRouter.quoteBestNet(
+      { ...valid, chainId: network.chainId + 1n }, [data], [0], [0]
+    ));
+    await assert.rejects(quoteRouter.quoteBestNet(
+      { ...valid, slippageBps: 2001 }, [data], [0], [0]
+    ));
+    await assert.rejects(quoteRouter.quoteBestNet(valid, [data], [], [0]));
+  });
+
   it("isolates a failing route while another registered DEX can quote", async function () {
     const badId = ethers.id("BAD_ROUTE");
     const flowId = ethers.id("LQC_FLOW");
