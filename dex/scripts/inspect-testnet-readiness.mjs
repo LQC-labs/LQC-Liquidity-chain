@@ -62,11 +62,15 @@ export async function inspectTestnetReadiness(env, provider = null) {
     new Set(configuredRoles).size === configuredRoles.length ? "four distinct role addresses" : "role addresses must be distinct");
   else add("roleSeparation", false, "configure all four role addresses first");
 
+  const configuredV3Fee = Number(env.PANCAKE_V3_FEE || "2500");
+  const validPilotFee = Number.isInteger(configuredV3Fee) && configuredV3Fee === 2500;
+  add("pancakeV3Fee", validPilotFee,
+    validPilotFee ? "2500 (0.25%) pilot fee is pinned" : "PANCAKE_V3_FEE must be exactly 2500 for the testnet pilot");
   let pool = ethers.ZeroAddress;
-  if (ethers.isAddress(contracts.TEST_LQC_ADDRESS) && ethers.isAddress(contracts.WBNB_ADDRESS)) {
+  if (validPilotFee && ethers.isAddress(contracts.TEST_LQC_ADDRESS) && ethers.isAddress(contracts.WBNB_ADDRESS)) {
     const factory = new ethers.Contract(PANCAKE_BSC_TESTNET.v3Factory,
       ["function getPool(address,address,uint24) view returns(address)"], provider);
-    pool = await factory.getPool(contracts.TEST_LQC_ADDRESS, contracts.WBNB_ADDRESS, Number(env.PANCAKE_V3_FEE || "2500"));
+    pool = await factory.getPool(contracts.TEST_LQC_ADDRESS, contracts.WBNB_ADDRESS, configuredV3Fee);
   }
   add("pancakeV3Pool", pool !== ethers.ZeroAddress, pool === ethers.ZeroAddress ? "tLQC/WBNB 0.25% pool not created" : pool);
   return { status: checks.every(check => check.pass) ? "ready" : "blocked", chainId: Number(network.chainId), checks };
