@@ -105,6 +105,15 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.walletSessionState([tokenA], true, "0x61", "0x61"), "connected");
   });
 
+  it("binds execution to the starting wallet account and BSC testnet", function () {
+    const valid=sdk.validateExecutionSession(tokenA,[tokenA],"0x61","0x61",ethers);
+    assert.equal(valid.valid,true); assert.equal(valid.account,tokenA.toLowerCase()); assert.equal(valid.chainId,97);
+    assert.throws(()=>sdk.validateExecutionSession(tokenA,[tokenB],"0x61","0x61",ethers),/account changed/);
+    assert.throws(()=>sdk.validateExecutionSession(tokenA,[tokenA],"0x38","0x61",ethers),/chain changed/);
+    assert.throws(()=>sdk.validateExecutionSession(tokenA,[],"0x61","0x61",ethers),/account unavailable/);
+    assert.throws(()=>sdk.validateExecutionSession(tokenA,[tokenA],"bad","0x61",ethers),/chain unavailable/);
+  });
+
   it("requires approval only when the selected spender allowance is insufficient", function () {
     assert.equal(sdk.requiresTokenApproval(99n, 100n), true);
     assert.equal(sdk.requiresTokenApproval(100n, 100n), false);

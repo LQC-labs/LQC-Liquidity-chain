@@ -12,7 +12,7 @@ describe("LQC DEX pre-submission simulation", function () {
 
   it("simulates and submits the exact same transaction request", function () {
     assert.match(app, /provider\.call\(\{\.\.\.transaction,from:account\}\)/);
-    assert.match(app, /signer\.sendTransaction\(transaction\)/);
+    assert.match(app, /activeSigner\.sendTransaction\(transaction\)/);
     assert.match(app, /const executionTransaction=await buildExecutionTransaction\(/);
     assert.ok(app.indexOf("await simulateExecution(") < app.indexOf("await submitExecution("));
   });
@@ -37,17 +37,17 @@ describe("LQC DEX pre-submission simulation", function () {
   });
 
   it("uses exact token approvals and validates every approval receipt", function () {
-    assert.match(app,/async function approveExact\(token,spender,allowance,value\)/);
+    assert.match(app,/async function approveExact\(token,spender,allowance,value,expectedAccount\)/);
     assert.match(app,/sdk\.exactApprovalAmounts\(allowance,value\)/);
     assert.match(app,/sdk\.validateSwapReceipt\(receipt,tx\.hash,ethers\)/);
-    assert.equal((app.match(/await approveExact\(token,spender,allowance,value\)/g)||[]).length,2);
+    assert.equal((app.match(/await approveExact\(token,spender,allowance,value,tradeAccount\)/g)||[]).length,2);
   });
 
   it("estimates funds and simulates each approval before asking the wallet to submit", function () {
     assert.match(app,/token\.approve\.populateTransaction\(spender,amount\)/);
     const approval=app.slice(app.indexOf("async function approveExact"),app.indexOf("async function submitExecution"));
     assert.ok(approval.indexOf("await validateFunds(transaction,value)")<approval.indexOf("await simulateExecution(transaction)"));
-    assert.ok(approval.indexOf("await simulateExecution(transaction)")<approval.indexOf("signer.sendTransaction(transaction)"));
+    assert.ok(approval.indexOf("await simulateExecution(transaction)")<approval.indexOf("token.runner.sendTransaction(transaction)"));
   });
 
   it("blocks duplicate submissions and locks mutable trade controls in flight", function () {
@@ -56,5 +56,13 @@ describe("LQC DEX pre-submission simulation", function () {
     for(const control of["ui.amountIn","ui.slippage","ui.tokenInButton","ui.tokenOutButton","ui.flip","ui.max","ui.buy","ui.sell","ui.quick"])
       assert.match(app,new RegExp(control.replace(".","\\.")));
     assert.match(app,/finally\{swapInFlight=false;lockTradeControls\(false\)\}/);
+  });
+
+  it("pins the starting account, recipient, signer, and chain through execution", function () {
+    assert.match(app,/const tradeAccount=account,tradeSigner=signer/);
+    assert.match(app,/sdk\.validateExecutionSession\(expectedAccount,accounts,chainId,cfg\.chainIdHex,ethers\)/);
+    assert.match(app,/buildExecutionTransaction\(plan,value,path,deadline,bps,tradeAccount\)/);
+    assert.match(app,/submitExecution\(executionTransaction,tradeSigner\)/);
+    assert.ok((app.match(/validateWalletExecutionSession\(tradeAccount\)/g)||[]).length>=3);
   });
 });

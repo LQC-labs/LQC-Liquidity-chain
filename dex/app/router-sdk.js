@@ -51,6 +51,12 @@
     if(String(chainId).toLowerCase()!==String(expectedChainId).toLowerCase())return'wrong_network';
     return'connected';
   }
+  function validateExecutionSession(expectedAccount,accounts,chainId,expectedChainId,ethers){
+    if(!ethers||!ethers.isAddress(expectedAccount)||!Array.isArray(accounts)||accounts.length===0||!ethers.isAddress(accounts[0]))throw new Error('Wallet execution account unavailable');
+    if(accounts[0].toLowerCase()!==expectedAccount.toLowerCase())throw new Error('Wallet execution account changed');
+    try{if(BigInt(chainId)!==BigInt(expectedChainId))throw new Error('Wallet execution chain changed')}catch(error){if(error.message==='Wallet execution chain changed')throw error;throw new Error('Wallet execution chain unavailable')}
+    return{valid:true,account:expectedAccount.toLowerCase(),chainId:Number(BigInt(chainId))};
+  }
   function requiresTokenApproval(allowance,amountIn){
     if(typeof allowance!=='bigint'||allowance<0n||typeof amountIn!=='bigint'||amountIn<=0n)throw new Error('Invalid approval state');
     return allowance<amountIn;
@@ -242,5 +248,5 @@
     if(nativeBalance<requiredNative)throw new Error('insufficient funds: native balance and gas');
     return{sufficient:true,gasCost,requiredNative};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
