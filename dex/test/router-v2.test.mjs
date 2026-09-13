@@ -207,6 +207,70 @@ describe("LQC Router 2.0", function () {
     await assert.rejects(quoteRouter.quoteBestNet(valid, [data], [], [0]));
   });
 
+  it("simulates independent DEX quotes and isolates a failed mock adapter", async function () {
+    const MockAdapter = new ethers.ContractFactory(
+      artifact("MockRouterV2DexAdapter", "mocks/MockRouterV2DexAdapter").abi,
+      artifact("MockRouterV2DexAdapter", "mocks/MockRouterV2DexAdapter").bytecode,
+      owner
+    );
+    const low = await MockAdapter.deploy(100, 100);
+    const high = await MockAdapter.deploy(110, 100);
+    await Promise.all([low.waitForDeployment(), high.waitForDeployment()]);
+    const lowId = ethers.id("MOCK_LOW"), highId = ethers.id("MOCK_HIGH");
+    await (await registry.addDex(lowId, await low.getAddress(), "Mock low", 100)).wait();
+    await (await registry.addDex(highId, await high.getAddress(), "Mock high", 90)).wait();
+    const tokenIn = await tokenA.getAddress(), tokenOut = await tokenB.getAddress();
+    const network = await provider.getNetwork(), block = await provider.getBlock("latest");
+    const request = { chainId: network.chainId, tokenIn, tokenOut, amountIn: 1000n,
+      recipient: await other.getAddress(), slippageBps: 100,
+      validUntil: BigInt(block.timestamp + 300) };
+
+    let quote = await quoteRouter.quoteBestNet(request, ["0x", "0x"], [0, 0], [0, 0]);
+    assert.equal(quote.dexId, highId);
+    await (await high.setQuoteFailure(true)).wait();
+    quote = await quoteRouter.quoteBestNet(request, ["0x", "0x"], [0, 0], [0, 0]);
+    assert.equal(quote.dexId, lowId);
+  });
+
+  it("verifies the selected-route proof and rejects route or cost tampering", async function () {
+    const dexId = ethers.id("LQC_FLOW");
+    await (await registry.addDex(dexId, await adapter.getAddress(), "LQC Flow", 100)).wait();
+    const tokenIn = await tokenA.getAddress(), tokenOut = await tokenB.getAddress();
+    const routeData = ethers.AbiCoder.defaultAbiCoder().encode(["address[]"], [[tokenIn, tokenOut]]);
+    const network = await provider.getNetwork(), block = await provider.getBlock("latest");
+    const request = { chainId: network.chainId, tokenIn, tokenOut,
+      amountIn: ethers.parseEther("10"), recipient: await other.getAddress(),
+      slippageBps: 100, validUntil: BigInt(block.timestamp + 300) };
+    const result = await quoteRouter.quoteBestNet(
+      request, [routeData], [ethers.parseEther("0.01")], [ethers.parseEther("0.02")]
+    );
+    const selected = {
+      dexId: result.dexId,
+      adapter: result.adapter,
+      quoteBlock: result.quoteBlock,
+      grossAmountOut: result.grossAmountOut,
+      gasCostInTokenOut: result.gasCostInTokenOut,
+      protocolFeeInTokenOut: result.protocolFeeInTokenOut,
+      netAmountOut: result.netAmountOut,
+      minimumAmountOut: result.minimumAmountOut,
+      priority: result.priority,
+      routeHash: result.routeHash
+    };
+    const Proof = new ethers.ContractFactory(
+      artifact("LQCBestExecutionProof", "router-v2/LQCBestExecutionProof").abi,
+      artifact("LQCBestExecutionProof", "router-v2/LQCBestExecutionProof").bytecode,
+      owner
+    );
+    const proof = await Proof.deploy();
+    await proof.waitForDeployment();
+
+    assert.equal(await proof.verifySelectedQuote(request, selected, routeData), true);
+    assert.notEqual(await proof.proofHash(request, selected), ethers.ZeroHash);
+    const tamperedCost = { ...selected, gasCostInTokenOut: selected.gasCostInTokenOut + 1n };
+    assert.equal(await proof.verifySelectedQuote(request, tamperedCost, routeData), false);
+    assert.equal(await proof.verifySelectedQuote(request, selected, "0x1234"), false);
+  });
+
   it("isolates a failing route while another registered DEX can quote", async function () {
     const badId = ethers.id("BAD_ROUTE");
     const flowId = ethers.id("LQC_FLOW");
