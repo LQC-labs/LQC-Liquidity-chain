@@ -3,6 +3,7 @@
 
   const dictionaries = Object.freeze({
     ko: Object.freeze({
+      quoteUpdated: '견적 생성 시각', quoteFreshness: '견적 상태', quotePending: '확인 대기', quoteFresh: '최신 데이터', quoteStale: '만료됨 · 거래 중지',
       backHome: '홈으로 돌아가기', connectWallet: '지갑 연결', favorite: '즐겨찾기', more: '더보기',
       marketChart: 'LQC 시장 차트', price: '가격 ⇌', marketCap: '시가총액', liquidity: '유동성', volume24h: '24시간 거래량', holders: '보유자',
       charts: '차트', info: '정보', data: '데이터', risk: '위험', routes: '경로', marketInfo: '시장 정보', marketSearch: '시장 검색', lpFee: 'LP 수수료', route: '경로', optimalPath: '최적 경로', chartIntervals: '차트 시간 단위', moreIntervals: '더보기⌄', chartType: '차트 유형', tradeSettings: '거래 설정',
@@ -17,6 +18,7 @@
       error_USER_REJECTED: '지갑에서 거래가 취소되었습니다. 원하시면 견적을 다시 확인한 뒤 재시도하세요.', error_INSUFFICIENT_GAS: '거래를 실행할 BNB 가스비가 부족합니다. 소량의 tBNB를 준비한 뒤 다시 시도하세요.', error_PRICE_MOVED: '가격이 변해 최소 수령 조건을 충족하지 못했습니다. 새 견적을 받은 뒤 슬리피지를 확인하고 재시도하세요.', error_NO_ROUTE: '현재 실행 가능한 유동성 경로가 없습니다. 수량을 줄이거나 다른 거래쌍을 선택하세요.', error_RISK_BLOCKED: 'LQC 위험관리 정책이 이 거래를 차단했습니다. 거래 한도와 토큰·DEX 활성 상태를 확인하세요.', error_APPROVAL_REQUIRED: '토큰 사용 승인이 완료되지 않았습니다. 승인 거래를 완료한 뒤 Swap을 다시 실행하세요.', error_ROUTE_CHANGED: '승인 중 최적 거래 경로가 다시 변경되었습니다. 최신 견적을 확인한 뒤 Swap을 다시 실행하세요.', error_NETWORK_ERROR: 'BSC 테스트넷 연결을 확인할 수 없습니다. 지갑 네트워크를 BSC Testnet으로 전환하세요.', error_UNKNOWN: '거래를 실행하지 못했습니다. 최신 견적과 지갑 상태를 확인한 뒤 다시 시도하세요.'
     }),
     en: Object.freeze({
+      quoteUpdated: 'Quote generated', quoteFreshness: 'Quote status', quotePending: 'Waiting for checks', quoteFresh: 'Fresh data', quoteStale: 'Expired · trading stopped',
       backHome: 'Back to home', connectWallet: 'Connect wallet', favorite: 'Favorite', more: 'More',
       marketChart: 'LQC market chart', price: 'Price ⇌', marketCap: 'Market cap', liquidity: 'Liquidity', volume24h: '24h volume', holders: 'Holders',
       charts: 'Charts', info: 'Info', data: 'Data', risk: 'Risk', routes: 'Routes', marketInfo: 'Market information', marketSearch: 'Search market', lpFee: 'LP Fee', route: 'Route', optimalPath: 'Optimal Path', chartIntervals: 'Chart intervals', moreIntervals: 'More⌄', chartType: 'Chart type', tradeSettings: 'Trade settings',
