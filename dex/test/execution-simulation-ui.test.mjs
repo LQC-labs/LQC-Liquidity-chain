@@ -84,6 +84,14 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app,/finally\{swapInFlight=false;lockTradeControls\(false\)\}/);
   });
 
+  it("stops waiting after two minutes while preserving pending protection", function () {
+    assert.match(app, /tx\.wait\(1,120000\)/);
+    assert.match(app, /if\(!receipt\)\{status\(t\('transactionStillPending'\),'pending',tx\.hash\);return\}/);
+    const timeoutIndex = app.indexOf("if(!receipt){status(t('transactionStillPending'");
+    const clearIndex = app.indexOf("clearPendingSwap(tradeAccount)", timeoutIndex);
+    assert.ok(timeoutIndex >= 0 && timeoutIndex < clearIndex);
+  });
+
   it("pins the starting account, recipient, signer, and chain through execution", function () {
     assert.match(app,/const tradeAccount=account,tradeSigner=signer/);
     assert.match(app,/sdk\.validateExecutionSession\(expectedAccount,accounts,chainId,cfg\.chainIdHex,ethers\)/);
