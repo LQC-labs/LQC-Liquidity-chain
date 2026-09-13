@@ -9,6 +9,11 @@ const i18n = fs.readFileSync(path.resolve(import.meta.dirname, "../app/i18n.js")
 const config = fs.readFileSync(path.resolve(import.meta.dirname, "../app/config.js"), "utf8");
 
 describe("LQC DEX pre-submission simulation", function () {
+  it("forwards interpolation values to translated status messages", function () {
+    assert.match(app, /t=\(key,values\)=>i18n\.t\(key,values\)/);
+    assert.match(app, /t\('tradeComplete',\{side:t\(mode\)\}\)/);
+  });
+
   it("builds every supported execution path without submitting it", function () {
     for (const method of ["swapExactNativeForToken", "swapExactTokenForNative", "swapOptimizedExactInput", "swapExactInput"])
       assert.match(app, new RegExp(`${method}\\.populateTransaction\\(`));
