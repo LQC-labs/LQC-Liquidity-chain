@@ -9,11 +9,23 @@ const defaultRpcUrls = ["https://bsc-testnet.drpc.org", "https://data-seed-prebs
 
 export function createReadinessProvider(env) {
   const urls = [...new Set([env.BSC_TESTNET_RPC_URL, ...defaultRpcUrls].filter(Boolean))];
-  const providers = urls.map((url, index) => {
+  const providers = urls.map(url => {
     const request = new ethers.FetchRequest(url); request.timeout = Number(env.RPC_TIMEOUT_MS || "15000");
-    return { provider: new ethers.JsonRpcProvider(request, 97, { staticNetwork: true }), priority: index + 1, stallTimeout: 2500, weight: 1 };
+    return new ethers.JsonRpcProvider(request, 97, { staticNetwork: true });
   });
-  return new ethers.FallbackProvider(providers, 97, { quorum: 1 });
+  const run = async (method, ...args) => {
+    let lastError;
+    for (const provider of providers) {
+      try { return await provider[method](...args); }
+      catch (error) { lastError = error; }
+    }
+    throw lastError || new Error(`No RPC provider could complete ${method}`);
+  };
+  return {
+    getNetwork: () => run("getNetwork"), getBalance: address => run("getBalance", address),
+    getCode: address => run("getCode", address), call: transaction => run("call", transaction),
+    resolveName: name => ethers.isAddress(name) ? Promise.resolve(ethers.getAddress(name)) : run("resolveName", name)
+  };
 }
 
 export async function inspectTestnetReadiness(env, provider = null) {
