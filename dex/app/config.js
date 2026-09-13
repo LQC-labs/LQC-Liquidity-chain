@@ -20,7 +20,7 @@ window.LQC_FLOW_CONFIG = Object.freeze({
   gasCostOracleAddress: null,
   dexes: [],
   tokens: [
-    { symbol: "BNB", name: "BNB", address: "native", decimals: 18 },
+    { symbol: "BNB", displaySymbol: "tBNB", name: "BNB Testnet Native", address: "native", decimals: 18 },
     { symbol: "WBNB", name: "Wrapped BNB", address: "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd", decimals: 18 },
     { symbol: "LQC", displaySymbol: "tLQC", name: "LQC Test Token", address: "0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc", decimals: 18 }
   ]
