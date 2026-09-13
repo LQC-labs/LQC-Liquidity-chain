@@ -40,6 +40,14 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /localStorage\.setItem\(pendingSwapKey\(account\)/);
   });
 
+  it("blocks swaps when the network reports an earlier pending nonce", function () {
+    assert.match(app, /getTransactionCount\(account,'latest'\)/);
+    assert.match(app, /getTransactionCount\(account,'pending'\)/);
+    assert.match(app, /pendingNonce>latestNonce/);
+    assert.match(app, /blockIfPendingSwap\(\)\|\|await blockIfNetworkTransactionPending\(\)/);
+    assert.match(app, /pendingCheckFailed/);
+  });
+
   it("links submitted and pending transactions to the configured explorer", function () {
     assert.match(app, /cfg\.blockExplorerUrls\[0\].+\/tx\/\$\{hash\}/);
     assert.match(app, /link\.target='_blank'/);
