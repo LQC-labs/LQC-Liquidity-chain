@@ -169,6 +169,16 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /setAttribute\('aria-selected',String\(token===\(side==='in'\?tokenIn:tokenOut\)\)\)/);
   });
 
+  it("shows an accessible empty state for unmatched token searches", function () {
+    assert.match(app, /if\(!options\.length\)/);
+    assert.match(app, /empty\.className='token-empty'/);
+    assert.match(app, /empty\.textContent=t\('noTokensFound'\)/);
+    assert.match(app, /empty\.setAttribute\('role','status'\)/);
+    assert.match(css, /\.token-empty\{/);
+    assert.match(i18n, /noTokensFound: '등록된 토큰을 찾을 수 없습니다\.'/);
+    assert.match(i18n, /noTokensFound: 'No listed tokens found\.'/);
+  });
+
   it("labels configured allowlisted tokens as verified", function () {
     assert.match(app, /class="token-verified"/);
     assert.match(app, /t\('verifiedToken'\)/);
