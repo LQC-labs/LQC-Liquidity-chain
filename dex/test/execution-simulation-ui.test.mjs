@@ -145,10 +145,16 @@ describe("LQC DEX pre-submission simulation", function () {
 
   it("restores the pending guard before enabling trades after reconnect", function () {
     assert.match(app, /pendingGuardActive=false/);
-    assert.match(app, /ui\.execute\.disabled=v\|\|pendingGuardActive/);
+    assert.match(app, /const disabled=v=>ui\.execute\.disabled=v/);
     assert.match(app, /const pendingBlocked=deploymentReady&&\(await blockIfPendingSwap\(\)\|\|await blockIfNetworkTransactionPending\(\)\)/);
     assert.match(app, /if\(!pendingBlocked\)quoteSoon\(\)/);
     assert.match(app, /pendingGuardActive=true;status\(t\('networkPendingTransaction'/);
+  });
+
+  it("keeps the execute control usable for an explicit pending-state recheck", function () {
+    assert.doesNotMatch(app, /ui\.execute\.disabled=v\|\|pendingGuardActive/);
+    assert.match(app, /if\(await blockIfPendingSwap\(\)\|\|await blockIfNetworkTransactionPending\(\)\)return/);
+    assert.match(app, /if\(!pendingGuardActive\)status\('견적 준비 완료','success'\)/);
   });
 
   it("stops waiting after two minutes while preserving pending protection", function () {
