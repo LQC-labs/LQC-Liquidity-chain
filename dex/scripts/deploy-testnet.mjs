@@ -79,8 +79,10 @@ const captureSafePolicy = async (address, label, minimumOwners, minimumThreshold
     throw new Error(`${label} must be a deployed Safe.`);
   }
   const policy = await assertSafeMultisig(provider, address, label, minimumOwners, minimumThreshold);
+  const implementationCode = await provider.getCode(policy.singleton);
   return { address, owners: policy.owners, threshold: Number(policy.threshold),
-    minimumOwners: Number(minimumOwners), minimumThreshold: Number(minimumThreshold) };
+    minimumOwners: Number(minimumOwners), minimumThreshold: Number(minimumThreshold),
+    singleton: policy.singleton, implementationCodeHash: ethers.keccak256(implementationCode) };
 };
 const governanceSafePolicy = await captureSafePolicy(owner, "FACTORY_OWNER", governanceMinimumOwners,
   governanceMinimumThreshold, false);
