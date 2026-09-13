@@ -154,6 +154,14 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok((app.match(/validateWalletExecutionSession\(tradeAccount\)/g)||[]).length>=3);
   });
 
+  it("labels configured allowlisted tokens as verified", function () {
+    assert.match(app, /class="token-verified"/);
+    assert.match(app, /t\('verifiedToken'\)/);
+    assert.match(css, /\.token-verified\{/);
+    assert.match(i18n, /verifiedToken: '검증됨'/);
+    assert.match(i18n, /verifiedToken: 'Verified'/);
+  });
+
   it("searches allowlisted tokens by contract address", function () {
     assert.match(app, /String\(token\.address\|\|''\)\.toLowerCase\(\)\.includes\(term\)/);
   });
