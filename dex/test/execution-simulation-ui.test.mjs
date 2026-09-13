@@ -85,7 +85,7 @@ describe("LQC DEX pre-submission simulation", function () {
   });
 
   it("shows completion only after validating the mined transaction receipt", function () {
-    const waitIndex = app.indexOf("const receipt=await tx.wait(1,120000)");
+    const waitIndex = app.indexOf("const receipt=await waitForReceipt(tx)");
     const validateIndex = app.indexOf("sdk.validateSwapReceipt(receipt,tx.hash,ethers)", waitIndex);
     const completeIndex = app.indexOf("status(t('tradeComplete'", validateIndex);
     assert.ok(waitIndex >= 0 && waitIndex < validateIndex && validateIndex < completeIndex);
@@ -153,10 +153,21 @@ describe("LQC DEX pre-submission simulation", function () {
 
   it("stops waiting after two minutes while preserving pending protection", function () {
     assert.match(app, /tx\.wait\(1,120000\)/);
+    assert.match(app, /async function waitForReceipt\(tx\)/);
+    assert.match(app, /code==='TIMEOUT'/);
+    assert.match(app, /message\.includes\('wait for transaction timeout'\)/);
+    assert.match(app, /const receipt=await waitForReceipt\(tx\)/);
     assert.match(app, /if\(!receipt\)\{status\(t\('transactionStillPending'\),'pending',tx\.hash\);return\}/);
     const timeoutIndex = app.indexOf("if(!receipt){status(t('transactionStillPending'");
     const clearIndex = app.indexOf("clearPendingSwap(tradeAccount)", timeoutIndex);
     assert.ok(timeoutIndex >= 0 && timeoutIndex < clearIndex);
+  });
+
+  it("clears a stale local transaction only when it never reached the network", function () {
+    assert.match(app, /provider\.getTransaction\(pending\.hash\)/);
+    assert.match(app, /!transaction&&Date\.now\(\)-Number\(pending\.createdAt\|\|0\)>300000/);
+    assert.match(app, /status\(t\('unpropagatedTransactionCleared'\)\)/);
+    assert.match(app, /nonce:tx\.nonce/);
   });
 
   it("pins the starting account, recipient, signer, and chain through execution", function () {
