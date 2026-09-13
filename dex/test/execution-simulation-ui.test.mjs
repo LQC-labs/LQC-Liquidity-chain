@@ -49,4 +49,12 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok(approval.indexOf("await validateFunds(transaction,value)")<approval.indexOf("await simulateExecution(transaction)"));
     assert.ok(approval.indexOf("await simulateExecution(transaction)")<approval.indexOf("signer.sendTransaction(transaction)"));
   });
+
+  it("blocks duplicate submissions and locks mutable trade controls in flight", function () {
+    assert.match(app,/swapInFlight=false/);
+    assert.match(app,/if\(swapInFlight\)return;swapInFlight=true;lockTradeControls\(true\)/);
+    for(const control of["ui.amountIn","ui.slippage","ui.tokenInButton","ui.tokenOutButton","ui.flip","ui.max","ui.buy","ui.sell","ui.quick"])
+      assert.match(app,new RegExp(control.replace(".","\\.")));
+    assert.match(app,/finally\{swapInFlight=false;lockTradeControls\(false\)\}/);
+  });
 });
