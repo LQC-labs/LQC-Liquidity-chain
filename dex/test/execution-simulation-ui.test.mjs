@@ -25,6 +25,14 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /const walletBrowserProvider=new ethers\.BrowserProvider\(target\)/);
   });
 
+  it("rejects malformed and over-precision token amounts before wallet prompts", function () {
+    assert.match(app, /const parseTradeAmount=/);
+    assert.match(app, /parts\[1\]\?\.length>token\.decimals/);
+    assert.match(app, /throw new Error\('InvalidAmount'\)/);
+    assert.match(app, /try\{parseTradeAmount\(raw,tokenIn\)\}catch\{return status\(t\('invalidAmount'\),'error'\)\}/);
+    assert.doesNotMatch(app, /ethers\.parseUnits\(raw,tokenIn\.decimals\)/);
+  });
+
   it("blocks unsafe custom slippage before quoting or submitting", function () {
     assert.match(app, /value<0\.1\|\|value>5/);
     assert.match(app, /throw new Error\('InvalidSlippage'\)/);
