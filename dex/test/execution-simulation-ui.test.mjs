@@ -35,4 +35,11 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /sdk\.validateTransactionFunds\(\{nativeBalance,tokenBalance,amountIn:value,estimatedGas/);
     assert.ok(app.indexOf("await validateFunds(executionTransaction,value)") < app.indexOf("await simulateExecution(executionTransaction)"));
   });
+
+  it("uses exact token approvals and validates every approval receipt", function () {
+    assert.match(app,/async function approveExact\(token,spender,allowance,value\)/);
+    assert.match(app,/sdk\.exactApprovalAmounts\(allowance,value\)/);
+    assert.match(app,/sdk\.validateSwapReceipt\(receipt,tx\.hash,ethers\)/);
+    assert.equal((app.match(/await approveExact\(token,spender,allowance,value\)/g)||[]).length,2);
+  });
 });

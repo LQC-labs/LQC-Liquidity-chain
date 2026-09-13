@@ -113,6 +113,14 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.requiresTokenApproval(100n, 0n));
   });
 
+  it("uses exact approvals and clears a smaller nonzero allowance first", function () {
+    assert.deepEqual([...sdk.exactApprovalAmounts(500n,400n)],[]);
+    assert.deepEqual([...sdk.exactApprovalAmounts(0n,400n)],[400n]);
+    assert.deepEqual([...sdk.exactApprovalAmounts(10n,400n)],[0n,400n]);
+    assert.throws(()=>sdk.exactApprovalAmounts(-1n,400n),/Invalid approval state/);
+    assert.throws(()=>sdk.exactApprovalAmounts(0n,0n),/Invalid approval state/);
+  });
+
   it("creates a verifiable proof that a single route has the highest gas-adjusted output", function () {
     const dexA = ethers.id("DEX_A"), dexB = ethers.id("DEX_B");
     const proof = sdk.buildBestExecutionProof({ chainId: 97, quoteBlock: 12345, expiresAt: 1789000000,
