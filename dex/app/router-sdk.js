@@ -220,5 +220,13 @@
     if(!factoryCode||factoryCode==='0x')throw new Error('Deployment bytecode missing: factory');
     return{ready:true,chainId:Number(network.chainId),checked:4,factory};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  function validateSwapReceipt(receipt,submittedHash,ethers){
+    if(!receipt||!ethers||!ethers.isHexString(submittedHash,32))throw new Error('Invalid submitted transaction');
+    if(Number(receipt.status)!==1)throw new Error('Swap transaction failed');
+    const receiptHash=String(receipt.hash||receipt.transactionHash||'');
+    if(!ethers.isHexString(receiptHash,32)||receiptHash.toLowerCase()!==submittedHash.toLowerCase())throw new Error('Swap transaction hash mismatch');
+    if(!Number.isSafeInteger(Number(receipt.blockNumber))||Number(receipt.blockNumber)<=0||!ethers.isHexString(receipt.blockHash,32))throw new Error('Invalid swap confirmation');
+    return{confirmed:true,transactionHash:receiptHash.toLowerCase(),blockHash:receipt.blockHash.toLowerCase(),blockNumber:Number(receipt.blockNumber)};
+  }
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);

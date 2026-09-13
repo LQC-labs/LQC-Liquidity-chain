@@ -24,4 +24,8 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /if\(minimalMode\)plan=await validatedMinimalExecutionPlan\(value,path\)/);
     assert.match(app, /if\(minimalMode\)\{const min=plan\.minimumOut/);
   });
+
+  it("shows completion only after validating the mined transaction receipt", function () {
+    assert.match(app, /const receipt=await tx\.wait\(\);sdk\.validateSwapReceipt\(receipt,tx\.hash,ethers\);status\(t\('tradeComplete'/);
+  });
 });

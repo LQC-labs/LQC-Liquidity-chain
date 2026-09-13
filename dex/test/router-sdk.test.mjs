@@ -399,6 +399,17 @@ describe("LQC Router browser SDK", function () {
     await assert.rejects(sdk.verifyMinimalUiDeployment({ ...provider, getCode: async target => target.toLowerCase() === factory.toLowerCase() ? "0x" : "0x6000" }, config, ethers), /factory/);
   });
 
+  it("marks a swap complete only from a successful matching mined receipt", function () {
+    const transactionHash=ethers.id("swap"),blockHash=ethers.id("swap-block");
+    const result=sdk.validateSwapReceipt({status:1,hash:transactionHash,blockHash,blockNumber:123},transactionHash,ethers);
+    assert.equal(result.confirmed,true); assert.equal(result.transactionHash,transactionHash.toLowerCase());
+    assert.equal(result.blockHash,blockHash.toLowerCase()); assert.equal(result.blockNumber,123);
+    assert.throws(()=>sdk.validateSwapReceipt({status:0,hash:transactionHash,blockHash,blockNumber:123},transactionHash,ethers),/failed/);
+    assert.throws(()=>sdk.validateSwapReceipt({status:1,hash:ethers.id("other"),blockHash,blockNumber:123},transactionHash,ethers),/hash mismatch/);
+    assert.throws(()=>sdk.validateSwapReceipt({status:1,hash:transactionHash,blockHash:"0x",blockNumber:123},transactionHash,ethers),/confirmation/);
+    assert.throws(()=>sdk.validateSwapReceipt({status:1,hash:transactionHash,blockHash,blockNumber:0},transactionHash,ethers),/confirmation/);
+  });
+
   it("accepts only the newest asynchronous quote response", function () {
     assert.equal(sdk.isLatestQuote(7, 7), true);
     assert.equal(sdk.isLatestQuote(6, 7), false);
