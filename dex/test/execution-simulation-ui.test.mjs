@@ -154,6 +154,12 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok((app.match(/validateWalletExecutionSession\(tradeAccount\)/g)||[]).length>=3);
   });
 
+  it("announces status changes and exposes selected token accessibly", function () {
+    assert.match(html, /id="statusBox" role="status" aria-live="polite" aria-atomic="true"/);
+    assert.match(app, /setAttribute\('role','option'\)/);
+    assert.match(app, /setAttribute\('aria-selected',String\(token===\(side==='in'\?tokenIn:tokenOut\)\)\)/);
+  });
+
   it("labels configured allowlisted tokens as verified", function () {
     assert.match(app, /class="token-verified"/);
     assert.match(app, /t\('verifiedToken'\)/);
