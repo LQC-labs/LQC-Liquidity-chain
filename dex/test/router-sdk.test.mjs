@@ -410,6 +410,16 @@ describe("LQC Router browser SDK", function () {
     assert.throws(()=>sdk.validateSwapReceipt({status:1,hash:transactionHash,blockHash,blockNumber:0},transactionHash,ethers),/confirmation/);
   });
 
+  it("requires enough token input and native gas funds before wallet submission", function () {
+    const token=sdk.validateTransactionFunds({nativeBalance:1_000n,tokenBalance:500n,amountIn:400n,estimatedGas:10n,feePerGas:20n,nativeInput:false});
+    assert.equal(token.sufficient,true); assert.equal(token.gasCost,200n); assert.equal(token.requiredNative,200n);
+    const native=sdk.validateTransactionFunds({nativeBalance:1_000n,tokenBalance:null,amountIn:700n,estimatedGas:10n,feePerGas:20n,nativeInput:true});
+    assert.equal(native.requiredNative,900n);
+    assert.throws(()=>sdk.validateTransactionFunds({nativeBalance:1_000n,tokenBalance:399n,amountIn:400n,estimatedGas:10n,feePerGas:20n,nativeInput:false}),/token balance/);
+    assert.throws(()=>sdk.validateTransactionFunds({nativeBalance:899n,tokenBalance:null,amountIn:700n,estimatedGas:10n,feePerGas:20n,nativeInput:true}),/native balance/);
+    assert.throws(()=>sdk.validateTransactionFunds({nativeBalance:1_000n,tokenBalance:null,amountIn:400n,estimatedGas:10n,feePerGas:20n,nativeInput:false}),/Invalid transaction funds/);
+  });
+
   it("accepts only the newest asynchronous quote response", function () {
     assert.equal(sdk.isLatestQuote(7, 7), true);
     assert.equal(sdk.isLatestQuote(6, 7), false);

@@ -228,5 +228,14 @@
     if(!Number.isSafeInteger(Number(receipt.blockNumber))||Number(receipt.blockNumber)<=0||!ethers.isHexString(receipt.blockHash,32))throw new Error('Invalid swap confirmation');
     return{confirmed:true,transactionHash:receiptHash.toLowerCase(),blockHash:receipt.blockHash.toLowerCase(),blockNumber:Number(receipt.blockNumber)};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  function validateTransactionFunds(input){
+    const{nativeBalance,tokenBalance,amountIn,estimatedGas,feePerGas,nativeInput}=input||{};
+    for(const value of[nativeBalance,amountIn,estimatedGas,feePerGas])if(typeof value!=='bigint'||value<0n)throw new Error('Invalid transaction funds');
+    if(amountIn===0n||typeof nativeInput!=='boolean'||(!nativeInput&&(typeof tokenBalance!=='bigint'||tokenBalance<0n)))throw new Error('Invalid transaction funds');
+    if(!nativeInput&&tokenBalance<amountIn)throw new Error('insufficient funds: token balance');
+    const gasCost=estimatedGas*feePerGas,requiredNative=gasCost+(nativeInput?amountIn:0n);
+    if(nativeBalance<requiredNative)throw new Error('insufficient funds: native balance and gas');
+    return{sufficient:true,gasCost,requiredNative};
+  }
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,requiresTokenApproval,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);

@@ -28,4 +28,11 @@ describe("LQC DEX pre-submission simulation", function () {
   it("shows completion only after validating the mined transaction receipt", function () {
     assert.match(app, /const receipt=await tx\.wait\(\);sdk\.validateSwapReceipt\(receipt,tx\.hash,ethers\);status\(t\('tradeComplete'/);
   });
+
+  it("checks token input and native gas funds before simulation and submission", function () {
+    assert.match(app, /async function validateFunds\(transaction,value\)/);
+    assert.match(app, /provider\.estimateGas\(\{\.\.\.transaction,from:account\}\)/);
+    assert.match(app, /sdk\.validateTransactionFunds\(\{nativeBalance,tokenBalance,amountIn:value,estimatedGas/);
+    assert.ok(app.indexOf("await validateFunds(executionTransaction,value)") < app.indexOf("await simulateExecution(executionTransaction)"));
+  });
 });
