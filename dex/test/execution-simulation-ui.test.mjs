@@ -40,6 +40,14 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.doesNotMatch(app, /minimumAmountOut\([^\n]+ui\.slippage\.value/);
   });
 
+  it("shows a conservative numeric tBNB gas estimate in minimal mode", function () {
+    assert.match(app, /provider\.getFeeData\(\)/);
+    assert.match(app, /BigInt\(cfg\.minimalRouterGasUnits\|\|180000\)\*gasPrice/);
+    assert.match(app, /ethers\.formatEther\(gasWei\)/);
+    assert.match(app, /\.toFixed\(6\)\} tBNB/);
+    assert.doesNotMatch(app, /≈ 최소 Router 가스/);
+  });
+
   it("revalidates a minimal testnet quote before execution and after token approval", function () {
     assert.match(app, /async function validatedMinimalExecutionPlan\(value,path\)/);
     assert.match(app, /sdk\.validateExecutionQuote\(quoteSnapshot/);
