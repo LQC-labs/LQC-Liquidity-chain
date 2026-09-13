@@ -26,7 +26,7 @@ describe("LQC DEX pre-submission simulation", function () {
   });
 
   it("shows completion only after validating the mined transaction receipt", function () {
-    const waitIndex = app.indexOf("const receipt=await tx.wait()");
+    const waitIndex = app.indexOf("const receipt=await tx.wait(1,120000)");
     const validateIndex = app.indexOf("sdk.validateSwapReceipt(receipt,tx.hash,ethers)", waitIndex);
     const completeIndex = app.indexOf("status(t('tradeComplete'", validateIndex);
     assert.ok(waitIndex >= 0 && waitIndex < validateIndex && validateIndex < completeIndex);
