@@ -34,7 +34,7 @@ describe("LQC DEX pre-submission simulation", function () {
 
   it("persists an unconfirmed swap and blocks accidental resubmission", function () {
     assert.match(app, /rememberPendingSwap\(tx\)/);
-    assert.match(app, /if\(await blockIfPendingSwap\(\)\)return/);
+    assert.match(app, /if\(await blockIfPendingSwap\(\)\|\|await blockIfNetworkTransactionPending\(\)\)return/);
     assert.match(app, /provider\.getTransactionReceipt\(pending\.hash\)/);
     assert.match(app, /clearPendingSwap\(tradeAccount\)/);
     assert.match(app, /localStorage\.setItem\(pendingSwapKey\(account\)/);
