@@ -171,6 +171,7 @@ describe("LQC DEX pre-submission simulation", function () {
   });
 
   it("shows tLQC on testnet while preserving the on-chain LQC symbol", function () {
+    assert.match(config, /symbol: "BNB", displaySymbol: "tBNB"/);
     assert.match(config, /symbol: "LQC", displaySymbol: "tLQC"/);
     assert.match(app, /const displaySymbol=token=>token\.displaySymbol\|\|token\.symbol/);
     assert.match(app, /displaySymbol\(tokenIn\)/);
@@ -178,6 +179,8 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(html, />tLQC 매수</);
     assert.match(i18n, /buyLqc: 'tLQC 매수'/);
     assert.match(i18n, /buyLqc: 'Buy tLQC'/);
+    assert.match(i18n, /price: '테스트넷 예시 가격 · 실시간 아님'/);
+    assert.match(html, /tBNB → tLQC/);
   });
 
   it("shows an accessible empty state for unmatched token searches", function () {
