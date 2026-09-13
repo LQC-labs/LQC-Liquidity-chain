@@ -72,4 +72,12 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok((app.match(/sdk\.validatePendingNonce\(nonce,await provider\.getTransactionCount\(/g)||[]).length>=2);
     assert.match(app,/executionTransaction=\{\.\.\.\(await buildExecutionTransaction\(.+\),nonce\}/);
   });
+
+  it("expires slow quotes after eight seconds and refreshes visible quotes every minute", function () {
+    assert.match(app,/quoteTimeoutMs=8000,quoteRefreshMs=60000/);
+    assert.match(app,/async function withinQuoteDeadline\(promise,deadline\)/);
+    assert.match(app,/Promise\.race\(\[promise,new Promise/);
+    assert.ok((app.match(/withinQuoteDeadline\(/g)||[]).length>=5);
+    assert.match(app,/setInterval\(\(\)=>\{if\(!document\.hidden&&deploymentReady&&ui\.amountIn\.value\.trim\(\)\)quote\(\)\},quoteRefreshMs\)/);
+  });
 });
