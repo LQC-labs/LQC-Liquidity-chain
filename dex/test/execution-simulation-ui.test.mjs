@@ -3,6 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 
 const app = fs.readFileSync(path.resolve(import.meta.dirname, "../app/app.js"), "utf8");
+const html = fs.readFileSync(path.resolve(import.meta.dirname, "../app/index.html"), "utf8");
+const css = fs.readFileSync(path.resolve(import.meta.dirname, "../app/styles.css"), "utf8");
+const i18n = fs.readFileSync(path.resolve(import.meta.dirname, "../app/i18n.js"), "utf8");
 
 describe("LQC DEX pre-submission simulation", function () {
   it("builds every supported execution path without submitting it", function () {
