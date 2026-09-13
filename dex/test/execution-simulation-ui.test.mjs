@@ -15,7 +15,7 @@ describe("LQC DEX pre-submission simulation", function () {
   });
 
   it("simulates and submits the exact same transaction request", function () {
-    assert.match(app, /provider\.call\(\{\.\.\.transaction,from:account\}\)/);
+    assert.match(app, /executionProvider\(\)\.call\(\{\.\.\.transaction,from:account\}\)/);
     assert.match(app, /activeSigner\.sendTransaction\(transaction\)/);
     assert.match(app, /executionTransaction=\{\.\.\.\(await buildExecutionTransaction\(/);
     assert.ok(app.indexOf("await simulateExecution(") < app.indexOf("await submitExecution("));
@@ -35,7 +35,8 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /new ethers\.JsonRpcProvider\(request,cfg\.chainId,\{staticNetwork:true\}\)/);
     assert.match(app, /priority:index\+1,stallTimeout:2500,weight:1/);
     assert.match(app, /provider=createReadProvider\(\)/);
-    assert.match(app, /const walletBrowserProvider=new ethers\.BrowserProvider\(target\)/);
+    assert.match(app, /walletRpcProvider=new ethers\.BrowserProvider\(target\)/);
+    assert.match(app, /const executionProvider=\(\)=>walletRpcProvider\|\|provider/);
   });
 
   it("rejects malformed and over-precision token amounts before wallet prompts", function () {
@@ -115,7 +116,7 @@ describe("LQC DEX pre-submission simulation", function () {
 
   it("checks token input and native gas funds before simulation and submission", function () {
     assert.match(app, /async function validateFunds\(transaction,value\)/);
-    assert.match(app, /provider\.estimateGas\(\{\.\.\.transaction,from:account\}\)/);
+    assert.match(app, /activeProvider\.estimateGas\(\{\.\.\.transaction,from:account\}\)/);
     assert.match(app, /sdk\.validateTransactionFunds\(\{nativeBalance,tokenBalance,amountIn:value,estimatedGas/);
     assert.ok(app.indexOf("await validateFunds(executionTransaction,value)") < app.indexOf("await simulateExecution(executionTransaction)"));
   });
@@ -216,7 +217,7 @@ describe("LQC DEX pre-submission simulation", function () {
   it("pins and revalidates the pending nonce for approvals and swaps", function () {
     assert.match(app,/getTransactionCount\(expectedAccount,'pending'\)/);
     assert.match(app,/getTransactionCount\(tradeAccount,'pending'\)/);
-    assert.ok((app.match(/sdk\.validatePendingNonce\(nonce,await provider\.getTransactionCount\(/g)||[]).length>=2);
+    assert.ok((app.match(/sdk\.validatePendingNonce\(nonce,await activeProvider\.getTransactionCount\(/g)||[]).length>=2);
     assert.match(app,/executionTransaction=\{\.\.\.\(await buildExecutionTransaction\(.+\),nonce\}/);
   });
 });
