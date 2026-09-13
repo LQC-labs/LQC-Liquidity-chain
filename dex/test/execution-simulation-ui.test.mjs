@@ -26,7 +26,25 @@ describe("LQC DEX pre-submission simulation", function () {
   });
 
   it("shows completion only after validating the mined transaction receipt", function () {
-    assert.match(app, /const receipt=await tx\.wait\(\);sdk\.validateSwapReceipt\(receipt,tx\.hash,ethers\);status\(t\('tradeComplete'/);
+    const waitIndex = app.indexOf("const receipt=await tx.wait()");
+    const validateIndex = app.indexOf("sdk.validateSwapReceipt(receipt,tx.hash,ethers)", waitIndex);
+    const completeIndex = app.indexOf("status(t('tradeComplete'", validateIndex);
+    assert.ok(waitIndex >= 0 && waitIndex < validateIndex && validateIndex < completeIndex);
+  });
+
+  it("persists an unconfirmed swap and blocks accidental resubmission", function () {
+    assert.match(app, /rememberPendingSwap\(tx\)/);
+    assert.match(app, /if\(await blockIfPendingSwap\(\)\)return/);
+    assert.match(app, /provider\.getTransactionReceipt\(pending\.hash\)/);
+    assert.match(app, /clearPendingSwap\(tradeAccount\)/);
+    assert.match(app, /localStorage\.setItem\(pendingSwapKey\(account\)/);
+  });
+
+  it("links submitted and pending transactions to the configured explorer", function () {
+    assert.match(app, /cfg\.blockExplorerUrls\[0\].+\/tx\/\$\{hash\}/);
+    assert.match(app, /link\.target='_blank'/);
+    assert.match(app, /link\.rel='noopener noreferrer'/);
+    assert.match(app, /viewTransaction/);
   });
 
   it("checks token input and native gas funds before simulation and submission", function () {
