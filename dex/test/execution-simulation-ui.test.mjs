@@ -154,6 +154,10 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok((app.match(/validateWalletExecutionSession\(tradeAccount\)/g)||[]).length>=3);
   });
 
+  it("searches allowlisted tokens by contract address", function () {
+    assert.match(app, /String\(token\.address\|\|''\)\.toLowerCase\(\)\.includes\(term\)/);
+  });
+
   it("pins and revalidates the pending nonce for approvals and swaps", function () {
     assert.match(app,/getTransactionCount\(expectedAccount,'pending'\)/);
     assert.match(app,/getTransactionCount\(tradeAccount,'pending'\)/);
