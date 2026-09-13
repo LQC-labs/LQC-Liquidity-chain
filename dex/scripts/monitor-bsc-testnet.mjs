@@ -252,6 +252,7 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     const unique = new Set(owners.map(owner => owner.toLowerCase()));
     readableSafes.push({ name: safe.name, owners: unique, threshold: Number(safe.expectedThreshold), singleton: safe.singleton });
     if (safe.singleton !== undefined) add(`multisig.${safe.name}.singleton`, safe.singleton && ethers.getAddress(safe.singleton) !== ethers.ZeroAddress ? "PASS" : "CRITICAL", "Safe proxy implementation must be readable and non-zero");
+    if (safe.implementationCode !== undefined) add(`multisig.${safe.name}.implementation_code`, safe.implementationCode && safe.implementationCode !== "0x" ? "PASS" : "CRITICAL", safe.implementationCode && safe.implementationCode !== "0x" ? "Safe implementation bytecode exists at the pinned block" : "Safe implementation bytecode is missing at the pinned block");
     const modules = (safe.modules || []).map(module => ethers.getAddress(module));
     add(`multisig.${safe.name}.modules`, modules.length === 0 ? "PASS" : "CRITICAL",
       modules.length === 0 ? "no threshold-bypassing Safe modules enabled" :
@@ -378,7 +379,8 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
     try {
       const safe = new ethers.Contract(policy.address, SAFE_ABI, provider);
       const snapshot = await readSafePolicyAtBlock(safe, Number(latest.number));
-      safeState.push({ name, ...snapshot, expectedOwners: policy.owners,
+      const implementationCode = await provider.getCode(snapshot.singleton, Number(latest.number));
+      safeState.push({ name, ...snapshot, implementationCode, expectedOwners: policy.owners,
         expectedThreshold: Number(policy.threshold), minimumOwners: Number(policy.minimumOwners),
         minimumThreshold: Number(policy.minimumThreshold) });
     } catch (error) {
