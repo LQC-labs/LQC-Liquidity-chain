@@ -253,6 +253,10 @@ export function buildMonitoringReport({ checkedAt, block, maxBlockAgeSeconds, va
     readableSafes.push({ name: safe.name, owners: unique, threshold: Number(safe.expectedThreshold), singleton: safe.singleton });
     if (safe.singleton !== undefined) add(`multisig.${safe.name}.singleton`, safe.singleton && ethers.getAddress(safe.singleton) !== ethers.ZeroAddress ? "PASS" : "CRITICAL", "Safe proxy implementation must be readable and non-zero");
     if (safe.implementationCode !== undefined) add(`multisig.${safe.name}.implementation_code`, safe.implementationCode && safe.implementationCode !== "0x" ? "PASS" : "CRITICAL", safe.implementationCode && safe.implementationCode !== "0x" ? "Safe implementation bytecode exists at the pinned block" : "Safe implementation bytecode is missing at the pinned block");
+    if (safe.expectedImplementationCodeHash !== undefined) {
+      const actualCodeHash = safe.implementationCode && safe.implementationCode !== "0x" ? ethers.keccak256(safe.implementationCode) : null;
+      add(`multisig.${safe.name}.implementation_code_hash`, actualCodeHash === safe.expectedImplementationCodeHash ? "PASS" : "CRITICAL", actualCodeHash === safe.expectedImplementationCodeHash ? "Safe implementation bytecode matches the deployment baseline" : "Safe implementation bytecode differs from the deployment baseline");
+    }
     const modules = (safe.modules || []).map(module => ethers.getAddress(module));
     add(`multisig.${safe.name}.modules`, modules.length === 0 ? "PASS" : "CRITICAL",
       modules.length === 0 ? "no threshold-bypassing Safe modules enabled" :
@@ -380,7 +384,7 @@ export async function monitorBscTestnet({ provider, deployment, checkedAt = new 
       const safe = new ethers.Contract(policy.address, SAFE_ABI, provider);
       const snapshot = await readSafePolicyAtBlock(safe, Number(latest.number));
       const implementationCode = await provider.getCode(snapshot.singleton, Number(latest.number));
-      safeState.push({ name, ...snapshot, implementationCode, expectedOwners: policy.owners,
+      safeState.push({ name, ...snapshot, implementationCode, expectedImplementationCodeHash: policy.implementationCodeHash, expectedOwners: policy.owners,
         expectedThreshold: Number(policy.threshold), minimumOwners: Number(policy.minimumOwners),
         minimumThreshold: Number(policy.minimumThreshold) });
     } catch (error) {
