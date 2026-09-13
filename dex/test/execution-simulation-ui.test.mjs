@@ -72,4 +72,31 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok((app.match(/sdk\.validatePendingNonce\(nonce,await provider\.getTransactionCount\(/g)||[]).length>=2);
     assert.match(app,/executionTransaction=\{\.\.\.\(await buildExecutionTransaction\(.+\),nonce\}/);
   });
+
+  it("expires slow quotes after eight seconds and refreshes visible quotes every minute", function () {
+    assert.match(app,/quoteTimeoutMs=8000,quoteRefreshMs=60000/);
+    assert.match(app,/async function withinQuoteDeadline\(promise,deadline\)/);
+    assert.match(app,/Promise\.race\(\[promise,new Promise/);
+    assert.ok((app.match(/withinQuoteDeadline\(/g)||[]).length>=5);
+    assert.match(app,/setInterval\(\(\)=>\{if\(!document\.hidden&&deploymentReady&&ui\.amountIn\.value\.trim\(\)\)quote\(\)\},quoteRefreshMs\)/);
+  });
+
+  it("shows quote time and disables trading when a displayed quote becomes stale", function () {
+    assert.match(app,/quoteUpdated:\$\('quoteUpdated'\),quoteFreshness:\$\('quoteFreshness'\)/);
+    assert.match(app,/function markQuoteFresh\(\)/);
+    assert.match(app,/new Date\(snapshot\.quotedAt\)\.toLocaleTimeString\(\)/);
+    assert.match(app,/freshnessTimer=setTimeout\(.+disabled\(true\)\},30000\)/);
+    assert.match(app,/quoteSnapshot=null;disabled\(true\);ui\.quoteUpdated\.textContent='—'/);
+    assert.match(app,/if\(!v&&quoteSnapshot\)markQuoteFresh\(\)/);
+  });
+
+  it("pins every route and price-impact read to one quote block", function () {
+    assert.match(app,/async function bestQuote\(value,path,blockTag\)/);
+    assert.match(app,/async function executionPlan\(value,path,blockTag\)/);
+    assert.match(app,/blockNumber=await withinQuoteDeadline\(provider\.getBlockNumber\(\),quoteDeadline\)/);
+    assert.match(app,/executionPlan\(value,path,blockNumber\)/);
+    assert.match(app,/planPriceImpact\(value,out,probe,path,plan,blockNumber\)/);
+    assert.ok((app.match(/\{blockTag\}/g)||[]).length>=5);
+    assert.match(app,/getAmountsOut\(value,path,\{blockTag:blockNumber\}\)/);
+  });
 });

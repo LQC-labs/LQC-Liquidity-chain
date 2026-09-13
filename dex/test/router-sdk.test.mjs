@@ -119,6 +119,8 @@ describe("LQC Router browser SDK", function () {
     assert.throws(()=>sdk.validatePendingNonce(7,8),/nonce changed/);
     assert.throws(()=>sdk.validatePendingNonce(-1,0),/Invalid pending nonce/);
     assert.throws(()=>sdk.validatePendingNonce(1.5,1),/Invalid pending nonce/);
+    assert.throws(()=>sdk.validatePendingNonce(1,-1),/Invalid pending nonce/);
+    assert.throws(()=>sdk.validatePendingNonce(1,1.5),/Invalid pending nonce/);
   });
 
   it("requires approval only when the selected spender allowance is insufficient", function () {
