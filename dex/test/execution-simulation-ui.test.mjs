@@ -17,6 +17,14 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok(app.indexOf("await simulateExecution(") < app.indexOf("await submitExecution("));
   });
 
+  it("fails over read-only RPC calls without changing the wallet signer", function () {
+    assert.match(app, /new ethers\.FallbackProvider\(cfg\.rpcUrls\.map/);
+    assert.match(app, /new ethers\.JsonRpcProvider\(url,cfg\.chainId,\{staticNetwork:true\}\)/);
+    assert.match(app, /priority:index\+1,stallTimeout:1500,weight:1/);
+    assert.match(app, /provider=createReadProvider\(\)/);
+    assert.match(app, /const walletBrowserProvider=new ethers\.BrowserProvider\(target\)/);
+  });
+
   it("revalidates a minimal testnet quote before execution and after token approval", function () {
     assert.match(app, /async function validatedMinimalExecutionPlan\(value,path\)/);
     assert.match(app, /sdk\.validateExecutionQuote\(quoteSnapshot/);
