@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const cfg=window.LQC_FLOW_CONFIG,{ethers,LQCRouterSDK:sdk,LQCI18N:i18n}=window,$=id=>document.getElementById(id),t=key=>i18n.t(key);
+  const cfg=window.LQC_FLOW_CONFIG,{ethers,LQCRouterSDK:sdk,LQCI18N:i18n}=window,$=id=>document.getElementById(id),t=(key,values)=>i18n.t(key,values);
   const routerAbi=['function getAmountsOut(uint256,address[]) view returns (uint256[])','function swapExactTokensForTokens(uint256,uint256,address[],address,uint256) returns (uint256[])','function swapExactBNBForTokens(uint256,address[],address,uint256) payable returns (uint256[])','function swapExactTokensForBNB(uint256,uint256,address[],address,uint256) returns (uint256[])'];
   const quoteRouterAbi=['function quoteBest(address,address,uint256,bytes[]) view returns ((bytes32 dexId,address adapter,uint256 amountOut,uint32 priority))'];
   const executionRouterAbi=['function swapExactInput(bytes32,address,address,uint256,uint256,address,uint256,bytes) returns (uint256)'];
