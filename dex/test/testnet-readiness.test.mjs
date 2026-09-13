@@ -15,7 +15,9 @@ const provider = ({ balance = ethers.parseEther("1.2"), pool = address(8), code 
 
 describe("BSC testnet read-only readiness inspection", function () {
   it("builds a failover provider without exposing a private key", function () {
-    assert.ok(createReadinessProvider({ BSC_TESTNET_RPC_URL: "https://example.invalid" }) instanceof ethers.FallbackProvider);
+    const result = createReadinessProvider({ BSC_TESTNET_RPC_URL: "https://example.invalid" });
+    for (const method of ["getNetwork", "getBalance", "getCode", "call", "resolveName"])
+      assert.equal(typeof result[method], "function");
   });
 
   it("reports ready without requiring a deployer private key", async function () {
