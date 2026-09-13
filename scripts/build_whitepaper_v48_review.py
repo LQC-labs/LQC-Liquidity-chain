@@ -12,7 +12,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from pypdf import PdfReader, PdfWriter
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.2_Review_Edition.pdf"
+OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.3_Review_Edition.pdf"
 NAVY = HexColor("#102235")
 TEAL = HexColor("#0b8790")
 MINT = HexColor("#31c7ad")
@@ -46,7 +46,7 @@ def draw_header(c, number, kicker, title):
 def draw_footer(c, number):
     c.setStrokeColor(LINE); c.setLineWidth(.5); c.line(54, 38, 558, 38)
     c.setFillColor(MID); c.setFont("LQCSans", 6.8)
-    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v5.2  ·  Review Edition")
+    c.drawString(54, 23, "MMXlabs&LQC LLC  ·  LQC Whitepaper v5.3  ·  Review Edition")
     c.drawRightString(558, 23, str(number))
 
 
@@ -249,6 +249,12 @@ compact_pages = [
         ("table", [["LQC distinction", "Reviewer evidence"], ["Protocol-neutral adapters", "Separate V2, V3 and LQC Flow integration modules"], ["Risk before execution", "Token, transaction, daily and DEX-specific caps"], ["Atomic route protection", "Deadline, minimum output, exact approval and rollback tests"], ["Evidence-led launch", "Pinned tests, deployment records, validation and verification tooling"]], [145,359]),
         ("callout", "The commercial objective is sustainable infrastructure usage. The whitepaper does not rely on token-price appreciation or guaranteed exchange listing as a value proposition."),
     ]),
+    ("Strategic differentiation", "5. Global Liquidity Operating Layer", [
+        "LQC is positioned as a non-custodial liquidity operating layer rather than only a consumer wallet or isolated exchange. LQC Flow provides the user interface, while Router 2.0, reviewed adapters and future SDK/API access form the reusable infrastructure layer.",
+        ("table", [["Strategic capability", "Target outcome"], ["Best Execution Proof", "Compare executable net output after gas, fees, slippage and price impact, then bind the selected route to settlement evidence"], ["Liquidity quality", "Prioritize measurable depth and reliable execution across approved venues instead of maximizing the number of integrations"], ["B2B Router SDK/API", "Allow wallets, DEXs, projects and market makers to consume LQC quote, route and verification services"], ["Unified capital utility", "Extend reviewed liquidity from trading into separately audited Vault, lending and staking modules"], ["Simple access", "Add policy-limited Gasless and cross-chain abstraction only after core routing and security gates pass"]], [145,359]),
+        ("callout", "Core objective: make LQC the verifiable liquidity and execution layer that other trading applications can integrate, while preserving independent LQC Flow access for end users."),
+        "Commercial expansion depends on audited contracts, verified deployments, real liquidity, partner adoption and measured execution performance. No market leadership or guaranteed economic outcome is claimed.",
+    ]),
     ("Design and architecture", "3. Principles and Modular Architecture", [
         ("table", [["Principle", "Engineering application"], ["Liquidity first", "Executable depth and measurable routing quality"], ["Modularity", "Separate quote, execution, risk and integration responsibilities"], ["Least privilege", "Divide governance, emergency and risk authority"], ["Evidence", "Pin code, settings, addresses and on-chain state"], ["Phased launch", "Testnet, caps and independent review before expansion"]], [135,369]),
         ("table", [["Layer", "Current status"], ["LQC Flow AMM", "Implemented testnet MVP"], ["Registry / quote / optimizer", "Implemented"], ["Execution / native BNB", "Implemented"], ["Risk and emergency controls", "Implemented foundation"], ["Lending / bridge / perpetuals", "Planned as separate scope"]], [235,269]),
@@ -309,7 +315,7 @@ compact_pages = [
 def build():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     c = canvas.Canvas(str(OUT), pagesize=letter)
-    c.setTitle("LQC Whitepaper v5.2 - Review Edition")
+    c.setTitle("LQC Whitepaper v5.3 - Review Edition")
     c.setAuthor("MMXlabs&LQC LLC")
     c.setSubject("Condensed official review edition for technical and exchange due diligence")
 
@@ -323,7 +329,7 @@ def build():
     c.drawString(58, 498, "Connecting Fragmented Web3 Liquidity")
     c.setFillColor(MINT); c.roundRect(58, 394, 496, 66, 7, fill=1, stroke=0)
     c.setFillColor(NAVY); c.setFont("LQCSans-Bold", 11)
-    c.drawString(76, 430, "Version 5.2  ·  September 2026  ·  28 pages")
+    c.drawString(76, 430, "Version 5.3  ·  September 2026  ·  29 pages")
     c.setFont("LQCSans", 9); c.drawString(76, 409, "Issued by MMXlabs&LQC LLC | Wyoming, United States")
     c.setFillColor(HexColor("#c8d7e1")); c.setFont("LQCSans", 8)
     c.drawString(58, 72, "Unaudited testnet MVP · No production or listing claim")
@@ -331,7 +337,7 @@ def build():
 
     # Contents
     y = draw_header(c, 2, "Review edition", "Contents and Status Legend")
-    toc = [["Pages", "Section"], ["3-7", "Executive summary, purpose, differentiation and architecture"], ["8-12", "DEX adapters, routing, execution and risk"], ["13-17", "Compatibility, testing, deployment and future lending"], ["18-21", "Cross-chain, Gasless design, utility and tokenomics"], ["22-27", "Supply, roadmap, audit, CEX evidence, team and compliance"], ["28", "Immediate priorities and conclusion"]]
+    toc = [["Pages", "Section"], ["3-8", "Executive summary, purpose, strategic differentiation and architecture"], ["9-13", "DEX adapters, routing, execution and risk"], ["14-18", "Compatibility, testing, deployment and future lending"], ["19-22", "Cross-chain, Gasless design, utility and tokenomics"], ["23-28", "Supply, roadmap, audit, CEX evidence, team and compliance"], ["29", "Immediate priorities and conclusion"]]
     draw_blocks(c, y, [("table", toc, [80,424]), ("callout", "Status legend: Implemented means public repository code/test evidence. In development means active implementation or configuration work. Subject to review means independent, legal, governance or deployment verification is required. Planned means no completed production module is claimed.")])
     draw_footer(c, 2); c.showPage()
 
@@ -344,8 +350,8 @@ def build():
 
     c.save()
     reader = PdfReader(str(OUT))
-    if len(reader.pages) != 28:
-        raise RuntimeError(f"Expected 28 pages, created {len(reader.pages)}")
+    if len(reader.pages) != 29:
+        raise RuntimeError(f"Expected 29 pages, created {len(reader.pages)}")
 
 
 if __name__ == "__main__":

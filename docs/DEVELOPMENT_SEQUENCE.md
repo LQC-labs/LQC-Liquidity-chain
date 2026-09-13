@@ -10,8 +10,8 @@ This is the official dependency-ordered development sequence for LQC. It priorit
 |---:|---|---|
 | 1 | Router, Vault, Risk, and adapter integration security | Integrated invariants, exposure/loss/cap enforcement, emergency controls, atomic rollback, and zero-retained-funds tests |
 | 2 | BSC testnet deployment and real Swap validation | Published chain-97 addresses, verified source, ownership validation, route probes, smoke swaps, and monitoring report |
-| 3 | Approved DEX connections and liquidity validation | Reviewed LQC Flow and PancakeSwap V2/V3 routes, bounded liquidity, measurable quotes, slippage, gas, and execution results |
-| 4 | Mobile UI, multi-wallet, and one-click trading | Provider-neutral wallet choice, safe reconnect, route/cost/risk disclosure, fallback guidance, and mobile validation |
+| 3 | Approved DEX connections, liquidity quality, and Best Execution Proof | Reviewed LQC Flow and PancakeSwap V2/V3 routes, bounded liquidity, comparable net-output quotes, settlement-bound proof, slippage, gas, and execution results |
+| 4 | Mobile UI, multi-wallet, one-click trading, and Router SDK/API | Provider-neutral wallet choice, safe reconnect, route/cost/risk disclosure, fallback guidance, mobile validation, read-only quote API, execution SDK, authentication, rate limits, and integration documentation |
 | 5 | Gasless Paymaster or signed-relay testnet integration | User signatures, policy authorization, quotas, gas caps, protocol budget, oracle checks, abuse controls, and emergency pause |
 | 6 | Independent security audit and remediation | Pinned audit scope and commit, findings, fixes, auditor retest, and known-issues disclosure |
 | 7 | Capped public pilot | Multisig, timelock, monitoring, incident response, approved limits, limited liquidity, and limited TVL |
@@ -23,10 +23,12 @@ This is the official dependency-ordered development sequence for LQC. It priorit
 
 ## Current position
 
-Stage 1 repository evidence has a reproducible exit gate. Stage 2 preparation is active, while live
-deployment remains blocked until reviewed BSC testnet Governance, Risk, Guardian, Treasury, and
-deployer addresses are supplied and pass on-chain validation. Gasless Policy V1 is an isolated safety
-foundation; actual sponsorship integration remains Stage 5 and must not bypass Stages 2-4.
+Stage 1 repository evidence has a reproducible exit gate. A minimal BSC testnet Router smoke flow has
+passed manual buy, sell, cancellation, retry, and consecutive-transaction checks, but this is only partial
+Stage 2 evidence. Full Router 2.0 deployment remains blocked until adequate tBNB, the reviewed BSC
+testnet Governance, Risk, Guardian, Treasury, and deployer addresses, and the approved V3 pool are
+available and pass on-chain validation. Gasless Policy V1 is an isolated safety foundation; actual
+sponsorship integration remains Stage 5 and must not bypass Stages 2-4.
 
 ## Efficiency rules
 
@@ -42,6 +44,39 @@ foundation; actual sponsorship integration remains Stage 5 and must not bypass S
 10. Lending, Cross-chain, and mainnet are separate security scopes and must not delay the initial BSC DEX MVP.
 11. Token issuance remains a user/governance decision and is not performed automatically by development tooling.
 12. Every completed stage must leave reproducible code, tests, documentation, and GitHub evidence.
+
+## Strategic execution requirements
+
+LQC will compete as a verifiable global liquidity operating layer, not by copying a broad consumer wallet feature set. LQC Flow remains the direct user interface, while Router 2.0 and its SDK/API become the reusable infrastructure offered to wallets, DEXs, projects, exchanges, and market makers.
+
+### Best Execution Proof acceptance criteria
+
+- Compare gross output, pool/protocol fees, estimated gas, slippage, price impact, and final net output across every eligible route.
+- Compare the best single route with an atomic split route and select split execution only when its net result is superior.
+- Bind chain, block, token pair, amount, adapters, route data, minimum output, quote expiry, and selected result to a deterministic proof.
+- Bind the proof to a successful canonical settlement and reject expired, failed, reorged, mismatched, or tampered evidence.
+- Display estimated savings against the best rejected alternative without claiming guaranteed realized savings.
+
+### Liquidity quality acceptance criteria
+
+- Begin with a small set of approved BNB Chain venues and core pairs; depth and reliable execution take priority over integration count.
+- Publish timestamped quote, slippage, price-impact, gas, failure-rate, and realized-output measurements for each active route.
+- Require bounded pilot liquidity, approved market-making policy, route-specific caps, and incident-free observation before expansion.
+- Disable a degraded route independently without interrupting healthy adapters.
+
+### B2B Router SDK/API acceptance criteria
+
+- Provide read-only multi-DEX quotes, selected-route evidence, transaction construction, and post-settlement verification.
+- Use documented versioning, authentication, quotas, rate limits, request tracing, and deterministic error responses.
+- Never receive, store, or transmit user private keys; execution remains user-authorized and non-custodial.
+- Publish an integration guide, reference client, sandbox environment, service-status page, and compatibility tests.
+- Define transparent routing/infrastructure fees before any commercial activation.
+
+### Sequencing constraints
+
+- Gasless improves access but cannot precede controlled routing, wallet, monitoring, and abuse-control evidence.
+- Lending, Vault yield strategies, staking, perpetuals, RWA, and cross-chain expansion remain separately scoped and audited modules.
+- Consumer feature breadth must not delay verified routing quality, real liquidity, security review, or B2B integration readiness.
 
 ## Mainnet portability requirements
 
