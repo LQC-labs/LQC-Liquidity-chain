@@ -240,9 +240,9 @@ describe("LQC DEX pre-submission simulation", function () {
   });
 
   it("pins and revalidates the pending nonce for approvals and swaps", function () {
-    assert.match(app,/executionRpc\('getTransactionCount',expectedAccount,'pending'\)/);
-    assert.match(app,/executionRpc\('getTransactionCount',tradeAccount,'pending'\)/);
-    assert.ok((app.match(/sdk\.validatePendingNonce\(nonce,await executionRpc\('getTransactionCount'/g)||[]).length>=2);
+    assert.match(app,/canonicalRpc\('getTransactionCount',expectedAccount,'pending'\)/);
+    assert.match(app,/canonicalRpc\('getTransactionCount',tradeAccount,'pending'\)/);
+    assert.ok((app.match(/sdk\.validatePendingNonce\(nonce,await canonicalRpc\('getTransactionCount'/g)||[]).length>=2);
     assert.match(app,/executionTransaction=\{\.\.\.\(await buildExecutionTransaction\(.+\),nonce\}/);
   });
 });
