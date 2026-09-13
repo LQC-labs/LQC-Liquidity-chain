@@ -271,6 +271,49 @@ describe("LQC Router 2.0", function () {
     assert.equal(await proof.verifySelectedQuote(request, selected, "0x1234"), false);
   });
 
+  it("proves the best route across a complete deterministic candidate set", async function () {
+    const Proof = new ethers.ContractFactory(
+      artifact("LQCBestExecutionProof", "router-v2/LQCBestExecutionProof").abi,
+      artifact("LQCBestExecutionProof", "router-v2/LQCBestExecutionProof").bytecode,
+      owner
+    );
+    const proof = await Proof.deploy();
+    await proof.waitForDeployment();
+    const network = await provider.getNetwork(), block = await provider.getBlock("latest");
+    const request = { chainId: network.chainId, tokenIn: await tokenA.getAddress(),
+      tokenOut: await tokenB.getAddress(), amountIn: 1000n,
+      recipient: await other.getAddress(), slippageBps: 100,
+      validUntil: BigInt(block.timestamp + 300) };
+    const quoteBlock = BigInt(block.number), routeA = "0x11", routeB = "0x22";
+    const adapterA = "0x00000000000000000000000000000000000000a1";
+    const adapterB = "0x00000000000000000000000000000000000000b1";
+    const dexA = ethers.id("DEX_A"), dexB = ethers.id("DEX_B");
+    const makeCandidate = async (dexId, adapterAddress, route, gross, gas, fee, priority) => ({
+      dexId, adapter: adapterAddress, quoteBlock, grossAmountOut: gross,
+      gasCostInTokenOut: gas, protocolFeeInTokenOut: fee,
+      netAmountOut: gross - gas - fee, minimumAmountOut: gross * 9900n / 10000n,
+      priority,
+      routeHash: await proof.computeRouteHash(
+        request, quoteBlock, dexId, adapterAddress, route, gross, gas, fee
+      )
+    });
+    const candidateA = await makeCandidate(dexA, adapterA, routeA, 1100n, 20n, 10n, 100);
+    const candidateB = await makeCandidate(dexB, adapterB, routeB, 1120n, 5n, 5n, 90);
+    const candidates = [candidateA, candidateB];
+
+    assert.equal(await proof.verifyBestCandidate(request, candidates, [routeA, routeB], 1), true);
+    assert.equal(await proof.verifyBestCandidate(request, candidates, [routeA, routeB], 0), false);
+    assert.notEqual(await proof.candidateSetHash(candidates), ethers.ZeroHash);
+    assert.notEqual(await proof.bestCandidateProofHash(request, candidates, 1), ethers.ZeroHash);
+    assert.equal(await proof.verifyBestCandidate(
+      request, [candidateB, candidateB], [routeB, routeB], 0
+    ), false);
+    const tampered = { ...candidateA, netAmountOut: candidateA.netAmountOut + 1n };
+    assert.equal(await proof.verifyBestCandidate(
+      request, [tampered, candidateB], [routeA, routeB], 1
+    ), false);
+  });
+
   it("isolates a failing route while another registered DEX can quote", async function () {
     const badId = ethers.id("BAD_ROUTE");
     const flowId = ethers.id("LQC_FLOW");
