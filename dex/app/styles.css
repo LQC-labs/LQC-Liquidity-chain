@@ -68,3 +68,5 @@ body{font-family:Roboto,Arial,"Noto Sans KR",sans-serif;letter-spacing:-.012em}.
 @media(max-width:480px){.language-picker select{max-width:72px;padding-left:6px;font-size:11px}.header-icon.favorite{font-size:25px}}
 
 .tx-link{color:inherit;font-weight:800;text-decoration:underline;text-underline-offset:2px;white-space:nowrap}
+
+.token-search{width:100%;margin:0 0 12px;padding:13px 15px;border:1px solid #dce6e3;border-radius:14px;background:#f6faf9;color:#182326;font:inherit;outline:none}.token-search:focus{border-color:#18a998;box-shadow:0 0 0 3px rgba(24,169,152,.12)}
