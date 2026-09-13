@@ -6,6 +6,7 @@ const app = fs.readFileSync(path.resolve(import.meta.dirname, "../app/app.js"), 
 const html = fs.readFileSync(path.resolve(import.meta.dirname, "../app/index.html"), "utf8");
 const css = fs.readFileSync(path.resolve(import.meta.dirname, "../app/styles.css"), "utf8");
 const i18n = fs.readFileSync(path.resolve(import.meta.dirname, "../app/i18n.js"), "utf8");
+const config = fs.readFileSync(path.resolve(import.meta.dirname, "../app/config.js"), "utf8");
 
 describe("LQC DEX pre-submission simulation", function () {
   it("builds every supported execution path without submitting it", function () {
@@ -167,6 +168,16 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(html, /id="statusBox" role="status" aria-live="polite" aria-atomic="true"/);
     assert.match(app, /setAttribute\('role','option'\)/);
     assert.match(app, /setAttribute\('aria-selected',String\(token===\(side==='in'\?tokenIn:tokenOut\)\)\)/);
+  });
+
+  it("shows tLQC on testnet while preserving the on-chain LQC symbol", function () {
+    assert.match(config, /symbol: "LQC", displaySymbol: "tLQC"/);
+    assert.match(app, /const displaySymbol=token=>token\.displaySymbol\|\|token\.symbol/);
+    assert.match(app, /displaySymbol\(tokenIn\)/);
+    assert.match(app, /displaySymbol\(tokenOut\)/);
+    assert.match(html, />tLQC 매수</);
+    assert.match(i18n, /buyLqc: 'tLQC 매수'/);
+    assert.match(i18n, /buyLqc: 'Buy tLQC'/);
   });
 
   it("shows an accessible empty state for unmatched token searches", function () {
