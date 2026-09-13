@@ -338,6 +338,18 @@ describe("LQC BSC testnet monitoring report", function () {
     assert.equal(buildMonitoringReport(input).checks.find(item => item.id === "multisig.governance.implementation_code").status, "PASS");
   });
 
+  it("fails closed when Safe implementation bytecode differs from the deployment baseline", function () {
+    const input = healthyInput();
+    input.safeState[0].singleton = "0x0000000000000000000000000000000000000099";
+    input.safeState[0].implementationCode = "0x6000";
+    input.safeState[0].expectedImplementationCodeHash = ethers.keccak256("0x6001");
+    const report = buildMonitoringReport(input);
+    assert.equal(report.checks.find(item => item.id === "multisig.governance.implementation_code_hash").status, "CRITICAL");
+    assert.equal(report.incident.code, "SAFE_POLICY_BREACH");
+    input.safeState[0].expectedImplementationCodeHash = ethers.keccak256("0x6000");
+    assert.equal(buildMonitoringReport(input).checks.find(item => item.id === "multisig.governance.implementation_code_hash").status, "PASS");
+  });
+
   it("includes a healthy candle indexer in the operational report", function () {
     const input=healthyInput();input.indexerState={ready:true,chainId:97,cursor:100,finalizedHead:99,lagBlocks:0,reorgCount:0,lastReorgAt:null};
     const report=buildMonitoringReport(input);
