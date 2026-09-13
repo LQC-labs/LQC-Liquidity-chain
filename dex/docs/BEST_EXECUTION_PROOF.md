@@ -46,3 +46,17 @@ recipient and input token, requires `nativeIn == false`, and reconciles both inp
 output amounts. A spoofed emitter, duplicate event, wrong direction, or inconsistent amount fails
 closed. The RPC must be independently trusted and production confirmation depth remains a
 governance risk parameter.
+
+## Execution intent and quote API foundation
+
+Before wallet submission, `buildExecutionIntent` binds the selected proof to the sender, reviewed
+execution contract, calldata hash, native value, pending nonce, and deadline. The intent-bound
+settlement evidence rejects nonce replay, target replacement, calldata substitution, sender changes,
+and value changes. This is local deterministic evidence; wallet signature verification and canonical
+transaction decoding remain required before production use.
+
+`buildQuoteApiRequest` provides the versioned request envelope for a future read-only multi-DEX quote
+API. It binds chain 97, token pair, exact input, a client request id, and a validity window of at most
+60 seconds. `validateQuoteApiResponse` accepts a response only when its Best Execution Proof matches
+the complete request. The foundation does not yet expose a public HTTP service, authentication, or
+rate limits.

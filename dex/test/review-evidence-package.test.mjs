@@ -52,4 +52,17 @@ describe("LQC exchange and security review evidence package", function () {
     assert.equal(report.submissionStatus, "READY_FOR_REVIEW");
     assert.deepEqual(report.pendingExternalEvidence, []);
   });
+
+  it("adds tamper-evident best-execution evidence bound to the reviewed deployment", function () {
+    const data = inputs();
+    data.executionEvidence = { chainId: 97, sourceRevision: data.deployment.sourceRevision,
+      deploymentFingerprint: buildAppConfig(data.deployment).deploymentFingerprint,
+      verifiedProofs: 12, verifiedSettlements: 8, evidenceDigest: `sha256:${"d".repeat(64)}` };
+    const report = buildReviewEvidencePackage(data);
+    assert.equal(report.artifacts.bestExecution.verifiedProofs, 12);
+    assert.equal(report.artifacts.bestExecution.verifiedSettlements, 8);
+    assert.match(report.artifacts.bestExecution.digest, /^sha256:[0-9a-f]{64}$/);
+    data.executionEvidence.sourceRevision = "e".repeat(40);
+    assert.throws(() => buildReviewEvidencePackage(data), /Execution evidence/);
+  });
 });

@@ -14,6 +14,17 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /t\('tradeComplete',\{side:t\(mode\)\}\)/);
   });
 
+  it("offers a keyboard-accessible mobile recovery action after blocked execution", function () {
+    assert.match(html, /id="recoveryButton"[^>]+type="button"[^>]+hidden/);
+    assert.match(css, /\.recovery-button/);
+    assert.match(css, /@media\(max-width:480px\).*\.recovery-button/s);
+    assert.match(app, /sdk\.recoveryActionForError\(e\)/);
+    assert.match(app, /showRecovery\(e\)/);
+    assert.match(app, /action==='SWITCH_NETWORK'.*connect\(walletProvider,true\)/);
+    assert.match(app, /action==='REFRESH_QUOTE'.*quote\(\)/);
+    assert.match(i18n, /refreshQuote: '최신 견적 다시 받기'/);
+  });
+
   it("builds every supported execution path without submitting it", function () {
     for (const method of ["swapExactNativeForToken", "swapExactTokenForNative", "swapOptimizedExactInput", "swapExactInput"])
       assert.match(app, new RegExp(`${method}\\.populateTransaction\\(`));

@@ -194,6 +194,60 @@ describe("LQC Router browser SDK", function () {
     }, ethers);
   }
 
+  it("binds the selected proof to one sender, target, calldata, value, nonce, and deadline", function () {
+    const proof = singleRouteProof(), sender = tokenA, target = tokenC;
+    const intent = sdk.buildExecutionIntent(proof, { sender, target, calldataHash: ethers.id("swap-calldata"),
+      value: 0n, nonce: 7, deadline: 1788999990 }, ethers);
+    assert.equal(sdk.verifyExecutionIntent(intent, proof, ethers), true);
+    const tampered = structuredClone(intent); tampered.nonce = 8;
+    assert.equal(sdk.verifyExecutionIntent(tampered, proof, ethers), false);
+    assert.equal(sdk.verifyExecutionIntent(null, proof, ethers), false);
+    const invalidShape = structuredClone(intent); invalidShape.deadline = proof.expiresAt + 1;
+    assert.equal(sdk.verifyExecutionIntent(invalidShape, proof, ethers), false);
+    const negativeValue = structuredClone(intent); negativeValue.value = "-1";
+    assert.equal(sdk.verifyExecutionIntent(negativeValue, proof, ethers), false);
+    const malformedValue = structuredClone(intent); malformedValue.value = "not-a-number";
+    assert.equal(sdk.verifyExecutionIntent(malformedValue, proof, ethers), false);
+    assert.throws(() => sdk.buildExecutionIntent(proof, { sender, target, calldataHash: ethers.id("swap-calldata"),
+      value: 0n, nonce: 7, deadline: 1789000001 }, ethers), /execution intent/);
+  });
+
+  it("creates intent-bound settlement evidence and rejects replay or transaction substitution", function () {
+    const proof = singleRouteProof(), execution = { chainId: 97, transactionHash: ethers.id("intent-tx"),
+      blockHash: ethers.id("intent-block"), blockNumber: 12350, settledAt: 1788999999, recipient: tokenA,
+      actualAmountOut: 995n, status: 1, sender: tokenA, target: tokenC,
+      calldataHash: ethers.id("swap-calldata"), value: 0n, nonce: 7 };
+    const intent = sdk.buildExecutionIntent(proof, { sender: execution.sender, target: execution.target,
+      calldataHash: execution.calldataHash, value: execution.value, nonce: execution.nonce, deadline: 1788999999 }, ethers);
+    const evidence = sdk.buildIntentBoundSettlementReceipt(proof, intent, execution, ethers);
+    assert.equal(sdk.verifyIntentBoundSettlementReceipt(evidence, proof, intent, ethers), true);
+    assert.throws(() => sdk.buildIntentBoundSettlementReceipt(proof, intent, { ...execution, nonce: 8 }, ethers), /match intent/);
+    const tampered = structuredClone(evidence); tampered.intentHash = ethers.id("substituted");
+    assert.equal(sdk.verifyIntentBoundSettlementReceipt(tampered, proof, intent, ethers), false);
+  });
+
+  it("validates a deterministic multi-DEX quote API request and proof response", function () {
+    const proof = singleRouteProof();
+    const request = sdk.buildQuoteApiRequest({ chainId: 97, tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n,
+      requestedAt: 1788999900, expiresAt: 1788999960, clientRequestId: "mobile-quote-7" }, ethers);
+    const result = sdk.validateQuoteApiResponse(request, { requestHash: request.requestHash.toLowerCase(), proof }, ethers, 1788999920);
+    assert.equal(result.valid, true); assert.equal(result.candidateCount, 1); assert.equal(result.proofHash, proof.proofHash.toLowerCase());
+    assert.throws(() => sdk.validateQuoteApiResponse(request, { requestHash: request.requestHash, proof }, ethers, 1789000000), /response context/);
+    const wrong = structuredClone(proof); wrong.amountIn = "999";
+    assert.throws(() => sdk.validateQuoteApiResponse(request, { requestHash: request.requestHash, proof: wrong }, ethers, 1788999920), /proof mismatch/);
+    assert.throws(() => sdk.buildQuoteApiRequest({ chainId: 56 }, ethers), /quote API request/);
+    assert.throws(() => sdk.buildQuoteApiRequest({ chainId: 97, tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n,
+      requestedAt: 1788999900, expiresAt: 1788999960 }, ethers), /request id/);
+  });
+
+  it("maps failures to deterministic mobile recovery actions", function () {
+    assert.equal(sdk.recoveryActionForError(new Error("StaleQuote")), "REFRESH_QUOTE");
+    assert.equal(sdk.recoveryActionForError({ code: "NETWORK_ERROR" }), "SWITCH_NETWORK");
+    assert.equal(sdk.recoveryActionForError({ code: "ACTION_REJECTED" }), "RETRY");
+    assert.equal(sdk.recoveryActionForError({ code: "INSUFFICIENT_FUNDS" }), "ADD_TEST_GAS");
+    assert.equal(sdk.recoveryActionForError(new Error("unexpected")), "REVIEW");
+  });
+
   it("binds a valid best-execution proof to its successful settlement", function () {
     const proof = singleRouteProof();
     const receipt = sdk.buildSettlementReceipt(proof, { chainId: 97, transactionHash: ethers.id("tx"),
@@ -464,6 +518,8 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.validateExecutionQuote(snapshot, { ...current, blockNumber: 106 }), /StaleQuote/);
     assert.throws(() => sdk.validateExecutionQuote(snapshot, { ...current, amountOut: 197n }), /QuotePriceMoved/);
     assert.throws(() => sdk.validateExecutionQuote(snapshot, current, { maxAgeMs: 999 }), /Invalid quote validation/);
+    assert.throws(() => sdk.validateExecutionQuote({ ...snapshot, amountOut: 0n }, current), /Invalid quote amounts/);
+    assert.throws(() => sdk.validateExecutionQuote(snapshot, { ...current, blockNumber: -1 }), /Invalid quote context/);
     assert.equal(sdk.explainSwapError(new Error("StaleQuote")).code, "STALE_QUOTE");
     assert.equal(sdk.explainSwapError(new Error("QuotePriceMoved")).code, "PRICE_MOVED");
     assert.equal(sdk.explainSwapError({ code: "CALL_EXCEPTION" }).code, "SIMULATION_FAILED");

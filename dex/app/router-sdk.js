@@ -125,6 +125,52 @@
     const{proofHash,...payload}=proof;
     return ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase()===proofHash.toLowerCase();
   }
+  function buildExecutionIntent(proof,input,ethers){
+    if(!verifyBestExecutionProof(proof,ethers)||!input||!ethers.isAddress(input.sender)||!ethers.isAddress(input.target)||
+      !ethers.isHexString(input.calldataHash,32)||typeof input.value!=='bigint'||input.value<0n||
+      !Number.isSafeInteger(input.nonce)||input.nonce<0||!Number.isSafeInteger(input.deadline)||input.deadline<=0||input.deadline>proof.expiresAt)throw new Error('Invalid execution intent');
+    const payload={version:1,type:'LQC_EXECUTION_INTENT',chainId:proof.chainId,proofHash:proof.proofHash.toLowerCase(),
+      sender:input.sender.toLowerCase(),target:input.target.toLowerCase(),calldataHash:input.calldataHash.toLowerCase(),
+      value:input.value.toString(),nonce:input.nonce,deadline:input.deadline};
+    return{...payload,intentHash:ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload)))};
+  }
+  function verifyExecutionIntent(intent,proof,ethers){
+    if(!intent||!verifyBestExecutionProof(proof,ethers)||!ethers.isHexString(intent.intentHash,32)||intent.proofHash!==proof.proofHash.toLowerCase())return false;
+    const{intentHash,...payload}=intent;
+    if(payload.version!==1||payload.type!=='LQC_EXECUTION_INTENT'||payload.chainId!==proof.chainId||!ethers.isAddress(payload.sender)||!ethers.isAddress(payload.target)||!ethers.isHexString(payload.calldataHash,32)||!Number.isSafeInteger(payload.nonce)||payload.nonce<0||!Number.isSafeInteger(payload.deadline)||payload.deadline<=0||payload.deadline>proof.expiresAt)return false;
+    try{if(BigInt(payload.value)<0n)return false;}catch{return false;}
+    return ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase()===intentHash.toLowerCase();
+  }
+  function buildIntentBoundSettlementReceipt(proof,intent,execution,ethers){
+    if(!verifyExecutionIntent(intent,proof,ethers)||!execution||String(execution.sender||'').toLowerCase()!==intent.sender||String(execution.target||'').toLowerCase()!==intent.target||String(execution.calldataHash||'').toLowerCase()!==intent.calldataHash||String(execution.value)!==intent.value||execution.nonce!==intent.nonce)throw new Error('Execution does not match intent');
+    const settlement=buildSettlementReceipt(proof,execution,ethers),payload={version:1,type:'LQC_INTENT_BOUND_SETTLEMENT',proofHash:proof.proofHash.toLowerCase(),intentHash:intent.intentHash.toLowerCase(),settlement};
+    return{...payload,evidenceHash:ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload)))};
+  }
+  function verifyIntentBoundSettlementReceipt(evidence,proof,intent,ethers){
+    if(!evidence||!verifyExecutionIntent(intent,proof,ethers)||evidence.proofHash!==proof.proofHash.toLowerCase()||evidence.intentHash!==intent.intentHash.toLowerCase()||!verifySettlementReceipt(evidence.settlement,proof,ethers)||!ethers.isHexString(evidence.evidenceHash,32))return false;
+    const{evidenceHash,...payload}=evidence;
+    return payload.version===1&&payload.type==='LQC_INTENT_BOUND_SETTLEMENT'&&ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase()===evidenceHash.toLowerCase();
+  }
+  function buildQuoteApiRequest(input,ethers){
+    if(!ethers||Number(input?.chainId)!==97||!ethers.isAddress(input.tokenIn)||!ethers.isAddress(input.tokenOut)||input.tokenIn.toLowerCase()===input.tokenOut.toLowerCase()||typeof input.amountIn!=='bigint'||input.amountIn<=0n||!Number.isSafeInteger(input.requestedAt)||!Number.isSafeInteger(input.expiresAt)||input.expiresAt<=input.requestedAt||input.expiresAt-input.requestedAt>60000)throw new Error('Invalid quote API request');
+    const payload={version:1,type:'LQC_MULTI_DEX_QUOTE_REQUEST',chainId:97,tokenIn:input.tokenIn.toLowerCase(),tokenOut:input.tokenOut.toLowerCase(),amountIn:input.amountIn.toString(),requestedAt:input.requestedAt,expiresAt:input.expiresAt,clientRequestId:String(input.clientRequestId||'')};
+    if(!payload.clientRequestId||payload.clientRequestId.length>128)throw new Error('Invalid quote API request id');
+    return{...payload,requestHash:ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload)))};
+  }
+  function validateQuoteApiResponse(request,response,ethers,now){
+    if(!request||!response||!ethers.isHexString(request.requestHash,32)||response.requestHash!==request.requestHash.toLowerCase()||!Number.isSafeInteger(now)||now<request.requestedAt||now>request.expiresAt)throw new Error('Invalid quote API response context');
+    const rebuilt=buildQuoteApiRequest({...request,amountIn:BigInt(request.amountIn)},ethers);
+    if(rebuilt.requestHash.toLowerCase()!==request.requestHash.toLowerCase()||!verifyBestExecutionProof(response.proof,ethers)||response.proof.chainId!==request.chainId||response.proof.tokenIn!==request.tokenIn||response.proof.tokenOut!==request.tokenOut||response.proof.amountIn!==request.amountIn)throw new Error('Quote API proof mismatch');
+    return{valid:true,requestHash:request.requestHash.toLowerCase(),proofHash:response.proof.proofHash.toLowerCase(),candidateCount:response.proof.candidates.length,expiresAt:request.expiresAt};
+  }
+  function recoveryActionForError(error){
+    const code=explainSwapError(error).code;
+    if(['STALE_QUOTE','PRICE_MOVED','NO_ROUTE','ROUTE_CHANGED'].includes(code))return'REFRESH_QUOTE';
+    if(code==='NETWORK_ERROR')return'SWITCH_NETWORK';
+    if(['APPROVAL_REQUIRED','USER_REJECTED'].includes(code))return'RETRY';
+    if(code==='INSUFFICIENT_GAS')return'ADD_TEST_GAS';
+    return'REVIEW';
+  }
   function buildSettlementReceipt(proof,execution,ethers){
     if(!verifyBestExecutionProof(proof,ethers))throw new Error('Invalid best execution proof');
     if(!execution||Number(execution.chainId)!==proof.chainId||!ethers.isHexString(execution.transactionHash,32)||!ethers.isHexString(execution.blockHash,32)||!Number.isInteger(execution.blockNumber)||execution.blockNumber<proof.quoteBlock)throw new Error('Invalid settlement context');
@@ -253,5 +299,5 @@
     if(nativeBalance<requiredNative)throw new Error('insufficient funds: native balance and gas');
     return{sufficient:true,gasCost,requiredNative};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildExecutionIntent,verifyExecutionIntent,buildIntentBoundSettlementReceipt,verifyIntentBoundSettlementReceipt,buildQuoteApiRequest,validateQuoteApiResponse,recoveryActionForError,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);

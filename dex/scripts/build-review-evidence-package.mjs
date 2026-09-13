@@ -6,7 +6,7 @@ import { buildAppConfig } from "./app-config.mjs";
 const SOURCE_REVISION = /^[0-9a-fA-F]{40}$/;
 const digest = value => `sha256:${crypto.createHash("sha256").update(JSON.stringify(value)).digest("hex")}`;
 
-export function buildReviewEvidencePackage({ deployment, monitoring, emergencyDrill, externalEvidence = {} }) {
+export function buildReviewEvidencePackage({ deployment, monitoring, emergencyDrill, executionEvidence, externalEvidence = {} }) {
   if (Number(deployment?.network?.chainId) !== 97 || Number(monitoring?.network?.chainId) !== 97 ||
       Number(emergencyDrill?.network?.chainId) !== 97) {
     throw new Error("Every technical artifact must target BSC testnet chain 97.");
@@ -25,6 +25,14 @@ export function buildReviewEvidencePackage({ deployment, monitoring, emergencyDr
   if (emergencyDrill.result !== "PASS" || !/^sha256:[0-9a-f]{64}$/.test(emergencyDrill.evidenceDigest || "")) {
     throw new Error("A passing emergency drill with an evidence digest is required.");
   }
+  if (executionEvidence) {
+    if (Number(executionEvidence.chainId) !== 97 || executionEvidence.sourceRevision?.toLowerCase() !== deployment.sourceRevision.toLowerCase() ||
+        executionEvidence.deploymentFingerprint !== deploymentFingerprint || !Number.isInteger(executionEvidence.verifiedProofs) || executionEvidence.verifiedProofs < 1 ||
+        !Number.isInteger(executionEvidence.verifiedSettlements) || executionEvidence.verifiedSettlements < 1 ||
+        !/^sha256:[0-9a-f]{64}$/.test(executionEvidence.evidenceDigest || "")) {
+      throw new Error("Execution evidence must bind verified proofs and settlements to this deployment.");
+    }
+  }
   const pendingExternalEvidence = [];
   if (!deployment.verification?.explorerVerifiedSource) pendingExternalEvidence.push("EXPLORER_VERIFIED_SOURCE");
   if (!externalEvidence.auditReportHash) pendingExternalEvidence.push("INDEPENDENT_AUDIT");
@@ -35,6 +43,9 @@ export function buildReviewEvidencePackage({ deployment, monitoring, emergencyDr
     emergencyDrill: { digest: digest(emergencyDrill), drillId: emergencyDrill.drillId,
       completedAt: emergencyDrill.completedAt, evidenceDigest: emergencyDrill.evidenceDigest }
   };
+  if (executionEvidence) artifacts.bestExecution = { digest: digest(executionEvidence),
+    verifiedProofs: executionEvidence.verifiedProofs, verifiedSettlements: executionEvidence.verifiedSettlements,
+    evidenceDigest: executionEvidence.evidenceDigest };
   const manifest = { schemaVersion: 1, packageType: "LQC_CEX_SECURITY_REVIEW_EVIDENCE",
     network: deployment.network, technicalEvidenceStatus: "PASS",
     submissionStatus: pendingExternalEvidence.length ? "INCOMPLETE" : "READY_FOR_REVIEW",
@@ -47,13 +58,13 @@ export function buildReviewEvidencePackage({ deployment, monitoring, emergencyDr
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
-    const [deploymentPath, monitoringPath, drillPath, externalPath] = process.argv.slice(2);
+    const [deploymentPath, monitoringPath, drillPath, externalPath, executionPath] = process.argv.slice(2);
     if (!deploymentPath || !monitoringPath || !drillPath) {
-      throw new Error("Usage: npm run package:review-evidence -- <deployment.json> <monitoring.json> <drill.json> [external-evidence.json]");
+      throw new Error("Usage: npm run package:review-evidence -- <deployment.json> <monitoring.json> <drill.json> [external-evidence.json] [execution-evidence.json]");
     }
     const read = file => JSON.parse(fs.readFileSync(file, "utf8"));
     const result = buildReviewEvidencePackage({ deployment: read(deploymentPath), monitoring: read(monitoringPath),
-      emergencyDrill: read(drillPath), externalEvidence: externalPath ? read(externalPath) : {} });
+      emergencyDrill: read(drillPath), externalEvidence: externalPath ? read(externalPath) : {}, executionEvidence: executionPath ? read(executionPath) : undefined });
     console.log(JSON.stringify(result, null, 2));
   } catch (error) {
     console.error(error.message);
