@@ -98,6 +98,22 @@ of real funds.
 
 To deploy after compilation:
 
+Before supplying any private key, run the read-only readiness inspector. It checks chain `97`, the
+deployer's tBNB balance, tLQC/WBNB bytecode, pinned PancakeSwap endpoints, four operational-role
+addresses, and the reviewed V3 pool. It never signs or submits a transaction:
+
+```bash
+export BSC_TESTNET_RPC_URL="https://bsc-testnet.drpc.org"
+export DEPLOYER_ADDRESS="0x..."
+export TEST_LQC_ADDRESS="0x..."
+export WBNB_ADDRESS="0x..."
+export FACTORY_OWNER="0x..."
+export RISK_ADMIN="0x..."
+export GUARDIAN_ADDRESS="0x..."
+export TREASURY_ADDRESS="0x..."
+npm run inspect:testnet-readiness
+```
+
 ```bash
 # export BSC_TESTNET_RPC_URL="..." # 기본 RPC를 사용하면 생략 가능
 export DEPLOYER_PRIVATE_KEY="..."
