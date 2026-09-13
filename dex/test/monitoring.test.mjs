@@ -6,6 +6,7 @@ const healthyInput = () => ({
   checkedAt: "2026-09-09T00:02:00.000Z", block: { number: 123, timestamp: 1788912060 }, maxBlockAgeSeconds: 180,
   validation: { lqc: { contractCount: 6, dexCount: 3, swapsPaused: false } }, validationError: null,
   custody: [{ contract: "executionRouter", asset: "BNB", balance: "0" }, { contract: "executionRouter", asset: "lqc", balance: "0" }],
+  allowances: [{ owner: "executionRouter", spender: "adapter-LQC Flow", asset: "lqc", amount: "0" }],
   ownership: [{ contract: "dexRegistry", owner: "0x0000000000000000000000000000000000000001", pendingOwner: ethers.ZeroAddress }],
   safeState: [{ name: "governance",
     owners: Array.from({ length: 7 }, (_, index) => `0x${(index + 10).toString(16).padStart(40, "0")}`),
@@ -30,6 +31,13 @@ describe("LQC BSC testnet monitoring report", function () {
     const report = buildMonitoringReport(input);
     assert.equal(report.status, "CRITICAL");
     assert.equal(report.counts.critical, 3);
+  });
+
+  it("fails closed for a residual Router-to-adapter approval", function () {
+    const input = healthyInput(); input.allowances[0].amount = "1";
+    const report = buildMonitoringReport(input);
+    assert.equal(report.status, "CRITICAL");
+    assert.equal(report.checks.find(check => check.id.startsWith("allowance.")).status, "CRITICAL");
   });
 
   it("surfaces emergency pauses and pending ownership transfers as warnings", function () {
