@@ -15,6 +15,8 @@ describe("LQC DEX app deployment configuration", function () {
     const first = buildAppConfig(deployment), second = buildAppConfig(deployment);
     assert.equal(first.deploymentFingerprint, second.deploymentFingerprint);
     assert.equal(first.tokens.find(token => token.symbol === "LQC").address, address(9));
+    assert.equal(first.tokens.find(token => token.symbol === "LQC").displaySymbol, "tLQC");
+    assert.equal(first.tokens.find(token => token.symbol === "BNB").displaySymbol, "tBNB");
     assert.equal(first.dexes[0].adapter, address(11));
   });
   it("rejects wrong chains, missing contracts, and duplicate DEX ids", function () {
