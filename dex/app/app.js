@@ -20,7 +20,8 @@
   const pendingSwapKey=owner=>`lqc-flow-pending-swap:${cfg.chainId}:${String(owner||'').toLowerCase()}`;
   const rememberPendingSwap=tx=>localStorage.setItem(pendingSwapKey(account),JSON.stringify({hash:tx.hash,createdAt:Date.now()}));
   const clearPendingSwap=owner=>localStorage.removeItem(pendingSwapKey(owner));
-  async function blockIfPendingSwap(){const key=pendingSwapKey(account),raw=localStorage.getItem(key);if(!raw)return false;let pending;try{pending=JSON.parse(raw)}catch{localStorage.removeItem(key);return false}if(!ethers.isHexString(pending?.hash,32)){localStorage.removeItem(key);return false}const receipt=await provider.getTransactionReceipt(pending.hash);if(receipt){localStorage.removeItem(key);return false}status(t('pendingTransaction'),'error',pending.hash);return true}
+  async function blockIfPendingSwap(){const key=pendingSwapKey(account),raw=localStorage.getItem(key);if(!raw)return false;let pending;try{pending=JSON.parse(raw)}catch{localStorage.removeItem(key);return false}if(!ethers.isHexString(pending?.hash,32)){localStorage.removeItem(key);return false}try{const receipt=await provider.getTransactionReceipt(pending.hash);if(receipt){localStorage.removeItem(key);return false}}catch{status(t('pendingCheckFailed'),'error');return true}status(t('pendingTransaction'),'error',pending.hash);return true}
+  async function blockIfNetworkTransactionPending(){try{const[latestNonce,pendingNonce]=await Promise.all([provider.getTransactionCount(account,'latest'),provider.getTransactionCount(account,'pending')]);if(pendingNonce>latestNonce){status(t('networkPendingTransaction'),'error');return true}return false}catch{status(t('pendingCheckFailed'),'error');return true}}
   const localizedError=e=>{const guidance=sdk.explainSwapError(e);return t(`error_${guidance.code}`)};
   const disabled=v=>ui.execute.disabled=v;
   const lockTradeControls=v=>{for(const control of[ui.amountIn,ui.slippage,ui.tokenInButton,ui.tokenOutButton,ui.flip,ui.max,ui.buy,ui.sell,ui.quick])control.disabled=v;disabled(v||!deploymentReady)};
@@ -122,7 +123,7 @@
   async function submitExecution(transaction,activeSigner){return activeSigner.sendTransaction(transaction)}
   async function swap(){
     if((minimalMode?!router:!executionRouter)||!account)return connect();const raw=ui.amountIn.value.trim();if(!raw||Number(raw)<=0)return status(t('enterAmount'),'error');
-    if(await blockIfPendingSwap())return;
+    if(await blockIfPendingSwap()||await blockIfNetworkTransactionPending())return;
     if(swapInFlight)return;swapInFlight=true;lockTradeControls(true);const tradeAccount=account,tradeSigner=signer;
     try{
       await validateWalletExecutionSession(tradeAccount);disabled(true);const value=ethers.parseUnits(raw,tokenIn.decimals),path=[address(tokenIn),address(tokenOut)];let plan=minimalMode?await validatedMinimalExecutionPlan(value,path):await validatedExecutionPlan(value,path),deadline=Math.floor(Date.now()/1000)+1200,bps=Math.round(Number(ui.slippage.value)*100);
