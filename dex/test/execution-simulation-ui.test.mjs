@@ -13,7 +13,7 @@ describe("LQC DEX pre-submission simulation", function () {
   it("simulates and submits the exact same transaction request", function () {
     assert.match(app, /provider\.call\(\{\.\.\.transaction,from:account\}\)/);
     assert.match(app, /activeSigner\.sendTransaction\(transaction\)/);
-    assert.match(app, /const executionTransaction=await buildExecutionTransaction\(/);
+    assert.match(app, /executionTransaction=\{\.\.\.\(await buildExecutionTransaction\(/);
     assert.ok(app.indexOf("await simulateExecution(") < app.indexOf("await submitExecution("));
   });
 
@@ -64,5 +64,12 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app,/buildExecutionTransaction\(plan,value,path,deadline,bps,tradeAccount\)/);
     assert.match(app,/submitExecution\(executionTransaction,tradeSigner\)/);
     assert.ok((app.match(/validateWalletExecutionSession\(tradeAccount\)/g)||[]).length>=3);
+  });
+
+  it("pins and revalidates the pending nonce for approvals and swaps", function () {
+    assert.match(app,/getTransactionCount\(expectedAccount,'pending'\)/);
+    assert.match(app,/getTransactionCount\(tradeAccount,'pending'\)/);
+    assert.ok((app.match(/sdk\.validatePendingNonce\(nonce,await provider\.getTransactionCount\(/g)||[]).length>=2);
+    assert.match(app,/executionTransaction=\{\.\.\.\(await buildExecutionTransaction\(.+\),nonce\}/);
   });
 });

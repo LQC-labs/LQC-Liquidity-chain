@@ -114,6 +114,13 @@ describe("LQC Router browser SDK", function () {
     assert.throws(()=>sdk.validateExecutionSession(tokenA,[tokenA],"bad","0x61",ethers),/chain unavailable/);
   });
 
+  it("rejects a pending nonce change before wallet submission", function () {
+    assert.deepEqual({...sdk.validatePendingNonce(7,7)},{valid:true,nonce:7});
+    assert.throws(()=>sdk.validatePendingNonce(7,8),/nonce changed/);
+    assert.throws(()=>sdk.validatePendingNonce(-1,0),/Invalid pending nonce/);
+    assert.throws(()=>sdk.validatePendingNonce(1.5,1),/Invalid pending nonce/);
+  });
+
   it("requires approval only when the selected spender allowance is insufficient", function () {
     assert.equal(sdk.requiresTokenApproval(99n, 100n), true);
     assert.equal(sdk.requiresTokenApproval(100n, 100n), false);
