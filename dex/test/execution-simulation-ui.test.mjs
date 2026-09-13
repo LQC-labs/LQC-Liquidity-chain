@@ -159,7 +159,10 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app,/token\.approve\.populateTransaction\(spender,amount\)/);
     const approval=app.slice(app.indexOf("async function approveExact"),app.indexOf("async function submitExecution"));
     assert.ok(approval.indexOf("await validateFunds(transaction,value)")<approval.indexOf("await simulateExecution(transaction)"));
-    assert.ok(approval.indexOf("await simulateExecution(transaction)")<approval.indexOf("token.runner.sendTransaction(transaction)"));
+    assert.ok(approval.indexOf("await simulateExecution(transaction)")<approval.indexOf("submitExecution(transaction,token.runner)"));
+    assert.match(approval,/transaction\.gasLimit=estimatedGas\*120n\/100n/);
+    assert.match(approval,/const tx=await submitExecution\(transaction,token\.runner\)/);
+    assert.match(approval,/receipt=await waitForReceipt\(tx\)/);
   });
 
   it("blocks duplicate submissions and locks mutable trade controls in flight", function () {
