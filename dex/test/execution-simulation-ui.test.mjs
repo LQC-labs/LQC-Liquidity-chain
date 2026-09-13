@@ -44,6 +44,15 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /return provider\[method\]\(\.\.\.args\)/);
   });
 
+  it("retries deployment verification against each configured RPC endpoint", function () {
+    assert.match(app, /async function verifyConfiguredDeployment\(\)/);
+    assert.match(app, /for\(const url of cfg\.rpcUrls\)/);
+    assert.match(app, /const verificationProvider=createRpcProvider\(url\)/);
+    assert.match(app, /sdk\.verifyMinimalUiDeployment\(verificationProvider,cfg,ethers\)/);
+    assert.match(app, /sdk\.verifyUiDeployment\(verificationProvider,cfg,ethers\)/);
+    assert.match(app, /if\(configured\)\{await verifyConfiguredDeployment\(\);deploymentReady=true\}/);
+  });
+
   it("rejects malformed and over-precision token amounts before wallet prompts", function () {
     assert.match(app, /const parseTradeAmount=/);
     assert.match(app, /parts\[1\]\?\.length>token\.decimals/);
