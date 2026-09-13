@@ -34,4 +34,10 @@ describe("BSC testnet read-only readiness inspection", function () {
     assert.ok(result.checks.some(check => check.name === "TREASURY_ADDRESS" && !check.pass));
     assert.ok(result.checks.some(check => check.name === "pancakeV3Pool" && !check.pass));
   });
+
+  it("fails closed unless the pilot V3 fee is exactly 2500", async function () {
+    const result = await inspectTestnetReadiness({ ...env, PANCAKE_V3_FEE: "500" }, provider());
+    assert.equal(result.status, "blocked");
+    assert.equal(result.checks.find(check => check.name === "pancakeV3Fee").pass, false);
+  });
 });
