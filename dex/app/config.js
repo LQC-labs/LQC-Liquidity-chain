@@ -4,10 +4,14 @@ window.LQC_FLOW_CONFIG = Object.freeze({
   chainIdHex: "0x61",
   chainName: "BSC Testnet",
   rpcUrls: [
+    "https://bsc-testnet.drpc.org",
     "https://data-seed-prebsc-1-s1.bnbchain.org:8545",
     "https://data-seed-prebsc-2-s1.binance.org:8545",
     "https://data-seed-prebsc-1-s2.binance.org:8545"
   ],
+  rpcTimeoutMs: 15000,
+  quoteMaxAgeMs: 300000,
+  quoteMaxBlockDrift: 300,
   blockExplorerUrls: ["https://testnet.bscscan.com"],
   nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 },
   minimalRouterGasUnits: 180000,
