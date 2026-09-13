@@ -89,4 +89,14 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app,/quoteSnapshot=null;disabled\(true\);ui\.quoteUpdated\.textContent='—'/);
     assert.match(app,/if\(!v&&quoteSnapshot\)markQuoteFresh\(\)/);
   });
+
+  it("pins every route and price-impact read to one quote block", function () {
+    assert.match(app,/async function bestQuote\(value,path,blockTag\)/);
+    assert.match(app,/async function executionPlan\(value,path,blockTag\)/);
+    assert.match(app,/blockNumber=await withinQuoteDeadline\(provider\.getBlockNumber\(\),quoteDeadline\)/);
+    assert.match(app,/executionPlan\(value,path,blockNumber\)/);
+    assert.match(app,/planPriceImpact\(value,out,probe,path,plan,blockNumber\)/);
+    assert.ok((app.match(/\{blockTag\}/g)||[]).length>=5);
+    assert.match(app,/getAmountsOut\(value,path,\{blockTag:blockNumber\}\)/);
+  });
 });
