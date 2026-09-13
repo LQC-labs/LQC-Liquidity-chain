@@ -4,7 +4,7 @@
   const dictionaries = Object.freeze({
     ko: Object.freeze({
       backHome: '홈으로 돌아가기', connectWallet: '지갑 연결', favorite: '즐겨찾기', more: '더보기',
-      marketChart: 'tLQC 테스트넷 시장 차트', price: '가격 ⇌', marketCap: '시가총액', liquidity: '유동성', volume24h: '24시간 거래량', holders: '보유자',
+      marketChart: 'tLQC 테스트넷 시장 차트', price: '테스트넷 예시 가격 · 실시간 아님', marketCap: '시가총액', liquidity: '유동성', volume24h: '24시간 거래량', holders: '보유자',
       charts: '차트', info: '정보', data: '데이터', risk: '위험', routes: '경로', marketInfo: '시장 정보', marketSearch: '시장 검색', lpFee: 'LP 수수료', route: '경로', optimalPath: '최적 경로', chartIntervals: '차트 시간 단위', moreIntervals: '더보기⌄', chartType: '차트 유형', tradeSettings: '거래 설정',
       accountInfo: '계정 정보', myPositions: '내 포지션', topTraders: '상위 거래자', activities: '활동', lqcBalance: 'tLQC 잔액', unrealizedPnl: '미실현 손익', holdings: '보유 수량', network: '네트워크',
       buyLqc: 'tLQC 매수', sellLqc: 'tLQC 매도', closeOrder: '주문창 닫기', slippageTolerance: '슬리피지 허용 범위', customSlippage: '직접 입력 슬리피지', sendToken: '보내는 토큰', amountToSend: '보낼 수량', balance: '잔액', flipTokens: '토큰 순서 변경', receiveToken: '받는 토큰', estimatedAmount: '예상 수량',
@@ -18,7 +18,7 @@
     }),
     en: Object.freeze({
       backHome: 'Back to home', connectWallet: 'Connect wallet', favorite: 'Favorite', more: 'More',
-      marketChart: 'tLQC testnet market chart', price: 'Price ⇌', marketCap: 'Market cap', liquidity: 'Liquidity', volume24h: '24h volume', holders: 'Holders',
+      marketChart: 'tLQC testnet market chart', price: 'Testnet sample price · Not live', marketCap: 'Market cap', liquidity: 'Liquidity', volume24h: '24h volume', holders: 'Holders',
       charts: 'Charts', info: 'Info', data: 'Data', risk: 'Risk', routes: 'Routes', marketInfo: 'Market information', marketSearch: 'Search market', lpFee: 'LP Fee', route: 'Route', optimalPath: 'Optimal Path', chartIntervals: 'Chart intervals', moreIntervals: 'More⌄', chartType: 'Chart type', tradeSettings: 'Trade settings',
       accountInfo: 'Account information', myPositions: 'My positions', topTraders: 'Top traders', activities: 'Activities', lqcBalance: 'tLQC balance', unrealizedPnl: 'Unrealized PnL', holdings: 'Holdings', network: 'Network',
       buyLqc: 'Buy tLQC', sellLqc: 'Sell tLQC', closeOrder: 'Close order panel', slippageTolerance: 'Slippage tolerance', customSlippage: 'Custom slippage', sendToken: 'You pay', amountToSend: 'Amount to send', balance: 'Balance', flipTokens: 'Switch tokens', receiveToken: 'You receive', estimatedAmount: 'Estimated amount',
