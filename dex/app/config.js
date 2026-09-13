@@ -10,6 +10,7 @@ window.LQC_FLOW_CONFIG = Object.freeze({
   ],
   blockExplorerUrls: ["https://testnet.bscscan.com"],
   nativeCurrency: { name: "tBNB", symbol: "tBNB", decimals: 18 },
+  minimalRouterGasUnits: 180000,
   routerAddress: "0xA3E1fbe94055e7A8971b3994C7025B3c16273a24",
   quoteRouterAddress: null,
   executionRouterAddress: null,
