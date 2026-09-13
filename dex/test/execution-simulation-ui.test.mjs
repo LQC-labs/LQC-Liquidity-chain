@@ -136,6 +136,13 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok(app.indexOf("await validateFunds(executionTransaction,value)") < app.indexOf("await simulateExecution(executionTransaction)"));
   });
 
+  it("passes a buffered preflight gas limit to wallets that cannot estimate it", function () {
+    assert.match(app, /return estimatedGas/);
+    assert.match(app, /const estimatedGas=await validateFunds\(executionTransaction,value\)/);
+    assert.match(app, /executionTransaction\.gasLimit=estimatedGas\*120n\/100n/);
+    assert.match(app, /key==='gasLimit'\?'gas':key/);
+  });
+
   it("uses exact token approvals and validates every approval receipt", function () {
     assert.match(app,/async function approveExact\(token,spender,allowance,value,expectedAccount\)/);
     assert.match(app,/sdk\.exactApprovalAmounts\(allowance,value\)/);
