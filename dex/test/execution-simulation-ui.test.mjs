@@ -16,7 +16,10 @@ describe("LQC DEX pre-submission simulation", function () {
 
   it("simulates and submits the exact same transaction request", function () {
     assert.match(app, /executionRpc\('call',\{\.\.\.transaction,from:account\}\)/);
-    assert.match(app, /activeSigner\.sendTransaction\(transaction\)/);
+    assert.match(app, /walletProvider\.request\(\{method:'eth_sendTransaction'/);
+    assert.match(app, /const walletTransactionHash=response/);
+    assert.match(app, /ethers\.isHexString\(hash,32\)/);
+    assert.match(app, /provider\.waitForTransaction\(hash,confirmations,timeout\)/);
     assert.match(app, /executionTransaction=\{\.\.\.\(await buildExecutionTransaction\(/);
     assert.ok(app.indexOf("await simulateExecution(") < app.indexOf("await submitExecution("));
   });
