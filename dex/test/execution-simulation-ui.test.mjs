@@ -40,6 +40,14 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.doesNotMatch(app, /minimumAmountOut\([^\n]+ui\.slippage\.value/);
   });
 
+  it("reserves live gas plus a buffer when MAX spends native BNB", function () {
+    assert.match(app, /async function nativeMaxReserve\(\)/);
+    assert.match(app, /BigInt\(cfg\.minimalRouterGasUnits\|\|180000\)\*gasPrice\*120n\/100n/);
+    assert.match(app, /tokenIn\.address==='native'\?await nativeMaxReserve\(\):0n/);
+    assert.match(app, /if\(b<=reserve\)return status\(t\('insufficientMaxGas'\),'error'\)/);
+    assert.doesNotMatch(app, /ethers\.parseEther\('\.01'\)/);
+  });
+
   it("shows a conservative numeric tBNB gas estimate in minimal mode", function () {
     assert.match(app, /provider\.getFeeData\(\)/);
     assert.match(app, /BigInt\(cfg\.minimalRouterGasUnits\|\|180000\)\*gasPrice/);
