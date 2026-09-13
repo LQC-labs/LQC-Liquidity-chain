@@ -25,6 +25,13 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /const walletBrowserProvider=new ethers\.BrowserProvider\(target\)/);
   });
 
+  it("blocks unsafe custom slippage before quoting or submitting", function () {
+    assert.match(app, /value<0\.1\|\|value>5/);
+    assert.match(app, /throw new Error\('InvalidSlippage'\)/);
+    assert.match(app, /try\{validatedSlippage\(\)\}catch\{return status\(t\('invalidSlippage'\),'error'\)\}/);
+    assert.doesNotMatch(app, /minimumAmountOut\([^\n]+ui\.slippage\.value/);
+  });
+
   it("revalidates a minimal testnet quote before execution and after token approval", function () {
     assert.match(app, /async function validatedMinimalExecutionPlan\(value,path\)/);
     assert.match(app, /sdk\.validateExecutionQuote\(quoteSnapshot/);
