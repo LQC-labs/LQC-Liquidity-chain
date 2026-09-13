@@ -172,6 +172,8 @@ Treasury allocation, staking rewards, revenue distribution, additional buyback, 
 
 ## Approved Tokenomics Design
 
+Canonical disclosure: [`LQC Tokenomics`](docs/TOKENOMICS.md) · Machine-readable record: [`tokenomics.json`](docs/tokenomics.json)
+
 The current approved design uses a fixed total supply of **1,000,000,000 LQC** and planned TGE circulation of **150,000,000 LQC (15%)**.
 
 | Allocation | Share | LQC | TGE / Release Framework |
@@ -185,7 +187,7 @@ The current approved design uses a fixed total supply of **1,000,000,000 LQC** a
 
 The planned TGE circulation consists of Community Initial 80M, Liquidity & Market Making 50M, Protocol Treasury 10M, and Grants & Strategic Ecosystem 10M.
 
-This is the current approved project design. Contract addresses, on-chain supply controls, final vesting contracts, and verification materials will be published when implementation and review are complete. Earlier drafts using a different total supply are superseded.
+This is the current approved project design. Contract addresses, on-chain supply controls, final vesting contracts, and verification materials will be published when implementation and review are complete.
 
 ## Roadmap
 
