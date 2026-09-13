@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {ILQCDexAdapter} from "./interfaces/ILQCDexAdapter.sol";
 import {ILQCDexRegistry} from "./interfaces/ILQCDexRegistry.sol";
 import {LQCQuoteTypes} from "./libraries/LQCQuoteTypes.sol";
+import {LQCQuoteHash} from "./libraries/LQCQuoteHash.sol";
 
 /// @notice Read-only Router 2.0 component that selects the best valid adapter quote.
 contract LQCQuoteRouter {
@@ -104,22 +105,16 @@ contract LQCQuoteRouter {
                         minimumAmountOut: grossAmountOut *
                             (LQCQuoteTypes.BPS - request.slippageBps) / LQCQuoteTypes.BPS,
                         priority: priority,
-                        routeHash: keccak256(abi.encode(
-                            request.chainId,
+                        routeHash: LQCQuoteHash.compute(
+                            request,
                             block.number,
-                            request.tokenIn,
-                            request.tokenOut,
-                            request.amountIn,
-                            request.recipient,
-                            request.slippageBps,
-                            request.validUntil,
                             dexId,
                             adapter,
-                            keccak256(routeData[i]),
+                            routeData[i],
                             grossAmountOut,
                             gasCostInTokenOut[i],
                             protocolFeeInTokenOut[i]
-                        ))
+                        )
                     });
                 }
             } catch {
