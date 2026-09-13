@@ -40,36 +40,36 @@
   function quoteSoon(){clearTimeout(timer);const requestVersion=++quoteVersion;timer=setTimeout(()=>quote(requestVersion),300)}
   async function withinQuoteDeadline(promise,deadline){const remaining=deadline-Date.now();if(remaining<=0)throw new Error('QuoteTimeout');let timeout;try{return await Promise.race([promise,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(new Error('QuoteTimeout')),remaining)})])}finally{clearTimeout(timeout)}}
   function markQuoteFresh(){clearTimeout(freshnessTimer);const snapshot=quoteSnapshot;ui.quoteUpdated.textContent=new Date(snapshot.quotedAt).toLocaleTimeString();ui.quoteFreshness.textContent=t('quoteFresh');freshnessTimer=setTimeout(()=>{if(quoteSnapshot!==snapshot)return;quoteSnapshot=null;ui.quoteFreshness.textContent=t('quoteStale');ui.preflightState.textContent=t('unavailable');ui.preflightState.className='preflight-warning';disabled(true)},30000)}
-  async function bestQuote(value,path){const routes=sdk.encodeRoutes(cfg.dexes,path,ethers),best=await quoteRouter.quoteBest(path[0],path.at(-1),value,routes),index=cfg.dexes.findIndex(d=>d.id.toLowerCase()===best.dexId.toLowerCase());if(index<0)throw new Error('Unknown DEX');return{best,routeData:routes[index],dex:cfg.dexes[index]}}
-  async function rankedRoutes(value,path,routes,costs){
+  async function bestQuote(value,path,blockTag){const routes=sdk.encodeRoutes(cfg.dexes,path,ethers),best=await quoteRouter.quoteBest(path[0],path.at(-1),value,routes,{blockTag}),index=cfg.dexes.findIndex(d=>d.id.toLowerCase()===best.dexId.toLowerCase());if(index<0)throw new Error('Unknown DEX');return{best,routeData:routes[index],dex:cfg.dexes[index]}}
+  async function rankedRoutes(value,path,routes,costs,blockTag){
     const candidates=await Promise.all(cfg.dexes.map(async(dex,index)=>{
       if(!ethers.isAddress(dex.adapter))return null;
       try{
-        const amountOut=await new ethers.Contract(dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),value,routes[index]);
+        const amountOut=await new ethers.Contract(dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),value,routes[index],{blockTag});
         return{name:dex.name,dex,index,routeData:routes[index],amountOut,cost:costs?.[index]||0n,priority:Number(dex.priority||0)};
       }catch{return null}
     }));
     return sdk.rankRouteQuotes(candidates);
   }
-  async function executionPlan(value,path){
-    const grossSingle=await bestQuote(value,path),routes=sdk.encodeRoutes(cfg.dexes,path,ethers);
+  async function executionPlan(value,path,blockTag){
+    const grossSingle=await bestQuote(value,path,blockTag),routes=sdk.encodeRoutes(cfg.dexes,path,ethers);
     if(tokenIn.address==='native'||tokenOut.address==='native')return{kind:'single',single:grossSingle,routes,costs:cfg.dexes.map(()=>0n),oracleReady:false};
-    let costs;try{const feeData=await provider.getFeeData(),gasUnits=cfg.dexes.map(dex=>BigInt(dex.gasUnits||220000));costs=await gasCostOracle.quoteRouteCosts(path.at(-1),gasUnits,feeData.gasPrice||0n)}catch{return{kind:'single',single:grossSingle,routes,costs:cfg.dexes.map(()=>0n),oracleReady:false}}
-    const ranked=await rankedRoutes(value,path,routes,costs),netBest=ranked[0];
+    let costs;try{const feeData=await provider.getFeeData(),gasUnits=cfg.dexes.map(dex=>BigInt(dex.gasUnits||220000));costs=await gasCostOracle.quoteRouteCosts(path.at(-1),gasUnits,feeData.gasPrice||0n,{blockTag})}catch{return{kind:'single',single:grossSingle,routes,costs:cfg.dexes.map(()=>0n),oracleReady:false}}
+    const ranked=await rankedRoutes(value,path,routes,costs,blockTag),netBest=ranked[0];
     if(!netBest)throw new Error('No executable route after gas');
     const single={best:{dexId:netBest.dex.id,adapter:netBest.dex.adapter,amountOut:netBest.amountOut,priority:netBest.priority},routeData:netBest.routeData,dex:netBest.dex};
-    const split=await splitOptimizer.quoteOptimalSplitCapped(path[0],path.at(-1),value,routes,costs,10,4);
+    const split=await splitOptimizer.quoteOptimalSplitCapped(path[0],path.at(-1),value,routes,costs,10,4,{blockTag});
     if(!sdk.isSplitNetBetter(single.best.amountOut,netBest.cost,split.totalNetAmountOut))return{kind:'single',single,routes,costs,ranked,oracleReady:true};
     return{kind:'split',single,split,routes,costs,ranked,oracleReady:true,summary:sdk.summarizeSplit(cfg.dexes,split.amountsIn,value)};
   }
   async function validatedExecutionPlan(value,path){
     if(!quoteSnapshot)throw new Error('StaleQuote');
-    const [plan,blockNumber]=await Promise.all([executionPlan(value,path),provider.getBlockNumber()]),amountOut=plan.kind==='split'?plan.split.totalAmountOut:plan.single.best.amountOut;
+    const blockNumber=await provider.getBlockNumber(),plan=await executionPlan(value,path,blockNumber),amountOut=plan.kind==='split'?plan.split.totalAmountOut:plan.single.best.amountOut;
     sdk.validateExecutionQuote(quoteSnapshot,{chainId:cfg.chainId,tokenIn:path[0].toLowerCase(),tokenOut:path.at(-1).toLowerCase(),amountIn:value,amountOut,blockNumber,now:Date.now()});
     return plan;
   }
   async function minimalQuote(value,path){
-    const amounts=await router.getAmountsOut(value,path),amountOut=amounts.at(-1),min=sdk.minimumAmountOut(amountOut,ui.slippage.value),blockNumber=await provider.getBlockNumber();
+    const blockNumber=await provider.getBlockNumber(),amounts=await router.getAmountsOut(value,path,{blockTag:blockNumber}),amountOut=amounts.at(-1),min=sdk.minimumAmountOut(amountOut,ui.slippage.value);
     return {amountOut,min,blockNumber};
   }
   async function validatedMinimalExecutionPlan(value,path){
@@ -78,13 +78,13 @@
     sdk.validateExecutionQuote(quoteSnapshot,{chainId:cfg.chainId,tokenIn:path[0].toLowerCase(),tokenOut:path.at(-1).toLowerCase(),amountIn:value,amountOut:current.amountOut,blockNumber:current.blockNumber,now:Date.now()});
     return{kind:'minimal',amountOut:current.amountOut,minimumOut:current.min};
   }
-  async function planPriceImpact(value,out,probe,path,plan){
+  async function planPriceImpact(value,out,probe,path,plan,blockTag){
     if(plan.kind==='single'){
-      const probeOut=await new ethers.Contract(plan.single.dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),probe,plan.single.routeData);
+      const probeOut=await new ethers.Contract(plan.single.dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),probe,plan.single.routeData,{blockTag});
       return sdk.priceImpactBps(value,out,probe,probeOut);
     }
     const expectedParts=await Promise.all(plan.summary.map(async item=>{
-      const index=cfg.dexes.indexOf(item.dex),probeOut=await new ethers.Contract(item.dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),probe,plan.routes[index]);
+      const index=cfg.dexes.indexOf(item.dex),probeOut=await new ethers.Contract(item.dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),probe,plan.routes[index],{blockTag});
       return item.amountIn*probeOut/probe;
     }));
     return sdk.priceImpactFromExpected(out,expectedParts.reduce((total,part)=>total+part,0n));
@@ -97,7 +97,7 @@
       if(minimalMode){
         const path=[address(tokenIn),address(tokenOut)],value=ethers.parseUnits(raw,tokenIn.decimals),result=await withinQuoteDeadline(minimalQuote(value,path),quoteDeadline);if(!sdk.isLatestQuote(requestVersion,quoteVersion))return;quoteSnapshot={chainId:cfg.chainId,tokenIn:path[0].toLowerCase(),tokenOut:path.at(-1).toLowerCase(),amountIn:value,amountOut:result.amountOut,minimumOut:result.min,blockNumber:result.blockNumber,quotedAt:Date.now()};ui.amountOut.textContent=ethers.formatUnits(result.amountOut,tokenOut.decimals);ui.minimum.textContent=`${Number(ethers.formatUnits(result.min,tokenOut.decimals)).toLocaleString(undefined,{maximumFractionDigits:6})} ${tokenOut.symbol}`;ui.gas.textContent='≈ 최소 Router 가스';ui.impact.textContent='—';ui.selectedDex.textContent='LQC 최소 Router';ui.alternativeRoute.textContent='단일 경로';ui.preflightState.textContent='테스트넷 최소 모드';ui.preflightState.className='preflight-warning';ui.routeStrategy.textContent='단일 Router';status('견적 준비 완료','success');disabled(false);return;
       }
-      const path=[address(tokenIn),address(tokenOut)],value=ethers.parseUnits(raw,tokenIn.decimals),probe=value>1000n?value/1000n:1n,plan=await withinQuoteDeadline(executionPlan(value,path),quoteDeadline),out=plan.kind==='split'?plan.split.totalAmountOut:plan.single.best.amountOut,[impact,feeData,blockNumber]=await withinQuoteDeadline(Promise.all([planPriceImpact(value,out,probe,path,plan),provider.getFeeData(),provider.getBlockNumber()]),quoteDeadline),ranked=plan.ranked||await withinQuoteDeadline(rankedRoutes(value,path,plan.routes,plan.costs),quoteDeadline),min=sdk.minimumAmountOut(out,ui.slippage.value),gasDex=plan.kind==='split'?{gasUnits:plan.summary.reduce((total,item)=>total+Number(item.dex.gasUnits||220000),0)}:plan.single.dex,gasWei=sdk.estimatedGasWei(gasDex,feeData.gasPrice||0n,tokenIn.address==='native'||tokenOut.address==='native');if(!sdk.isLatestQuote(requestVersion,quoteVersion))return;quoteSnapshot={chainId:cfg.chainId,tokenIn:path[0].toLowerCase(),tokenOut:path.at(-1).toLowerCase(),amountIn:value,amountOut:out,minimumOut:min,blockNumber,quotedAt:Date.now()};
+      const path=[address(tokenIn),address(tokenOut)],value=ethers.parseUnits(raw,tokenIn.decimals),probe=value>1000n?value/1000n:1n,blockNumber=await withinQuoteDeadline(provider.getBlockNumber(),quoteDeadline),plan=await withinQuoteDeadline(executionPlan(value,path,blockNumber),quoteDeadline),out=plan.kind==='split'?plan.split.totalAmountOut:plan.single.best.amountOut,[impact,feeData]=await withinQuoteDeadline(Promise.all([planPriceImpact(value,out,probe,path,plan,blockNumber),provider.getFeeData()]),quoteDeadline),ranked=plan.ranked||await withinQuoteDeadline(rankedRoutes(value,path,plan.routes,plan.costs,blockNumber),quoteDeadline),min=sdk.minimumAmountOut(out,ui.slippage.value),gasDex=plan.kind==='split'?{gasUnits:plan.summary.reduce((total,item)=>total+Number(item.dex.gasUnits||220000),0)}:plan.single.dex,gasWei=sdk.estimatedGasWei(gasDex,feeData.gasPrice||0n,tokenIn.address==='native'||tokenOut.address==='native');if(!sdk.isLatestQuote(requestVersion,quoteVersion))return;quoteSnapshot={chainId:cfg.chainId,tokenIn:path[0].toLowerCase(),tokenOut:path.at(-1).toLowerCase(),amountIn:value,amountOut:out,minimumOut:min,blockNumber,quotedAt:Date.now()};
       ui.amountOut.textContent=ethers.formatUnits(out,tokenOut.decimals);ui.minimum.textContent=`${Number(ethers.formatUnits(min,tokenOut.decimals)).toLocaleString(undefined,{maximumFractionDigits:6})} ${tokenOut.symbol}`;ui.gas.textContent=`≈ ${Number(ethers.formatEther(gasWei)).toFixed(6)} BNB`;ui.impact.textContent=`≈ ${(impact/100).toFixed(2)}%`;ui.impact.classList.toggle('warning',impact>=300);ui.selectedDex.textContent=plan.kind==='split'?plan.summary.map(item=>item.dex.name).join(' + '):plan.single.dex.name;ui.split.textContent=plan.kind==='split'?plan.summary.map(item=>`${item.dex.name} ${item.percent.toFixed(1)}%`).join(' · '):t('singleRoute100');ui.routeStrategy.textContent=t(plan.kind==='split'?'splitStrategy':plan.oracleReady?'bestSingleStrategy':'oraclePendingStrategy');const fallback=ranked.find(item=>item.name!==ranked[0]?.name);ui.alternativeRoute.textContent=fallback?t('fallbackAvailable',{name:fallback.name}):t('noExtraRoute');ui.alternativeRoute.classList.toggle('alternative-ready',Boolean(fallback));ui.preflightState.textContent=t(impact>=300?'highImpact':plan.oracleReady?'readyGasVerified':'limitedOraclePending');ui.preflightState.className=impact>=300||!plan.oracleReady?'preflight-warning':'preflight-safe';status(t(impact>=300?'highImpactHelp':'preflightPassed'),impact>=300?'':'success');disabled(false);
     }catch{if(!sdk.isLatestQuote(requestVersion,quoteVersion))return;ui.selectedDex.textContent=t('noValidRoute');ui.alternativeRoute.textContent=t('noFallbackRoute');ui.preflightState.textContent=t('unavailable');ui.preflightState.className='preflight-warning';disabled(true);status(t('liquidityUnavailable'),'error')}
   }
