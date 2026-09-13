@@ -30,8 +30,10 @@ describe("LQC DEX pre-submission simulation", function () {
 
   it("fails over read-only RPC calls without changing the wallet signer", function () {
     assert.match(app, /new ethers\.FallbackProvider\(cfg\.rpcUrls\.map/);
-    assert.match(app, /new ethers\.JsonRpcProvider\(url,cfg\.chainId,\{staticNetwork:true\}\)/);
-    assert.match(app, /priority:index\+1,stallTimeout:1500,weight:1/);
+    assert.match(app, /new ethers\.FetchRequest\(url\)/);
+    assert.match(app, /request\.timeout=Number\(cfg\.rpcTimeoutMs\|\|15000\)/);
+    assert.match(app, /new ethers\.JsonRpcProvider\(request,cfg\.chainId,\{staticNetwork:true\}\)/);
+    assert.match(app, /priority:index\+1,stallTimeout:2500,weight:1/);
     assert.match(app, /provider=createReadProvider\(\)/);
     assert.match(app, /const walletBrowserProvider=new ethers\.BrowserProvider\(target\)/);
   });
@@ -70,8 +72,11 @@ describe("LQC DEX pre-submission simulation", function () {
   it("revalidates a minimal testnet quote before execution and after token approval", function () {
     assert.match(app, /async function validatedMinimalExecutionPlan\(value,path\)/);
     assert.match(app, /sdk\.validateExecutionQuote\(quoteSnapshot/);
-    assert.match(app, /minimalMode\?await validatedMinimalExecutionPlan\(value,path\):await validatedExecutionPlan\(value,path\)/);
-    assert.match(app, /if\(minimalMode\)plan=await validatedMinimalExecutionPlan\(value,path\)/);
+    assert.match(app, /async function freshExecutionPlan\(value,path\)/);
+    assert.match(app, /let plan=await freshExecutionPlan\(value,path\)/);
+    assert.match(app, /plan=await freshExecutionPlan\(value,path\)/);
+    assert.match(app, /if\(!quoteNeedsRefresh\(e\)\)throw e/);
+    assert.match(app, /await quote\(\);if\(!quoteSnapshot\)throw e;return validate\(\)/);
     assert.match(app, /if\(minimalMode\)\{const min=plan\.minimumOut/);
   });
 
