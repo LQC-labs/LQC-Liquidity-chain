@@ -84,6 +84,14 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app,/finally\{swapInFlight=false;lockTradeControls\(false\)\}/);
   });
 
+  it("restores the pending guard before enabling trades after reconnect", function () {
+    assert.match(app, /pendingGuardActive=false/);
+    assert.match(app, /ui\.execute\.disabled=v\|\|pendingGuardActive/);
+    assert.match(app, /const pendingBlocked=deploymentReady&&\(await blockIfPendingSwap\(\)\|\|await blockIfNetworkTransactionPending\(\)\)/);
+    assert.match(app, /if\(!pendingBlocked\)quoteSoon\(\)/);
+    assert.match(app, /pendingGuardActive=true;status\(t\('networkPendingTransaction'/);
+  });
+
   it("stops waiting after two minutes while preserving pending protection", function () {
     assert.match(app, /tx\.wait\(1,120000\)/);
     assert.match(app, /if\(!receipt\)\{status\(t\('transactionStillPending'\),'pending',tx\.hash\);return\}/);
