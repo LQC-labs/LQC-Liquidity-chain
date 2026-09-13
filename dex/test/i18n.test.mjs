@@ -31,7 +31,7 @@ describe('LQC DEX UI internationalization', function () {
     const { api, storage } = load();
     api.setLocale('en-US');
     assert.equal(api.getLocale(), 'en');
-    assert.equal(api.t('buyLqc'), 'Buy LQC');
+    assert.equal(api.t('buyLqc'), 'Buy tLQC');
     assert.equal(storage.get('lqc-flow-locale'), 'en');
     assert.equal(api.t('approveToken', { token: 'LQC' }), 'Confirm LQC spending approval.');
     assert.match(api.t('error_RISK_BLOCKED'), /risk controls/);
