@@ -62,7 +62,10 @@ describe("LQC DEX pre-submission simulation", function () {
   });
 
   it("shows a conservative numeric tBNB gas estimate in minimal mode", function () {
-    assert.match(app, /provider\.getFeeData\(\)/);
+    assert.match(app, /async function reliableFeeData\(\)/);
+    assert.match(app, /provider\.send\('eth_gasPrice',\[\]\)/);
+    assert.match(app, /result=await minimalQuote\(value,path\);let gasPrice=0n/);
+    assert.match(app, /try\{const feeData=await reliableFeeData\(\)/);
     assert.match(app, /BigInt\(cfg\.minimalRouterGasUnits\|\|180000\)\*gasPrice/);
     assert.match(app, /ethers\.formatEther\(gasWei\)/);
     assert.match(app, /\.toFixed\(6\)\} tBNB/);
