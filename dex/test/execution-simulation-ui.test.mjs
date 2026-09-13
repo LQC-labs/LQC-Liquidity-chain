@@ -157,6 +157,12 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok((app.match(/validateWalletExecutionSession\(tradeAccount\)/g)||[]).length>=3);
   });
 
+  it("announces errors urgently without making normal status noisy", function () {
+    assert.match(app, /const urgent=type==='error'/);
+    assert.match(app, /setAttribute\('role',urgent\?'alert':'status'\)/);
+    assert.match(app, /setAttribute\('aria-live',urgent\?'assertive':'polite'\)/);
+  });
+
   it("announces status changes and exposes selected token accessibly", function () {
     assert.match(html, /id="statusBox" role="status" aria-live="polite" aria-atomic="true"/);
     assert.match(app, /setAttribute\('role','option'\)/);
