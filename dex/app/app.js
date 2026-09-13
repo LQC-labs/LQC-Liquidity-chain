@@ -111,7 +111,7 @@
     return sdk.validateTransactionFunds({nativeBalance,tokenBalance,amountIn:value,estimatedGas,feePerGas:feeData.maxFeePerGas||feeData.gasPrice||0n,nativeInput:tokenIn.address==='native'});
   }
   async function approveExact(token,spender,allowance,value){
-    for(const amount of sdk.exactApprovalAmounts(allowance,value)){const tx=await token.approve(spender,amount),receipt=await tx.wait();sdk.validateSwapReceipt(receipt,tx.hash,ethers)}
+    for(const amount of sdk.exactApprovalAmounts(allowance,value)){const transaction=await token.approve.populateTransaction(spender,amount);await validateFunds(transaction,value);await simulateExecution(transaction);const tx=await signer.sendTransaction(transaction),receipt=await tx.wait();sdk.validateSwapReceipt(receipt,tx.hash,ethers)}
   }
   async function submitExecution(transaction){return signer.sendTransaction(transaction)}
   async function swap(){

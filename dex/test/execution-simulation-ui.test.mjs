@@ -42,4 +42,11 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app,/sdk\.validateSwapReceipt\(receipt,tx\.hash,ethers\)/);
     assert.equal((app.match(/await approveExact\(token,spender,allowance,value\)/g)||[]).length,2);
   });
+
+  it("estimates funds and simulates each approval before asking the wallet to submit", function () {
+    assert.match(app,/token\.approve\.populateTransaction\(spender,amount\)/);
+    const approval=app.slice(app.indexOf("async function approveExact"),app.indexOf("async function submitExecution"));
+    assert.ok(approval.indexOf("await validateFunds(transaction,value)")<approval.indexOf("await simulateExecution(transaction)"));
+    assert.ok(approval.indexOf("await simulateExecution(transaction)")<approval.indexOf("signer.sendTransaction(transaction)"));
+  });
 });
