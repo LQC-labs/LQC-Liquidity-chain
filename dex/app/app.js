@@ -72,7 +72,7 @@
   async function validatedMinimalExecutionPlan(value,path){
     if(!quoteSnapshot)throw new Error('StaleQuote');
     const current=await minimalQuote(value,path);
-    sdk.validateExecutionQuote(quoteSnapshot,{chainId:cfg.chainId,tokenIn:path[0].toLowerCase(),tokenOut:path.at(-1).toLowerCase(),amountIn:value,amountOut:current.amountOut,blockNumber:current.blockNumber,now:Date.now()});
+    sdk.validateExecutionQuote(quoteSnapshot,{chainId:cfg.chainId,tokenIn:path[0].toLowerCase(),tokenOut:path.at(-1).toLowerCase(),amountIn:value,amountOut:current.amountOut,blockNumber:current.blockNumber,now:Date.now()},{maxAgeMs:120000,maxBlockDrift:100});
     return{kind:'minimal',amountOut:current.amountOut,minimumOut:current.min};
   }
   async function planPriceImpact(value,out,probe,path,plan){
