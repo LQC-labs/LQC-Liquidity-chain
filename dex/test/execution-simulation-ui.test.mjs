@@ -17,6 +17,13 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok(app.indexOf("await simulateExecution(") < app.indexOf("await submitExecution("));
   });
 
+  it("filters the token picker by symbol or name without changing configured tokens", function () {
+    assert.match(app, /function tokenList\(query=''\)/);
+    assert.match(app, /token\.symbol\.toLowerCase\(\)\.includes\(term\)/);
+    assert.match(app, /token\.name\.toLowerCase\(\)\.includes\(term\)/);
+    assert.match(app, /ui\.tokenSearch\.oninput=\(\)=>tokenList\(ui\.tokenSearch\.value\)/);
+  });
+
   it("fails over read-only RPC calls without changing the wallet signer", function () {
     assert.match(app, /new ethers\.FallbackProvider\(cfg\.rpcUrls\.map/);
     assert.match(app, /new ethers\.JsonRpcProvider\(url,cfg\.chainId,\{staticNetwork:true\}\)/);
