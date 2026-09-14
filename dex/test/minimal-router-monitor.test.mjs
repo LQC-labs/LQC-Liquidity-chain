@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { buildMinimalRouterReport, createReadProvider, minimalMonitorConfigFromDeployment,
-  parseRpcUrls } from "../scripts/monitor-minimal-router.mjs";
+  parseRpcUrls, selectHealthyRpc } from "../scripts/monitor-minimal-router.mjs";
 
 const address = value => `0x${value.toString(16).padStart(40, "0")}`;
 const healthy = () => ({ checkedAt: "2026-09-14T07:10:00.000Z", blockNumber: 130938158,
@@ -17,6 +17,27 @@ describe("LQC minimal testnet Router monitoring", function () {
     assert.throws(() => parseRpcUrls("http://one.example"), /HTTPS/);
     assert.throws(() => parseRpcUrls("https://one.example,https://one.example"), /unique/);
     assert.throws(() => createReadProvider("https://one.example", 999), /1-30 seconds/);
+  });
+  it("records sanitized failures and selects the first healthy chain-97 RPC", async function () {
+    const providers = new Map([
+      ["https://failed.example/private/key", { getNetwork: async () => { const error = new Error("secret upstream detail"); error.code = "TIMEOUT"; throw error; }, getBlockNumber: async () => 1 }],
+      ["https://healthy.example/api?key=secret", { getNetwork: async () => ({ chainId: 97n }), getBlockNumber: async () => 130938158 }]
+    ]);
+    const result = await selectHealthyRpc([...providers.keys()].join(","), 1000, url => providers.get(url));
+    assert.equal(result.selectedEndpoint, "https://healthy.example");
+    assert.deepEqual(result.diagnostics, [
+      { endpoint: "https://failed.example", status: "FAILED", code: "TIMEOUT" },
+      { endpoint: "https://healthy.example", status: "SELECTED", chainId: 97, blockNumber: 130938158 }
+    ]);
+    assert.equal(JSON.stringify(result.diagnostics).includes("secret"), false);
+  });
+  it("fails with bounded diagnostics when every RPC is unavailable", async function () {
+    const provider = { getNetwork: async () => ({ chainId: 56n }), getBlockNumber: async () => 1 };
+    await assert.rejects(() => selectHealthyRpc("https://wrong.example", 1000, () => provider), error => {
+      assert.equal(error.message, "No healthy BSC Testnet RPC endpoint is available.");
+      assert.deepEqual(error.diagnostics, [{ endpoint: "https://wrong.example", status: "FAILED", code: "WRONG_CHAIN" }]);
+      return true;
+    });
   });
   it("loads every address from the chain-97 minimal deployment record", function () {
     const deployment = { mode: "minimal-testnet-smoke", network: { chainId: 97 }, contracts: {
