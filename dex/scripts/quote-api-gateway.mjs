@@ -9,6 +9,39 @@ const QUOTE_REQUEST_FIELDS = Object.freeze(["version", "type", "chainId", "token
 
 export const hashApiKey = value => crypto.createHash("sha256").update(String(value)).digest("hex");
 
+const exactFields = (value, fields) => value && typeof value === "object" && Object.keys(value).length === fields.length &&
+  fields.every(field => Object.hasOwn(value, field));
+
+export function validateQuoteApiHealth(health, now = Date.now(), maxAgeMs = 60_000) {
+  const capacityFields = ["inFlight", "maxInFlight", "completed", "maxCompletedEntries"];
+  const policyFields = ["providerTimeoutMs", "rateLimit", "rateLimitWindowMs"];
+  const metricFields = ["requests", "authenticated", "unauthorized", "rateLimited", "succeeded", "replayed", "busy", "failed"];
+  const countersValid = exactFields(health?.metrics, metricFields) &&
+    metricFields.every(field => Number.isSafeInteger(health.metrics[field]) && health.metrics[field] >= 0);
+  const capacityValid = exactFields(health?.capacity, capacityFields) && capacityFields.every(field =>
+    Number.isSafeInteger(health.capacity[field]) && health.capacity[field] >= 0) && health.capacity.maxInFlight >= 1 &&
+    health.capacity.maxCompletedEntries >= 1 && health.capacity.inFlight <= health.capacity.maxInFlight &&
+    health.capacity.completed <= health.capacity.maxCompletedEntries;
+  const policyValid = exactFields(health?.policy, policyFields) && Number.isSafeInteger(health.policy.providerTimeoutMs) &&
+    health.policy.providerTimeoutMs >= 10 && health.policy.providerTimeoutMs <= 30_000 &&
+    Number.isSafeInteger(health.policy.rateLimit) && health.policy.rateLimit >= 1 &&
+    Number.isSafeInteger(health.policy.rateLimitWindowMs) && health.policy.rateLimitWindowMs >= 1_000;
+  if (!exactFields(health, ["schemaVersion", "type", "status", "checkedAt", "capacity", "policy", "metrics"]) ||
+      health.schemaVersion !== 1 || health.type !== "LQC_QUOTE_API_HEALTH" || !Number.isSafeInteger(now) ||
+      !Number.isSafeInteger(maxAgeMs) || maxAgeMs < 1_000 || maxAgeMs > 300_000 ||
+      !Number.isSafeInteger(health.checkedAt) || health.checkedAt > now || now - health.checkedAt > maxAgeMs ||
+      !capacityValid || !policyValid || !countersValid ||
+      health.metrics.requests !== health.metrics.authenticated + health.metrics.unauthorized ||
+      health.metrics.rateLimited + health.metrics.succeeded + health.metrics.replayed + health.metrics.busy + health.metrics.failed >
+        health.metrics.authenticated) throw new Error("Invalid quote API health");
+  const inFlightRatio = health.capacity.inFlight / health.capacity.maxInFlight;
+  const replayRatio = health.capacity.completed / health.capacity.maxCompletedEntries;
+  const expected = inFlightRatio >= 1 || replayRatio >= 1 ? "busy" :
+    inFlightRatio >= 0.8 || replayRatio >= 0.8 ? "degraded" : "healthy";
+  if (health.status !== expected) throw new Error("Invalid quote API health");
+  return health;
+}
+
 export function validateQuoteApiCapabilities(capabilities, requirements = {}) {
   const chainId = requirements.chainId ?? 97;
   const requestVersion = requirements.requestVersion ?? 1;
