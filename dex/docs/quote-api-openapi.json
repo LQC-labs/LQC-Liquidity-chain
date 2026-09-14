@@ -46,8 +46,8 @@
         "properties": {
           "version": { "const": 1 }, "type": { "const": "LQC_MULTI_DEX_QUOTE_REQUEST" }, "chainId": { "const": 97 },
           "tokenIn": { "$ref": "#/components/schemas/Address" }, "tokenOut": { "$ref": "#/components/schemas/Address" },
-          "amountIn": { "type": "string", "pattern": "^[1-9][0-9]*$" }, "requestedAt": { "type": "integer", "minimum": 0 },
-          "expiresAt": { "type": "integer", "minimum": 1 }, "clientRequestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "amountIn": { "type": "string", "pattern": "^[1-9][0-9]*$", "maxLength": 78 }, "requestedAt": { "type": "integer", "minimum": 0 },
+          "expiresAt": { "type": "integer", "minimum": 1 }, "clientRequestId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9._:-]+$" },
           "requestHash": { "$ref": "#/components/schemas/Hash32" }
         }
       },
