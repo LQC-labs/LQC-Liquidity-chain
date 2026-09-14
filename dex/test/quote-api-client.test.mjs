@@ -53,11 +53,49 @@ describe("LQC quote API reference client", function () {
 
   it("returns sanitized stable errors without exposing the API key", async function () {
     const secret = "very-secret-api-key-value";
-    const client = createQuoteApiClient({ baseUrl: "https://quotes.example", apiKey: secret, clock:()=>now,
+    const client = createQuoteApiClient({ baseUrl: "https://quotes.example", apiKey: secret, clock:()=>now, maxRetries: 0,
       fetchImpl: async()=>jsonResponse(503, { error: { code: "SERVICE_BUSY", retryable: true } }), validateQuoteResponse: async()=>true });
     await assert.rejects(async()=>client.quote(request()), error => {
       assert.equal(error.code, "SERVICE_BUSY"); assert.equal(error.retryable, true);
       assert.equal(String(error).includes(secret), false); return true;
     });
+  });
+
+  it("retries only retryable failures with the identical idempotent request", async function () {
+    const input = request(), seen = [], delays = [];
+    let calls = 0;
+    const client = createQuoteApiClient({ baseUrl: "https://quotes.example", apiKey: "0123456789abcdef", clock:()=>now,
+      maxRetries: 1, retryDelayMs: 25, delay: async ms => { delays.push(ms); },
+      fetchImpl: async (url, options) => { calls += 1; seen.push({ url, authorization: options.headers.authorization,
+        body: options.body, redirect: options.redirect });
+        if (calls === 1) return jsonResponse(503, { error: { code: "SERVICE_BUSY", retryable: true } });
+        return jsonResponse(200, { schemaVersion: 1, requestHash: input.requestHash, proof: {}, traceId: "retry-ok" });
+      }, validateQuoteResponse: async (original, response) => original.requestHash === response.requestHash });
+    const result = await client.quote(input);
+    assert.equal(result.traceId, "retry-ok"); assert.equal(calls, 2); assert.deepEqual(delays, [25]);
+    assert.equal(seen[0].body, seen[1].body); assert.equal(seen[0].authorization, seen[1].authorization);
+    assert.equal(seen.every(value => value.redirect === "error"), true);
+  });
+
+  it("does not retry non-retryable errors or an expired request", async function () {
+    let calls = 0, current = now;
+    const client = createQuoteApiClient({ baseUrl: "https://quotes.example", apiKey: "0123456789abcdef", clock:()=>current,
+      maxRetries: 2, retryDelayMs: 10, delay: async () => { current = now + 31_000; },
+      fetchImpl: async()=>{ calls += 1; return jsonResponse(503, { error: { code: "SERVICE_BUSY", retryable: true } }); },
+      validateQuoteResponse: async()=>true });
+    await assert.rejects(()=>client.quote(request()), /Invalid canonical quote request/);
+    assert.equal(calls, 1);
+    const rejected = createQuoteApiClient({ baseUrl: "https://quotes.example", apiKey: "0123456789abcdef", clock:()=>now,
+      maxRetries: 2, fetchImpl: async()=>{ calls += 1; return jsonResponse(400, { error: { code: "INVALID_REQUEST", retryable: false } }); },
+      validateQuoteResponse: async()=>true });
+    await assert.rejects(()=>rejected.quote(request()), error => error.code === "INVALID_REQUEST");
+    assert.equal(calls, 2);
+  });
+
+  it("rejects unsafe retry policies", function () {
+    const base = { baseUrl: "https://quotes.example", apiKey: "0123456789abcdef", fetchImpl: async()=>{}, validateQuoteResponse: async()=>true };
+    assert.throws(()=>createQuoteApiClient({ ...base, maxRetries: 3 }), /Invalid quote API client policy/);
+    assert.throws(()=>createQuoteApiClient({ ...base, retryDelayMs: 9 }), /Invalid quote API client policy/);
+    assert.throws(()=>createQuoteApiClient({ ...base, retryDelayMs: 1_001 }), /Invalid quote API client policy/);
   });
 });
