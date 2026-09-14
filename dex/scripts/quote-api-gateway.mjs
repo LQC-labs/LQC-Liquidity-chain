@@ -50,8 +50,11 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
   const usage = new Map();
   const completed = new Map();
   const inFlight = new Map();
+  const purgeExpiredCompleted = now => {
+    for (const [key, value] of completed) if (value.expiresAt < now) completed.delete(key);
+  };
 
-  return async function handleQuote({ authorization, request, traceId }, quote) {
+  const handleQuote = async function handleQuote({ authorization, request, traceId }, quote) {
     const safeTrace = TRACE.test(traceId || "") ? traceId : crypto.randomUUID();
     const match = /^Bearer ([^\s]+)$/.exec(authorization || "");
     const supplied = match ? hashApiKey(match[1]) : "";
@@ -69,7 +72,7 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
 
     try {
       validateCanonicalQuoteRequest(request, now);
-      for (const [key, value] of completed) if (value.expiresAt < now) completed.delete(key);
+      purgeExpiredCompleted(now);
       const replayKey = `${client.id}:${request.clientRequestId}`;
       const previous = completed.get(replayKey);
       if (previous) {
@@ -126,4 +129,16 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
         ["SERVICE_UNAVAILABLE", "SERVICE_BUSY"].includes(code));
     }
   };
+  handleQuote.health = () => {
+    const checkedAt = clock();
+    purgeExpiredCompleted(checkedAt);
+    const inFlightRatio = inFlight.size / maxInFlight;
+    const replayRatio = completed.size / maxCompletedEntries;
+    const status = inFlightRatio >= 1 || replayRatio >= 1 ? "busy" :
+      inFlightRatio >= 0.8 || replayRatio >= 0.8 ? "degraded" : "healthy";
+    return { schemaVersion: 1, type: "LQC_QUOTE_API_HEALTH", status, checkedAt,
+      capacity: { inFlight: inFlight.size, maxInFlight, completed: completed.size, maxCompletedEntries },
+      policy: { providerTimeoutMs, rateLimit: limit, rateLimitWindowMs: windowMs } };
+  };
+  return handleQuote;
 }
