@@ -279,4 +279,22 @@ describe("LQC read-only quote API gateway foundation", function () {
     const denied = await gateway({ authorization: "Bearer unknown-secret", request: request() }, async()=>{ calls += 1; });
     assert.equal(denied.status, 401); assert.equal(calls, 2);
   });
+
+  it("reports aggregate operational metrics without client or trade details", async function () {
+    const gateway = createQuoteApiGateway({ clients: [{ id: "sensitive-partner", keyDigest: hashApiKey("sensitive-secret") }],
+      verifyProof, limit: 1, clock: () => now });
+    await gateway({ authorization: "Bearer wrong", request: request() }, async()=>{});
+    const input = request({ clientRequestId: "metrics-1" });
+    const provider = async value => ({ requestHash: value.requestHash, proof: proof(value) });
+    await gateway({ authorization: "Bearer sensitive-secret", request: input }, provider);
+    await gateway({ authorization: "Bearer sensitive-secret", request: input }, provider);
+    const health = gateway.health();
+    assert.deepEqual(health.metrics, { requests: 3, authenticated: 2, unauthorized: 1, rateLimited: 1,
+      succeeded: 1, replayed: 0, busy: 0, failed: 0 });
+    const encoded = JSON.stringify(health);
+    assert.equal(encoded.includes("sensitive-partner"), false);
+    assert.equal(encoded.includes("sensitive-secret"), false);
+    assert.equal(encoded.includes(tokenA), false);
+    assert.equal(gateway.capabilities().features.operationalMetrics, true);
+  });
 });
