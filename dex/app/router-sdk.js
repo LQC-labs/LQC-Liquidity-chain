@@ -166,9 +166,9 @@
     return payload.version===1&&payload.type==='LQC_INTENT_BOUND_SETTLEMENT'&&ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase()===evidenceHash.toLowerCase();
   }
   function buildQuoteApiRequest(input,ethers){
-    if(!ethers||Number(input?.chainId)!==97||!ethers.isAddress(input.tokenIn)||!ethers.isAddress(input.tokenOut)||input.tokenIn.toLowerCase()===input.tokenOut.toLowerCase()||typeof input.amountIn!=='bigint'||input.amountIn<=0n||!Number.isSafeInteger(input.requestedAt)||!Number.isSafeInteger(input.expiresAt)||input.expiresAt<=input.requestedAt||input.expiresAt-input.requestedAt>60000)throw new Error('Invalid quote API request');
+    if(!ethers||Number(input?.chainId)!==97||!ethers.isAddress(input.tokenIn)||!ethers.isAddress(input.tokenOut)||input.tokenIn.toLowerCase()===input.tokenOut.toLowerCase()||typeof input.amountIn!=='bigint'||input.amountIn<=0n||input.amountIn>ethers.MaxUint256||!Number.isSafeInteger(input.requestedAt)||!Number.isSafeInteger(input.expiresAt)||input.expiresAt<=input.requestedAt||input.expiresAt-input.requestedAt>60000)throw new Error('Invalid quote API request');
     const payload={version:1,type:'LQC_MULTI_DEX_QUOTE_REQUEST',chainId:97,tokenIn:input.tokenIn.toLowerCase(),tokenOut:input.tokenOut.toLowerCase(),amountIn:input.amountIn.toString(),requestedAt:input.requestedAt,expiresAt:input.expiresAt,clientRequestId:String(input.clientRequestId||'')};
-    if(!payload.clientRequestId||payload.clientRequestId.length>128)throw new Error('Invalid quote API request id');
+    if(!/^[A-Za-z0-9._:-]{1,128}$/.test(payload.clientRequestId))throw new Error('Invalid quote API request id');
     return{...payload,requestHash:ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload)))};
   }
   function validateQuoteApiResponse(request,response,ethers,now){
