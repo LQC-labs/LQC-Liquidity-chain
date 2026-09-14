@@ -20,6 +20,7 @@ describe("LQC quote API OpenAPI contract", function () {
     assert.equal(request.properties.chainId.const, 97);
     assert.equal(request.properties.type.const, "LQC_MULTI_DEX_QUOTE_REQUEST");
     assert.equal(request.properties.clientRequestId.maxLength, 128);
+    assert.deepEqual(request.required.sort(), Object.keys(request.properties).sort());
     assert.equal(spec.components.schemas.Address.pattern, "^0x[0-9a-f]{40}$");
     assert.equal(spec.components.schemas.Hash32.pattern, "^0x[0-9a-f]{64}$");
     assert.equal(spec.components.schemas.Capabilities.properties.maxQuoteValidityMs.maximum, 60_000);
