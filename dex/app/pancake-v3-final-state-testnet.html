@@ -1,0 +1,20 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LQC V3 최종 상태 검증 · BSC Testnet</title>
+<style>:root{font-family:system-ui,sans-serif;color:#122126;background:#f3fbf9}body{margin:0;padding:24px 14px}.card{max-width:720px;margin:auto;background:#fff;border:1px solid #d9ece7;border-radius:22px;padding:22px;box-shadow:0 10px 30px #193c3420}h1{font-size:25px}.badge{display:inline-block;background:#dff8f1;color:#087b69;border-radius:999px;padding:6px 10px;font-weight:700}.notice{background:#e8f8f4;border-radius:14px;padding:14px;margin:18px 0}.row{padding:11px 0;border-bottom:1px solid #e5efed}.row b{display:block}code{display:block;overflow-wrap:anywhere;margin-top:4px;color:#34484d}button{width:100%;border:0;border-radius:14px;padding:16px;margin-top:14px;font-size:18px;font-weight:800;background:#152825;color:#fff}button:disabled{background:#a5bbb6}#status{padding:14px;border-radius:14px;background:#edf5f3;margin-top:16px;white-space:pre-line}#status[data-type="error"]{background:#ffe9ed;color:#ad2140}#status[data-type="ok"]{background:#dff8ed;color:#08724f}.ok{color:#08724f;font-weight:800}.small{font-size:13px;color:#607277}</style>
+</head><body><main class="card">
+<span class="badge">읽기 전용 · TESTNET 97</span><h1>PancakeSwap V3 최종 상태 검증</h1>
+<div class="notice"><b>지갑 거래 없음:</b> 승인·서명·수수료 없이 공개 블록체인 상태만 읽습니다.</div>
+<div class="row"><b>V3 풀</b><code id="pool"></code></div>
+<div class="row"><b>LP NFT</b><code>Token ID 37418 · <span id="nft">—</span></code></div>
+<div class="row"><b>풀 유동성</b><code id="liquidity">—</code></div>
+<div class="row"><b>풀 tLQC 잔액</b><code id="poolTlqc">—</code></div>
+<div class="row"><b>풀 WBNB 잔액</b><code id="poolWbnb">—</code></div>
+<div class="row"><b>Signer 1의 Router 잔여 승인</b><code id="allowances">—</code></div>
+<div class="row"><b>정방향 교환 영수증</b><code id="forward">—</code></div>
+<div class="row"><b>역방향 교환 영수증</b><code id="reverse">—</code></div>
+<button id="verify">최종 상태 읽기 검증</button>
+<p class="small">이 버튼은 eth_call·영수증·블록 조회만 수행합니다.</p>
+<div id="status">버튼을 눌러 최종 상태를 확인하세요.</div>
+<script src="./pancake-v3-final-state-testnet.js"></script>
+</main></body></html>
