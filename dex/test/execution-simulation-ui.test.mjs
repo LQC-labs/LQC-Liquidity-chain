@@ -52,6 +52,15 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.ok(app.indexOf("await simulateExecution(") < app.indexOf("await submitExecution("));
   });
 
+  it("binds proof expiry, target, calldata, value, sender, and nonce before wallet submission", function () {
+    assert.match(app, /deadline=displayedProof\.expiresAt/);
+    assert.match(app, /const executionIntentFor=transaction=>sdk\.buildExecutionIntent\(displayedProof/);
+    assert.match(app, /calldataHash:ethers\.keccak256\(transaction\.data\)/);
+    assert.match(app, /pendingExecutionIntent=executionIntentFor\(transaction\)/);
+    assert.match(app, /finalIntent\.intentHash\.toLowerCase\(\)!==pendingExecutionIntent\.intentHash\.toLowerCase\(\)/);
+    assert.ok(app.indexOf("pendingExecutionIntent=executionIntentFor(transaction)") < app.indexOf("walletProvider.request({method:'eth_sendTransaction'"));
+  });
+
   it("filters the token picker by symbol or name without changing configured tokens", function () {
     assert.match(app, /function tokenList\(query=''\)/);
     assert.match(app, /token\.symbol\.toLowerCase\(\)\.includes\(term\)/);

@@ -74,3 +74,8 @@ split route and exact per-leg input allocations, and requires every refreshed le
 or above its committed minimum. A changed route therefore requires a new displayed proof before any
 wallet signature request. This is client-side fail-closed validation and does not replace settlement
 verification or an independent audit.
+
+The final wallet transaction uses the proof expiry as its on-chain deadline. Before simulation, an
+execution intent binds the proof to the wallet address, reviewed execution contract, calldata hash,
+native value, pending nonce and deadline. The same intent is rebuilt immediately before
+`eth_sendTransaction`; any substitution between simulation and wallet submission is rejected.
