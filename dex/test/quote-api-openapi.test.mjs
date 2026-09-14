@@ -44,4 +44,11 @@ describe("LQC quote API OpenAPI contract", function () {
     assert.match(source, /"cache-control": "no-store"/);
     assert.match(source, /"x-content-type-options": "nosniff"/);
   });
+
+  it("binds the HTTP implementation to unambiguous request framing", function () {
+    const source = fs.readFileSync(new URL("../scripts/quote-api-http.mjs", import.meta.url), "utf8");
+    assert.match(source, /headers\["transfer-encoding"\]/);
+    assert.match(source, /CONTENT_LENGTH_MISMATCH/);
+    assert.match(source, /UNSAFE_BODY_FRAMING/);
+  });
 });
