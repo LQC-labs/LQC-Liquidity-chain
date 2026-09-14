@@ -12,6 +12,11 @@ function request() {
 }
 const proofFor = input => ({ proofHash: ethers.id("proof"), chainId: input.chainId, tokenIn: input.tokenIn,
   tokenOut: input.tokenOut, amountIn: input.amountIn, expiresAt: input.expiresAt });
+const healthBody = (overrides = {}) => ({ schemaVersion: 1, type: "LQC_QUOTE_API_HEALTH", status: "healthy", checkedAt: now,
+  capacity: { inFlight: 0, maxInFlight: 100, completed: 0, maxCompletedEntries: 10_000 },
+  policy: { providerTimeoutMs: 5_000, rateLimit: 60, rateLimitWindowMs: 60_000 },
+  metrics: { requests: 0, authenticated: 0, unauthorized: 0, rateLimited: 0, succeeded: 0, replayed: 0, busy: 0, failed: 0 },
+  ...overrides });
 const jsonResponse = (status, body, contentLength = null) => { const raw = JSON.stringify(body); return { status,
   headers: { get: name => name.toLowerCase() === "content-type" ? "application/json" :
     name.toLowerCase() === "content-length" ? contentLength : null }, text: async () => raw }; };
@@ -23,7 +28,7 @@ describe("LQC quote API reference client", function () {
       if (url.endsWith("/v1/capabilities")) return jsonResponse(200, { schemaVersion: 1, type: "LQC_QUOTE_API_CAPABILITIES",
         supportedChains: [97], quoteRequestVersions: [1], quoteResponseVersions: [1], maxQuoteValidityMs: 60_000,
         features: { bestExecutionProof: true, requestHashBinding: true, idempotentRetries: true, serviceHealth: true } });
-      return jsonResponse(200, { schemaVersion: 1, type: "LQC_QUOTE_API_HEALTH", status: "healthy", checkedAt: now, capacity: {}, policy: {} });
+      return jsonResponse(200, healthBody());
     };
     const client = createQuoteApiClient({ baseUrl: "https://quotes.example/", apiKey: "0123456789abcdef", fetchImpl,
       clock: () => now, validateQuoteResponse: async()=>true });
@@ -64,6 +69,15 @@ describe("LQC quote API reference client", function () {
     await assert.rejects(()=>run({ ...proofFor(input), chainId: 56 }), /Invalid quote API proof response/);
     await assert.rejects(()=>run({ ...proofFor(input), amountIn: "999" }), /Invalid quote API proof response/);
     await assert.rejects(()=>run({ ...proofFor(input), expiresAt: now - 1 }), /Invalid quote API proof response/);
+  });
+
+  it("rejects stale or internally inconsistent service health", async function () {
+    const run = body => createQuoteApiClient({ baseUrl: "https://quotes.example", apiKey: "0123456789abcdef",
+      clock:()=>now, fetchImpl: async()=>jsonResponse(200, body), validateQuoteResponse: async()=>true }).health();
+    await assert.rejects(()=>run(healthBody({ checkedAt: now - 60_001 })), /Invalid quote API health/);
+    await assert.rejects(()=>run(healthBody({ status: "healthy",
+      capacity: { inFlight: 100, maxInFlight: 100, completed: 0, maxCompletedEntries: 10_000 } })), /Invalid quote API health/);
+    await assert.rejects(()=>run(healthBody({ metrics: { ...healthBody().metrics, requests: 2 } })), /Invalid quote API health/);
   });
 
   it("returns sanitized stable errors without exposing the API key", async function () {
