@@ -7,6 +7,7 @@
     "compile": "node scripts/compile.mjs",
     "test": "npm run check:app && npm run check:scripts && npm run test:contracts",
     "test:local": "npm test",
+    "verify:router2-risk-finalization": "node scripts/verify-router2-risk-finalization.mjs",
     "check:scripts": "node --check scripts/deploy-minimal-testnet.mjs && node --check scripts/deploy-testnet.mjs && node --check scripts/inspect-testnet-readiness.mjs && node --check scripts/monitor-minimal-router.mjs && node --check scripts/prepare-governance-safe.mjs && node --check scripts/prepare-risk-safe.mjs && node --check scripts/prepare-operational-safe.mjs && node --check scripts/prepare-pancake-v3-pool.mjs && node --check scripts/prepare-pancake-v3-liquidity.mjs && node --check scripts/prepare-pancake-v3-smoke-swap.mjs && node --check scripts/prepare-pancake-v3-reverse-smoke-swap.mjs && node --check scripts/prepare-router2-quote-stack.mjs && node --check scripts/prepare-router2-execution-stack.mjs && node --check scripts/prepare-route-probes.mjs && node --check scripts/prepare-router2-cutover.mjs && node --check scripts/build-router2-route-readiness.mjs && node --check scripts/quote-api-gateway.mjs && node --check scripts/quote-api-http.mjs && node --check scripts/quote-api-client.mjs && node --check scripts/build-reproducibility-seal.mjs",
     "test:contracts": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
     "gate:stage1": "node scripts/run-stage1-gate.mjs",
