@@ -22,4 +22,13 @@ describe("Router 2.0 Quote Router TokenPocket page", function () {
     assert.match(script,/0x7b103999/);assert.match(script,/if\(await existing\(\)\)return/);assert.match(script,/localStorage\.setItem\(STORAGE_KEY/);
     assert.match(script,/value:"0x0",data:deployData/);assert.match(html,/Quote Router 계약 하나만 생성/);assert.match(html,/토큰 승인·교환·유동성 이동은 없습니다/);
   });
+
+  it("records the successful verified Quote Router deployment", function () {
+    const deployment=record.executions.quoteRouter;
+    assert.equal(deployment.address,"0xf3128ceed7ef4e4ce48913977fabc341dfbec949");
+    assert.equal(deployment.transactionHash,"0x976b997de249325e4ad5335d9599b09c244ec07fe2237158e892444a1f269e4e");
+    assert.equal(deployment.registry,record.executions.registry.address);
+    assert.equal(deployment.status,"success");
+    assert.match(deployment.address,/^0x[0-9a-f]{40}$/);assert.match(deployment.transactionHash,/^0x[0-9a-f]{64}$/);
+  });
 });

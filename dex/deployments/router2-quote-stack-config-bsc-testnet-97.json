@@ -80,6 +80,13 @@
       "priority": 95,
       "status": "success",
       "evidence": "Three successful TokenPocket transactions followed by on-chain fee, pool, adapter, enabled, and priority verification"
+    },
+    "quoteRouter": {
+      "address": "0xf3128ceed7ef4e4ce48913977fabc341dfbec949",
+      "transactionHash": "0x976b997de249325e4ad5335d9599b09c244ec07fe2237158e892444a1f269e4e",
+      "registry": "0x0465c6460deaece522506e09cddc1b62d6d75c84",
+      "status": "success",
+      "evidence": "Successful TokenPocket deployment receipt followed by bytecode and registry() verification"
     }
   }
 }
