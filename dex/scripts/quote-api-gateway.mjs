@@ -146,9 +146,11 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
         let result;
         try { result = await Promise.race([Promise.resolve().then(() => quote(request)), timedOut]); }
         finally { clearTimeout(timeout); }
+        const verifiedAt = clock();
         if (!result?.proof || result.requestHash !== request.requestHash || result.proof.chainId !== request.chainId ||
             result.proof.tokenIn !== request.tokenIn || result.proof.tokenOut !== request.tokenOut ||
-            result.proof.amountIn !== request.amountIn || result.proof.expiresAt > request.expiresAt ||
+            result.proof.amountIn !== request.amountIn || !Number.isSafeInteger(result.proof.expiresAt) ||
+            result.proof.expiresAt < verifiedAt || result.proof.expiresAt > request.expiresAt || request.expiresAt < verifiedAt ||
             !(await verifyProof(result.proof))) {
           throw Object.assign(new Error("Quote service returned mismatched evidence"), { code: "INVALID_QUOTE_EVIDENCE" });
         }
@@ -157,7 +159,7 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
       inFlight.set(replayKey, { requestHash: request.requestHash, promise });
       let body;
       try { body = await promise; } finally { inFlight.delete(replayKey); }
-      completed.set(replayKey, { requestHash: request.requestHash, expiresAt: request.expiresAt, body });
+      completed.set(replayKey, { requestHash: request.requestHash, expiresAt: body.proof.expiresAt, body });
       increment("succeeded");
       return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
         "x-ratelimit-limit": String(limit), "x-ratelimit-remaining": String(limit - current.count) },
