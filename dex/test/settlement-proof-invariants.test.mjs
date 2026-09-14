@@ -68,4 +68,56 @@ describe("LQC execution-proof deterministic invariants", function () {
       assert.equal(sdk.verifySettlementReceipt(mutated, proof, ethers), false);
     }
   });
+
+  it("preserves split-plan binding across 250 deterministic execution refreshes", function () {
+    const random = generator(0x2f10f00d), dexA = ethers.id("SPLIT_A"), dexB = ethers.id("SPLIT_B");
+    for (let index = 0; index < 250; index++) {
+      const amountIn = BigInt(random(10_000, 1_000_000)), inputA = amountIn * BigInt(random(20, 80)) / 100n,
+        inputB = amountIn - inputA, outputA = inputA + BigInt(random(100, 1_000)),
+        outputB = inputB + BigInt(random(100, 1_000)), minimumA = outputA * 99n / 100n,
+        minimumB = outputB * 99n / 100n, fullA = amountIn + 100n, fullB = amountIn + 90n;
+      const proof = sdk.buildBestExecutionProof({ chainId: 97, quoteBlock: 30_000 + index,
+        expiresAt: 1_900_000_000, tokenIn, tokenOut, amountIn, slippageBps: 100,
+        candidates: [
+          { dexId: dexA, name: "A", amountOut: fullA, cost: 20n, routeDataHash: ethers.id(`split-a-${index}`) },
+          { dexId: dexB, name: "B", amountOut: fullB, cost: 20n, routeDataHash: ethers.id(`split-b-${index}`) }
+        ], plan: { kind: "split", cost: 30n, legs: [
+          { dexId: dexA, amountIn: inputA, expectedOut: outputA, minimumOut: minimumA },
+          { dexId: dexB, amountIn: inputB, expectedOut: outputB, minimumOut: minimumB }
+        ] } }, ethers);
+      const current = { chainId: 97, tokenIn, tokenOut, amountIn, kind: "split", legs: [
+        { dexId: dexA, amountIn: inputA, expectedOut: minimumA + BigInt(random(0, Number(outputA - minimumA))) },
+        { dexId: dexB, amountIn: inputB, expectedOut: minimumB + BigInt(random(0, Number(outputB - minimumB))) }
+      ] };
+      assert.equal(sdk.validateExecutionPlanProof(proof, current, ethers, proof.expiresAt).valid, true);
+    }
+  });
+
+  it("rejects 250 deterministic route, allocation, output, trade, expiry, and proof mutations", function () {
+    const random = generator(0xbad51eed), dexA = ethers.id("MUTATE_A"), dexB = ethers.id("MUTATE_B");
+    const proof = sdk.buildBestExecutionProof({ chainId: 97, quoteBlock: 40_000, expiresAt: 1_900_000_000,
+      tokenIn, tokenOut, amountIn: 10_000n, slippageBps: 100,
+      candidates: [
+        { dexId: dexA, name: "A", amountOut: 10_100n, cost: 20n, routeDataHash: ethers.id("mutate-a") },
+        { dexId: dexB, name: "B", amountOut: 10_090n, cost: 20n, routeDataHash: ethers.id("mutate-b") }
+      ], plan: { kind: "split", cost: 30n, legs: [
+        { dexId: dexA, amountIn: 6_000n, expectedOut: 6_100n, minimumOut: 6_039n },
+        { dexId: dexB, amountIn: 4_000n, expectedOut: 4_100n, minimumOut: 4_059n }
+      ] } }, ethers);
+    const base = { chainId: 97, tokenIn, tokenOut, amountIn: 10_000n, kind: "split", legs: [
+      { dexId: dexA, amountIn: 6_000n, expectedOut: 6_039n },
+      { dexId: dexB, amountIn: 4_000n, expectedOut: 4_059n }
+    ] };
+    for (let index = 0; index < 250; index++) {
+      const current = structuredClone(base), mutation = random(0, 5);
+      let candidateProof = proof, now = proof.expiresAt;
+      if (mutation === 0) current.legs[0].dexId = ethers.id(`other-${index}`);
+      if (mutation === 1) { current.legs[0].amountIn += 1n; current.legs[1].amountIn -= 1n; }
+      if (mutation === 2) current.legs[1].expectedOut = 4_058n;
+      if (mutation === 3) current.tokenOut = tokenIn;
+      if (mutation === 4) now += index + 1;
+      if (mutation === 5) { candidateProof = structuredClone(proof); candidateProof.plan.legs[0].minimumOut = "1"; }
+      assert.throws(() => sdk.validateExecutionPlanProof(candidateProof, current, ethers, now));
+    }
+  });
 });

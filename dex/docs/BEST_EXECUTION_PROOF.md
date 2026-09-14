@@ -79,3 +79,7 @@ The final wallet transaction uses the proof expiry as its on-chain deadline. Bef
 execution intent binds the proof to the wallet address, reviewed execution contract, calldata hash,
 native value, pending nonce and deadline. The same intent is rebuilt immediately before
 `eth_sendTransaction`; any substitution between simulation and wallet submission is rejected.
+
+The deterministic invariant suite also exercises 250 valid split-route refreshes and 250 mutations
+covering route replacement, allocation drift, below-minimum output, trade substitution, expiry and
+proof tampering. These are local property-style tests and do not claim live testnet execution.
