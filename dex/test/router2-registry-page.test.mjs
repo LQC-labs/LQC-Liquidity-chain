@@ -1,0 +1,6 @@
+import assert from "node:assert/strict"; import fs from "node:fs"; import { buildRouter2QuoteStack } from "../scripts/prepare-router2-quote-stack.mjs";
+describe("Router 2.0 Registry TokenPocket page", function () {
+  it("publishes generator-identical Registry data", async function () { const record=JSON.parse(fs.readFileSync(new URL("../deployments/router2-quote-stack-stage1-bsc-testnet-97.json",import.meta.url))); assert.equal(record.orderedActions[0].data,(await buildRouter2QuoteStack()).orderedActions[0].data); });
+  it("pins chain, signer, zero value and one-contract scope", function () { const s=fs.readFileSync(new URL("../app/router2-registry-testnet.js",import.meta.url),"utf8"); const h=fs.readFileSync(new URL("../app/router2-registry-testnet.html",import.meta.url),"utf8"); assert.match(s,/CHAIN_ID = "0x61"/); assert.match(s,/value:"0x0",data:deployData/); assert.match(s,/data: "0x8da5cb5b"/); assert.match(h,/Registry 계약 하나만 생성/); assert.match(h,/토큰 승인·교환·유동성 이동은 없습니다/); });
+  it("blocks repeat deployment after receipt verification", function () { const s=fs.readFileSync(new URL("../app/router2-registry-testnet.js",import.meta.url),"utf8"); assert.match(s,/if \(await existing\(\)\) return/); assert.match(s,/localStorage\.setItem\(STORAGE_KEY/); assert.match(s,/receipt\.contractAddress/); });
+});

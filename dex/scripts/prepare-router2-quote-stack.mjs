@@ -55,5 +55,7 @@ export async function buildRouter2QuoteStack(registryAddress = null, adapterAddr
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  process.stdout.write(`${JSON.stringify(await buildRouter2QuoteStack(), null, 2)}\n`);
+  const output = path.resolve(import.meta.dirname, "../deployments/router2-quote-stack-stage1-bsc-testnet-97.json");
+  fs.writeFileSync(output, `${JSON.stringify(await buildRouter2QuoteStack(), null, 2)}\n`);
+  console.log(`Wrote ${output}`);
 }
