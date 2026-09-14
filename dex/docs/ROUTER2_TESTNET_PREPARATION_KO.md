@@ -45,8 +45,8 @@
 |---|---|---|
 | Protocol Governance Safe | 기본 4-of-7 | `0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A` |
 | Risk Safe | 기본 3-of-5 | `0x155a0c883eac0a408717222d1e271cb073e55e0b` |
-| Emergency Guardian Safe | 기본 3-of-5 | 준비 대기 |
-| Treasury Safe | 기본 3-of-5 | 준비 대기 |
+| Emergency Guardian Safe | 기본 3-of-5 | `0xdc8003a7046be67f257d294b2680c20988a6bc2b` |
+| Treasury Safe | 기본 3-of-5 | `0x0771fbc76ec3e89345bbdd803d0774bbd4943103` |
 
 네 역할 주소는 서로 달라야 한다. 운영 정책을 낮추거나 동일 주소를 재사용하지 않는다.
 

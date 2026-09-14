@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-09-14T10:23:00Z",
+  "recordedAt": "2026-09-14T11:09:00Z",
   "network": { "name": "BSC Testnet", "chainId": 97 },
   "roles": {
     "FACTORY_OWNER": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
     "RISK_ADMIN": "0x155a0c883eac0a408717222d1e271cb073e55e0b",
-    "GUARDIAN_ADDRESS": null,
-    "TREASURY_ADDRESS": null
+    "GUARDIAN_ADDRESS": "0xdc8003a7046be67f257d294b2680c20988a6bc2b",
+    "TREASURY_ADDRESS": "0x0771fbc76ec3e89345bbdd803d0774bbd4943103"
   },
-  "status": "PARTIAL",
-  "warning": "Do not deploy until GUARDIAN_ADDRESS and TREASURY_ADDRESS are separately reviewed and recorded."
+  "status": "READY",
+  "warning": "Testnet roles only. Do not reuse these addresses as an authorization for mainnet deployment."
 }

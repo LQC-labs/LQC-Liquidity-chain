@@ -10,12 +10,13 @@ authorize mainnet deployment or use of real user funds.
 
 - [x] Create a Protocol Governance Safe meeting the default 4-of-7 minimum policy: `0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A`.
 - [x] Create a separate Risk Safe meeting the default 3-of-5 minimum policy: `0x155a0c883eac0a408717222d1e271cb073e55e0b`.
-- [ ] Create separate Emergency Guardian and Treasury Safes meeting the default 3-of-5 minimum policy.
+- [x] Create a separate Emergency Guardian Safe meeting the default 3-of-5 minimum policy: `0xdc8003a7046be67f257d294b2680c20988a6bc2b`.
+- [x] Create a separate Treasury Safe meeting the default 3-of-5 minimum policy: `0x0771fbc76ec3e89345bbdd803d0774bbd4943103`.
 - [ ] Record signer names and wallet addresses in the private governance register.
 - [ ] Verify every signer can access, review, and sign a test Safe transaction.
 - [x] Record the deployed Protocol Governance Safe address as `FACTORY_OWNER`.
 - [x] Record the deployed Risk Safe address as `RISK_ADMIN`.
-- [ ] Set `GUARDIAN_ADDRESS` and `TREASURY_ADDRESS` to their reviewed Safe addresses.
+- [x] Record `GUARDIAN_ADDRESS` and `TREASURY_ADDRESS` as their reviewed Safe addresses.
 - [ ] Keep the deployer separate from all four operational roles.
 - [ ] Never paste, commit, email, or include the deployer private key in screenshots or documents.
 
