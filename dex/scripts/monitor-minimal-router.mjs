@@ -32,6 +32,29 @@ export function createReadProvider(urls, timeoutMs = 10000) {
   return providers.length === 1 ? providers[0].provider : new ethers.FallbackProvider(providers, 97, { quorum: 1 });
 }
 
+const rpcLabel = value => { const parsed = new URL(value); return `${parsed.protocol}//${parsed.host}`; };
+const rpcFailureCode = error => String(error?.code || "").toUpperCase() === "TIMEOUT" ? "TIMEOUT" :
+  String(error?.message || "").includes("chain") ? "WRONG_CHAIN" : "UNAVAILABLE";
+
+export async function selectHealthyRpc(value, timeoutMs = 10000, providerFactory = url => createReadProvider(url, timeoutMs)) {
+  const urls = parseRpcUrls(value), diagnostics = [];
+  for (const url of urls) {
+    const label = rpcLabel(url), provider = providerFactory(url);
+    try {
+      const [network, blockNumber] = await Promise.all([provider.getNetwork(), provider.getBlockNumber()]);
+      if (BigInt(network.chainId) !== 97n) throw new Error(`wrong chain ${network.chainId}`);
+      if (!Number.isSafeInteger(Number(blockNumber)) || Number(blockNumber) < 1) throw new Error("invalid block");
+      diagnostics.push({ endpoint: label, status: "SELECTED", chainId: 97, blockNumber: Number(blockNumber) });
+      return { provider, selectedEndpoint: label, diagnostics };
+    } catch (error) {
+      diagnostics.push({ endpoint: label, status: "FAILED", code: rpcFailureCode(error) });
+    }
+  }
+  const failure = new Error("No healthy BSC Testnet RPC endpoint is available.");
+  failure.diagnostics = diagnostics;
+  throw failure;
+}
+
 export function minimalMonitorConfigFromDeployment(deployment) {
   if (Number(deployment?.network?.chainId) !== 97 || deployment?.mode !== "minimal-testnet-smoke") {
     throw new Error("Minimal deployment record must target BSC testnet chain 97.");
@@ -108,7 +131,9 @@ async function main() {
       tlqc: process.env.TLQC_ADDRESS, wbnb: process.env.WBNB_ADDRESS };
   }
   const timeoutMs = Number(process.env.MONITOR_RPC_TIMEOUT_MS || 10000);
-  const report = await monitorMinimalRouter({ provider: createReadProvider(rpcUrls, timeoutMs), ...config });
+  const selected = await selectHealthyRpc(rpcUrls, timeoutMs);
+  const report = await monitorMinimalRouter({ provider: selected.provider, ...config });
+  report.rpc = { selectedEndpoint: selected.selectedEndpoint, diagnostics: selected.diagnostics };
   console.log(JSON.stringify(report, null, 2));
   if (report.status === "CRITICAL") process.exitCode = 2;
 }
