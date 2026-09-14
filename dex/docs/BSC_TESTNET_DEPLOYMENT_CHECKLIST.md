@@ -5,6 +5,9 @@ authorize mainnet deployment or use of real user funds.
 
 ## 1. Required roles and wallets
 
+- [ ] Generate and independently review the unsigned Governance Safe creation bundle with `npm run prepare:governance-safe`.
+- [ ] Submit that transaction only from signer 1 on BSC testnet chain `97`; do not switch to Ethereum or BNB mainnet when Safe Wallet reports the chain as unknown.
+
 - [ ] Create a Protocol Governance Safe meeting the default 4-of-7 minimum policy.
 - [ ] Create separate Risk, Emergency Guardian, and Treasury Safes meeting the default 3-of-5 minimum policy.
 - [ ] Record signer names and wallet addresses in the private governance register.
