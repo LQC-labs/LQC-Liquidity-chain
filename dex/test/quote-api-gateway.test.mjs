@@ -257,4 +257,26 @@ describe("LQC read-only quote API gateway foundation", function () {
       { id: "wallet.partner-1", keyDigest: digestA }, { id: "exchange:partner_2", keyDigest: digestB }
     ] }));
   });
+
+  it("authenticates keys at either end of the policy without early-exit lookup", async function () {
+    const source = await import("node:fs").then(fs => fs.readFileSync(
+      new URL("../scripts/quote-api-gateway.mjs", import.meta.url), "utf8"));
+    assert.doesNotMatch(source, /approved\.find\(item => sameDigest/);
+    assert.match(source, /for \(const candidate of approved\)/);
+    const gateway = createQuoteApiGateway({ clients: [
+      { id: "first", keyDigest: hashApiKey("first-secret") },
+      { id: "middle", keyDigest: hashApiKey("middle-secret") },
+      { id: "last", keyDigest: hashApiKey("last-secret") }
+    ], verifyProof, limit: 10, clock: () => now });
+    let calls = 0;
+    for (const [secret, id] of [["first-secret", "first-key"], ["last-secret", "last-key"]]) {
+      const input = request({ clientRequestId: id });
+      const result = await gateway({ authorization: `Bearer ${secret}`, request: input }, async value => {
+        calls += 1; return { requestHash: value.requestHash, proof: proof(value) };
+      });
+      assert.equal(result.status, 200);
+    }
+    const denied = await gateway({ authorization: "Bearer unknown-secret", request: request() }, async()=>{ calls += 1; });
+    assert.equal(denied.status, 401); assert.equal(calls, 2);
+  });
 });
