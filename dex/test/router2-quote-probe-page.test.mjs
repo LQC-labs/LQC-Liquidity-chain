@@ -1,0 +1,5 @@
+import assert from "node:assert/strict";import fs from "node:fs";
+describe("Router 2.0 read-only quote probe page",function(){const s=fs.readFileSync(new URL("../app/router2-quote-probe-testnet.js",import.meta.url),"utf8");const h=fs.readFileSync(new URL("../app/router2-quote-probe-testnet.html",import.meta.url),"utf8");const r=JSON.parse(fs.readFileSync(new URL("../deployments/router2-quote-stack-config-bsc-testnet-97.json",import.meta.url)));
+it("publishes a fixed quote probe for the deployed Router",function(){assert.equal(r.quoteProbe.to,r.executions.quoteRouter.address);assert.equal(r.quoteProbe.callMethod,"eth_call");assert.equal(r.quoteProbe.value,"0");assert.match(s,/request\("eth_call"/);});
+it("never sends a transaction or requests token approval",function(){assert.doesNotMatch(s,/eth_sendTransaction|eth_sign|personal_sign|approve\(/);assert.match(h,/지갑 서명, 승인창, 가스비, 토큰 이동이 전혀 없는 조회/);});
+it("validates the selected DEX and Adapter",function(){assert.match(s,/DEX_ID/);assert.match(s,/ADAPTER/);assert.match(s,/amount<=0n/);});});

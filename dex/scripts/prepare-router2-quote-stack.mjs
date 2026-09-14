@@ -14,6 +14,7 @@ const quoteRouterArtifact = artifact("LQCQuoteRouter.sol/LQCQuoteRouter.json");
 const adapterArtifact = artifact("adapters/PancakeV3ExecutionAdapter.sol/PancakeV3ExecutionAdapter.json");
 const registry = new ethers.Interface(registryArtifact.abi);
 const adapter = new ethers.Interface(adapterArtifact.abi);
+const quoteRouter = new ethers.Interface(quoteRouterArtifact.abi);
 
 function deploymentData(contractArtifact, args) {
   return new ethers.ContractFactory(contractArtifact.abi, contractArtifact.bytecode).getDeployTransaction(...args);
@@ -54,16 +55,37 @@ export async function buildRouter2QuoteStack(registryAddress = null, adapterAddr
   return result;
 }
 
+export function buildRouter2QuoteProbe(quoteRouterAddress) {
+  if (!ethers.isAddress(quoteRouterAddress)) throw new Error("quoteRouterAddress must be valid");
+  const amountIn = ethers.parseUnits("1000", 18);
+  const routeData = ethers.solidityPacked(["address", "uint24", "address"], [TEST_LQC, PILOT_FEE, TEST_WBNB]);
+  return {
+    purpose: "Read-only 1,000 tLQC to WBNB quote probe",
+    to: quoteRouterAddress,
+    value: "0",
+    data: quoteRouter.encodeFunctionData("quoteBest", [TEST_LQC, TEST_WBNB, amountIn, [routeData]]),
+    tokenIn: TEST_LQC,
+    tokenOut: TEST_WBNB,
+    amountIn: amountIn.toString(),
+    fee: PILOT_FEE,
+    routeData,
+    callMethod: "eth_call",
+  };
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const output = path.resolve(import.meta.dirname, "../deployments/router2-quote-stack-stage1-bsc-testnet-97.json");
-  const previous = fs.existsSync(output) ? JSON.parse(fs.readFileSync(output, "utf8")) : null;
+  const configOutput = path.resolve(import.meta.dirname, "../deployments/router2-quote-stack-config-bsc-testnet-97.json");
+  const previous = fs.existsSync(configOutput) ? JSON.parse(fs.readFileSync(configOutput, "utf8")) :
+    (fs.existsSync(output) ? JSON.parse(fs.readFileSync(output, "utf8")) : null);
   if (!previous) fs.writeFileSync(output, `${JSON.stringify(await buildRouter2QuoteStack(), null, 2)}\n`);
   const registryAddress = previous?.executions?.registry?.address;
   const adapterAddress = previous?.executions?.pancakeV3Adapter?.address;
   if (registryAddress && adapterAddress) {
     const configured = await buildRouter2QuoteStack(registryAddress, adapterAddress);
     configured.executions = previous.executions;
-    const configOutput = path.resolve(import.meta.dirname, "../deployments/router2-quote-stack-config-bsc-testnet-97.json");
+    const quoteRouterAddress = previous?.executions?.quoteRouter?.address;
+    if (quoteRouterAddress) configured.quoteProbe = buildRouter2QuoteProbe(quoteRouterAddress);
     fs.writeFileSync(configOutput, `${JSON.stringify(configured, null, 2)}\n`);
     console.log(`Wrote ${configOutput}`);
   } else {

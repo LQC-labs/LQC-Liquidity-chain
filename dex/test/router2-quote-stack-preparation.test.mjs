@@ -4,7 +4,7 @@ import { ethers } from "ethers";
 import { TEST_LQC, TEST_WBNB, PILOT_FEE } from "../scripts/prepare-pancake-v3-pool.mjs";
 import { SIGNER_1 } from "../scripts/prepare-pancake-v3-liquidity.mjs";
 import { PANCAKE_BSC_TESTNET } from "../scripts/validate-bsc-testnet.mjs";
-import { PANCAKE_V3_DEX_ID, buildRouter2QuoteStack } from "../scripts/prepare-router2-quote-stack.mjs";
+import { PANCAKE_V3_DEX_ID, buildRouter2QuoteProbe, buildRouter2QuoteStack } from "../scripts/prepare-router2-quote-stack.mjs";
 
 const artifact = name => JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/router-v2/${name}`, import.meta.url)));
 
@@ -47,5 +47,13 @@ describe("Router 2.0 quote-first testnet stack preparation", function () {
   it("rejects malformed dependent deployment addresses", async function () {
     await assert.rejects(buildRouter2QuoteStack("bad", null), /registryAddress/);
     await assert.rejects(buildRouter2QuoteStack(null, "bad"), /adapterAddress/);
+  });
+
+  it("builds a fixed read-only one-hop quote probe", function () {
+    const address="0xf3128ceed7ef4e4ce48913977fabc341dfbec949";
+    const probe=buildRouter2QuoteProbe(address);
+    assert.equal(probe.to,address);assert.equal(probe.value,"0");assert.equal(probe.callMethod,"eth_call");
+    assert.equal(probe.amountIn,ethers.parseUnits("1000",18).toString());assert.equal(probe.fee,PILOT_FEE);
+    assert.equal(probe.routeData,ethers.solidityPacked(["address","uint24","address"],[TEST_LQC,PILOT_FEE,TEST_WBNB]));
   });
 });
