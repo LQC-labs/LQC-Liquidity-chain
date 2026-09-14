@@ -30,6 +30,16 @@
       "owner": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
       "status": "success",
       "evidence": "Successful TokenPocket deployment receipt followed by bytecode and owner() verification"
+    },
+    "pancakeV3Adapter": {
+      "address": "0x1bffac4b93f48d5ea03bae36dbaee6bedd0a73d4",
+      "transactionHash": "0xa92b6cc863fe4b38b3b672178f36bb6f24aad351b7f48875b80e43660c5a0638",
+      "quoter": "0xbC203d7f83677c7ed3F7acEc959963E7F4ECC5C2",
+      "swapRouter": "0x1b81D678ffb9C0263b24A97847620C99d213eB14",
+      "owner": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
+      "maxHops": 1,
+      "status": "success",
+      "evidence": "Successful TokenPocket deployment receipt followed by bytecode, endpoint, owner, and maxHops verification"
     }
   },
   "safety": "Quote-first phase only. No Execution Router, Risk Registry, token approval, liquidity movement, or swap."
