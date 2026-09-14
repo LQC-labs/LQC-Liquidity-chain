@@ -44,6 +44,21 @@ as a fixed evidence field because it increases over time.
 - Router execution and UI balances recovered without a forced wallet reset.
 - No mainnet asset or production token was used.
 
+## Read-only zero-custody follow-up
+
+Run the minimal Router monitor from the `dex` directory after recording the deployed Factory address.
+It reads chain `97` only, never requests a private key, and fails closed if the Router binding changed
+or if the Router retains any BNB, tLQC, or WBNB after the completed swaps.
+
+```bash
+export BSC_TESTNET_RPC_URL="<BSC Testnet RPC URL>"
+export MINIMAL_ROUTER_ADDRESS="0xA3E1fbe94055e7A8971b3994C7025B3c16273a24"
+export MINIMAL_FACTORY_ADDRESS="<factory from the minimal deployment record>"
+export TLQC_ADDRESS="0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc"
+export WBNB_ADDRESS="0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd"
+npm run monitor:minimal-router
+```
+
 ## Evidence still to append
 
 - BscScan transaction hashes and canonical block numbers for the remaining successful buys,
