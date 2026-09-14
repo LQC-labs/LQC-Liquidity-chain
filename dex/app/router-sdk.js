@@ -125,6 +125,20 @@
     const{proofHash,...payload}=proof;
     return ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase()===proofHash.toLowerCase();
   }
+  function validateExecutionPlanProof(proof,current,ethers,now=Math.floor(Date.now()/1000)){
+    if(!verifyBestExecutionProof(proof,ethers)||!current||!Number.isSafeInteger(now)||now<0)throw new Error('InvalidBestExecutionProof');
+    if(now>proof.expiresAt)throw new Error('StaleProof');
+    if(current.chainId!==proof.chainId||String(current.tokenIn).toLowerCase()!==proof.tokenIn||String(current.tokenOut).toLowerCase()!==proof.tokenOut||typeof current.amountIn!=='bigint'||current.amountIn.toString()!==proof.amountIn)throw new Error('ProofTradeChanged');
+    if(current.kind!==proof.plan.kind||!Array.isArray(current.legs)||current.legs.length!==proof.plan.legs.length)throw new Error('ProofRouteChanged');
+    let totalInput=0n,totalMinimum=0n;
+    for(let i=0;i<current.legs.length;i++){
+      const live=current.legs[i],committed=proof.plan.legs[i];
+      if(String(live.dexId).toLowerCase()!==committed.dexId||typeof live.amountIn!=='bigint'||live.amountIn.toString()!==committed.amountIn||typeof live.expectedOut!=='bigint'||live.expectedOut<BigInt(committed.minimumOut))throw new Error('ProofRouteChanged');
+      totalInput+=live.amountIn;totalMinimum+=BigInt(committed.minimumOut);
+    }
+    if(totalInput!==current.amountIn)throw new Error('ProofRouteChanged');
+    return{valid:true,proofHash:proof.proofHash.toLowerCase(),kind:current.kind,legs:current.legs.length,totalMinimumOut:totalMinimum};
+  }
   function buildExecutionIntent(proof,input,ethers){
     if(!verifyBestExecutionProof(proof,ethers)||!input||!ethers.isAddress(input.sender)||!ethers.isAddress(input.target)||
       !ethers.isHexString(input.calldataHash,32)||typeof input.value!=='bigint'||input.value<0n||
@@ -233,12 +247,12 @@
     const message=String(error?.shortMessage||error?.reason||error?.message||'').toLowerCase();
     if(code==='ACTION_REJECTED'||message.includes('user rejected')||message.includes('user denied'))return{code:'USER_REJECTED',message:'지갑에서 거래가 취소되었습니다.',action:'원하시면 견적을 다시 확인한 뒤 재시도하세요.',retryable:true};
     if(code==='INSUFFICIENT_FUNDS'||message.includes('insufficient funds'))return{code:'INSUFFICIENT_GAS',message:'거래를 실행할 BNB 가스비가 부족합니다.',action:'소량의 tBNB를 준비한 뒤 다시 시도하세요.',retryable:true};
-    if(message.includes('stalequote')||message.includes('quotetradechanged'))return{code:'STALE_QUOTE',message:'표시된 견적이 만료되었거나 거래 조건이 변경되었습니다.',action:'최신 견적을 확인한 뒤 다시 실행하세요.',retryable:true};
+    if(message.includes('stalequote')||message.includes('staleproof')||message.includes('quotetradechanged'))return{code:'STALE_QUOTE',message:'표시된 견적이 만료되었거나 거래 조건이 변경되었습니다.',action:'최신 견적을 확인한 뒤 다시 실행하세요.',retryable:true};
     if(message.includes('quotepricemoved')||message.includes('insufficientoutput')||message.includes('too little received')||message.includes('slippage'))return{code:'PRICE_MOVED',message:'가격이 변해 최소 수령 조건을 충족하지 못했습니다.',action:'새 견적을 받은 뒤 슬리피지를 확인하고 재시도하세요.',retryable:true};
     if(message.includes('novalidquote')||message.includes('noexecutableroute')||message.includes('no approved')||message.includes('liquidity'))return{code:'NO_ROUTE',message:'현재 실행 가능한 유동성 경로가 없습니다.',action:'수량을 줄이거나 다른 거래쌍을 선택하세요.',retryable:true};
     if(message.includes('paused')||message.includes('limit')||message.includes('cap')||message.includes('unsupportedtoken'))return{code:'RISK_BLOCKED',message:'LQC 위험관리 정책이 이 거래를 차단했습니다.',action:'거래 한도와 토큰·DEX 활성 상태를 확인하세요.',retryable:false};
     if(message.includes('allowance')||message.includes('approve'))return{code:'APPROVAL_REQUIRED',message:'토큰 사용 승인이 완료되지 않았습니다.',action:'승인 거래를 완료한 뒤 Swap을 다시 실행하세요.',retryable:true};
-    if(message.includes('routechangedduringapproval'))return{code:'ROUTE_CHANGED',message:'승인 중 최적 거래 경로가 다시 변경되었습니다.',action:'최신 견적을 확인한 뒤 Swap을 다시 실행하세요.',retryable:true};
+    if(message.includes('routechangedduringapproval')||message.includes('proofroutechanged')||message.includes('prooftradechanged'))return{code:'ROUTE_CHANGED',message:'승인 중 최적 거래 경로가 다시 변경되었습니다.',action:'최신 견적을 확인한 뒤 Swap을 다시 실행하세요.',retryable:true};
     if(code==='CALL_EXCEPTION'||message.includes('execution reverted')||message.includes('missing revert data'))return{code:'SIMULATION_FAILED',message:'사전 시뮬레이션에서 거래 실패가 예상되어 제출을 중단했습니다.',action:'최신 견적과 잔액·승인 상태를 확인하세요.',retryable:true};
     if(code==='NETWORK_ERROR'||message.includes('network')||message.includes('chain'))return{code:'NETWORK_ERROR',message:'BSC 테스트넷 연결을 확인할 수 없습니다.',action:'지갑 네트워크를 BSC Testnet으로 전환하세요.',retryable:true};
     return{code:'UNKNOWN',message:'거래를 실행하지 못했습니다.',action:'최신 견적과 지갑 상태를 확인한 뒤 다시 시도하세요.',retryable:true};
@@ -299,5 +313,5 @@
     if(nativeBalance<requiredNative)throw new Error('insufficient funds: native balance and gas');
     return{sufficient:true,gasCost,requiredNative};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,buildExecutionIntent,verifyExecutionIntent,buildIntentBoundSettlementReceipt,verifyIntentBoundSettlementReceipt,buildQuoteApiRequest,validateQuoteApiResponse,recoveryActionForError,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,validateExecutionPlanProof,buildExecutionIntent,verifyExecutionIntent,buildIntentBoundSettlementReceipt,verifyIntentBoundSettlementReceipt,buildQuoteApiRequest,validateQuoteApiResponse,recoveryActionForError,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);

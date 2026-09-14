@@ -65,3 +65,12 @@ errors that do not leak upstream details. A completed request id is idempotent u
 retry receives the same proof, while reuse of that id with different content fails closed. It does not
 open a network listener, store raw
 API keys, submit transactions, or expose a public production service.
+
+## Display-to-execution binding
+
+The browser keeps the complete verified proof with its quote snapshot. Immediately before building a
+wallet request, it checks the proof again, rejects expiry or trade changes, requires the same single or
+split route and exact per-leg input allocations, and requires every refreshed leg output to remain at
+or above its committed minimum. A changed route therefore requires a new displayed proof before any
+wallet signature request. This is client-side fail-closed validation and does not replace settlement
+verification or an independent audit.

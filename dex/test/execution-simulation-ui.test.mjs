@@ -31,6 +31,8 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /async function buildDisplayedProof\(plan,value,path,blockNumber\)/);
     assert.match(app, /sdk\.buildBestExecutionProof\(/); assert.match(app, /sdk\.verifyBestExecutionProof\(proof,ethers\)/);
     assert.match(app, /quoteSnapshot\.proofHash=proof\.proofHash/);
+    assert.match(app, /displayedProof=proof/);
+    assert.match(app, /sdk\.validateExecutionPlanProof\(displayedProof/);
     assert.match(app, /e\?\.message==='InvalidBestExecutionProof'\?t\('proofFailed'\)/);
     assert.match(i18n, /proofVerified: '검증 완료 · \{count\}개 후보'/);
   });

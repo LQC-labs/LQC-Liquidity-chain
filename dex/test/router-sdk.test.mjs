@@ -194,6 +194,17 @@ describe("LQC Router browser SDK", function () {
     }, ethers);
   }
 
+  it("binds execution-time route legs to the displayed proof", function () {
+    const proof = singleRouteProof(), current = { chainId: 97, tokenIn: tokenA, tokenOut: tokenB,
+      amountIn: 1000n, kind: "single", legs: [{ dexId: proof.plan.legs[0].dexId, amountIn: 1000n, expectedOut: 995n }] };
+    const result = sdk.validateExecutionPlanProof(proof, current, ethers, proof.expiresAt);
+    assert.equal(result.valid, true); assert.equal(result.proofHash, proof.proofHash.toLowerCase());
+    assert.throws(() => sdk.validateExecutionPlanProof(proof, current, ethers, proof.expiresAt + 1), /StaleProof/);
+    assert.throws(() => sdk.validateExecutionPlanProof(proof, { ...current, amountIn: 999n }, ethers, proof.expiresAt), /ProofTradeChanged/);
+    assert.throws(() => sdk.validateExecutionPlanProof(proof, { ...current, legs: [{ ...current.legs[0], dexId: ethers.id("OTHER") }] }, ethers, proof.expiresAt), /ProofRouteChanged/);
+    assert.throws(() => sdk.validateExecutionPlanProof(proof, { ...current, legs: [{ ...current.legs[0], expectedOut: 989n }] }, ethers, proof.expiresAt), /ProofRouteChanged/);
+  });
+
   it("binds the selected proof to one sender, target, calldata, value, nonce, and deadline", function () {
     const proof = singleRouteProof(), sender = tokenA, target = tokenC;
     const intent = sdk.buildExecutionIntent(proof, { sender, target, calldataHash: ethers.id("swap-calldata"),
