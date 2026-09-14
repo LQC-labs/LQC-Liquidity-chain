@@ -1,0 +1,6 @@
+import assert from "node:assert/strict";import fs from "node:fs";import { buildRouter2QuoteStack } from "../scripts/prepare-router2-quote-stack.mjs";
+describe("Router 2.0 V3 Adapter TokenPocket page",function(){
+ it("publishes generator-identical V3 Adapter data",async function(){const r=JSON.parse(fs.readFileSync(new URL("../deployments/router2-quote-stack-stage1-bsc-testnet-97.json",import.meta.url)));assert.equal(r.orderedActions[1].data,(await buildRouter2QuoteStack()).orderedActions[1].data);});
+ it("verifies official endpoints, owner and max one hop after deployment",function(){const s=fs.readFileSync(new URL("../app/router2-v3-adapter-testnet.js",import.meta.url),"utf8");assert.match(s,/0xe20dccb2/);assert.match(s,/0xc31c9c07/);assert.match(s,/0x8da5cb5b/);assert.match(s,/0x3f888cbb/);assert.match(s,/uintResult\(h\)!==1n/);});
+ it("keeps zero value, single-contract scope and duplicate protection",function(){const s=fs.readFileSync(new URL("../app/router2-v3-adapter-testnet.js",import.meta.url),"utf8");const h=fs.readFileSync(new URL("../app/router2-v3-adapter-testnet.html",import.meta.url),"utf8");assert.match(s,/value:"0x0",data:deployData/);assert.match(s,/if\(await existing\(\)\)return/);assert.match(h,/Adapter 계약 하나만 생성/);assert.match(h,/수수료·풀 등록이나 교환을 하지 않습니다/);});
+});
