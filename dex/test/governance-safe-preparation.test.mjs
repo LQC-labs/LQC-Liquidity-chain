@@ -45,7 +45,7 @@ describe("Governance Safe deployment preparation", function () {
 
   it("keeps the TokenPocket page transaction identical to the reviewed generator", function () {
     const source = fs.readFileSync(new URL("../app/governance-safe-testnet.js", import.meta.url), "utf8");
-    const data = source.match(/const DATA = "(0x[0-9a-f]+)";/)?.[1];
+    const data = source.match(/const GOVERNANCE_DATA = "(0x[0-9a-f]+)";/)?.[1];
     assert.equal(data, buildGovernanceSafeTransaction().transaction.data);
     for (const owner of GOVERNANCE_OWNERS) assert.match(source, new RegExp(owner, "i"));
   });

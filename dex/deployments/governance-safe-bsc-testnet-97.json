@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-14T10:08:31Z",
+  "network": { "name": "BSC Testnet", "chainId": 97 },
+  "role": "governance",
+  "safeVersion": "1.4.1",
+  "address": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+  "deploymentTransaction": "0x57e3de9c19436db06d00172676925e5abbbd84242986a90b7ef6142207cf45ce",
+  "owners": [
+    "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
+    "0xFBF84C81cfF0b400D33Ac2C3c095DC22E4A91B6c",
+    "0x6CEd713de5342b8A9A2869BB132b3f251907970A",
+    "0x1bC23531Eea799B1b7A0a7cbd7E7fC24baCb29FB",
+    "0xE498CAcDa9cE819307AB1292389F270A46471B25",
+    "0x30107526b867Ab345FBd23239157d9Ed225f9Dc0",
+    "0x4A20a68834917d901d7C86bAB06061f3f182d7bC"
+  ],
+  "threshold": 4,
+  "fundingStatus": "UNFUNDED",
+  "evidenceSource": "successful TokenPocket receipt displayed by the chain-97 deployment page"
+}
