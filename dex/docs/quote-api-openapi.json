@@ -66,10 +66,20 @@
           "features": { "type": "object" } }
       },
       "Health": {
-        "type": "object", "required": ["schemaVersion", "type", "status", "checkedAt", "capacity", "policy", "metrics"],
+        "type": "object", "additionalProperties": false, "required": ["schemaVersion", "type", "status", "checkedAt", "capacity", "policy", "metrics"],
         "properties": { "schemaVersion": { "const": 1 }, "type": { "const": "LQC_QUOTE_API_HEALTH" },
           "status": { "enum": ["healthy", "degraded", "busy"] }, "checkedAt": { "type": "integer" },
-          "capacity": { "type": "object" }, "policy": { "type": "object" }, "metrics": { "$ref": "#/components/schemas/OperationalMetrics" } }
+          "capacity": { "$ref": "#/components/schemas/HealthCapacity" }, "policy": { "$ref": "#/components/schemas/HealthPolicy" }, "metrics": { "$ref": "#/components/schemas/OperationalMetrics" } }
+      },
+      "HealthCapacity": {
+        "type": "object", "additionalProperties": false, "required": ["inFlight", "maxInFlight", "completed", "maxCompletedEntries"],
+        "properties": { "inFlight": { "$ref": "#/components/schemas/Counter" }, "maxInFlight": { "type": "integer", "minimum": 1, "maximum": 1000 },
+          "completed": { "$ref": "#/components/schemas/Counter" }, "maxCompletedEntries": { "type": "integer", "minimum": 1, "maximum": 100000 } }
+      },
+      "HealthPolicy": {
+        "type": "object", "additionalProperties": false, "required": ["providerTimeoutMs", "rateLimit", "rateLimitWindowMs"],
+        "properties": { "providerTimeoutMs": { "type": "integer", "minimum": 10, "maximum": 30000 },
+          "rateLimit": { "type": "integer", "minimum": 1 }, "rateLimitWindowMs": { "type": "integer", "minimum": 1000 } }
       },
       "OperationalMetrics": {
         "type": "object", "additionalProperties": false,
