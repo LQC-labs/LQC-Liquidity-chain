@@ -16,6 +16,18 @@ describe("PancakeSwap V3 reverse smoke-swap preparation", function () {
     assert.equal(record.firstSmokeSwap.status, "success");
   });
 
+  it("records the successful reverse receipt and exact WBNB balance decrease", function () {
+    const record = JSON.parse(fs.readFileSync(new URL("../deployments/pancake-v3-pool-bsc-testnet-97.json", import.meta.url)));
+    assert.equal(record.reverseSmokeSwap.direction, "WBNB-to-tLQC");
+    assert.equal(record.reverseSmokeSwap.amountInWBNB, "0.0005");
+    assert.equal(record.reverseSmokeSwap.swapTransactionHash, "0x09af1ce5db45ff9750f91b763d1229bf15f0c12d54d5886412a98df670f4772e");
+    assert.equal(
+      ethers.parseEther(record.reverseSmokeSwap.WBNBBalanceBefore) - ethers.parseEther(record.reverseSmokeSwap.WBNBBalanceAfter),
+      REVERSE_AMOUNT_IN,
+    );
+    assert.equal(record.reverseSmokeSwap.status, "success");
+  });
+
   it("quotes and approves exactly 0.0005 WBNB through official endpoints", function () {
     const bundle = buildReverseSmokeSwap(deadline, quote);
     assert.equal(bundle.router, PANCAKE_BSC_TESTNET.v3Router);

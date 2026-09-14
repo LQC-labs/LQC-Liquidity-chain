@@ -41,5 +41,17 @@
     "receivedWBNB": "0.000995513949670407",
     "status": "success",
     "evidence": "Successful TokenPocket receipt and WBNB balance-delta verification"
+  },
+  "reverseSmokeSwap": {
+    "direction": "WBNB-to-tLQC",
+    "amountInWBNB": "0.0005",
+    "approvalTransactionHash": "0x3197d7dbb29fbc38f916f3a738054d638f39291974bb1c37ee446d65ec284377",
+    "swapTransactionHash": "0x09af1ce5db45ff9750f91b763d1229bf15f0c12d54d5886412a98df670f4772e",
+    "quotedTLQCBeforeSubmission": "500.242010643997156149",
+    "minimumTLQC": "495.239590537557184587",
+    "WBNBBalanceBefore": "0.000995513949670434",
+    "WBNBBalanceAfter": "0.000495513949670434",
+    "status": "success",
+    "evidence": "Successful TokenPocket receipt, exact WBNB balance decrease, and DApp tLQC minimum-output balance-delta verification"
   }
 }
