@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "network": {
+    "name": "BSC Testnet",
+    "chainId": 97
+  },
+  "generatedAt": "2026-09-14T13:38:55.319Z",
+  "pancakeV3Pilot": {
+    "status": "ready",
+    "pool": "0x4bfbf746a675153e050f5fbc90eaa18d07014c95",
+    "fee": 2500,
+    "liquidity": "500000000000000000000",
+    "lpNftTokenId": "37418",
+    "forwardSwap": "success",
+    "reverseSwap": "success",
+    "residualAllowances": {
+      "tLQC": "0",
+      "WBNB": "0"
+    }
+  },
+  "router2": {
+    "status": "deployment-required",
+    "comparableRoutes": 0,
+    "missingContracts": [
+      "dexRegistry",
+      "quoteRouter",
+      "executionRouter",
+      "pancakeV3Adapter"
+    ],
+    "v3Registered": false,
+    "blockers": [
+      "Router 2.0 testnet contracts missing: dexRegistry, quoteRouter, executionRouter, pancakeV3Adapter",
+      "Verified V3 pool is not yet registered through the V3 adapter",
+      "At least two deployed routes are required for real best-route comparison"
+    ]
+  },
+  "nextSafeStep": "Deploy and verify the Router 2.0 core plus Pancake V3 adapter before any routed wallet transaction."
+}
