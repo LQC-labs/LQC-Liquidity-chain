@@ -242,4 +242,19 @@ describe("LQC read-only quote API gateway foundation", function () {
     assert.equal(response.status, 503); assert.deepEqual(response.body.error, { code: "SERVICE_UNAVAILABLE", retryable: true });
     assert.equal(JSON.stringify(response).includes("private upstream"), false);
   });
+
+  it("rejects duplicate or ambiguous API client identities before serving requests", function () {
+    const digestA = hashApiKey("secret-a"), digestB = hashApiKey("secret-b"), base = { verifyProof };
+    assert.throws(() => createQuoteApiGateway({ ...base, clients: [
+      { id: "partner", keyDigest: digestA }, { id: "partner", keyDigest: digestB }
+    ] }), /Duplicate API client policy/);
+    assert.throws(() => createQuoteApiGateway({ ...base, clients: [
+      { id: "partner-a", keyDigest: digestA }, { id: "partner-b", keyDigest: digestA }
+    ] }), /Duplicate API client policy/);
+    for (const id of ["", "space partner", "x".repeat(65), "partner/route"])
+      assert.throws(() => createQuoteApiGateway({ ...base, clients: [{ id, keyDigest: digestA }] }), /Invalid API client policy/);
+    assert.doesNotThrow(() => createQuoteApiGateway({ ...base, clients: [
+      { id: "wallet.partner-1", keyDigest: digestA }, { id: "exchange:partner_2", keyDigest: digestB }
+    ] }));
+  });
 });
