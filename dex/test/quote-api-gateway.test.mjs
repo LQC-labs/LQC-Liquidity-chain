@@ -64,6 +64,12 @@ describe("LQC read-only quote API gateway foundation", function () {
     assert.equal(expired.status, 400); assert.equal(expired.body.error.code, "INVALID_QUOTE_EVIDENCE");
   });
 
+  it("rejects extra or inherited request fields even when an attacker rehashes them", function () {
+    assert.throws(() => validateCanonicalQuoteRequest(request({ memo: "hidden-routing-hint" }), now), /Invalid canonical/);
+    const inherited = Object.create(request());
+    assert.throws(() => validateCanonicalQuoteRequest(inherited, now), /Invalid canonical/);
+  });
+
   it("cryptographically verifies proof context instead of trusting the quote provider", async function () {
     const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }],
       verifyProof, clock: () => now });
