@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
-import { createQuoteApiGateway, hashApiKey, validateCanonicalQuoteRequest } from "../scripts/quote-api-gateway.mjs";
+import { createQuoteApiGateway, hashApiKey, validateCanonicalQuoteRequest,
+  validateQuoteApiCapabilities } from "../scripts/quote-api-gateway.mjs";
 
 const tokenA = "0x0000000000000000000000000000000000000001";
 const tokenB = "0x0000000000000000000000000000000000000002";
@@ -208,6 +209,30 @@ describe("LQC read-only quote API gateway foundation", function () {
     const encoded = JSON.stringify(capabilities);
     assert.equal(encoded.includes("private-partner"), false);
     assert.equal(encoded.includes("secret-value"), false);
+  });
+
+  it("validates partner compatibility and fails closed on capability downgrade", function () {
+    const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }], verifyProof });
+    const capabilities = gateway.capabilities();
+    const verified = validateQuoteApiCapabilities(capabilities);
+    assert.equal(verified.compatible, true); assert.equal(verified.chainId, 97);
+    assert.deepEqual(verified.verifiedFeatures,
+      ["bestExecutionProof", "requestHashBinding", "idempotentRetries", "serviceHealth"]);
+    assert.throws(() => validateQuoteApiCapabilities({ ...capabilities, supportedChains: [56] }), /Incompatible/);
+    assert.throws(() => validateQuoteApiCapabilities({ ...capabilities, quoteRequestVersions: [2] }), /Incompatible/);
+    assert.throws(() => validateQuoteApiCapabilities({ ...capabilities,
+      features: { ...capabilities.features, bestExecutionProof: false } }), /Incompatible/);
+    assert.throws(() => validateQuoteApiCapabilities({ ...capabilities, maxQuoteValidityMs: 60_001 }), /Incompatible/);
+  });
+
+  it("supports explicit, validated compatibility requirements", function () {
+    const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }], verifyProof });
+    const capabilities = gateway.capabilities();
+    const verified = validateQuoteApiCapabilities(capabilities,
+      { chainId: 97, requestVersion: 1, responseVersion: 1, requiredFeatures: ["concurrentRequestCoalescing"] });
+    assert.deepEqual(verified.verifiedFeatures, ["concurrentRequestCoalescing"]);
+    assert.throws(() => validateQuoteApiCapabilities(capabilities, { chainId: 0 }), /Incompatible/);
+    assert.throws(() => validateQuoteApiCapabilities(capabilities, { requiredFeatures: [""] }), /Incompatible/);
   });
 
   it("uses stable errors without exposing provider details", async function () {
