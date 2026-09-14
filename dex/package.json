@@ -7,7 +7,7 @@
     "compile": "node scripts/compile.mjs",
     "test": "npm run check:app && npm run check:scripts && npm run test:contracts",
     "test:local": "npm test",
-    "check:scripts": "node --check scripts/deploy-minimal-testnet.mjs && node --check scripts/deploy-testnet.mjs && node --check scripts/inspect-testnet-readiness.mjs && node --check scripts/monitor-minimal-router.mjs && node --check scripts/prepare-route-probes.mjs && node --check scripts/prepare-router2-cutover.mjs && node --check scripts/quote-api-gateway.mjs && node --check scripts/quote-api-http.mjs && node --check scripts/quote-api-client.mjs && node --check scripts/build-reproducibility-seal.mjs",
+    "check:scripts": "node --check scripts/deploy-minimal-testnet.mjs && node --check scripts/deploy-testnet.mjs && node --check scripts/inspect-testnet-readiness.mjs && node --check scripts/monitor-minimal-router.mjs && node --check scripts/prepare-governance-safe.mjs && node --check scripts/prepare-route-probes.mjs && node --check scripts/prepare-router2-cutover.mjs && node --check scripts/quote-api-gateway.mjs && node --check scripts/quote-api-http.mjs && node --check scripts/quote-api-client.mjs && node --check scripts/build-reproducibility-seal.mjs",
     "test:contracts": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
     "gate:stage1": "node scripts/run-stage1-gate.mjs",
     "coverage:router-sdk": "node scripts/check-router-sdk-coverage.mjs",
@@ -32,7 +32,8 @@
     "render:review-summary": "node scripts/render-review-evidence-markdown.mjs",
     "build:review-bundle": "node scripts/build-review-bundle.mjs",
     "build:reproducibility-seal": "node scripts/build-reproducibility-seal.mjs",
-    "check:app": "node --check app/config.js && node --check app/router-sdk.js && node --check app/i18n.js && node --check app/app.js"
+    "check:app": "node --check app/config.js && node --check app/router-sdk.js && node --check app/i18n.js && node --check app/app.js && node --check app/governance-safe-testnet.js",
+    "prepare:governance-safe": "node scripts/prepare-governance-safe.mjs"
   },
   "devDependencies": {
     "ethers": "^6.15.0",
