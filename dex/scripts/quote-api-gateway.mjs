@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 
 const HASH = /^0x[0-9a-f]{64}$/;
 const TRACE = /^[A-Za-z0-9._:-]{1,128}$/;
+const DECIMAL_UINT256 = /^[1-9][0-9]{0,77}$/;
 const QUOTE_REQUEST_FIELDS = Object.freeze(["version", "type", "chainId", "tokenIn", "tokenOut", "amountIn",
   "requestedAt", "expiresAt", "clientRequestId", "requestHash"]);
 
@@ -41,16 +42,17 @@ function fail(status, code, traceId, retryable = false) {
 
 export function validateCanonicalQuoteRequest(request, now = Date.now()) {
   const keys = request && typeof request === "object" ? Object.keys(request) : [];
+  const validAmount = DECIMAL_UINT256.test(request?.amountIn || "") && BigInt(request.amountIn) <= ethers.MaxUint256;
   if (!request || keys.length !== QUOTE_REQUEST_FIELDS.length ||
       !QUOTE_REQUEST_FIELDS.every(field => Object.hasOwn(request, field)) ||
       request.version !== 1 || request.type !== "LQC_MULTI_DEX_QUOTE_REQUEST" ||
       request.chainId !== 97 || !ethers.isAddress(request.tokenIn) || !ethers.isAddress(request.tokenOut) ||
       request.tokenIn !== request.tokenIn.toLowerCase() || request.tokenOut !== request.tokenOut.toLowerCase() ||
-      request.tokenIn === request.tokenOut || !/^[1-9][0-9]*$/.test(request.amountIn || "") ||
+      request.tokenIn === request.tokenOut || !validAmount ||
       !Number.isSafeInteger(request.requestedAt) || !Number.isSafeInteger(request.expiresAt) ||
       request.expiresAt <= request.requestedAt || request.expiresAt - request.requestedAt > 60_000 ||
-      now < request.requestedAt || now > request.expiresAt || typeof request.clientRequestId !== "string" ||
-      request.clientRequestId.length < 1 || request.clientRequestId.length > 128 || !HASH.test(request.requestHash || "")) {
+      now < request.requestedAt || now > request.expiresAt || !TRACE.test(request.clientRequestId || "") ||
+      !HASH.test(request.requestHash || "")) {
     throw Object.assign(new Error("Invalid canonical quote request"), { code: "INVALID_REQUEST" });
   }
   const { requestHash, ...payload } = request;
