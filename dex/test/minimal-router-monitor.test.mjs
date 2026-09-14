@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { buildMinimalRouterReport, minimalMonitorConfigFromDeployment } from "../scripts/monitor-minimal-router.mjs";
+import { buildMinimalRouterReport, createReadProvider, minimalMonitorConfigFromDeployment,
+  parseRpcUrls } from "../scripts/monitor-minimal-router.mjs";
 
 const address = value => `0x${value.toString(16).padStart(40, "0")}`;
 const healthy = () => ({ checkedAt: "2026-09-14T07:10:00.000Z", blockNumber: 130938158,
@@ -9,6 +10,14 @@ const healthy = () => ({ checkedAt: "2026-09-14T07:10:00.000Z", blockNumber: 130
   ] });
 
 describe("LQC minimal testnet Router monitoring", function () {
+  it("accepts bounded unique HTTPS RPC failover lists", function () {
+    assert.deepEqual(parseRpcUrls("https://one.example, https://two.example"),
+      ["https://one.example", "https://two.example"]);
+    assert.ok(createReadProvider("https://one.example", 1000));
+    assert.throws(() => parseRpcUrls("http://one.example"), /HTTPS/);
+    assert.throws(() => parseRpcUrls("https://one.example,https://one.example"), /unique/);
+    assert.throws(() => createReadProvider("https://one.example", 999), /1-30 seconds/);
+  });
   it("loads every address from the chain-97 minimal deployment record", function () {
     const deployment = { mode: "minimal-testnet-smoke", network: { chainId: 97 }, contracts: {
       router: address(1), factory: address(2), tLQC: address(3), wbnb: address(4) } };
