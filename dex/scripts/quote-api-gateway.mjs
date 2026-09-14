@@ -65,9 +65,14 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
     throw new Error("Invalid quote API gateway policy");
   }
   const approved = clients.map(client => {
-    if (!client?.id || !/^[0-9a-f]{64}$/.test(client.keyDigest || "")) throw new Error("Invalid API client policy");
-    return { id: String(client.id), keyDigest: client.keyDigest };
+    if (!/^[A-Za-z0-9._:-]{1,64}$/.test(client?.id || "") || !/^[0-9a-f]{64}$/.test(client.keyDigest || ""))
+      throw new Error("Invalid API client policy");
+    return Object.freeze({ id: client.id, keyDigest: client.keyDigest });
   });
+  if (new Set(approved.map(client => client.id)).size !== approved.length ||
+      new Set(approved.map(client => client.keyDigest)).size !== approved.length) {
+    throw new Error("Duplicate API client policy");
+  }
   const usage = new Map();
   const completed = new Map();
   const inFlight = new Map();
