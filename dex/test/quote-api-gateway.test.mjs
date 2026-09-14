@@ -88,6 +88,25 @@ describe("LQC read-only quote API gateway foundation", function () {
     assert.equal(conflict.status, 400); assert.equal(conflict.body.error.code, "REQUEST_ID_CONFLICT"); assert.equal(calls, 1);
   });
 
+  it("coalesces concurrent identical requests and rejects concurrent request-id substitution", async function () {
+    let calls = 0, release;
+    const waiting = new Promise(resolve => { release = resolve; });
+    const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }],
+      verifyProof, limit: 10, clock: () => now });
+    const input = request({ clientRequestId: "concurrent-request-4" });
+    const provider = async value => { calls += 1; await waiting; return { requestHash: value.requestHash, proof: proof(value) }; };
+    const first = gateway({ authorization: "Bearer secret", request: input, traceId: "trace-011" }, provider);
+    const duplicate = gateway({ authorization: "Bearer secret", request: input, traceId: "trace-012" }, provider);
+    const substituted = request({ clientRequestId: "concurrent-request-4", amountIn: "2000" });
+    const conflict = await gateway({ authorization: "Bearer secret", request: substituted, traceId: "trace-013" }, provider);
+    assert.equal(conflict.status, 400); assert.equal(conflict.body.error.code, "REQUEST_ID_CONFLICT");
+    release();
+    const [original, replay] = await Promise.all([first, duplicate]);
+    assert.equal(original.status, 200); assert.equal(replay.status, 200); assert.equal(calls, 1);
+    assert.equal(replay.headers["x-lqc-idempotent-replay"], "true");
+    assert.equal(original.body.traceId, "trace-011"); assert.equal(replay.body.traceId, "trace-012");
+  });
+
   it("uses stable errors without exposing provider details", async function () {
     const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }], verifyProof, clock: () => now });
     const response = await gateway({ authorization: "Bearer secret", request: request(), traceId: "trace-005" },
