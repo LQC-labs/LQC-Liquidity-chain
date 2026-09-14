@@ -3,7 +3,8 @@ import crypto from "node:crypto";
 const TRACE = /^[A-Za-z0-9._:-]{1,128}$/;
 
 function response(status, body, headers = {}) {
-  return { status, headers: { "content-type": "application/json", ...headers }, body };
+  return { status, headers: { "content-type": "application/json", "cache-control": "no-store",
+    "x-content-type-options": "nosniff", ...headers }, body };
 }
 
 function error(status, code, traceId) {
@@ -40,6 +41,7 @@ export function createQuoteApiHttpAdapter({ gateway, quote, maxBodyBytes = 32_76
     let body;
     try { body = JSON.parse(request.body); } catch { return error(400, "INVALID_JSON", traceId); }
     if (!body || Array.isArray(body) || typeof body !== "object") return error(400, "INVALID_JSON", traceId);
-    return gateway({ authorization: headers.authorization, request: body, traceId }, quote);
+    const result = await gateway({ authorization: headers.authorization, request: body, traceId }, quote);
+    return { ...result, headers: { "cache-control": "no-store", "x-content-type-options": "nosniff", ...result.headers } };
   };
 }
