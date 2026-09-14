@@ -76,6 +76,9 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
   const usage = new Map();
   const completed = new Map();
   const inFlight = new Map();
+  const metrics = { requests: 0, authenticated: 0, unauthorized: 0, rateLimited: 0,
+    succeeded: 0, replayed: 0, busy: 0, failed: 0 };
+  const increment = key => { if (metrics[key] < Number.MAX_SAFE_INTEGER) metrics[key] += 1; };
   const authenticate = supplied => {
     let authenticated = null;
     for (const candidate of approved) {
@@ -89,19 +92,21 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
   };
 
   const handleQuote = async function handleQuote({ authorization, request, traceId }, quote) {
+    increment("requests");
     const safeTrace = TRACE.test(traceId || "") ? traceId : crypto.randomUUID();
     const match = /^Bearer ([^\s]+)$/.exec(authorization || "");
     const supplied = match ? hashApiKey(match[1]) : "";
     const client = authenticate(supplied);
-    if (!client) return fail(401, "UNAUTHORIZED", safeTrace);
+    if (!client) { increment("unauthorized"); return fail(401, "UNAUTHORIZED", safeTrace); }
+    increment("authenticated");
 
     const now = clock();
     const windowStart = Math.floor(now / windowMs) * windowMs;
     const prior = usage.get(client.id);
     const current = prior?.windowStart === windowStart ? prior : { windowStart, count: 0 };
-    if (current.count >= limit) return { ...fail(429, "RATE_LIMITED", safeTrace, true),
+    if (current.count >= limit) { increment("rateLimited"); return { ...fail(429, "RATE_LIMITED", safeTrace, true),
       headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
-        "retry-after": String(Math.max(1, Math.ceil((windowStart + windowMs - now) / 1000))) } };
+        "retry-after": String(Math.max(1, Math.ceil((windowStart + windowMs - now) / 1000))) } }; }
     current.count += 1; usage.set(client.id, current);
 
     try {
@@ -113,7 +118,7 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
         if (previous.requestHash !== request.requestHash) {
           throw Object.assign(new Error("Quote request id was reused with different content"), { code: "REQUEST_ID_CONFLICT" });
         }
-        return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
+        increment("replayed"); return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
           "x-lqc-idempotent-replay": "true", "x-ratelimit-limit": String(limit),
           "x-ratelimit-remaining": String(limit - current.count) }, body: { ...previous.body, traceId: safeTrace } };
       }
@@ -122,7 +127,7 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
         if (pending.requestHash !== request.requestHash) {
           throw Object.assign(new Error("Quote request id was reused with different content"), { code: "REQUEST_ID_CONFLICT" });
         }
-        const body = await pending.promise;
+        const body = await pending.promise; increment("replayed");
         return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
           "x-lqc-idempotent-replay": "true", "x-ratelimit-limit": String(limit),
           "x-ratelimit-remaining": String(limit - current.count) }, body: { ...body, traceId: safeTrace } };
@@ -153,12 +158,14 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
       let body;
       try { body = await promise; } finally { inFlight.delete(replayKey); }
       completed.set(replayKey, { requestHash: request.requestHash, expiresAt: request.expiresAt, body });
+      increment("succeeded");
       return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
         "x-ratelimit-limit": String(limit), "x-ratelimit-remaining": String(limit - current.count) },
         body };
     } catch (error) {
       const code = ["INVALID_REQUEST", "REQUEST_HASH_MISMATCH", "REQUEST_ID_CONFLICT", "INVALID_QUOTE_EVIDENCE"].includes(error?.code)
         ? error.code : error?.code === "NO_ROUTE" ? "NO_ROUTE" : error?.code === "SERVICE_BUSY" ? "SERVICE_BUSY" : "SERVICE_UNAVAILABLE";
+      increment(code === "SERVICE_BUSY" ? "busy" : "failed");
       return fail(["SERVICE_UNAVAILABLE", "SERVICE_BUSY"].includes(code) ? 503 : code === "NO_ROUTE" ? 422 : 400, code, safeTrace,
         ["SERVICE_UNAVAILABLE", "SERVICE_BUSY"].includes(code));
     }
@@ -172,11 +179,11 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
       inFlightRatio >= 0.8 || replayRatio >= 0.8 ? "degraded" : "healthy";
     return { schemaVersion: 1, type: "LQC_QUOTE_API_HEALTH", status, checkedAt,
       capacity: { inFlight: inFlight.size, maxInFlight, completed: completed.size, maxCompletedEntries },
-      policy: { providerTimeoutMs, rateLimit: limit, rateLimitWindowMs: windowMs } };
+      policy: { providerTimeoutMs, rateLimit: limit, rateLimitWindowMs: windowMs }, metrics: { ...metrics } };
   };
   handleQuote.capabilities = () => ({ schemaVersion: 1, type: "LQC_QUOTE_API_CAPABILITIES",
     supportedChains: [97], quoteRequestVersions: [1], quoteResponseVersions: [1],
     maxQuoteValidityMs: 60_000, features: { bestExecutionProof: true, requestHashBinding: true,
-      idempotentRetries: true, concurrentRequestCoalescing: true, serviceHealth: true } });
+      idempotentRetries: true, concurrentRequestCoalescing: true, serviceHealth: true, operationalMetrics: true } });
   return handleQuote;
 }
