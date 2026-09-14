@@ -70,6 +70,10 @@ Router 2.0 is intentionally protocol-neutral: every EVM DEX can be integrated th
 
 ## Commands
 
+파트너용 읽기 전용 견적 API는 [`docs/QUOTE_API_INTEGRATION_KO.md`](docs/QUOTE_API_INTEGRATION_KO.md)의
+호환성 확인, 상태 확인, 견적 요청, Proof 검증 순서를 따른다. 기계 판독 계약은
+[`docs/quote-api-openapi.json`](docs/quote-api-openapi.json)에 고정되어 있다.
+
 ```bash
 npm install
 npm test
