@@ -86,15 +86,41 @@ export function recordRiskRegistryDeployment(bundle, address, transactionHash) {
   };
 }
 
+export function recordExecutionRouterDeployment(bundle, address, transactionHash) {
+  if (!ethers.isAddress(address)) throw new Error("A valid deployed Execution Router address is required.");
+  if (!/^0x[0-9a-fA-F]{64}$/.test(transactionHash)) throw new Error("A valid Execution Router transaction hash is required.");
+  if (!bundle.executions?.riskRegistry || bundle.orderedActions.length !== 8) throw new Error("Recorded Risk Registry and configuration data are required.");
+  return {
+    ...bundle,
+    executions: {
+      ...bundle.executions,
+      executionRouter: {
+        address,
+        transactionHash,
+        dexRegistry: bundle.dependencies.dexRegistry,
+        riskRegistry: bundle.executions.riskRegistry.address,
+        status: "success",
+        evidenceSource: "successful TokenPocket receipt and on-page chain-97 binding verification",
+      },
+    },
+  };
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const riskRegistryAddress = process.env.RISK_REGISTRY_ADDRESS || null;
   const transactionHash = process.env.RISK_REGISTRY_TX || null;
-  let bundle = await buildExecutionStack(riskRegistryAddress);
+  const executionRouterAddress = process.env.EXECUTION_ROUTER_ADDRESS || null;
+  const executionRouterTx = process.env.EXECUTION_ROUTER_TX || null;
+  let bundle = await buildExecutionStack(riskRegistryAddress, executionRouterAddress);
   if (riskRegistryAddress || transactionHash) {
     if (!riskRegistryAddress || !transactionHash) throw new Error("Set both RISK_REGISTRY_ADDRESS and RISK_REGISTRY_TX.");
     bundle = recordRiskRegistryDeployment(bundle, riskRegistryAddress, transactionHash);
   }
-  const stage = riskRegistryAddress ? "stage2" : "stage1";
+  if (executionRouterAddress || executionRouterTx) {
+    if (!executionRouterAddress || !executionRouterTx) throw new Error("Set both EXECUTION_ROUTER_ADDRESS and EXECUTION_ROUTER_TX.");
+    bundle = recordExecutionRouterDeployment(bundle, executionRouterAddress, executionRouterTx);
+  }
+  const stage = executionRouterAddress ? "stage3" : riskRegistryAddress ? "stage2" : "stage1";
   const output = path.resolve(import.meta.dirname, `../deployments/router2-execution-stack-${stage}-bsc-testnet-97.json`);
   fs.writeFileSync(output, `${JSON.stringify(bundle, null, 2)}\n`);
   console.log(`Wrote ${output}`);
