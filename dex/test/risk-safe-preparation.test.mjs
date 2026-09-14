@@ -24,5 +24,6 @@ describe("Risk Safe deployment preparation", function () {
     const source = fs.readFileSync(new URL("../app/governance-safe-testnet.js", import.meta.url), "utf8");
     const data = source.match(/const RISK_DATA = "(0x[0-9a-f]+)";/)?.[1];
     assert.equal(data, buildRiskSafeTransaction().transaction.data);
+    assert.match(source, /IS_RISK \? "5개 주소와 3\/5" : "7개 주소와 4\/7"/);
   });
 });
