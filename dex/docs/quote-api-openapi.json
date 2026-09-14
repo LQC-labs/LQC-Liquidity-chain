@@ -42,6 +42,7 @@
     "schemas": {
       "QuoteRequest": {
         "type": "object", "additionalProperties": false,
+        "x-lqc-request-hash-fields": ["version", "type", "chainId", "tokenIn", "tokenOut", "amountIn", "requestedAt", "expiresAt", "clientRequestId"],
         "required": ["version", "type", "chainId", "tokenIn", "tokenOut", "amountIn", "requestedAt", "expiresAt", "clientRequestId", "requestHash"],
         "properties": {
           "version": { "const": 1 }, "type": { "const": "LQC_MULTI_DEX_QUOTE_REQUEST" }, "chainId": { "const": 97 },
