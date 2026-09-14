@@ -1,21 +1,32 @@
 import { validateCanonicalQuoteRequest, validateQuoteApiCapabilities } from "./quote-api-gateway.mjs";
 
-async function readJson(response) {
+async function readJson(response, maxResponseBytes) {
   const type = String(response?.headers?.get?.("content-type") || "");
   if (!response || !/^application\/json(?:\s*;|$)/i.test(type)) throw new Error("Invalid quote API response");
-  try { return await response.json(); } catch { throw new Error("Invalid quote API response"); }
+  const declared = response.headers.get("content-length");
+  if (declared !== null && (!/^[0-9]+$/.test(declared) || BigInt(declared) > BigInt(maxResponseBytes)))
+    throw new Error("Quote API response too large");
+  try {
+    const raw = await response.text();
+    if (Buffer.byteLength(raw, "utf8") > maxResponseBytes) throw new Error("Quote API response too large");
+    return JSON.parse(raw);
+  } catch (error) {
+    if (error?.message === "Quote API response too large") throw error;
+    throw new Error("Invalid quote API response");
+  }
 }
 
 export function createQuoteApiClient({ baseUrl, apiKey, fetchImpl = globalThis.fetch,
   timeoutMs = 5_000, maxRetries = 1, retryDelayMs = 100, delay = ms => new Promise(resolve => setTimeout(resolve, ms)),
-  clock = () => Date.now(), validateQuoteResponse }) {
+  maxResponseBytes = 262_144, clock = () => Date.now(), validateQuoteResponse }) {
   let url;
   try { url = new URL(baseUrl); } catch { throw new Error("Invalid quote API client policy"); }
   if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash ||
       typeof apiKey !== "string" || apiKey.length < 16 || apiKey.length > 512 || /\s/.test(apiKey) ||
       typeof fetchImpl !== "function" || !Number.isSafeInteger(timeoutMs) || timeoutMs < 10 || timeoutMs > 30_000 ||
       !Number.isSafeInteger(maxRetries) || maxRetries < 0 || maxRetries > 2 || !Number.isSafeInteger(retryDelayMs) ||
-      retryDelayMs < 10 || retryDelayMs > 1_000 || typeof delay !== "function" || typeof clock !== "function" ||
+      retryDelayMs < 10 || retryDelayMs > 1_000 || !Number.isSafeInteger(maxResponseBytes) ||
+      maxResponseBytes < 1_024 || maxResponseBytes > 1_048_576 || typeof delay !== "function" || typeof clock !== "function" ||
       typeof validateQuoteResponse !== "function") {
     throw new Error("Invalid quote API client policy");
   }
@@ -25,7 +36,7 @@ export function createQuoteApiClient({ baseUrl, apiKey, fetchImpl = globalThis.f
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const response = await fetchImpl(`${root}${path}`, { ...options, redirect: "error", signal: controller.signal });
-      const body = await readJson(response);
+      const body = await readJson(response, maxResponseBytes);
       if (!accepted.includes(response.status)) {
         const error = new Error("Quote API request failed");
         error.code = typeof body?.error?.code === "string" ? body.error.code : "INVALID_RESPONSE";
@@ -34,7 +45,7 @@ export function createQuoteApiClient({ baseUrl, apiKey, fetchImpl = globalThis.f
       }
       return body;
     } catch (cause) {
-      if (cause?.message === "Quote API request failed" || cause?.message === "Invalid quote API response") throw cause;
+      if (["Quote API request failed", "Invalid quote API response", "Quote API response too large"].includes(cause?.message)) throw cause;
       throw Object.assign(new Error("Quote API unavailable"), { code: "SERVICE_UNAVAILABLE", retryable: true });
     } finally { clearTimeout(timeout); }
   };
