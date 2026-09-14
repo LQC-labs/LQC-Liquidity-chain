@@ -15,13 +15,14 @@ describe("Router 2.0 live-route readiness", function () {
     assert.equal(report.router2.status, "deployment-required");
     assert.equal(report.router2.comparableRoutes, 0);
     assert.ok(report.router2.missingContracts.includes("pancakeV3Adapter"));
+    assert.equal(report.router2.executionPhase.status, "separate-deployment-required");
   });
 
   it("requires two deployed routes and exact registration of the verified V3 pool", function () {
     const address = n => ethers.getAddress(`0x${n.toString(16).padStart(40, "0")}`);
     const deployment = { contracts: {
       dexRegistry: { address: address(1) }, quoteRouter: { address: address(2) },
-      executionRouter: { address: address(3) }, pancakeV3Adapter: { address: address(4) },
+      pancakeV3Adapter: { address: address(4) },
     }, dexes: [
       { kind: "v2", enabled: true },
       { kind: "v3", enabled: true, pools: [{ address: pool.contracts.pancakeV3Pool, fee: 2500 }] },

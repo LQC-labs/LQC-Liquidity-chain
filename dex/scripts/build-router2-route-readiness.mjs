@@ -14,7 +14,7 @@ export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null) 
     poolRecord.finalStateVerification?.status === "success" &&
     poolRecord.finalStateVerification?.routerResidualAllowances?.tLQC === "0" &&
     poolRecord.finalStateVerification?.routerResidualAllowances?.WBNB === "0";
-  const requiredContracts = ["dexRegistry", "quoteRouter", "executionRouter", "pancakeV3Adapter"];
+  const requiredContracts = ["dexRegistry", "quoteRouter", "pancakeV3Adapter"];
   const missingContracts = requiredContracts.filter(name => !ethers.isAddress(routerDeployment?.contracts?.[name]?.address));
   const v3Registered = Array.isArray(routerDeployment?.dexes) && routerDeployment.dexes.some(dex =>
     dex?.kind === "v3" && dex?.enabled !== false && dex?.pools?.some(pool =>
@@ -45,6 +45,11 @@ export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null) 
       missingContracts,
       v3Registered,
       blockers,
+      executionPhase: {
+        status: ethers.isAddress(routerDeployment?.contracts?.riskRegistry?.address) && ethers.isAddress(routerDeployment?.contracts?.executionRouter?.address)
+          ? "deployed" : "separate-deployment-required",
+        requiredContracts: ["riskRegistry", "executionRouter"],
+      },
     },
     nextSafeStep: blockers.length
       ? "Deploy and verify the Router 2.0 core plus Pancake V3 adapter before any routed wallet transaction."

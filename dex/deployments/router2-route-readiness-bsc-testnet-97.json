@@ -4,7 +4,7 @@
     "name": "BSC Testnet",
     "chainId": 97
   },
-  "generatedAt": "2026-09-14T13:38:55.319Z",
+  "generatedAt": "2026-09-14T13:47:48.679Z",
   "pancakeV3Pilot": {
     "status": "ready",
     "pool": "0x4bfbf746a675153e050f5fbc90eaa18d07014c95",
@@ -24,15 +24,21 @@
     "missingContracts": [
       "dexRegistry",
       "quoteRouter",
-      "executionRouter",
       "pancakeV3Adapter"
     ],
     "v3Registered": false,
     "blockers": [
-      "Router 2.0 testnet contracts missing: dexRegistry, quoteRouter, executionRouter, pancakeV3Adapter",
+      "Router 2.0 testnet contracts missing: dexRegistry, quoteRouter, pancakeV3Adapter",
       "Verified V3 pool is not yet registered through the V3 adapter",
       "At least two deployed routes are required for real best-route comparison"
-    ]
+    ],
+    "executionPhase": {
+      "status": "separate-deployment-required",
+      "requiredContracts": [
+        "riskRegistry",
+        "executionRouter"
+      ]
+    }
   },
   "nextSafeStep": "Deploy and verify the Router 2.0 core plus Pancake V3 adapter before any routed wallet transaction."
 }
