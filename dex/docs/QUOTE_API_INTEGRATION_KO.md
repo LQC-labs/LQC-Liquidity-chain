@@ -51,6 +51,7 @@ const response = await client.quote(canonicalRequest);
 - 서버가 `retryable: true`로 응답한 경우에만 최대 2회 재시도한다.
 - 각 재시도 전에 요청 만료를 다시 확인한다.
 - 응답 Proof의 만료시간이 요청 만료를 넘지 않고 현재 시각보다 이른지 검사하며, 실제 실행 한도에는 더 짧은 Proof 만료시간을 사용한다.
+- 참조 클라이언트는 사용자 정의 Proof 검증 결과와 별개로 응답 버전·요청 해시·추적 ID·체인·토큰·수량·만료 문맥을 항상 먼저 검사한다.
 - `INVALID_REQUEST`, `REQUEST_ID_CONFLICT`, `INVALID_QUOTE_EVIDENCE`는 재시도하지 않는다.
 - 응답을 받지 못했더라도 새로운 내용에 기존 요청 ID를 사용하지 않는다.
 
