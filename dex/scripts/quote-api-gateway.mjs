@@ -140,5 +140,9 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
       capacity: { inFlight: inFlight.size, maxInFlight, completed: completed.size, maxCompletedEntries },
       policy: { providerTimeoutMs, rateLimit: limit, rateLimitWindowMs: windowMs } };
   };
+  handleQuote.capabilities = () => ({ schemaVersion: 1, type: "LQC_QUOTE_API_CAPABILITIES",
+    supportedChains: [97], quoteRequestVersions: [1], quoteResponseVersions: [1],
+    maxQuoteValidityMs: 60_000, features: { bestExecutionProof: true, requestHashBinding: true,
+      idempotentRetries: true, concurrentRequestCoalescing: true, serviceHealth: true } });
   return handleQuote;
 }
