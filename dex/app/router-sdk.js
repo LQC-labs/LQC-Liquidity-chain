@@ -174,8 +174,8 @@
   function validateQuoteApiResponse(request,response,ethers,now){
     if(!request||!response||!ethers.isHexString(request.requestHash,32)||response.requestHash!==request.requestHash.toLowerCase()||!Number.isSafeInteger(now)||now<request.requestedAt||now>request.expiresAt)throw new Error('Invalid quote API response context');
     const rebuilt=buildQuoteApiRequest({...request,amountIn:BigInt(request.amountIn)},ethers);
-    if(rebuilt.requestHash.toLowerCase()!==request.requestHash.toLowerCase()||!verifyBestExecutionProof(response.proof,ethers)||response.proof.chainId!==request.chainId||response.proof.tokenIn!==request.tokenIn||response.proof.tokenOut!==request.tokenOut||response.proof.amountIn!==request.amountIn)throw new Error('Quote API proof mismatch');
-    return{valid:true,requestHash:request.requestHash.toLowerCase(),proofHash:response.proof.proofHash.toLowerCase(),candidateCount:response.proof.candidates.length,expiresAt:request.expiresAt};
+    if(rebuilt.requestHash.toLowerCase()!==request.requestHash.toLowerCase()||!Number.isSafeInteger(response.proof?.expiresAt)||response.proof.expiresAt<now||response.proof.expiresAt>request.expiresAt||!verifyBestExecutionProof(response.proof,ethers)||response.proof.chainId!==request.chainId||response.proof.tokenIn!==request.tokenIn||response.proof.tokenOut!==request.tokenOut||response.proof.amountIn!==request.amountIn)throw new Error('Quote API proof mismatch');
+    return{valid:true,requestHash:request.requestHash.toLowerCase(),proofHash:response.proof.proofHash.toLowerCase(),candidateCount:response.proof.candidates.length,expiresAt:response.proof.expiresAt};
   }
   function recoveryActionForError(error){
     const code=explainSwapError(error).code;
