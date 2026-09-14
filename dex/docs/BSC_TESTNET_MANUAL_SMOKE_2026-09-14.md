@@ -1,6 +1,6 @@
 # BSC Testnet Manual Smoke Test — 2026-09-14
 
-Status: **PASS (minimal Router, partial testnet milestone)**
+Status: **PASS (minimal Router, bidirectional swap milestone)**
 
 This record documents a user-observed mobile-wallet smoke test on BSC Testnet chain `97`. It is
 testnet evidence only and is not a production-readiness, security-audit, or mainnet claim.
@@ -25,6 +25,17 @@ testnet evidence only and is not a production-readiness, security-audit, or main
 | Mobile gas presentation | explicit buffered preflight gas limit | TokenPocket changed from `0 tBNB` to a non-zero network fee and accepted submission | PASS |
 | Status localization | completed buy/sell | localized `매수/매도 거래가 완료되었습니다` rendered without a raw placeholder | PASS |
 
+## Canonical explorer evidence
+
+| Direction | Function | Transaction hash | Block | Timestamp (UTC) | Status |
+|---|---|---|---:|---|---|
+| `tLQC -> tBNB` | `Swap Exact Tokens For BNB` | `0x39b938a0caecc7b99ea035e563d637cc3a1d4f0d266cc320fdc4649fa886ead7` | `130938158` | `2026-09-14 06:53:50` | Success |
+
+The sell receipt was independently opened in BscScan Testnet after the LQC Flow UI reported
+completion. The explorer showed the wallet calling the minimal LQC Flow Router and displayed more
+than 100 confirmations at the time of observation. Confirmation count is intentionally not treated
+as a fixed evidence field because it increases over time.
+
 ## Safety observations
 
 - Exact token approvals were used instead of unlimited approval.
@@ -35,12 +46,15 @@ testnet evidence only and is not a production-readiness, security-audit, or main
 
 ## Evidence still to append
 
-- BscScan transaction hashes and canonical block numbers for each successful buy, approval, and sell.
+- BscScan transaction hashes and canonical block numbers for the remaining successful buys,
+  approval, and earlier sells.
 - Final receipt/log reconciliation against expected token transfers.
 - Router and adapter zero-custody checks from the post-deployment monitor.
 
 ## Scope boundary
 
-This milestone validates the minimal LQC Flow Router buy/sell path and mobile-wallet recovery flow.
+This milestone validates the minimal LQC Flow Router bidirectional buy/sell path and mobile-wallet
+recovery flow. The recorded sell hash gives canonical on-chain evidence for one completed direction;
+the remaining hashes and receipt/log reconciliation are still required for the complete evidence set.
 PancakeSwap V2/V3 comparison, Router 2.0, split routing, governance roles, emergency drills, and full
 deployment monitoring remain separate testnet milestones.
