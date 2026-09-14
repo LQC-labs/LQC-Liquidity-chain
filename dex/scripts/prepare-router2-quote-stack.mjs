@@ -56,6 +56,17 @@ export async function buildRouter2QuoteStack(registryAddress = null, adapterAddr
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const output = path.resolve(import.meta.dirname, "../deployments/router2-quote-stack-stage1-bsc-testnet-97.json");
-  fs.writeFileSync(output, `${JSON.stringify(await buildRouter2QuoteStack(), null, 2)}\n`);
-  console.log(`Wrote ${output}`);
+  const previous = fs.existsSync(output) ? JSON.parse(fs.readFileSync(output, "utf8")) : null;
+  if (!previous) fs.writeFileSync(output, `${JSON.stringify(await buildRouter2QuoteStack(), null, 2)}\n`);
+  const registryAddress = previous?.executions?.registry?.address;
+  const adapterAddress = previous?.executions?.pancakeV3Adapter?.address;
+  if (registryAddress && adapterAddress) {
+    const configured = await buildRouter2QuoteStack(registryAddress, adapterAddress);
+    configured.executions = previous.executions;
+    const configOutput = path.resolve(import.meta.dirname, "../deployments/router2-quote-stack-config-bsc-testnet-97.json");
+    fs.writeFileSync(configOutput, `${JSON.stringify(configured, null, 2)}\n`);
+    console.log(`Wrote ${configOutput}`);
+  } else {
+    console.log(`Wrote ${output}`);
+  }
 }
