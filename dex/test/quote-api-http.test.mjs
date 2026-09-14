@@ -79,4 +79,25 @@ describe("LQC quote API read-only HTTP adapter", function () {
       assert.equal(item.headers["content-type"], "application/json");
     }
   });
+
+  it("rejects ambiguous framing, compressed bodies, and content-length mismatches", async function () {
+    const dispatch = setup(), body = JSON.stringify(quoteRequest()), base = { method: "POST", path: "/v1/quote", body };
+    const smuggled = await dispatch({ ...base, headers: { "content-type": "application/json",
+      "content-length": String(Buffer.byteLength(body)), "transfer-encoding": "chunked" } });
+    assert.equal(smuggled.status, 400); assert.equal(smuggled.body.error.code, "UNSAFE_BODY_FRAMING");
+    const compressed = await dispatch({ ...base, headers: { "content-type": "application/json", "content-encoding": "gzip" } });
+    assert.equal(compressed.body.error.code, "UNSAFE_BODY_FRAMING");
+    const mismatch = await dispatch({ ...base, headers: { "content-type": "application/json", "content-length": "1" } });
+    assert.equal(mismatch.body.error.code, "CONTENT_LENGTH_MISMATCH");
+    const malformed = await dispatch({ ...base, headers: { "content-type": "application/json", "content-length": "1e3" } });
+    assert.equal(malformed.body.error.code, "CONTENT_LENGTH_MISMATCH");
+  });
+
+  it("accepts an exact UTF-8 byte length with identity encoding", async function () {
+    const dispatch = setup(), body = JSON.stringify(quoteRequest());
+    const result = await dispatch({ method: "POST", path: "/v1/quote", body, headers: {
+      authorization: "Bearer secret", "content-type": "application/json; charset=utf-8",
+      "content-length": String(Buffer.byteLength(body, "utf8")), "content-encoding": "identity" } });
+    assert.equal(result.status, 200);
+  });
 });
