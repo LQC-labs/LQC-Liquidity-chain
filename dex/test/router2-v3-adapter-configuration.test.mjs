@@ -39,4 +39,19 @@ describe("Router 2.0 V3 Adapter staged configuration", function () {
   it("keeps every configuration transaction at zero native value", function () {
     assert.ok(record.orderedActions.slice(2, 5).every(action => action.value === "0"));
   });
+
+  it("records the three successful on-chain configuration receipts", function () {
+    const execution = record.executions.v3Configuration;
+    assert.equal(execution.feeTier, 2500);
+    assert.equal(execution.pool, record.verifiedPool);
+    assert.equal(execution.dexId, "PANCAKE_V3");
+    assert.equal(execution.priority, 95);
+    assert.equal(execution.status, "success");
+    for (const hash of [execution.feeTierTransactionHash, execution.poolAllowTransactionHash, execution.registryTransactionHash]) {
+      assert.match(hash, /^0x[0-9a-f]{64}$/);
+    }
+    assert.equal(execution.feeTierTransactionHash, "0xf1d0a6fc5c922c2a0f769209262d1a97e53d060fccc7cdfe54328a98523f4c0c");
+    assert.equal(execution.poolAllowTransactionHash, "0xe64ed69e6b42824dc7ac7fe8b05510fc10eb6f1d687240c0044bde782d4de184");
+    assert.equal(execution.registryTransactionHash, "0x0f56e870bf9b149a2e1e4b0c3a439d63195141ff3617e199ce068b7c9701ceb4");
+  });
 });

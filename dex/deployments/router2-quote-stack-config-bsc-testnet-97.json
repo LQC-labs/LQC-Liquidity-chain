@@ -69,6 +69,17 @@
       "maxHops": 1,
       "status": "success",
       "evidence": "Successful TokenPocket deployment receipt followed by bytecode, endpoint, owner, and maxHops verification"
+    },
+    "v3Configuration": {
+      "feeTier": 2500,
+      "feeTierTransactionHash": "0xf1d0a6fc5c922c2a0f769209262d1a97e53d060fccc7cdfe54328a98523f4c0c",
+      "pool": "0x4bfbf746a675153e050f5fbc90eaa18d07014c95",
+      "poolAllowTransactionHash": "0xe64ed69e6b42824dc7ac7fe8b05510fc10eb6f1d687240c0044bde782d4de184",
+      "dexId": "PANCAKE_V3",
+      "registryTransactionHash": "0x0f56e870bf9b149a2e1e4b0c3a439d63195141ff3617e199ce068b7c9701ceb4",
+      "priority": 95,
+      "status": "success",
+      "evidence": "Three successful TokenPocket transactions followed by on-chain fee, pool, adapter, enabled, and priority verification"
     }
   }
 }
