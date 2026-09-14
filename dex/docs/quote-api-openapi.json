@@ -1,0 +1,83 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "LQC Read-Only Quote API", "version": "1.0.0" },
+  "servers": [{ "url": "https://sandbox.invalid" }],
+  "paths": {
+    "/v1/capabilities": {
+      "get": {
+        "operationId": "getCapabilities",
+        "responses": { "200": { "description": "Supported chain, schema versions, and safety features", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Capabilities" } } } } }
+      }
+    },
+    "/v1/health": {
+      "get": {
+        "operationId": "getHealth",
+        "responses": {
+          "200": { "description": "Healthy or degraded", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Health" } } } },
+          "503": { "description": "Capacity exhausted", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Health" } } } }
+        }
+      }
+    },
+    "/v1/quote": {
+      "post": {
+        "operationId": "createQuote",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "X-LQC-Trace-ID", "in": "header", "required": false, "schema": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[A-Za-z0-9._:-]+$" } }],
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/QuoteRequest" } } } },
+        "responses": {
+          "200": { "description": "Verified quote proof", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/QuoteResponse" } } } },
+          "400": { "$ref": "#/components/responses/Error" },
+          "401": { "$ref": "#/components/responses/Error" },
+          "413": { "$ref": "#/components/responses/Error" },
+          "415": { "$ref": "#/components/responses/Error" },
+          "422": { "$ref": "#/components/responses/Error" },
+          "429": { "$ref": "#/components/responses/Error" },
+          "503": { "$ref": "#/components/responses/Error" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": { "bearerAuth": { "type": "http", "scheme": "bearer" } },
+    "schemas": {
+      "QuoteRequest": {
+        "type": "object", "additionalProperties": false,
+        "required": ["version", "type", "chainId", "tokenIn", "tokenOut", "amountIn", "requestedAt", "expiresAt", "clientRequestId", "requestHash"],
+        "properties": {
+          "version": { "const": 1 }, "type": { "const": "LQC_MULTI_DEX_QUOTE_REQUEST" }, "chainId": { "const": 97 },
+          "tokenIn": { "$ref": "#/components/schemas/Address" }, "tokenOut": { "$ref": "#/components/schemas/Address" },
+          "amountIn": { "type": "string", "pattern": "^[1-9][0-9]*$" }, "requestedAt": { "type": "integer", "minimum": 0 },
+          "expiresAt": { "type": "integer", "minimum": 1 }, "clientRequestId": { "type": "string", "minLength": 1, "maxLength": 128 },
+          "requestHash": { "$ref": "#/components/schemas/Hash32" }
+        }
+      },
+      "QuoteResponse": {
+        "type": "object", "additionalProperties": false,
+        "required": ["schemaVersion", "requestHash", "proof", "traceId"],
+        "properties": { "schemaVersion": { "const": 1 }, "requestHash": { "$ref": "#/components/schemas/Hash32" },
+          "proof": { "type": "object" }, "traceId": { "type": "string", "minLength": 1, "maxLength": 128 } }
+      },
+      "Capabilities": {
+        "type": "object", "required": ["schemaVersion", "type", "supportedChains", "quoteRequestVersions", "quoteResponseVersions", "maxQuoteValidityMs", "features"],
+        "properties": { "schemaVersion": { "const": 1 }, "type": { "const": "LQC_QUOTE_API_CAPABILITIES" },
+          "supportedChains": { "type": "array", "items": { "type": "integer" } }, "quoteRequestVersions": { "type": "array", "items": { "type": "integer" } },
+          "quoteResponseVersions": { "type": "array", "items": { "type": "integer" } }, "maxQuoteValidityMs": { "type": "integer", "maximum": 60000 },
+          "features": { "type": "object" } }
+      },
+      "Health": {
+        "type": "object", "required": ["schemaVersion", "type", "status", "checkedAt", "capacity", "policy"],
+        "properties": { "schemaVersion": { "const": 1 }, "type": { "const": "LQC_QUOTE_API_HEALTH" },
+          "status": { "enum": ["healthy", "degraded", "busy"] }, "checkedAt": { "type": "integer" },
+          "capacity": { "type": "object" }, "policy": { "type": "object" } }
+      },
+      "Error": {
+        "type": "object", "required": ["schemaVersion", "error", "traceId"],
+        "properties": { "schemaVersion": { "const": 1 }, "error": { "type": "object", "required": ["code", "retryable"],
+          "properties": { "code": { "type": "string" }, "retryable": { "type": "boolean" } } }, "traceId": { "type": "string" } }
+      },
+      "Address": { "type": "string", "pattern": "^0x[0-9a-f]{40}$" },
+      "Hash32": { "type": "string", "pattern": "^0x[0-9a-f]{64}$" }
+    },
+    "responses": { "Error": { "description": "Stable error envelope", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } } }
+  }
+}
