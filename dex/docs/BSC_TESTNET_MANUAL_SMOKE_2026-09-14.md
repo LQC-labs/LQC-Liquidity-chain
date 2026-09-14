@@ -58,7 +58,9 @@ npm run monitor:minimal-router
 
 For automatic read-only failover, set `BSC_TESTNET_RPC_URLS` to a comma-separated list of unique
 HTTPS endpoints. The monitor uses the first healthy chain-97 provider and never falls back to the
-connected wallet provider.
+connected wallet provider. Its JSON report records each sanitized RPC host as `FAILED` or `SELECTED`,
+the stable failure class, and the selected endpoint's observed block number. URL paths, query values,
+and upstream error messages are never written to the evidence report.
 
 The four address environment variables remain an explicit fallback only when the local deployment
 record is unavailable.
