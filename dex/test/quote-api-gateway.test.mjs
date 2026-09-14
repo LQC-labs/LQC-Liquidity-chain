@@ -70,6 +70,14 @@ describe("LQC read-only quote API gateway foundation", function () {
     assert.throws(() => validateCanonicalQuoteRequest(inherited, now), /Invalid canonical/);
   });
 
+  it("bounds quote amounts to uint256 and request ids to safe ASCII", function () {
+    assert.doesNotThrow(() => validateCanonicalQuoteRequest(request({ amountIn: ethers.MaxUint256.toString() }), now));
+    assert.throws(() => validateCanonicalQuoteRequest(request({ amountIn: (ethers.MaxUint256 + 1n).toString() }), now),
+      /Invalid canonical/);
+    for (const clientRequestId of ["line\nbreak", "한글-요청", "space request"])
+      assert.throws(() => validateCanonicalQuoteRequest(request({ clientRequestId }), now), /Invalid canonical/);
+  });
+
   it("cryptographically verifies proof context instead of trusting the quote provider", async function () {
     const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }],
       verifyProof, clock: () => now });
