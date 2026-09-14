@@ -76,6 +76,14 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
   const usage = new Map();
   const completed = new Map();
   const inFlight = new Map();
+  const authenticate = supplied => {
+    let authenticated = null;
+    for (const candidate of approved) {
+      const matches = sameDigest(candidate.keyDigest, supplied);
+      if (matches) authenticated = candidate;
+    }
+    return authenticated;
+  };
   const purgeExpiredCompleted = now => {
     for (const [key, value] of completed) if (value.expiresAt < now) completed.delete(key);
   };
@@ -84,7 +92,7 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
     const safeTrace = TRACE.test(traceId || "") ? traceId : crypto.randomUUID();
     const match = /^Bearer ([^\s]+)$/.exec(authorization || "");
     const supplied = match ? hashApiKey(match[1]) : "";
-    const client = approved.find(item => sameDigest(item.keyDigest, supplied));
+    const client = authenticate(supplied);
     if (!client) return fail(401, "UNAUTHORIZED", safeTrace);
 
     const now = clock();
