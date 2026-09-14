@@ -41,10 +41,10 @@ describe("LQC read-only quote API gateway foundation", function () {
   it("enforces a per-client fixed-window quota with deterministic retry guidance", async function () {
     const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }],
       verifyProof, limit: 1, windowMs: 60_000, clock: () => now });
-    const call = () => gateway({ authorization: "Bearer secret", request: request(), traceId: "trace-003" },
+    const call = input => gateway({ authorization: "Bearer secret", request: input, traceId: "trace-003" },
       async value => ({ requestHash: value.requestHash, proof: proof(value) }));
-    assert.equal((await call()).status, 200);
-    const blocked = await call();
+    assert.equal((await call(request({ clientRequestId: "quota-1" }))).status, 200);
+    const blocked = await call(request({ clientRequestId: "quota-2" }));
     assert.equal(blocked.status, 429); assert.equal(blocked.body.error.code, "RATE_LIMITED");
     assert.match(blocked.headers["retry-after"], /^[1-9][0-9]*$/);
   });
@@ -87,6 +87,26 @@ describe("LQC read-only quote API gateway foundation", function () {
     const substituted = request({ clientRequestId: "stable-request-9", amountIn: "2000" });
     const conflict = await gateway({ authorization: "Bearer secret", request: substituted, traceId: "trace-010" }, provider);
     assert.equal(conflict.status, 400); assert.equal(conflict.body.error.code, "REQUEST_ID_CONFLICT"); assert.equal(calls, 1);
+  });
+
+  it("does not charge completed or concurrent idempotent retries against the quote quota", async function () {
+    let calls = 0, release;
+    const waiting = new Promise(resolve => { release = resolve; });
+    const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }],
+      verifyProof, limit: 1, clock: () => now });
+    const input = request({ clientRequestId: "quota-replay-1" });
+    const provider = async value => { calls += 1; await waiting; return { requestHash: value.requestHash, proof: proof(value) }; };
+    const first = gateway({ authorization: "Bearer secret", request: input }, provider);
+    const concurrent = gateway({ authorization: "Bearer secret", request: input }, provider);
+    release();
+    const [original, joined] = await Promise.all([first, concurrent]);
+    const completed = await gateway({ authorization: "Bearer secret", request: input }, provider);
+    assert.equal(original.status, 200); assert.equal(joined.status, 200); assert.equal(completed.status, 200);
+    assert.equal(joined.headers["x-ratelimit-remaining"], "0");
+    assert.equal(completed.headers["x-ratelimit-remaining"], "0"); assert.equal(calls, 1);
+    const blocked = await gateway({ authorization: "Bearer secret",
+      request: request({ clientRequestId: "quota-replay-2" }) }, provider);
+    assert.equal(blocked.status, 429); assert.equal(blocked.body.error.code, "RATE_LIMITED");
   });
 
   it("coalesces concurrent identical requests and rejects concurrent request-id substitution", async function () {
@@ -286,7 +306,7 @@ describe("LQC read-only quote API gateway foundation", function () {
     await gateway({ authorization: "Bearer wrong", request: request() }, async()=>{});
     const input = request({ clientRequestId: "metrics-1" });
     const provider = async value => ({ requestHash: value.requestHash, proof: proof(value) });
-    await gateway({ authorization: "Bearer sensitive-secret", request: input }, provider);
+    await gateway({ authorization: "Bearer sensitive-secret", request: request({ clientRequestId: "metrics-2" }) }, provider);
     await gateway({ authorization: "Bearer sensitive-secret", request: input }, provider);
     const health = gateway.health();
     assert.deepEqual(health.metrics, { requests: 3, authenticated: 2, unauthorized: 1, rateLimited: 1,
