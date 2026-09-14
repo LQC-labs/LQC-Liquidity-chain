@@ -67,8 +67,35 @@ export async function buildExecutionStack(riskRegistryAddress = null, executionR
   };
 }
 
+export function recordRiskRegistryDeployment(bundle, address, transactionHash) {
+  if (!ethers.isAddress(address)) throw new Error("A valid deployed Risk Registry address is required.");
+  if (!/^0x[0-9a-fA-F]{64}$/.test(transactionHash)) throw new Error("A valid Risk Registry transaction hash is required.");
+  if (bundle.orderedActions[1]?.action !== "deploy-execution-router") throw new Error("Execution Router deployment data is required before recording Risk Registry evidence.");
+  return {
+    ...bundle,
+    executions: {
+      riskRegistry: {
+        address,
+        transactionHash,
+        owner: SIGNER_1,
+        riskAdmin: riskSafe.address,
+        status: "success",
+        evidenceSource: "successful TokenPocket receipt and on-page chain-97 role verification",
+      },
+    },
+  };
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const output = path.resolve(import.meta.dirname, "../deployments/router2-execution-stack-stage1-bsc-testnet-97.json");
-  fs.writeFileSync(output, `${JSON.stringify(await buildExecutionStack(), null, 2)}\n`);
+  const riskRegistryAddress = process.env.RISK_REGISTRY_ADDRESS || null;
+  const transactionHash = process.env.RISK_REGISTRY_TX || null;
+  let bundle = await buildExecutionStack(riskRegistryAddress);
+  if (riskRegistryAddress || transactionHash) {
+    if (!riskRegistryAddress || !transactionHash) throw new Error("Set both RISK_REGISTRY_ADDRESS and RISK_REGISTRY_TX.");
+    bundle = recordRiskRegistryDeployment(bundle, riskRegistryAddress, transactionHash);
+  }
+  const stage = riskRegistryAddress ? "stage2" : "stage1";
+  const output = path.resolve(import.meta.dirname, `../deployments/router2-execution-stack-${stage}-bsc-testnet-97.json`);
+  fs.writeFileSync(output, `${JSON.stringify(bundle, null, 2)}\n`);
   console.log(`Wrote ${output}`);
 }
