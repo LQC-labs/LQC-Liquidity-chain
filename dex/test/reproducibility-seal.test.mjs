@@ -4,7 +4,8 @@ import { buildReproducibilitySeal, verifyReproducibilitySeal } from "../scripts/
 const sha = character => `sha256:${character.repeat(64)}`;
 const input = () => ({ sourceRevision: "a".repeat(40), nodeVersion: "v22.18.0", packageLockDigest: sha("b"),
   compiler: { version: "0.8.30+commit.73712a01.Emscripten.clang", optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
-  sourceFiles: [{ path: "contracts/Z.sol", digest: sha("c") }, { path: "app/router-sdk.js", digest: sha("d") }] });
+  sourceFiles: [{ path: "contracts/Z.sol", digest: sha("c") }, { path: "app/router-sdk.js", digest: sha("d") }],
+  compiledContracts: [{ id: "contracts/Z.sol:Z", abiDigest: sha("1"), bytecodeDigest: sha("2"), deployedBytecodeDigest: sha("3") }] });
 
 describe("LQC reproducibility seal", function () {
   it("produces one deterministic seal independent of source input order", function () {
@@ -12,6 +13,7 @@ describe("LQC reproducibility seal", function () {
     const reversed = input(); reversed.sourceFiles.reverse();
     assert.deepEqual(buildReproducibilitySeal(reversed), first);
     assert.match(first.sourceTreeDigest, /^sha256:[0-9a-f]{64}$/);
+    assert.match(first.buildOutputsDigest, /^sha256:[0-9a-f]{64}$/);
     assert.match(first.sealDigest, /^sha256:[0-9a-f]{64}$/);
     assert.equal(verifyReproducibilitySeal(first), true);
   });
@@ -22,7 +24,8 @@ describe("LQC reproducibility seal", function () {
       seal => { seal.compiler.optimizer.runs = 201; },
       seal => { seal.runtime.packageLockDigest = sha("f"); },
       seal => { seal.sourceRevision = "1".repeat(40); },
-      seal => { seal.schemas.executionIntent.requiredFields.pop(); }
+      seal => { seal.schemas.executionIntent.requiredFields.pop(); },
+      seal => { seal.compiledContracts[0].deployedBytecodeDigest = sha("9"); }
     ];
     for (const mutate of mutations) {
       const seal = structuredClone(buildReproducibilitySeal(input())); mutate(seal);
@@ -37,5 +40,7 @@ describe("LQC reproducibility seal", function () {
     assert.throws(() => buildReproducibilitySeal(unsafe), /safe relative path/);
     const wrongCompiler = input(); wrongCompiler.compiler.viaIR = false;
     assert.throws(() => buildReproducibilitySeal(wrongCompiler), /Compiler/);
+    const duplicateContract = input(); duplicateContract.compiledContracts.push({ ...duplicateContract.compiledContracts[0] });
+    assert.throws(() => buildReproducibilitySeal(duplicateContract), /Duplicate compiled contract/);
   });
 });

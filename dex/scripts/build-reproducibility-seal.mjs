@@ -34,11 +34,20 @@ function validateInput(input) {
     if (paths.has(file.path)) throw new Error(`Duplicate source path: ${file.path}`);
     paths.add(file.path);
   }
+  if (!Array.isArray(input.compiledContracts) || input.compiledContracts.length === 0) throw new Error("compiledContracts must not be empty.");
+  const contractIds = new Set();
+  for (const contract of input.compiledContracts) {
+    if (!contract || !/^[^:]+\.sol:[A-Za-z_$][A-Za-z0-9_$]*$/.test(contract.id) || !SHA256.test(contract.abiDigest) || !SHA256.test(contract.bytecodeDigest) || !SHA256.test(contract.deployedBytecodeDigest)) throw new Error("Each compiled contract needs a canonical id and three SHA-256 digests.");
+    if (contractIds.has(contract.id)) throw new Error(`Duplicate compiled contract: ${contract.id}`);
+    contractIds.add(contract.id);
+  }
 }
 
 export function buildReproducibilitySeal(input) {
   validateInput(input);
   const sourceFiles = input.sourceFiles.map(file => ({ path: file.path, digest: file.digest })).sort((a, b) => a.path.localeCompare(b.path));
+  const compiledContracts = input.compiledContracts.map(contract => ({ id: contract.id, abiDigest: contract.abiDigest,
+    bytecodeDigest: contract.bytecodeDigest, deployedBytecodeDigest: contract.deployedBytecodeDigest })).sort((a, b) => a.id.localeCompare(b.id));
   const body = {
     schemaVersion: 1,
     sealType: "LQC_ROUTER_REPRODUCIBILITY_SEAL",
@@ -50,7 +59,9 @@ export function buildReproducibilitySeal(input) {
       executionIntent: { version: 1, type: "LQC_EXECUTION_INTENT", requiredFields: INTENT_FIELDS }
     },
     sourceFiles,
-    sourceTreeDigest: digest(serialize(sourceFiles))
+    sourceTreeDigest: digest(serialize(sourceFiles)),
+    compiledContracts,
+    buildOutputsDigest: digest(serialize(compiledContracts))
   };
   return { ...body, sealDigest: digest(serialize(body)) };
 }
@@ -59,7 +70,8 @@ export function verifyReproducibilitySeal(seal) {
   try {
     if (seal?.schemaVersion !== 1 || seal?.sealType !== "LQC_ROUTER_REPRODUCIBILITY_SEAL" || !SHA256.test(seal.sealDigest)) return false;
     const rebuilt = buildReproducibilitySeal({ sourceRevision: seal.sourceRevision, nodeVersion: seal.runtime?.nodeVersion,
-      packageLockDigest: seal.runtime?.packageLockDigest, compiler: seal.compiler, sourceFiles: seal.sourceFiles });
+      packageLockDigest: seal.runtime?.packageLockDigest, compiler: seal.compiler, sourceFiles: seal.sourceFiles,
+      compiledContracts: seal.compiledContracts });
     return serialize(rebuilt) === serialize(seal);
   } catch {
     return false;
@@ -79,6 +91,25 @@ function collectFiles(root) {
   return [...new Set(files)].sort().map(relative => ({ path: relative, digest: digest(fs.readFileSync(path.join(root, relative))) }));
 }
 
+function collectCompiledContracts(root) {
+  const artifactsRoot = path.join(root, "artifacts", "contracts");
+  if (!fs.existsSync(artifactsRoot)) throw new Error("Compiled artifacts are missing; run npm run compile first.");
+  const contracts = [];
+  const walk = directory => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const absolute = path.join(directory, entry.name);
+      if (entry.isDirectory()) walk(absolute);
+      else if (entry.name.endsWith(".json")) {
+        const artifact = JSON.parse(fs.readFileSync(absolute, "utf8"));
+        contracts.push({ id: `${artifact.sourceName}:${artifact.contractName}`, abiDigest: digest(serialize(artifact.abi)),
+          bytecodeDigest: digest(artifact.bytecode), deployedBytecodeDigest: digest(artifact.deployedBytecode) });
+      }
+    }
+  };
+  walk(artifactsRoot);
+  return contracts;
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const root = path.resolve(import.meta.dirname, "..");
@@ -87,7 +118,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     const seal = buildReproducibilitySeal({ sourceRevision, nodeVersion: process.version,
       packageLockDigest: digest(fs.readFileSync(path.join(root, "package-lock.json"))),
       compiler: { version: solc.version(), optimizer: { enabled: true, runs: 200 }, viaIR: true, evmVersion: "shanghai" },
-      sourceFiles: collectFiles(root) });
+      sourceFiles: collectFiles(root), compiledContracts: collectCompiledContracts(root) });
     console.log(`${JSON.stringify(seal, null, 2)}\n`);
   } catch (error) {
     console.error(error.message);

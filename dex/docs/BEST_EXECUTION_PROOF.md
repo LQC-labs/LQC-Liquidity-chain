@@ -88,9 +88,10 @@ proof tampering. These are local property-style tests and do not claim live test
 
 `npm run build:reproducibility-seal` emits a deterministic JSON manifest only from a clean committed
 worktree. It binds the full Git revision, Node version, package-lock digest, exact Solidity compiler
-settings, security-relevant source-file digests, and the required Proof and Execution Intent schema
-fields to one SHA-256 seal. Reordering source inputs does not change the result; source, toolchain,
-schema, or configuration mutations fail verification.
+settings, security-relevant source-file digests, every compiled contract's ABI, creation bytecode and
+runtime bytecode digests, and the required Proof and Execution Intent schema fields to one SHA-256
+seal. Reordering inputs does not change the result; source, build output, toolchain, schema, or
+configuration mutations fail verification. Run `npm run compile` immediately before generating it.
 
 The command reads local files and Git metadata only. It does not access an RPC, wallet, private key,
 testnet balance, deployment address, or transaction endpoint. The seal proves artifact identity and
