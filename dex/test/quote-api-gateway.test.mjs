@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
 import { createQuoteApiGateway, hashApiKey, validateCanonicalQuoteRequest,
-  validateQuoteApiCapabilities } from "../scripts/quote-api-gateway.mjs";
+  validateQuoteApiCapabilities, validateQuoteApiHealth } from "../scripts/quote-api-gateway.mjs";
 
 const tokenA = "0x0000000000000000000000000000000000000001";
 const tokenB = "0x0000000000000000000000000000000000000002";
@@ -247,6 +247,7 @@ describe("LQC read-only quote API gateway foundation", function () {
     const gateway = createQuoteApiGateway({ clients: [{ id: "private-partner", keyDigest: hashApiKey("secret-value") }],
       verifyProof, limit: 10, maxInFlight: 1, maxCompletedEntries: 1, clock: () => current });
     const healthy = gateway.health();
+    assert.equal(validateQuoteApiHealth(healthy, current), healthy);
     assert.equal(healthy.status, "healthy"); assert.equal(healthy.capacity.inFlight, 0);
     assert.equal(JSON.stringify(healthy).includes("private-partner"), false);
     assert.equal(JSON.stringify(healthy).includes("secret-value"), false);
