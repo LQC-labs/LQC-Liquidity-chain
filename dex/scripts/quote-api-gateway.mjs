@@ -34,9 +34,11 @@ export function validateCanonicalQuoteRequest(request, now = Date.now()) {
   return request;
 }
 
-export function createQuoteApiGateway({ clients, verifyProof, limit = 60, windowMs = 60_000, clock = () => Date.now() }) {
+export function createQuoteApiGateway({ clients, verifyProof, limit = 60, windowMs = 60_000,
+  providerTimeoutMs = 5_000, clock = () => Date.now() }) {
   if (!Array.isArray(clients) || clients.length === 0 || !Number.isSafeInteger(limit) || limit < 1 ||
-      !Number.isSafeInteger(windowMs) || windowMs < 1_000 || typeof verifyProof !== "function") {
+      !Number.isSafeInteger(windowMs) || windowMs < 1_000 || !Number.isSafeInteger(providerTimeoutMs) ||
+      providerTimeoutMs < 10 || providerTimeoutMs > 30_000 || typeof verifyProof !== "function") {
     throw new Error("Invalid quote API gateway policy");
   }
   const approved = clients.map(client => {
@@ -88,7 +90,12 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
       }
       if (typeof quote !== "function") throw Object.assign(new Error("Quote service unavailable"), { code: "SERVICE_UNAVAILABLE" });
       const promise = (async () => {
-        const result = await quote(request);
+        let timeout;
+        const timedOut = new Promise((_, reject) => { timeout = setTimeout(() => reject(
+          Object.assign(new Error("Quote provider timed out"), { code: "SERVICE_UNAVAILABLE" })), providerTimeoutMs); });
+        let result;
+        try { result = await Promise.race([Promise.resolve().then(() => quote(request)), timedOut]); }
+        finally { clearTimeout(timeout); }
         if (!result?.proof || result.requestHash !== request.requestHash || result.proof.chainId !== request.chainId ||
             result.proof.tokenIn !== request.tokenIn || result.proof.tokenOut !== request.tokenOut ||
             result.proof.amountIn !== request.amountIn || result.proof.expiresAt > request.expiresAt ||
