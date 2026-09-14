@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LQC PancakeSwap V3 Pool · BSC Testnet</title>
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#122126;background:#f3fbf9}body{margin:0;padding:24px 14px}.card{max-width:720px;margin:auto;background:#fff;border:1px solid #d9ece7;border-radius:22px;padding:22px;box-shadow:0 10px 30px #193c3420}h1{font-size:25px;margin:8px 0}.badge{display:inline-block;background:#dff8f1;color:#087b69;border-radius:999px;padding:6px 10px;font-weight:700}.warning{background:#fff4dc;border-radius:14px;padding:14px;margin:18px 0}.row{padding:10px 0;border-bottom:1px solid #e5efed}.row b{display:block}code{display:block;overflow-wrap:anywhere;margin-top:4px;color:#34484d}button{width:100%;border:0;border-radius:14px;padding:16px;margin-top:14px;font-size:18px;font-weight:800;background:#0b8f7d;color:#fff}button:disabled{background:#9eb9b3}.secondary{background:#152825}#status{padding:14px;border-radius:14px;background:#edf5f3;margin-top:16px}#status[data-type="error"]{background:#ffe9ed;color:#ad2140}#status[data-type="ok"]{background:#dff8ed;color:#08724f}.result{margin-top:18px;border-top:1px solid #dbe8e5;padding-top:12px}.small{font-size:13px;color:#607277}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <span class="badge">TESTNET · CHAIN 97</span>
+    <h1>tLQC/WBNB PancakeSwap V3 빈 풀 생성</h1>
+    <p>이번 단계는 풀 계약만 생성합니다. 토큰 승인, 초기 가격 설정, 유동성 공급은 하지 않습니다.</p>
+    <div class="warning"><b>주의:</b> BNB 메인넷으로 전환하지 마세요. Signer 1과 BSC 테스트넷에서만 실행하세요.</div>
+    <div class="row"><b>tLQC</b><code id="tlqc"></code></div>
+    <div class="row"><b>WBNB</b><code id="wbnb"></code></div>
+    <div class="row"><b>수수료</b><code id="fee"></code></div>
+    <div class="row"><b>공식 PancakeSwap V3 Factory</b><code id="factory"></code></div>
+    <button id="connect" class="secondary">1. Signer 1 연결 및 검증</button>
+    <p class="small">연결 지갑: <span id="wallet">아직 연결되지 않음</span></p>
+    <button id="create" disabled>2. 빈 V3 풀 생성</button>
+    <div id="status">먼저 Signer 1 지갑을 연결하세요.</div>
+    <div class="result">
+      <p><b>생성된 V3 풀 주소</b><code id="pool">—</code></p>
+      <p><b>거래 해시</b><code id="tx">—</code></p>
+    </div>
+  </main>
+  <script src="./pancake-v3-pool-testnet.js"></script>
+</body>
+</html>
