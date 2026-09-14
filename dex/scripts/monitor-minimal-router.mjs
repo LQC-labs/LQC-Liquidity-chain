@@ -8,6 +8,30 @@ const ERC20_ABI = ["function balanceOf(address) view returns(uint256)"];
 
 const same = (left, right) => ethers.getAddress(left) === ethers.getAddress(right);
 
+export function parseRpcUrls(value) {
+  const urls = String(value || "").split(",").map(item => item.trim()).filter(Boolean);
+  if (urls.length === 0 || urls.length > 8) throw new Error("Provide between one and eight BSC Testnet RPC URLs.");
+  if (new Set(urls).size !== urls.length) throw new Error("BSC Testnet RPC URLs must be unique.");
+  for (const url of urls) {
+    let parsed;
+    try { parsed = new URL(url); } catch { throw new Error("BSC Testnet RPC URL is invalid."); }
+    if (parsed.protocol !== "https:" || parsed.username || parsed.password) {
+      throw new Error("BSC Testnet RPC URLs must use HTTPS without embedded credentials.");
+    }
+  }
+  return urls;
+}
+
+export function createReadProvider(urls, timeoutMs = 10000) {
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1000 || timeoutMs > 30000) throw new Error("RPC timeout must be 1-30 seconds.");
+  const providers = parseRpcUrls(urls).map((url, index) => {
+    const request = new ethers.FetchRequest(url); request.timeout = timeoutMs;
+    return { provider: new ethers.JsonRpcProvider(request, 97, { staticNetwork: true }),
+      priority: index + 1, stallTimeout: Math.min(2500, timeoutMs), weight: 1 };
+  });
+  return providers.length === 1 ? providers[0].provider : new ethers.FallbackProvider(providers, 97, { quorum: 1 });
+}
+
 export function minimalMonitorConfigFromDeployment(deployment) {
   if (Number(deployment?.network?.chainId) !== 97 || deployment?.mode !== "minimal-testnet-smoke") {
     throw new Error("Minimal deployment record must target BSC testnet chain 97.");
@@ -71,7 +95,8 @@ export async function monitorMinimalRouter({ provider, router, factory, tlqc, wb
 }
 
 async function main() {
-  if (!process.env.BSC_TESTNET_RPC_URL) throw new Error("Set BSC_TESTNET_RPC_URL. Never commit RPC credentials or private keys.");
+  const rpcUrls = process.env.BSC_TESTNET_RPC_URLS || process.env.BSC_TESTNET_RPC_URL;
+  if (!rpcUrls) throw new Error("Set BSC_TESTNET_RPC_URLS or BSC_TESTNET_RPC_URL. Never commit RPC credentials or private keys.");
   const root = path.resolve(import.meta.dirname, "..");
   const deploymentPath = path.resolve(process.env.MINIMAL_DEPLOYMENT_FILE ||
     path.join(root, "deployments/minimal-bsc-testnet-97.local.json"));
@@ -82,7 +107,8 @@ async function main() {
     config = { router: process.env.MINIMAL_ROUTER_ADDRESS, factory: process.env.MINIMAL_FACTORY_ADDRESS,
       tlqc: process.env.TLQC_ADDRESS, wbnb: process.env.WBNB_ADDRESS };
   }
-  const report = await monitorMinimalRouter({ provider: new ethers.JsonRpcProvider(process.env.BSC_TESTNET_RPC_URL), ...config });
+  const timeoutMs = Number(process.env.MONITOR_RPC_TIMEOUT_MS || 10000);
+  const report = await monitorMinimalRouter({ provider: createReadProvider(rpcUrls, timeoutMs), ...config });
   console.log(JSON.stringify(report, null, 2));
   if (report.status === "CRITICAL") process.exitCode = 2;
 }
