@@ -16,6 +16,9 @@ describe("PancakeSwap V3 first smoke-swap preparation", function () {
     const record = JSON.parse(fs.readFileSync(new URL("../deployments/pancake-v3-pool-bsc-testnet-97.json", import.meta.url)));
     assert.equal(record.initialLiquidityPlan.lpNftTokenId, "37418");
     assert.equal(record.initialLiquidityPlan.status, "executed");
+    assert.equal(record.firstSmokeSwap.swapTransactionHash, "0xcdc26400dd1df9abc773ada2f5bd597009fffe209e933128f9f0906350ef3727");
+    assert.equal(record.firstSmokeSwap.quotedWBNB, record.firstSmokeSwap.receivedWBNB);
+    assert.equal(record.firstSmokeSwap.status, "success");
   });
 
   it("quotes and approves exactly 1,000 tLQC through official endpoints", function () {

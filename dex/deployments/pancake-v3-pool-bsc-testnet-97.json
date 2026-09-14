@@ -30,5 +30,16 @@
     "reportedPoolLiquidity": "500000000000000000000",
     "lpNftTokenId": "37418",
     "evidence": "TokenPocket DApp successful receipt followed by pool liquidity read"
+  },
+  "firstSmokeSwap": {
+    "direction": "tLQC-to-WBNB",
+    "amountIn": "1000",
+    "approvalTransactionHash": "0xe29bc34e110f248b3f9ab81ebef7a29ac27fc67661eb3f5482574f9785151ccd",
+    "swapTransactionHash": "0xcdc26400dd1df9abc773ada2f5bd597009fffe209e933128f9f0906350ef3727",
+    "quotedWBNB": "0.000995513949670407",
+    "minimumWBNB": "0.000985558810173702",
+    "receivedWBNB": "0.000995513949670407",
+    "status": "success",
+    "evidence": "Successful TokenPocket receipt and WBNB balance-delta verification"
   }
 }
