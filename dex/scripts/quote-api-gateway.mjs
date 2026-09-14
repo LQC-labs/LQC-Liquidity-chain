@@ -55,8 +55,10 @@ export function validateCanonicalQuoteRequest(request, now = Date.now()) {
       !HASH.test(request.requestHash || "")) {
     throw Object.assign(new Error("Invalid canonical quote request"), { code: "INVALID_REQUEST" });
   }
-  const { requestHash, ...payload } = request;
-  if (ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase() !== requestHash) {
+  const payload = { version: request.version, type: request.type, chainId: request.chainId, tokenIn: request.tokenIn,
+    tokenOut: request.tokenOut, amountIn: request.amountIn, requestedAt: request.requestedAt,
+    expiresAt: request.expiresAt, clientRequestId: request.clientRequestId };
+  if (ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase() !== request.requestHash) {
     throw Object.assign(new Error("Quote request hash mismatch"), { code: "REQUEST_HASH_MISMATCH" });
   }
   return request;
