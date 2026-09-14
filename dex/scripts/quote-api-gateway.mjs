@@ -104,10 +104,6 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
     const windowStart = Math.floor(now / windowMs) * windowMs;
     const prior = usage.get(client.id);
     const current = prior?.windowStart === windowStart ? prior : { windowStart, count: 0 };
-    if (current.count >= limit) { increment("rateLimited"); return { ...fail(429, "RATE_LIMITED", safeTrace, true),
-      headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
-        "retry-after": String(Math.max(1, Math.ceil((windowStart + windowMs - now) / 1000))) } }; }
-    current.count += 1; usage.set(client.id, current);
 
     try {
       validateCanonicalQuoteRequest(request, now);
@@ -120,7 +116,7 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
         }
         increment("replayed"); return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
           "x-lqc-idempotent-replay": "true", "x-ratelimit-limit": String(limit),
-          "x-ratelimit-remaining": String(limit - current.count) }, body: { ...previous.body, traceId: safeTrace } };
+          "x-ratelimit-remaining": String(Math.max(0, limit - current.count)) }, body: { ...previous.body, traceId: safeTrace } };
       }
       const pending = inFlight.get(replayKey);
       if (pending) {
@@ -130,8 +126,12 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
         const body = await pending.promise; increment("replayed");
         return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
           "x-lqc-idempotent-replay": "true", "x-ratelimit-limit": String(limit),
-          "x-ratelimit-remaining": String(limit - current.count) }, body: { ...body, traceId: safeTrace } };
+          "x-ratelimit-remaining": String(Math.max(0, limit - current.count)) }, body: { ...body, traceId: safeTrace } };
       }
+      if (current.count >= limit) { increment("rateLimited"); return { ...fail(429, "RATE_LIMITED", safeTrace, true),
+        headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
+          "retry-after": String(Math.max(1, Math.ceil((windowStart + windowMs - now) / 1000))) } }; }
+      current.count += 1; usage.set(client.id, current);
       if (typeof quote !== "function") throw Object.assign(new Error("Quote service unavailable"), { code: "SERVICE_UNAVAILABLE" });
       if (inFlight.size >= maxInFlight) {
         throw Object.assign(new Error("Quote service capacity reached"), { code: "SERVICE_BUSY" });
