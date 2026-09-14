@@ -10,7 +10,7 @@ npm ci
 npm test
 ```
 
-The current suite compiles **45 Solidity sources** and reports **166 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
+The current suite compiles **49 Solidity sources** and reports **250 passing tests**. Future commits may change that count; the CI result for the exact reviewed commit is authoritative.
 
 | Security property | Automated evidence | Status / boundary |
 |---|---|---|
@@ -36,11 +36,12 @@ The current suite compiles **45 Solidity sources** and reports **166 passing tes
 | Test token ownership and supply behavior | `test/testnet-token.test.mjs` | Test infrastructure only; not evidence for a final production LQC token. |
 | Browser route encoding and execution-plan SDK | `test/router-sdk.test.mjs` | Covered for supported routing formats. |
 | Proof of Best Execution | `test/router-sdk.test.mjs` | Produces tamper-evident single/split decision receipts, proves gas-adjusted route selection, rejects non-improving splits and inconsistent allocations, and excludes raw route data. |
+| Proof/intent reproducibility seal | `test/reproducibility-seal.test.mjs` | Deterministically binds the Git revision, dependency lock, Node/Solidity toolchain, compiler settings, security-relevant source hashes, and required Proof/Execution Intent schema fields. Dirty-worktree CLI use and any manifest mutation fail closed; this is local provenance evidence, not an audit. |
 | Proof-to-Settlement binding | `test/router-sdk.test.mjs` | Binds a valid route proof to successful BSC testnet transaction and block evidence, enforces expiry and minimum output, records execution variance, and detects receipt tampering or proof substitution. RPC finality and event decoding remain external prerequisites. |
 | Canonical ERC-20 settlement verification | `test/router-sdk.test.mjs` | Re-fetches the transaction and canonical block, enforces confirmation depth, and exactly reconciles output-token transfers to the committed recipient. Reorgs, insufficient finality, and log mismatches fail closed; native BNB is excluded. |
 | Canonical native BNB settlement verification | `test/router-sdk.test.mjs` | Requires one event from the reviewed Native Router and reconciles recipient, input token, direction, input amount, and actual BNB output after canonical block and finality checks. Spoofed, duplicate, or inconsistent events fail closed. |
 | Execution-proof deterministic fuzz invariants | `test/settlement-proof-invariants.test.mjs` | Exercises 250 varied best-route settlements plus 250 proof-bound receipt mutations. Valid outputs remain above the committed minimum and every mutated settlement field fails verification. Deterministic fuzzing is reproducible but does not replace formal verification. |
-| Router SDK coverage gate | `scripts/check-router-sdk-coverage.mjs` | Uses dependency-free V8 precise coverage and fails below 100% function or 90% executed-range coverage. The reviewed baseline is 35/35 functions and 217/241 ranges; neither metric is mislabeled as branch or Solidity coverage. |
+| Router SDK coverage gate | `scripts/check-router-sdk-coverage.mjs` | Uses dependency-free V8 precise coverage and fails below 100% function or 90% executed-range coverage. The reviewed baseline is 66/66 functions and 390/430 ranges; neither metric is mislabeled as branch or Solidity coverage. |
 | Critical Solidity audit-surface drift | `test/critical-audit-surface.test.mjs`, `audit/critical-surface.json` | Maps all 36 state-changing ABI entry points across Execution Router, Risk Registry, and Liquidity Vault to explicit authority, critical/high risk, and existing automated evidence. Any unclassified ABI change fails the suite. |
 | Critical cross-module attack paths | `test/critical-attack-paths.test.mjs` | A malicious DEX adapter cannot reenter the Execution Router or retain funds/approval; an attacker cannot steal Risk/Vault authority, bypass pauses, consume limits, reopen deposits, or change caps/strategy. Rejected attacks preserve balances and configuration. |
 | Malicious Strategy callback isolation | `test/critical-attack-paths.test.mjs` | Strategy callbacks cannot reenter Vault allocation or recall. Both attacks revert atomically and preserve idle assets, strategy token backing, managed-asset accounting, and strategy debt. |

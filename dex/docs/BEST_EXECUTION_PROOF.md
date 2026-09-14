@@ -83,3 +83,15 @@ native value, pending nonce and deadline. The same intent is rebuilt immediately
 The deterministic invariant suite also exercises 250 valid split-route refreshes and 250 mutations
 covering route replacement, allocation drift, below-minimum output, trade substitution, expiry and
 proof tampering. These are local property-style tests and do not claim live testnet execution.
+
+## Reproducibility seal
+
+`npm run build:reproducibility-seal` emits a deterministic JSON manifest only from a clean committed
+worktree. It binds the full Git revision, Node version, package-lock digest, exact Solidity compiler
+settings, security-relevant source-file digests, and the required Proof and Execution Intent schema
+fields to one SHA-256 seal. Reordering source inputs does not change the result; source, toolchain,
+schema, or configuration mutations fail verification.
+
+The command reads local files and Git metadata only. It does not access an RPC, wallet, private key,
+testnet balance, deployment address, or transaction endpoint. The seal proves artifact identity and
+reproducibility metadata, not correct compilation, honest inputs, runtime safety, or audit approval.
