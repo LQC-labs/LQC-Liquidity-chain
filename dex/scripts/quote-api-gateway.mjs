@@ -3,6 +3,8 @@ import { ethers } from "ethers";
 
 const HASH = /^0x[0-9a-f]{64}$/;
 const TRACE = /^[A-Za-z0-9._:-]{1,128}$/;
+const QUOTE_REQUEST_FIELDS = Object.freeze(["version", "type", "chainId", "tokenIn", "tokenOut", "amountIn",
+  "requestedAt", "expiresAt", "clientRequestId", "requestHash"]);
 
 export const hashApiKey = value => crypto.createHash("sha256").update(String(value)).digest("hex");
 
@@ -38,7 +40,10 @@ function fail(status, code, traceId, retryable = false) {
 }
 
 export function validateCanonicalQuoteRequest(request, now = Date.now()) {
-  if (!request || request.version !== 1 || request.type !== "LQC_MULTI_DEX_QUOTE_REQUEST" ||
+  const keys = request && typeof request === "object" ? Object.keys(request) : [];
+  if (!request || keys.length !== QUOTE_REQUEST_FIELDS.length ||
+      !QUOTE_REQUEST_FIELDS.every(field => Object.hasOwn(request, field)) ||
+      request.version !== 1 || request.type !== "LQC_MULTI_DEX_QUOTE_REQUEST" ||
       request.chainId !== 97 || !ethers.isAddress(request.tokenIn) || !ethers.isAddress(request.tokenOut) ||
       request.tokenIn !== request.tokenIn.toLowerCase() || request.tokenOut !== request.tokenOut.toLowerCase() ||
       request.tokenIn === request.tokenOut || !/^[1-9][0-9]*$/.test(request.amountIn || "") ||
