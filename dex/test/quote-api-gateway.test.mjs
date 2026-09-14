@@ -149,6 +149,30 @@ describe("LQC read-only quote API gateway foundation", function () {
     assert.throws(() => createQuoteApiGateway({ ...options, maxInFlight: 1_001 }), /Invalid quote API gateway policy/);
   });
 
+  it("bounds completed replay evidence without evicting a still-valid idempotency record", async function () {
+    let current = now, calls = 0;
+    const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }],
+      verifyProof, limit: 10, maxCompletedEntries: 1, clock: () => current });
+    const provider = async value => { calls += 1; return { requestHash: value.requestHash, proof: proof(value) }; };
+    const firstInput = request({ clientRequestId: "replay-capacity-1" });
+    assert.equal((await gateway({ authorization: "Bearer secret", request: firstInput }, provider)).status, 200);
+    const replay = await gateway({ authorization: "Bearer secret", request: firstInput }, provider);
+    assert.equal(replay.status, 200); assert.equal(replay.headers["x-lqc-idempotent-replay"], "true");
+    const busy = await gateway({ authorization: "Bearer secret",
+      request: request({ clientRequestId: "replay-capacity-2" }) }, provider);
+    assert.equal(busy.status, 503); assert.equal(busy.body.error.code, "SERVICE_BUSY"); assert.equal(calls, 1);
+    current = now + 31_000;
+    const fresh = request({ clientRequestId: "replay-capacity-3", requestedAt: current - 1_000, expiresAt: current + 30_000 });
+    const accepted = await gateway({ authorization: "Bearer secret", request: fresh }, provider);
+    assert.equal(accepted.status, 200); assert.equal(calls, 2);
+  });
+
+  it("rejects unsafe completed replay capacity policies", function () {
+    const options = { clients: [{ id: "partner", keyDigest: hashApiKey("secret") }], verifyProof };
+    assert.throws(() => createQuoteApiGateway({ ...options, maxCompletedEntries: 0 }), /Invalid quote API gateway policy/);
+    assert.throws(() => createQuoteApiGateway({ ...options, maxCompletedEntries: 100_001 }), /Invalid quote API gateway policy/);
+  });
+
   it("uses stable errors without exposing provider details", async function () {
     const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }], verifyProof, clock: () => now });
     const response = await gateway({ authorization: "Bearer secret", request: request(), traceId: "trace-005" },
