@@ -23,6 +23,8 @@ describe("LQC quote API OpenAPI contract", function () {
     assert.equal(request.properties.clientRequestId.pattern, "^[A-Za-z0-9._:-]+$");
     assert.equal(request.properties.amountIn.maxLength, 78);
     assert.deepEqual(request.required.sort(), Object.keys(request.properties).sort());
+    assert.deepEqual(request["x-lqc-request-hash-fields"],
+      ["version", "type", "chainId", "tokenIn", "tokenOut", "amountIn", "requestedAt", "expiresAt", "clientRequestId"]);
     assert.equal(spec.components.schemas.Address.pattern, "^0x[0-9a-f]{40}$");
     assert.equal(spec.components.schemas.Hash32.pattern, "^0x[0-9a-f]{64}$");
     assert.equal(spec.components.schemas.Capabilities.properties.maxQuoteValidityMs.maximum, 60_000);
