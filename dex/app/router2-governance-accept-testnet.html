@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Router 2.0 Governance 소유권 수락</title>
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#122126;background:#f3fbf9}body{margin:0;padding:24px 14px}.card{max-width:720px;margin:auto;background:#fff;border:1px solid #d9ece7;border-radius:22px;padding:22px;box-shadow:0 10px 30px #193c3420}h1{font-size:26px;margin:8px 0}.badge{display:inline-block;background:#dff8f1;color:#087b69;border-radius:999px;padding:6px 10px;font-weight:700}.warning{background:#fff4dc;border-radius:14px;padding:14px;margin:18px 0}.row{border-top:1px solid #dbe8e5;padding:14px 0}.row b{display:block;margin-bottom:5px}code{display:block;overflow-wrap:anywhere;color:#34484d}button,a.button{display:block;box-sizing:border-box;width:100%;border:0;border-radius:14px;padding:16px;margin-top:12px;font-size:17px;font-weight:800;text-align:center;text-decoration:none;background:#152825;color:#fff}a.button{background:#0b8f7d}button:disabled,a.disabled{pointer-events:none;background:#9eb9b3}#status{padding:14px;border-radius:14px;background:#edf5f3;margin-top:16px}#status[data-type="error"]{background:#ffe9ed;color:#ad2140}#status[data-type="ok"]{background:#dff8ed;color:#08724f}.small{font-size:13px;color:#607277}.steps{line-height:1.7}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <span class="badge">TESTNET · CHAIN 97 · READ-ONLY CHECK</span>
+    <h1>Governance Safe 소유권 수락 준비</h1>
+    <p>Risk Registry의 대기 소유자가 확정된 Governance Safe인지 검증한 뒤, Safe에 등록할 단일 거래값을 제공합니다.</p>
+    <div class="warning"><b>중요:</b> 이 거래는 Signer 1 개인지갑에서 직접 보내면 실패합니다. Governance Safe의 4/7 승인을 거쳐 실행해야 합니다.</div>
+    <div class="row"><b>Governance Safe</b><code id="safe"></code></div>
+    <div class="row"><b>거래 대상 · Risk Registry</b><code id="target"></code></div>
+    <div class="row"><b>거래 금액</b><code>0 tBNB</code></div>
+    <div class="row"><b>호출 데이터 · acceptOwnership()</b><code id="data"></code></div>
+    <button id="verify">1. Signer 지갑 연결 및 온체인 검증</button>
+    <a id="openSafe" class="button disabled" target="_blank" rel="noopener">2. 공식 Safe 거래 화면 열기</a>
+    <div id="status">먼저 1번 검증을 실행하세요. 거래는 전송되지 않습니다.</div>
+    <ol class="steps">
+      <li>Safe 화면에서 새 거래를 만들고 위 대상·금액·데이터만 입력합니다.</li>
+      <li>최소 4명의 등록 Signer가 같은 거래를 확인·승인합니다.</li>
+      <li>승인 기준 4/7을 채운 뒤 Safe에서 실행합니다.</li>
+      <li>이 페이지로 돌아와 1번을 다시 눌러 최종 소유권을 확인합니다.</li>
+    </ol>
+    <p class="small">개인키·시드문구를 이 페이지나 다른 사람에게 입력하거나 보내지 마세요.</p>
+  </main>
+  <script src="./router2-governance-accept-testnet.js"></script>
+</body>
+</html>
