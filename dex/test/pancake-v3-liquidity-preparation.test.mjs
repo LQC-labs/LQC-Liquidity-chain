@@ -24,7 +24,9 @@ describe("PancakeSwap V3 initial-liquidity preparation", function () {
     assert.equal(record.creation.transactionHash, "0x273b2e9bba7e599764030571f81625ae121b1bc4d867ea3d9f929e7ca4b5cd29");
     assert.equal(record.initialLiquidityPlan.tLQC, "500000");
     assert.equal(record.initialLiquidityPlan.WBNB, "0.5");
-    assert.equal(record.initialLiquidityPlan.status, "not-executed");
+    assert.equal(record.initialLiquidityPlan.status, "executed");
+    assert.equal(record.initialLiquidityPlan.transactionHash, "0x85de5d094f5713eeddefc67a67cf4986899f607495a63229ec41c2083b72b985");
+    assert.equal(record.initialLiquidityPlan.reportedPoolLiquidity, "500000000000000000000");
   });
 
   it("derives the exact 1e-6 WBNB-per-tLQC initial square-root price", function () {
@@ -70,6 +72,8 @@ describe("PancakeSwap V3 initial-liquidity preparation", function () {
     assert.equal(constant("INITIALIZE_DATA"), bundle.transactions.initialize.data);
     assert.match(source, /nextAction !== actionId/);
     assert.match(source, /기존 승인이 확정 수량보다 큽니다/);
+    assert.match(source, /LP 포지션 NFT 발행 기록을 찾지 못했습니다/);
+    assert.match(source, /transaction\.input\.toLowerCase\(\)\.startsWith\("0x88316456"\)/);
     assert.doesNotMatch(source, /ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff/);
   });
 

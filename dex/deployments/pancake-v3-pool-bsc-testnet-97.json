@@ -25,6 +25,9 @@
     "WBNBPerTLQC": "0.000001",
     "tickLower": -887250,
     "tickUpper": 887250,
-    "status": "not-executed"
+    "status": "executed",
+    "transactionHash": "0x85de5d094f5713eeddefc67a67cf4986899f607495a63229ec41c2083b72b985",
+    "reportedPoolLiquidity": "500000000000000000000",
+    "evidence": "TokenPocket DApp successful receipt followed by pool liquidity read"
   }
 }

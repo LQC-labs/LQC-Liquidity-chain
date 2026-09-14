@@ -15,6 +15,8 @@
   const SQRT_PRICE_X96 = 79228162514264337593543950n;
   const TICK_LOWER = -887250n;
   const TICK_UPPER = 887250n;
+  const FINAL_MINT_TX = "0x85de5d094f5713eeddefc67a67cf4986899f607495a63229ec41c2083b72b985";
+  const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
   const APPROVE_TLQC_DATA = "0x095ea7b3000000000000000000000000427bf5b37357632377ecbec9de3626c71a5396c10000000000000000000000000000000000000000000069e10de76676d0800000";
   const APPROVE_WBNB_DATA = "0x095ea7b3000000000000000000000000427bf5b37357632377ecbec9de3626c71a5396c100000000000000000000000000000000000000000000000006f05b59d3b20000";
   const INITIALIZE_DATA = "0xf637731d0000000000000000000000000000000000000000004189374bc6a7ef9db22d0e";
@@ -83,6 +85,23 @@
     return uintResult(await read(token, callData("0xdd62ed3e", [addressWord(account), addressWord(MANAGER)])));
   }
 
+  async function verifyFinalMint() {
+    const [transaction, receipt] = await Promise.all([
+      request("eth_getTransactionByHash", [FINAL_MINT_TX]),
+      request("eth_getTransactionReceipt", [FINAL_MINT_TX]),
+    ]);
+    if (!transaction || !receipt || BigInt(receipt.status) !== 1n) throw new Error("최종 유동성 거래의 성공 영수증을 확인할 수 없습니다.");
+    if (transaction.from.toLowerCase() !== SIGNER.toLowerCase() || transaction.to.toLowerCase() !== MANAGER.toLowerCase() || BigInt(transaction.value) !== 0n || !transaction.input.toLowerCase().startsWith("0x88316456")) {
+      throw new Error("최종 유동성 거래 내용이 확정된 Signer·Position Manager·mint 호출과 다릅니다.");
+    }
+    const signerTopic = `0x${"0".repeat(24)}${SIGNER.toLowerCase().slice(2)}`;
+    const transfer = receipt.logs.find((log) => log.address.toLowerCase() === MANAGER.toLowerCase()
+      && log.topics?.length === 4 && log.topics[0].toLowerCase() === TRANSFER_TOPIC
+      && BigInt(log.topics[1]) === 0n && log.topics[2].toLowerCase() === signerTopic);
+    if (!transfer) throw new Error("Signer 1이 받은 LP 포지션 NFT 발행 기록을 찾지 못했습니다.");
+    return BigInt(transfer.topics[3]).toString();
+  }
+
   async function refresh() {
     nextAction = null;
     buttons.forEach((id) => { $(id).disabled = true; });
@@ -106,8 +125,10 @@
     });
 
     if (poolLiquidity > 0n) {
-      $("result").textContent = "초기 유동성 공급 완료";
-      status("모든 단계가 완료되었습니다. 버튼을 다시 누르지 마세요.", "ok");
+      const tokenId = await verifyFinalMint();
+      $("tx").textContent = FINAL_MINT_TX;
+      $("result").textContent = `초기 유동성 공급 완료 · LP NFT Token ID ${tokenId}`;
+      status("최종 검증 완료: 성공 거래, 풀 유동성, Signer 1의 LP 포지션 NFT를 모두 확인했습니다.", "ok");
       return;
     }
     if (busy) return;
