@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { ethers } from "ethers";
 import { TEST_LQC, TEST_WBNB } from "../scripts/prepare-pancake-v3-pool.mjs";
 import { SIGNER_1 } from "../scripts/prepare-pancake-v3-liquidity.mjs";
-import { PILOT_LIMITS, buildExecutionStack } from "../scripts/prepare-router2-execution-stack.mjs";
+import { PILOT_LIMITS, buildExecutionStack, recordRiskRegistryDeployment } from "../scripts/prepare-router2-execution-stack.mjs";
 
 const address = digit => `0x${digit.repeat(40)}`;
 
@@ -42,5 +42,14 @@ describe("Router 2.0 capped execution stack preparation", function () {
   it("rejects malformed staged addresses", async function () {
     await assert.rejects(buildExecutionStack("bad"), /riskRegistryAddress/);
     await assert.rejects(buildExecutionStack(address("1"), "bad"), /executionRouterAddress/);
+  });
+
+  it("records the successful Risk Registry before preparing the next deployment", async function () {
+    const bundle = await buildExecutionStack(address("1"));
+    const recorded = recordRiskRegistryDeployment(bundle, address("1"), `0x${"2".repeat(64)}`);
+    assert.equal(recorded.executions.riskRegistry.address, address("1"));
+    assert.equal(recorded.executions.riskRegistry.status, "success");
+    assert.equal(recorded.orderedActions[1].action, "deploy-execution-router");
+    assert.throws(() => recordRiskRegistryDeployment(bundle, "bad", `0x${"2".repeat(64)}`), /valid deployed/);
   });
 });
