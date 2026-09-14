@@ -43,8 +43,8 @@
 
 | 역할 | 요구 정책 | 주소 |
 |---|---|---|
-| Protocol Governance Safe | 기본 4-of-7 | 준비 대기 |
-| Risk Safe | 기본 3-of-5 | 준비 대기 |
+| Protocol Governance Safe | 기본 4-of-7 | `0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A` |
+| Risk Safe | 기본 3-of-5 | `0x155a0c883eac0a408717222d1e271cb073e55e0b` |
 | Emergency Guardian Safe | 기본 3-of-5 | 준비 대기 |
 | Treasury Safe | 기본 3-of-5 | 준비 대기 |
 

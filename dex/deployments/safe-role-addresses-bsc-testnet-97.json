@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-09-14T10:23:00Z",
+  "network": { "name": "BSC Testnet", "chainId": 97 },
+  "roles": {
+    "FACTORY_OWNER": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+    "RISK_ADMIN": "0x155a0c883eac0a408717222d1e271cb073e55e0b",
+    "GUARDIAN_ADDRESS": null,
+    "TREASURY_ADDRESS": null
+  },
+  "status": "PARTIAL",
+  "warning": "Do not deploy until GUARDIAN_ADDRESS and TREASURY_ADDRESS are separately reviewed and recorded."
+}

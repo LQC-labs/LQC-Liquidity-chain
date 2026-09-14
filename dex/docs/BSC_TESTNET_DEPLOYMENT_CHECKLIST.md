@@ -5,15 +5,16 @@ authorize mainnet deployment or use of real user funds.
 
 ## 1. Required roles and wallets
 
-- [ ] Generate and independently review the unsigned Governance Safe creation bundle with `npm run prepare:governance-safe`.
-- [ ] Submit that transaction only from signer 1 on BSC testnet chain `97`; do not switch to Ethereum or BNB mainnet when Safe Wallet reports the chain as unknown.
+- [x] Generate and independently review the unsigned Governance Safe creation bundle with `npm run prepare:governance-safe`.
+- [x] Submit that transaction only from signer 1 on BSC testnet chain `97`; do not switch to Ethereum or BNB mainnet when Safe Wallet reports the chain as unknown.
 
-- [ ] Create a Protocol Governance Safe meeting the default 4-of-7 minimum policy.
-- [ ] Create separate Risk, Emergency Guardian, and Treasury Safes meeting the default 3-of-5 minimum policy.
+- [x] Create a Protocol Governance Safe meeting the default 4-of-7 minimum policy: `0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A`.
+- [x] Create a separate Risk Safe meeting the default 3-of-5 minimum policy: `0x155a0c883eac0a408717222d1e271cb073e55e0b`.
+- [ ] Create separate Emergency Guardian and Treasury Safes meeting the default 3-of-5 minimum policy.
 - [ ] Record signer names and wallet addresses in the private governance register.
 - [ ] Verify every signer can access, review, and sign a test Safe transaction.
-- [ ] Use the deployed Protocol Governance Safe address as `FACTORY_OWNER`.
-- [ ] Use the deployed Risk Safe address as `RISK_ADMIN`.
+- [x] Record the deployed Protocol Governance Safe address as `FACTORY_OWNER`.
+- [x] Record the deployed Risk Safe address as `RISK_ADMIN`.
 - [ ] Set `GUARDIAN_ADDRESS` and `TREASURY_ADDRESS` to their reviewed Safe addresses.
 - [ ] Keep the deployer separate from all four operational roles.
 - [ ] Never paste, commit, email, or include the deployer private key in screenshots or documents.
