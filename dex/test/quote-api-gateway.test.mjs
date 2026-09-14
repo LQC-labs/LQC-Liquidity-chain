@@ -107,6 +107,24 @@ describe("LQC read-only quote API gateway foundation", function () {
     assert.equal(original.body.traceId, "trace-011"); assert.equal(replay.body.traceId, "trace-012");
   });
 
+  it("times out a stalled provider and releases the request id for a safe retry", async function () {
+    const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }],
+      verifyProof, limit: 10, providerTimeoutMs: 10, clock: () => now });
+    const input = request({ clientRequestId: "timeout-request-2" });
+    const stalled = await gateway({ authorization: "Bearer secret", request: input, traceId: "trace-014" },
+      async () => new Promise(() => {}));
+    assert.equal(stalled.status, 503); assert.equal(stalled.body.error.code, "SERVICE_UNAVAILABLE");
+    const retried = await gateway({ authorization: "Bearer secret", request: input, traceId: "trace-015" },
+      async value => ({ requestHash: value.requestHash, proof: proof(value) }));
+    assert.equal(retried.status, 200); assert.equal(retried.body.traceId, "trace-015");
+  });
+
+  it("rejects unsafe quote-provider timeout policies", function () {
+    const options = { clients: [{ id: "partner", keyDigest: hashApiKey("secret") }], verifyProof };
+    assert.throws(() => createQuoteApiGateway({ ...options, providerTimeoutMs: 9 }), /Invalid quote API gateway policy/);
+    assert.throws(() => createQuoteApiGateway({ ...options, providerTimeoutMs: 30_001 }), /Invalid quote API gateway policy/);
+  });
+
   it("uses stable errors without exposing provider details", async function () {
     const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }], verifyProof, clock: () => now });
     const response = await gateway({ authorization: "Bearer secret", request: request(), traceId: "trace-005" },
