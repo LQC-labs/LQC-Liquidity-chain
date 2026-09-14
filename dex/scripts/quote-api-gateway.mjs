@@ -35,11 +35,12 @@ export function validateCanonicalQuoteRequest(request, now = Date.now()) {
 }
 
 export function createQuoteApiGateway({ clients, verifyProof, limit = 60, windowMs = 60_000,
-  providerTimeoutMs = 5_000, maxInFlight = 100, clock = () => Date.now() }) {
+  providerTimeoutMs = 5_000, maxInFlight = 100, maxCompletedEntries = 10_000, clock = () => Date.now() }) {
   if (!Array.isArray(clients) || clients.length === 0 || !Number.isSafeInteger(limit) || limit < 1 ||
       !Number.isSafeInteger(windowMs) || windowMs < 1_000 || !Number.isSafeInteger(providerTimeoutMs) ||
       providerTimeoutMs < 10 || providerTimeoutMs > 30_000 || !Number.isSafeInteger(maxInFlight) ||
-      maxInFlight < 1 || maxInFlight > 1_000 || typeof verifyProof !== "function") {
+      maxInFlight < 1 || maxInFlight > 1_000 || !Number.isSafeInteger(maxCompletedEntries) ||
+      maxCompletedEntries < 1 || maxCompletedEntries > 100_000 || typeof verifyProof !== "function") {
     throw new Error("Invalid quote API gateway policy");
   }
   const approved = clients.map(client => {
@@ -92,6 +93,9 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
       if (typeof quote !== "function") throw Object.assign(new Error("Quote service unavailable"), { code: "SERVICE_UNAVAILABLE" });
       if (inFlight.size >= maxInFlight) {
         throw Object.assign(new Error("Quote service capacity reached"), { code: "SERVICE_BUSY" });
+      }
+      if (completed.size >= maxCompletedEntries) {
+        throw Object.assign(new Error("Quote replay capacity reached"), { code: "SERVICE_BUSY" });
       }
       const promise = (async () => {
         let timeout;
