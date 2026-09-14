@@ -25,6 +25,16 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(i18n, /refreshQuote: '최신 견적 다시 받기'/);
   });
 
+  it("shows verified Best Execution Proof evidence and blocks invalid proof quotes", function () {
+    assert.match(html, /id="proofStatus"/); assert.match(html, /id="proofId"/);
+    assert.match(css, /\.proof-valid/); assert.match(css, /\.proof-invalid/);
+    assert.match(app, /async function buildDisplayedProof\(plan,value,path,blockNumber\)/);
+    assert.match(app, /sdk\.buildBestExecutionProof\(/); assert.match(app, /sdk\.verifyBestExecutionProof\(proof,ethers\)/);
+    assert.match(app, /quoteSnapshot\.proofHash=proof\.proofHash/);
+    assert.match(app, /e\?\.message==='InvalidBestExecutionProof'\?t\('proofFailed'\)/);
+    assert.match(i18n, /proofVerified: '검증 완료 · \{count\}개 후보'/);
+  });
+
   it("builds every supported execution path without submitting it", function () {
     for (const method of ["swapExactNativeForToken", "swapExactTokenForNative", "swapOptimizedExactInput", "swapExactInput"])
       assert.match(app, new RegExp(`${method}\\.populateTransaction\\(`));
