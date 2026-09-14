@@ -56,6 +56,10 @@ export BSC_TESTNET_RPC_URL="<BSC Testnet RPC URL>"
 npm run monitor:minimal-router
 ```
 
+For automatic read-only failover, set `BSC_TESTNET_RPC_URLS` to a comma-separated list of unique
+HTTPS endpoints. The monitor uses the first healthy chain-97 provider and never falls back to the
+connected wallet provider.
+
 The four address environment variables remain an explicit fallback only when the local deployment
 record is unavailable.
 
