@@ -1,5 +1,18 @@
 import { validateCanonicalQuoteRequest, validateQuoteApiCapabilities } from "./quote-api-gateway.mjs";
 
+const TRACE = /^[A-Za-z0-9._:-]{1,128}$/;
+
+function validateQuoteEnvelope(request, body, now) {
+  const fields = body && typeof body === "object" ? Object.keys(body) : [];
+  if (fields.length !== 4 || !["schemaVersion", "requestHash", "proof", "traceId"].every(field => Object.hasOwn(body, field)) ||
+      body.schemaVersion !== 1 || body.requestHash !== request.requestHash || !TRACE.test(body.traceId || "") ||
+      !body.proof || body.proof.chainId !== request.chainId || body.proof.tokenIn !== request.tokenIn ||
+      body.proof.tokenOut !== request.tokenOut || body.proof.amountIn !== request.amountIn ||
+      !Number.isSafeInteger(body.proof.expiresAt) || body.proof.expiresAt < now || body.proof.expiresAt > request.expiresAt) {
+    throw new Error("Invalid quote API proof response");
+  }
+}
+
 async function readJson(response, maxResponseBytes) {
   const type = String(response?.headers?.get?.("content-type") || "");
   if (!response || !/^application\/json(?:\s*;|$)/i.test(type)) throw new Error("Invalid quote API response");
@@ -74,6 +87,7 @@ export function createQuoteApiClient({ baseUrl, apiKey, fetchImpl = globalThis.f
       const body = await request("/v1/quote", { method: "POST", headers: {
         authorization: `Bearer ${apiKey}`, "content-type": "application/json"
       }, body: JSON.stringify(input) }, [200], () => validateCanonicalQuoteRequest(input, clock()));
+      validateQuoteEnvelope(input, body, clock());
       if (!(await validateQuoteResponse(input, body))) throw new Error("Invalid quote API proof response");
       return body;
     }
