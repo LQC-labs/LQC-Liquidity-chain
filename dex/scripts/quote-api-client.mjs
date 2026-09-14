@@ -1,4 +1,4 @@
-import { validateCanonicalQuoteRequest, validateQuoteApiCapabilities } from "./quote-api-gateway.mjs";
+import { validateCanonicalQuoteRequest, validateQuoteApiCapabilities, validateQuoteApiHealth } from "./quote-api-gateway.mjs";
 
 const TRACE = /^[A-Za-z0-9._:-]{1,128}$/;
 
@@ -31,7 +31,7 @@ async function readJson(response, maxResponseBytes) {
 
 export function createQuoteApiClient({ baseUrl, apiKey, fetchImpl = globalThis.fetch,
   timeoutMs = 5_000, maxRetries = 1, retryDelayMs = 100, delay = ms => new Promise(resolve => setTimeout(resolve, ms)),
-  maxResponseBytes = 262_144, clock = () => Date.now(), validateQuoteResponse }) {
+  maxResponseBytes = 262_144, maxHealthAgeMs = 60_000, clock = () => Date.now(), validateQuoteResponse }) {
   let url;
   try { url = new URL(baseUrl); } catch { throw new Error("Invalid quote API client policy"); }
   if (url.protocol !== "https:" || url.username || url.password || url.search || url.hash ||
@@ -39,7 +39,8 @@ export function createQuoteApiClient({ baseUrl, apiKey, fetchImpl = globalThis.f
       typeof fetchImpl !== "function" || !Number.isSafeInteger(timeoutMs) || timeoutMs < 10 || timeoutMs > 30_000 ||
       !Number.isSafeInteger(maxRetries) || maxRetries < 0 || maxRetries > 2 || !Number.isSafeInteger(retryDelayMs) ||
       retryDelayMs < 10 || retryDelayMs > 1_000 || !Number.isSafeInteger(maxResponseBytes) ||
-      maxResponseBytes < 1_024 || maxResponseBytes > 1_048_576 || typeof delay !== "function" || typeof clock !== "function" ||
+      maxResponseBytes < 1_024 || maxResponseBytes > 1_048_576 || !Number.isSafeInteger(maxHealthAgeMs) ||
+      maxHealthAgeMs < 1_000 || maxHealthAgeMs > 300_000 || typeof delay !== "function" || typeof clock !== "function" ||
       typeof validateQuoteResponse !== "function") {
     throw new Error("Invalid quote API client policy");
   }
@@ -79,9 +80,7 @@ export function createQuoteApiClient({ baseUrl, apiKey, fetchImpl = globalThis.f
     },
     async health() {
       const body = await request("/v1/health", {}, [200, 503]);
-      if (body?.type !== "LQC_QUOTE_API_HEALTH" || !["healthy", "degraded", "busy"].includes(body.status) ||
-          !Number.isSafeInteger(body.checkedAt)) throw new Error("Invalid quote API health");
-      return body;
+      return validateQuoteApiHealth(body, clock(), maxHealthAgeMs);
     },
     async quote(input) {
       const body = await request("/v1/quote", { method: "POST", headers: {
