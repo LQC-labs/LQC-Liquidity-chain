@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "network": {
+    "name": "BSC Testnet",
+    "chainId": 97
+  },
+  "pair": "tLQC/WBNB",
+  "fee": 2500,
+  "contracts": {
+    "tLQC": "0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc",
+    "WBNB": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+    "pancakeV3Factory": "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865",
+    "pancakeV3Pool": "0x4bfbf746a675153e050f5fbc90eaa18d07014c95",
+    "pancakeV3PositionManager": "0x427bF5b37357632377eCbEC9de3626C71A5396c1"
+  },
+  "creation": {
+    "signer": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
+    "transactionHash": "0x273b2e9bba7e599764030571f81625ae121b1bc4d867ea3d9f929e7ca4b5cd29",
+    "reportedStatus": "success",
+    "evidence": "TokenPocket DApp receipt confirmation followed by Factory getPool read"
+  },
+  "initialLiquidityPlan": {
+    "tLQC": "500000",
+    "WBNB": "0.5",
+    "WBNBPerTLQC": "0.000001",
+    "tickLower": -887250,
+    "tickUpper": 887250,
+    "status": "not-executed"
+  }
+}
