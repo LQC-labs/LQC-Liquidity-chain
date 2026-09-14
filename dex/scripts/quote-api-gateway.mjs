@@ -34,9 +34,11 @@ export function validateCanonicalQuoteRequest(request, now = Date.now()) {
   return request;
 }
 
-export function createQuoteApiGateway({ clients, limit = 60, windowMs = 60_000, clock = () => Date.now() }) {
+export function createQuoteApiGateway({ clients, verifyProof, limit = 60, windowMs = 60_000, clock = () => Date.now() }) {
   if (!Array.isArray(clients) || clients.length === 0 || !Number.isSafeInteger(limit) || limit < 1 ||
-      !Number.isSafeInteger(windowMs) || windowMs < 1_000) throw new Error("Invalid quote API gateway policy");
+      !Number.isSafeInteger(windowMs) || windowMs < 1_000 || typeof verifyProof !== "function") {
+    throw new Error("Invalid quote API gateway policy");
+  }
   const approved = clients.map(client => {
     if (!client?.id || !/^[0-9a-f]{64}$/.test(client.keyDigest || "")) throw new Error("Invalid API client policy");
     return { id: String(client.id), keyDigest: client.keyDigest };
@@ -63,7 +65,10 @@ export function createQuoteApiGateway({ clients, limit = 60, windowMs = 60_000, 
       validateCanonicalQuoteRequest(request, now);
       if (typeof quote !== "function") throw Object.assign(new Error("Quote service unavailable"), { code: "SERVICE_UNAVAILABLE" });
       const result = await quote(request);
-      if (!result?.proof || result.requestHash !== request.requestHash) {
+      if (!result?.proof || result.requestHash !== request.requestHash || result.proof.chainId !== request.chainId ||
+          result.proof.tokenIn !== request.tokenIn || result.proof.tokenOut !== request.tokenOut ||
+          result.proof.amountIn !== request.amountIn || result.proof.expiresAt > request.expiresAt ||
+          !(await verifyProof(result.proof))) {
         throw Object.assign(new Error("Quote service returned mismatched evidence"), { code: "INVALID_QUOTE_EVIDENCE" });
       }
       return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,

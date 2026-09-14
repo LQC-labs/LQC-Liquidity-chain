@@ -60,5 +60,6 @@ API. It binds chain 97, token pair, exact input, a client request id, and a vali
 60 seconds. `validateQuoteApiResponse` accepts a response only when its Best Execution Proof matches
 the complete request. The transport-neutral `quote-api-gateway.mjs` foundation adds hashed bearer-key
 authentication, per-client fixed-window quotas, request tracing, canonical request-hash validation,
-and stable errors that do not leak upstream details. It does not open a network listener, store raw
+server-supplied cryptographic proof verification, exact request/proof context matching, and stable
+errors that do not leak upstream details. It does not open a network listener, store raw
 API keys, submit transactions, or expose a public production service.
