@@ -173,6 +173,28 @@ describe("LQC read-only quote API gateway foundation", function () {
     assert.throws(() => createQuoteApiGateway({ ...options, maxCompletedEntries: 100_001 }), /Invalid quote API gateway policy/);
   });
 
+  it("reports sanitized health, capacity pressure, and expired-record recovery", async function () {
+    let current = now, release;
+    const waiting = new Promise(resolve => { release = resolve; });
+    const gateway = createQuoteApiGateway({ clients: [{ id: "private-partner", keyDigest: hashApiKey("secret-value") }],
+      verifyProof, limit: 10, maxInFlight: 1, maxCompletedEntries: 1, clock: () => current });
+    const healthy = gateway.health();
+    assert.equal(healthy.status, "healthy"); assert.equal(healthy.capacity.inFlight, 0);
+    assert.equal(JSON.stringify(healthy).includes("private-partner"), false);
+    assert.equal(JSON.stringify(healthy).includes("secret-value"), false);
+    const input = request({ clientRequestId: "health-1" });
+    const pending = gateway({ authorization: "Bearer secret-value", request: input }, async value => {
+      await waiting; return { requestHash: value.requestHash, proof: proof(value) };
+    });
+    assert.equal(gateway.health().status, "busy");
+    release(); assert.equal((await pending).status, 200);
+    assert.equal(gateway.health().status, "busy");
+    current = now + 31_000;
+    const recovered = gateway.health();
+    assert.equal(recovered.status, "healthy"); assert.equal(recovered.capacity.completed, 0);
+    assert.equal(recovered.checkedAt, current);
+  });
+
   it("uses stable errors without exposing provider details", async function () {
     const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }], verifyProof, clock: () => now });
     const response = await gateway({ authorization: "Bearer secret", request: request(), traceId: "trace-005" },
