@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LQC V3 소액 교환 · BSC Testnet</title>
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#122126;background:#f3fbf9}body{margin:0;padding:24px 14px}.card{max-width:720px;margin:auto;background:#fff;border:1px solid #d9ece7;border-radius:22px;padding:22px;box-shadow:0 10px 30px #193c3420}h1{font-size:25px}.badge{display:inline-block;background:#dff8f1;color:#087b69;border-radius:999px;padding:6px 10px;font-weight:700}.warning{background:#fff4dc;border-radius:14px;padding:14px;margin:18px 0}.row{padding:10px 0;border-bottom:1px solid #e5efed}.row b{display:block}code{display:block;overflow-wrap:anywhere;margin-top:4px;color:#34484d}button{width:100%;border:0;border-radius:14px;padding:16px;margin-top:14px;font-size:18px;font-weight:800;background:#0b8f7d;color:#fff}button:disabled{background:#a5bbb6}.secondary{background:#152825}#status{padding:14px;border-radius:14px;background:#edf5f3;margin-top:16px;white-space:pre-line}#status[data-type="error"]{background:#ffe9ed;color:#ad2140}#status[data-type="ok"]{background:#dff8ed;color:#08724f}.small{font-size:13px;color:#607277}.result{margin-top:18px;border-top:1px solid #dbe8e5;padding-top:12px}
+  </style>
+</head>
+<body><main class="card">
+  <span class="badge">TESTNET · CHAIN 97</span>
+  <h1>PancakeSwap V3 소액 교환 검증</h1>
+  <p><b>1,000 tLQC → WBNB</b><br>수수료 0.25% · 공식 Quoter 실시간 견적 · 최소수령량 99%</p>
+  <div class="warning"><b>주의:</b> BNB 메인넷으로 전환하지 마세요. 이 화면은 최초 소액 교환을 한 번만 실행합니다.</div>
+  <div class="row"><b>V3 풀</b><code id="pool"></code></div>
+  <div class="row"><b>공식 Swap Router</b><code id="router"></code></div>
+  <div class="row"><b>공식 Quoter</b><code id="quoter"></code></div>
+  <button id="connect" class="secondary">1. Signer 1 연결 및 견적 검증</button>
+  <p class="small">연결 지갑: <span id="wallet">아직 연결되지 않음</span></p>
+  <div class="row"><b>예상 수령량</b><code id="quote">—</code></div>
+  <div class="row"><b>최소 수령량</b><code id="minimum">—</code></div>
+  <button id="approve" disabled>2. tLQC 1,000개 정확 승인</button>
+  <p id="approveState" class="small">대기: 미승인</p>
+  <button id="swap" disabled>3. 1,000 tLQC 소액 교환</button>
+  <div id="status">먼저 Signer 1 지갑을 연결하세요.</div>
+  <div class="result"><p><b>교환 거래 해시</b><code id="tx">—</code></p><p><b>결과</b><code id="result">아직 실행되지 않음</code></p></div>
+  <script src="./pancake-v3-smoke-swap-testnet.js"></script>
+</main></body>
+</html>
