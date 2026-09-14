@@ -38,4 +38,10 @@ describe("LQC quote API OpenAPI contract", function () {
     assert.equal(spec.servers[0].url, "https://sandbox.invalid");
     assert.equal(/api[_-]?key|private[_-]?key|bearer [A-Za-z0-9]/i.test(encoded), false);
   });
+
+  it("requires non-cacheable JSON responses in the HTTP implementation", function () {
+    const source = fs.readFileSync(new URL("../scripts/quote-api-http.mjs", import.meta.url), "utf8");
+    assert.match(source, /"cache-control": "no-store"/);
+    assert.match(source, /"x-content-type-options": "nosniff"/);
+  });
 });
