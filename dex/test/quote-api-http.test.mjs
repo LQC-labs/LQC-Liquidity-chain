@@ -62,4 +62,21 @@ describe("LQC quote API read-only HTTP adapter", function () {
     const gateway = Object.assign(async()=>{}, { health:()=>({}), capabilities:()=>({}) });
     assert.throws(() => createQuoteApiHttpAdapter({ gateway, quote: async()=>{}, maxBodyBytes: 1_023 }), /Invalid/);
   });
+
+  it("prevents caching and content sniffing on every public, success, and error response", async function () {
+    const dispatch = setup();
+    const input = quoteRequest();
+    const responses = [
+      await dispatch({ method: "GET", path: "/v1/capabilities" }),
+      await dispatch({ method: "GET", path: "/v1/health" }),
+      await dispatch({ method: "POST", path: "/v1/quote", headers: {
+        authorization: "Bearer secret", "content-type": "application/json" }, body: JSON.stringify(input) }),
+      await dispatch({ method: "GET", path: "/missing" })
+    ];
+    for (const item of responses) {
+      assert.equal(item.headers["cache-control"], "no-store");
+      assert.equal(item.headers["x-content-type-options"], "nosniff");
+      assert.equal(item.headers["content-type"], "application/json");
+    }
+  });
 });
