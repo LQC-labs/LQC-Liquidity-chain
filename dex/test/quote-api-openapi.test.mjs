@@ -51,4 +51,17 @@ describe("LQC quote API OpenAPI contract", function () {
     assert.match(source, /CONTENT_LENGTH_MISMATCH/);
     assert.match(source, /UNSAFE_BODY_FRAMING/);
   });
+
+  it("pins aggregate operational metrics to bounded non-negative integer counters", function () {
+    const health = spec.components.schemas.Health, metrics = spec.components.schemas.OperationalMetrics;
+    const names = ["requests", "authenticated", "unauthorized", "rateLimited", "succeeded", "replayed", "busy", "failed"];
+    assert.ok(health.required.includes("metrics"));
+    assert.equal(health.properties.metrics.$ref, "#/components/schemas/OperationalMetrics");
+    assert.equal(metrics.additionalProperties, false);
+    assert.deepEqual(metrics.required, names);
+    assert.deepEqual(Object.keys(metrics.properties), names);
+    for (const name of names) assert.equal(metrics.properties[name].$ref, "#/components/schemas/Counter");
+    assert.deepEqual(spec.components.schemas.Counter,
+      { type: "integer", minimum: 0, maximum: Number.MAX_SAFE_INTEGER });
+  });
 });
