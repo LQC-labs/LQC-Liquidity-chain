@@ -58,6 +58,10 @@ describe("LQC read-only quote API gateway foundation", function () {
     const bad = await gateway({ authorization: "Bearer secret", request: request(), traceId: "trace-004" },
       async () => ({ requestHash: ethers.id("wrong"), proof: {} }));
     assert.equal(bad.status, 400); assert.equal(bad.body.error.code, "INVALID_QUOTE_EVIDENCE");
+    const expiredInput = request({ clientRequestId: "expired-evidence" });
+    const expired = await gateway({ authorization: "Bearer secret", request: expiredInput },
+      async value => ({ requestHash: value.requestHash, proof: { ...proof(value), expiresAt: now - 1 } }));
+    assert.equal(expired.status, 400); assert.equal(expired.body.error.code, "INVALID_QUOTE_EVIDENCE");
   });
 
   it("cryptographically verifies proof context instead of trusting the quote provider", async function () {
@@ -107,6 +111,24 @@ describe("LQC read-only quote API gateway foundation", function () {
     const blocked = await gateway({ authorization: "Bearer secret",
       request: request({ clientRequestId: "quota-replay-2" }) }, provider);
     assert.equal(blocked.status, 429); assert.equal(blocked.body.error.code, "RATE_LIMITED");
+  });
+
+  it("expires replay evidence at the proof deadline and refreshes the same request safely", async function () {
+    let current = now, calls = 0;
+    const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }],
+      verifyProof, limit: 10, clock: () => current });
+    const input = request({ clientRequestId: "short-proof-1" });
+    const provider = async value => {
+      calls += 1;
+      return { requestHash: value.requestHash, proof: { ...proof(value), expiresAt: calls === 1 ? now + 5_000 : value.expiresAt } };
+    };
+    const first = await gateway({ authorization: "Bearer secret", request: input }, provider);
+    assert.equal(first.status, 200); assert.equal(calls, 1);
+    current = now + 5_001;
+    const refreshed = await gateway({ authorization: "Bearer secret", request: input }, provider);
+    assert.equal(refreshed.status, 200); assert.equal(calls, 2);
+    assert.equal(refreshed.headers["x-lqc-idempotent-replay"], undefined);
+    assert.equal(refreshed.body.proof.expiresAt, input.expiresAt);
   });
 
   it("coalesces concurrent identical requests and rejects concurrent request-id substitution", async function () {
