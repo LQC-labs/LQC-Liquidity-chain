@@ -38,4 +38,24 @@ describe("BSC testnet Safe deployment records", function () {
     assert.equal(ethers.getAddress(roles.roles.TREASURY_ADDRESS), ethers.getAddress(treasury.address));
     assert.equal(roles.status, "READY");
   });
+
+  it("binds the read-only on-chain verification to every recorded Safe role", async function () {
+    const [roles, evidence] = await Promise.all([
+      readJson("safe-role-addresses-bsc-testnet-97.json"),
+      readJson("safe-onchain-verification-bsc-testnet-97.json"),
+    ]);
+    assert.equal(evidence.network.chainId, 97);
+    assert.equal(evidence.status, "VERIFIED");
+    assert.equal(evidence.checks.length, 4);
+    for (const check of evidence.checks) {
+      const env = check.role === "governance" ? "FACTORY_OWNER"
+        : check.role === "risk" ? "RISK_ADMIN"
+          : check.role === "guardian" ? "GUARDIAN_ADDRESS" : "TREASURY_ADDRESS";
+      assert.equal(ethers.getAddress(check.address), ethers.getAddress(roles.roles[env]));
+      assert.equal(check.transactionStatus, "SUCCESS");
+      assert.equal(check.factoryEventMatched, true);
+      assert.equal(check.bytecodePresent, true);
+      assert.ok(check.deploymentBlock <= evidence.observedBlock);
+    }
+  });
 });

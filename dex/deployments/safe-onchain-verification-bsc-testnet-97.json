@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-14T11:15:00Z",
+  "network": { "name": "BSC Testnet", "chainId": 97 },
+  "observedBlock": 130973920,
+  "rpc": "https://bsc-testnet-dataseed.bnbchain.org",
+  "safeProxyFactory": "0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67",
+  "safeSingleton": "0x29fcB43b46531BcA003ddC8FCB67FFE91900C762",
+  "status": "VERIFIED",
+  "checks": [
+    {
+      "role": "governance",
+      "address": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+      "ownerCount": 7,
+      "threshold": 4,
+      "deploymentBlock": 130963452,
+      "transactionStatus": "SUCCESS",
+      "factoryEventMatched": true,
+      "bytecodePresent": true
+    },
+    {
+      "role": "risk",
+      "address": "0x155a0c883eac0a408717222d1e271cb073e55e0b",
+      "ownerCount": 5,
+      "threshold": 3,
+      "deploymentBlock": 130965772,
+      "transactionStatus": "SUCCESS",
+      "factoryEventMatched": true,
+      "bytecodePresent": true
+    },
+    {
+      "role": "guardian",
+      "address": "0xdc8003a7046be67f257d294b2680c20988a6bc2b",
+      "ownerCount": 5,
+      "threshold": 3,
+      "deploymentBlock": 130971744,
+      "transactionStatus": "SUCCESS",
+      "factoryEventMatched": true,
+      "bytecodePresent": true
+    },
+    {
+      "role": "treasury",
+      "address": "0x0771fbc76ec3e89345bbdd803d0774bbd4943103",
+      "ownerCount": 5,
+      "threshold": 3,
+      "deploymentBlock": 130972248,
+      "transactionStatus": "SUCCESS",
+      "factoryEventMatched": true,
+      "bytecodePresent": true
+    }
+  ]
+}

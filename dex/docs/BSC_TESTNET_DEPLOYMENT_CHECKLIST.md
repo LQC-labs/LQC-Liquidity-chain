@@ -17,6 +17,7 @@ authorize mainnet deployment or use of real user funds.
 - [x] Record the deployed Protocol Governance Safe address as `FACTORY_OWNER`.
 - [x] Record the deployed Risk Safe address as `RISK_ADMIN`.
 - [x] Record `GUARDIAN_ADDRESS` and `TREASURY_ADDRESS` as their reviewed Safe addresses.
+- [x] Verify all four Safe contracts, owner counts, thresholds, successful receipts, and factory events on BSC testnet.
 - [ ] Keep the deployer separate from all four operational roles.
 - [ ] Never paste, commit, email, or include the deployer private key in screenshots or documents.
 
