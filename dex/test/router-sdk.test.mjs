@@ -185,9 +185,9 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.buildBestExecutionProof(inconsistent, ethers), /allocation/);
   });
 
-  function singleRouteProof() {
+  function singleRouteProof(expiresAt = 1789000000) {
     const dexA = ethers.id("DEX_A");
-    return sdk.buildBestExecutionProof({ chainId: 97, quoteBlock: 12345, expiresAt: 1789000000,
+    return sdk.buildBestExecutionProof({ chainId: 97, quoteBlock: 12345, expiresAt,
       tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n, slippageBps: 100,
       candidates: [{ dexId: dexA, name: "A", amountOut: 1000n, cost: 10n, routeDataHash: ethers.id("route-a") }],
       plan: { kind: "single", cost: 10n, legs: [{ dexId: dexA, amountIn: 1000n, expectedOut: 1000n, minimumOut: 990n }] }
@@ -238,14 +238,19 @@ describe("LQC Router browser SDK", function () {
   });
 
   it("validates a deterministic multi-DEX quote API request and proof response", function () {
-    const proof = singleRouteProof();
+    const proof = singleRouteProof(1788999980);
     const request = sdk.buildQuoteApiRequest({ chainId: 97, tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n,
-      requestedAt: 1788999900, expiresAt: 1788999960, clientRequestId: "mobile-quote-7" }, ethers);
-    const result = sdk.validateQuoteApiResponse(request, { requestHash: request.requestHash.toLowerCase(), proof }, ethers, 1788999920);
+      requestedAt: 1788999940, expiresAt: 1789000000, clientRequestId: "mobile-quote-7" }, ethers);
+    const result = sdk.validateQuoteApiResponse(request, { requestHash: request.requestHash.toLowerCase(), proof }, ethers, 1788999960);
     assert.equal(result.valid, true); assert.equal(result.candidateCount, 1); assert.equal(result.proofHash, proof.proofHash.toLowerCase());
-    assert.throws(() => sdk.validateQuoteApiResponse(request, { requestHash: request.requestHash, proof }, ethers, 1789000000), /response context/);
+    assert.equal(result.expiresAt, proof.expiresAt);
+    assert.throws(() => sdk.validateQuoteApiResponse(request, { requestHash: request.requestHash, proof }, ethers, 1788999981), /proof mismatch/);
     const wrong = structuredClone(proof); wrong.amountIn = "999";
-    assert.throws(() => sdk.validateQuoteApiResponse(request, { requestHash: request.requestHash, proof: wrong }, ethers, 1788999920), /proof mismatch/);
+    assert.throws(() => sdk.validateQuoteApiResponse(request, { requestHash: request.requestHash, proof: wrong }, ethers, 1788999960), /proof mismatch/);
+    const shorterRequest = sdk.buildQuoteApiRequest({ chainId: 97, tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n,
+      requestedAt: 1788999940, expiresAt: 1788999970, clientRequestId: "short-request" }, ethers);
+    assert.throws(() => sdk.validateQuoteApiResponse(shorterRequest,
+      { requestHash: shorterRequest.requestHash, proof }, ethers, 1788999960), /proof mismatch/);
     assert.throws(() => sdk.buildQuoteApiRequest({ chainId: 56 }, ethers), /quote API request/);
     assert.throws(() => sdk.buildQuoteApiRequest({ chainId: 97, tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n,
       requestedAt: 1788999900, expiresAt: 1788999960 }, ethers), /request id/);
