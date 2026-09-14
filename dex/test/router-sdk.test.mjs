@@ -249,6 +249,12 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.buildQuoteApiRequest({ chainId: 56 }, ethers), /quote API request/);
     assert.throws(() => sdk.buildQuoteApiRequest({ chainId: 97, tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n,
       requestedAt: 1788999900, expiresAt: 1788999960 }, ethers), /request id/);
+    assert.throws(() => sdk.buildQuoteApiRequest({ chainId: 97, tokenIn: tokenA, tokenOut: tokenB,
+      amountIn: ethers.MaxUint256 + 1n, requestedAt: 1788999900, expiresAt: 1788999960,
+      clientRequestId: "oversized" }, ethers), /quote API request/);
+    assert.throws(() => sdk.buildQuoteApiRequest({ chainId: 97, tokenIn: tokenA, tokenOut: tokenB,
+      amountIn: 1000n, requestedAt: 1788999900, expiresAt: 1788999960,
+      clientRequestId: "unsafe request" }, ethers), /request id/);
   });
 
   it("maps failures to deterministic mobile recovery actions", function () {
