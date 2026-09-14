@@ -3,7 +3,7 @@ import fs from "node:fs";
 import { ethers } from "ethers";
 import { TEST_LQC, TEST_WBNB } from "../scripts/prepare-pancake-v3-pool.mjs";
 import { SIGNER_1 } from "../scripts/prepare-pancake-v3-liquidity.mjs";
-import { PILOT_LIMITS, buildExecutionStack, recordRiskRegistryDeployment } from "../scripts/prepare-router2-execution-stack.mjs";
+import { PILOT_LIMITS, buildExecutionStack, recordExecutionRouterDeployment, recordRiskRegistryDeployment } from "../scripts/prepare-router2-execution-stack.mjs";
 
 const address = digit => `0x${digit.repeat(40)}`;
 
@@ -51,5 +51,15 @@ describe("Router 2.0 capped execution stack preparation", function () {
     assert.equal(recorded.executions.riskRegistry.status, "success");
     assert.equal(recorded.orderedActions[1].action, "deploy-execution-router");
     assert.throws(() => recordRiskRegistryDeployment(bundle, "bad", `0x${"2".repeat(64)}`), /valid deployed/);
+  });
+
+  it("records the bound Execution Router before any configuration transaction", async function () {
+    const riskAddress = address("1"); const routerAddress = address("2");
+    let bundle = await buildExecutionStack(riskAddress, routerAddress);
+    bundle = recordRiskRegistryDeployment(bundle, riskAddress, `0x${"3".repeat(64)}`);
+    const recorded = recordExecutionRouterDeployment(bundle, routerAddress, `0x${"4".repeat(64)}`);
+    assert.equal(recorded.executions.executionRouter.address, routerAddress);
+    assert.equal(recorded.executions.executionRouter.riskRegistry, riskAddress);
+    assert.equal(recorded.orderedActions[2].action, "set-executor");
   });
 });
