@@ -53,5 +53,20 @@
     "WBNBBalanceAfter": "0.000495513949670434",
     "status": "success",
     "evidence": "Successful TokenPocket receipt, exact WBNB balance decrease, and DApp tLQC minimum-output balance-delta verification"
+  },
+  "finalStateVerification": {
+    "poolLiquidity": "500000000000000000000",
+    "poolTLQCBalance": "500499.757989356002843824",
+    "poolWBNBBalance": "0.499504486050329566",
+    "lpNftTokenId": "37418",
+    "lpNftOwner": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
+    "routerResidualAllowances": {
+      "tLQC": "0",
+      "WBNB": "0"
+    },
+    "forwardSwapConfirmationsObserved": 4512,
+    "reverseSwapConfirmationsObserved": 1536,
+    "status": "success",
+    "evidence": "Read-only chain-97 verification of pool balances and liquidity, LP NFT owner, swap receipts, confirmations, and zero Router allowances"
   }
 }

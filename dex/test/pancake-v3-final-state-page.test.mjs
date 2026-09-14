@@ -24,4 +24,16 @@ describe("PancakeSwap V3 final read-only state page", function () {
     assert.match(source, /BigInt\(value.status\) !== 1n/);
     assert.match(source, /value.to.toLowerCase\(\) !== ROUTER.toLowerCase\(\)/);
   });
+
+  it("records the successful final state with zero residual approvals", function () {
+    const record = JSON.parse(fs.readFileSync(new URL("../deployments/pancake-v3-pool-bsc-testnet-97.json", import.meta.url)));
+    const final = record.finalStateVerification;
+    assert.equal(final.poolLiquidity, "500000000000000000000");
+    assert.equal(final.lpNftTokenId, "37418");
+    assert.equal(final.lpNftOwner, "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB");
+    assert.deepEqual(final.routerResidualAllowances, { tLQC: "0", WBNB: "0" });
+    assert.ok(final.forwardSwapConfirmationsObserved > 0);
+    assert.ok(final.reverseSwapConfirmationsObserved > 0);
+    assert.equal(final.status, "success");
+  });
 });
