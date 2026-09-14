@@ -195,6 +195,21 @@ describe("LQC read-only quote API gateway foundation", function () {
     assert.equal(recovered.checkedAt, current);
   });
 
+  it("publishes a stable, non-sensitive partner compatibility descriptor", function () {
+    const gateway = createQuoteApiGateway({ clients: [{ id: "private-partner", keyDigest: hashApiKey("secret-value") }], verifyProof });
+    const capabilities = gateway.capabilities();
+    assert.deepEqual(capabilities.supportedChains, [97]);
+    assert.deepEqual(capabilities.quoteRequestVersions, [1]);
+    assert.deepEqual(capabilities.quoteResponseVersions, [1]);
+    assert.equal(capabilities.maxQuoteValidityMs, 60_000);
+    assert.equal(capabilities.features.bestExecutionProof, true);
+    assert.equal(capabilities.features.idempotentRetries, true);
+    assert.equal(capabilities.features.serviceHealth, true);
+    const encoded = JSON.stringify(capabilities);
+    assert.equal(encoded.includes("private-partner"), false);
+    assert.equal(encoded.includes("secret-value"), false);
+  });
+
   it("uses stable errors without exposing provider details", async function () {
     const gateway = createQuoteApiGateway({ clients: [{ id: "partner", keyDigest: hashApiKey("secret") }], verifyProof, clock: () => now });
     const response = await gateway({ authorization: "Bearer secret", request: request(), traceId: "trace-005" },
