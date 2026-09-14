@@ -10,8 +10,9 @@ function request() {
     tokenOut: tokenB, amountIn: "1000", requestedAt: now - 1_000, expiresAt: now + 30_000, clientRequestId: "client-1" };
   return { ...payload, requestHash: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase() };
 }
-const jsonResponse = (status, body) => ({ status, headers: { get: name => name.toLowerCase() === "content-type" ? "application/json" : null },
-  json: async () => body });
+const jsonResponse = (status, body, contentLength = null) => { const raw = JSON.stringify(body); return { status,
+  headers: { get: name => name.toLowerCase() === "content-type" ? "application/json" :
+    name.toLowerCase() === "content-length" ? contentLength : null }, text: async () => raw }; };
 
 describe("LQC quote API reference client", function () {
   it("checks capabilities and health without sending credentials", async function () {
@@ -35,9 +36,10 @@ describe("LQC quote API reference client", function () {
     const client = createQuoteApiClient({ baseUrl: "https://quotes.example", apiKey: "0123456789abcdef",
       fetchImpl: async (url, options) => { seen = { url, options }; return jsonResponse(200,
         { schemaVersion: 1, requestHash: input.requestHash, proof, traceId: "client-trace" }); }, clock: () => now,
-      validateQuoteResponse: async (original, response) => original.requestHash === response.requestHash && response.proof === proof });
+      validateQuoteResponse: async (original, response) => original.requestHash === response.requestHash &&
+        response.proof?.proofHash === proof.proofHash });
     const result = await client.quote(input);
-    assert.equal(result.proof, proof); assert.equal(seen.url, "https://quotes.example/v1/quote");
+    assert.deepEqual(result.proof, proof); assert.equal(seen.url, "https://quotes.example/v1/quote");
     assert.equal(seen.options.headers.authorization, "Bearer 0123456789abcdef");
     assert.deepEqual(JSON.parse(seen.options.body), input);
   });
@@ -97,5 +99,22 @@ describe("LQC quote API reference client", function () {
     assert.throws(()=>createQuoteApiClient({ ...base, maxRetries: 3 }), /Invalid quote API client policy/);
     assert.throws(()=>createQuoteApiClient({ ...base, retryDelayMs: 9 }), /Invalid quote API client policy/);
     assert.throws(()=>createQuoteApiClient({ ...base, retryDelayMs: 1_001 }), /Invalid quote API client policy/);
+  });
+
+  it("rejects oversized declared and actual response bodies without retrying", async function () {
+    const base = { baseUrl: "https://quotes.example", apiKey: "0123456789abcdef", clock:()=>now,
+      maxRetries: 2, maxResponseBytes: 1_024, validateQuoteResponse: async()=>true };
+    let calls = 0;
+    const declared = createQuoteApiClient({ ...base, fetchImpl: async()=>{ calls += 1; return jsonResponse(200, {}, "1025"); } });
+    await assert.rejects(()=>declared.health(), /response too large/); assert.equal(calls, 1);
+    const actual = createQuoteApiClient({ ...base, fetchImpl: async()=>{ calls += 1;
+      return jsonResponse(200, { padding: "x".repeat(1_100) }); } });
+    await assert.rejects(()=>actual.health(), /response too large/); assert.equal(calls, 2);
+  });
+
+  it("rejects unsafe response-size policies", function () {
+    const base = { baseUrl: "https://quotes.example", apiKey: "0123456789abcdef", fetchImpl: async()=>{}, validateQuoteResponse: async()=>true };
+    assert.throws(()=>createQuoteApiClient({ ...base, maxResponseBytes: 1_023 }), /Invalid quote API client policy/);
+    assert.throws(()=>createQuoteApiClient({ ...base, maxResponseBytes: 1_048_577 }), /Invalid quote API client policy/);
   });
 });
