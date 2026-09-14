@@ -58,5 +58,7 @@ transaction decoding remain required before production use.
 `buildQuoteApiRequest` provides the versioned request envelope for a future read-only multi-DEX quote
 API. It binds chain 97, token pair, exact input, a client request id, and a validity window of at most
 60 seconds. `validateQuoteApiResponse` accepts a response only when its Best Execution Proof matches
-the complete request. The foundation does not yet expose a public HTTP service, authentication, or
-rate limits.
+the complete request. The transport-neutral `quote-api-gateway.mjs` foundation adds hashed bearer-key
+authentication, per-client fixed-window quotas, request tracing, canonical request-hash validation,
+and stable errors that do not leak upstream details. It does not open a network listener, store raw
+API keys, submit transactions, or expose a public production service.
