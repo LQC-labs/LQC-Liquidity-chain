@@ -10,6 +10,8 @@ function request() {
     tokenOut: tokenB, amountIn: "1000", requestedAt: now - 1_000, expiresAt: now + 30_000, clientRequestId: "client-1" };
   return { ...payload, requestHash: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase() };
 }
+const proofFor = input => ({ proofHash: ethers.id("proof"), chainId: input.chainId, tokenIn: input.tokenIn,
+  tokenOut: input.tokenOut, amountIn: input.amountIn, expiresAt: input.expiresAt });
 const jsonResponse = (status, body, contentLength = null) => { const raw = JSON.stringify(body); return { status,
   headers: { get: name => name.toLowerCase() === "content-type" ? "application/json" :
     name.toLowerCase() === "content-length" ? contentLength : null }, text: async () => raw }; };
@@ -32,7 +34,7 @@ describe("LQC quote API reference client", function () {
 
   it("sends a canonical quote with bearer authentication and validates the proof response", async function () {
     let seen;
-    const input = request(), proof = { proofHash: ethers.id("proof") };
+    const input = request(), proof = proofFor(input);
     const client = createQuoteApiClient({ baseUrl: "https://quotes.example", apiKey: "0123456789abcdef",
       fetchImpl: async (url, options) => { seen = { url, options }; return jsonResponse(200,
         { schemaVersion: 1, requestHash: input.requestHash, proof, traceId: "client-trace" }); }, clock: () => now,
@@ -53,6 +55,17 @@ describe("LQC quote API reference client", function () {
     await assert.rejects(() => client.quote(request()), /Invalid quote API proof response/);
   });
 
+  it("enforces the quote envelope even when the injected proof validator trusts it", async function () {
+    const input = request();
+    const run = proof => createQuoteApiClient({ baseUrl: "https://quotes.example", apiKey: "0123456789abcdef",
+      clock:()=>now, fetchImpl: async()=>jsonResponse(200,
+        { schemaVersion: 1, requestHash: input.requestHash, proof, traceId: "safe-trace" }),
+      validateQuoteResponse: async()=>true }).quote(input);
+    await assert.rejects(()=>run({ ...proofFor(input), chainId: 56 }), /Invalid quote API proof response/);
+    await assert.rejects(()=>run({ ...proofFor(input), amountIn: "999" }), /Invalid quote API proof response/);
+    await assert.rejects(()=>run({ ...proofFor(input), expiresAt: now - 1 }), /Invalid quote API proof response/);
+  });
+
   it("returns sanitized stable errors without exposing the API key", async function () {
     const secret = "very-secret-api-key-value";
     const client = createQuoteApiClient({ baseUrl: "https://quotes.example", apiKey: secret, clock:()=>now, maxRetries: 0,
@@ -71,7 +84,7 @@ describe("LQC quote API reference client", function () {
       fetchImpl: async (url, options) => { calls += 1; seen.push({ url, authorization: options.headers.authorization,
         body: options.body, redirect: options.redirect });
         if (calls === 1) return jsonResponse(503, { error: { code: "SERVICE_BUSY", retryable: true } });
-        return jsonResponse(200, { schemaVersion: 1, requestHash: input.requestHash, proof: {}, traceId: "retry-ok" });
+        return jsonResponse(200, { schemaVersion: 1, requestHash: input.requestHash, proof: proofFor(input), traceId: "retry-ok" });
       }, validateQuoteResponse: async (original, response) => original.requestHash === response.requestHash });
     const result = await client.quote(input);
     assert.equal(result.traceId, "retry-ok"); assert.equal(calls, 2); assert.deepEqual(delays, [25]);
