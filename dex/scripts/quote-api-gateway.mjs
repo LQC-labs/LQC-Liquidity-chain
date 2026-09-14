@@ -35,10 +35,11 @@ export function validateCanonicalQuoteRequest(request, now = Date.now()) {
 }
 
 export function createQuoteApiGateway({ clients, verifyProof, limit = 60, windowMs = 60_000,
-  providerTimeoutMs = 5_000, clock = () => Date.now() }) {
+  providerTimeoutMs = 5_000, maxInFlight = 100, clock = () => Date.now() }) {
   if (!Array.isArray(clients) || clients.length === 0 || !Number.isSafeInteger(limit) || limit < 1 ||
       !Number.isSafeInteger(windowMs) || windowMs < 1_000 || !Number.isSafeInteger(providerTimeoutMs) ||
-      providerTimeoutMs < 10 || providerTimeoutMs > 30_000 || typeof verifyProof !== "function") {
+      providerTimeoutMs < 10 || providerTimeoutMs > 30_000 || !Number.isSafeInteger(maxInFlight) ||
+      maxInFlight < 1 || maxInFlight > 1_000 || typeof verifyProof !== "function") {
     throw new Error("Invalid quote API gateway policy");
   }
   const approved = clients.map(client => {
@@ -89,6 +90,9 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
           "x-ratelimit-remaining": String(limit - current.count) }, body: { ...body, traceId: safeTrace } };
       }
       if (typeof quote !== "function") throw Object.assign(new Error("Quote service unavailable"), { code: "SERVICE_UNAVAILABLE" });
+      if (inFlight.size >= maxInFlight) {
+        throw Object.assign(new Error("Quote service capacity reached"), { code: "SERVICE_BUSY" });
+      }
       const promise = (async () => {
         let timeout;
         const timedOut = new Promise((_, reject) => { timeout = setTimeout(() => reject(
@@ -113,9 +117,9 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
         body };
     } catch (error) {
       const code = ["INVALID_REQUEST", "REQUEST_HASH_MISMATCH", "REQUEST_ID_CONFLICT", "INVALID_QUOTE_EVIDENCE"].includes(error?.code)
-        ? error.code : error?.code === "NO_ROUTE" ? "NO_ROUTE" : "SERVICE_UNAVAILABLE";
-      return fail(code === "SERVICE_UNAVAILABLE" ? 503 : code === "NO_ROUTE" ? 422 : 400, code, safeTrace,
-        code === "SERVICE_UNAVAILABLE");
+        ? error.code : error?.code === "NO_ROUTE" ? "NO_ROUTE" : error?.code === "SERVICE_BUSY" ? "SERVICE_BUSY" : "SERVICE_UNAVAILABLE";
+      return fail(["SERVICE_UNAVAILABLE", "SERVICE_BUSY"].includes(code) ? 503 : code === "NO_ROUTE" ? 422 : 400, code, safeTrace,
+        ["SERVICE_UNAVAILABLE", "SERVICE_BUSY"].includes(code));
     }
   };
 }
