@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildMinimalRouterReport } from "../scripts/monitor-minimal-router.mjs";
+import { buildMinimalRouterReport, minimalMonitorConfigFromDeployment } from "../scripts/monitor-minimal-router.mjs";
 
 const address = value => `0x${value.toString(16).padStart(40, "0")}`;
 const healthy = () => ({ checkedAt: "2026-09-14T07:10:00.000Z", blockNumber: 130938158,
@@ -9,6 +9,15 @@ const healthy = () => ({ checkedAt: "2026-09-14T07:10:00.000Z", blockNumber: 130
   ] });
 
 describe("LQC minimal testnet Router monitoring", function () {
+  it("loads every address from the chain-97 minimal deployment record", function () {
+    const deployment = { mode: "minimal-testnet-smoke", network: { chainId: 97 }, contracts: {
+      router: address(1), factory: address(2), tLQC: address(3), wbnb: address(4) } };
+    assert.deepEqual(minimalMonitorConfigFromDeployment(deployment), {
+      router: address(1), factory: address(2), tlqc: address(3), wbnb: address(4) });
+    assert.throws(() => minimalMonitorConfigFromDeployment({ ...deployment, network: { chainId: 56 } }), /chain 97/);
+    delete deployment.contracts.factory;
+    assert.throws(() => minimalMonitorConfigFromDeployment(deployment), /missing factory/);
+  });
   it("reports healthy only when bindings match and no swap funds remain", function () {
     const report = buildMinimalRouterReport(healthy());
     assert.equal(report.status, "HEALTHY");
