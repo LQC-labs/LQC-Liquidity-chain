@@ -45,6 +45,7 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
   });
   const usage = new Map();
   const completed = new Map();
+  const inFlight = new Map();
 
   return async function handleQuote({ authorization, request, traceId }, quote) {
     const safeTrace = TRACE.test(traceId || "") ? traceId : crypto.randomUUID();
@@ -75,15 +76,30 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
           "x-lqc-idempotent-replay": "true", "x-ratelimit-limit": String(limit),
           "x-ratelimit-remaining": String(limit - current.count) }, body: { ...previous.body, traceId: safeTrace } };
       }
-      if (typeof quote !== "function") throw Object.assign(new Error("Quote service unavailable"), { code: "SERVICE_UNAVAILABLE" });
-      const result = await quote(request);
-      if (!result?.proof || result.requestHash !== request.requestHash || result.proof.chainId !== request.chainId ||
-          result.proof.tokenIn !== request.tokenIn || result.proof.tokenOut !== request.tokenOut ||
-          result.proof.amountIn !== request.amountIn || result.proof.expiresAt > request.expiresAt ||
-          !(await verifyProof(result.proof))) {
-        throw Object.assign(new Error("Quote service returned mismatched evidence"), { code: "INVALID_QUOTE_EVIDENCE" });
+      const pending = inFlight.get(replayKey);
+      if (pending) {
+        if (pending.requestHash !== request.requestHash) {
+          throw Object.assign(new Error("Quote request id was reused with different content"), { code: "REQUEST_ID_CONFLICT" });
+        }
+        const body = await pending.promise;
+        return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
+          "x-lqc-idempotent-replay": "true", "x-ratelimit-limit": String(limit),
+          "x-ratelimit-remaining": String(limit - current.count) }, body: { ...body, traceId: safeTrace } };
       }
-      const body = { schemaVersion: 1, requestHash: request.requestHash, proof: result.proof, traceId: safeTrace };
+      if (typeof quote !== "function") throw Object.assign(new Error("Quote service unavailable"), { code: "SERVICE_UNAVAILABLE" });
+      const promise = (async () => {
+        const result = await quote(request);
+        if (!result?.proof || result.requestHash !== request.requestHash || result.proof.chainId !== request.chainId ||
+            result.proof.tokenIn !== request.tokenIn || result.proof.tokenOut !== request.tokenOut ||
+            result.proof.amountIn !== request.amountIn || result.proof.expiresAt > request.expiresAt ||
+            !(await verifyProof(result.proof))) {
+          throw Object.assign(new Error("Quote service returned mismatched evidence"), { code: "INVALID_QUOTE_EVIDENCE" });
+        }
+        return { schemaVersion: 1, requestHash: request.requestHash, proof: result.proof, traceId: safeTrace };
+      })();
+      inFlight.set(replayKey, { requestHash: request.requestHash, promise });
+      let body;
+      try { body = await promise; } finally { inFlight.delete(replayKey); }
       completed.set(replayKey, { requestHash: request.requestHash, expiresAt: request.expiresAt, body });
       return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
         "x-ratelimit-limit": String(limit), "x-ratelimit-remaining": String(limit - current.count) },
