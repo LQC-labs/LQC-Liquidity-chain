@@ -6,6 +6,27 @@ const TRACE = /^[A-Za-z0-9._:-]{1,128}$/;
 
 export const hashApiKey = value => crypto.createHash("sha256").update(String(value)).digest("hex");
 
+export function validateQuoteApiCapabilities(capabilities, requirements = {}) {
+  const chainId = requirements.chainId ?? 97;
+  const requestVersion = requirements.requestVersion ?? 1;
+  const responseVersion = requirements.responseVersion ?? 1;
+  const requiredFeatures = requirements.requiredFeatures ??
+    ["bestExecutionProof", "requestHashBinding", "idempotentRetries", "serviceHealth"];
+  if (!capabilities || capabilities.schemaVersion !== 1 || capabilities.type !== "LQC_QUOTE_API_CAPABILITIES" ||
+      !Number.isSafeInteger(chainId) || chainId <= 0 || !Number.isSafeInteger(requestVersion) || requestVersion <= 0 ||
+      !Number.isSafeInteger(responseVersion) || responseVersion <= 0 || !Array.isArray(requiredFeatures) ||
+      !Array.isArray(capabilities.supportedChains) || !capabilities.supportedChains.includes(chainId) ||
+      !Array.isArray(capabilities.quoteRequestVersions) || !capabilities.quoteRequestVersions.includes(requestVersion) ||
+      !Array.isArray(capabilities.quoteResponseVersions) || !capabilities.quoteResponseVersions.includes(responseVersion) ||
+      !Number.isSafeInteger(capabilities.maxQuoteValidityMs) || capabilities.maxQuoteValidityMs < 1_000 ||
+      capabilities.maxQuoteValidityMs > 60_000 || !capabilities.features ||
+      requiredFeatures.some(feature => typeof feature !== "string" || capabilities.features[feature] !== true)) {
+    throw new Error("Incompatible quote API capabilities");
+  }
+  return { compatible: true, chainId, requestVersion, responseVersion,
+    maxQuoteValidityMs: capabilities.maxQuoteValidityMs, verifiedFeatures: [...requiredFeatures] };
+}
+
 function sameDigest(left, right) {
   if (!/^[0-9a-f]{64}$/.test(left || "") || !/^[0-9a-f]{64}$/.test(right || "")) return false;
   return crypto.timingSafeEqual(Buffer.from(left, "hex"), Buffer.from(right, "hex"));
