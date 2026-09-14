@@ -61,5 +61,7 @@ API. It binds chain 97, token pair, exact input, a client request id, and a vali
 the complete request. The transport-neutral `quote-api-gateway.mjs` foundation adds hashed bearer-key
 authentication, per-client fixed-window quotas, request tracing, canonical request-hash validation,
 server-supplied cryptographic proof verification, exact request/proof context matching, and stable
-errors that do not leak upstream details. It does not open a network listener, store raw
+errors that do not leak upstream details. A completed request id is idempotent until expiry: an exact
+retry receives the same proof, while reuse of that id with different content fails closed. It does not
+open a network listener, store raw
 API keys, submit transactions, or expose a public production service.

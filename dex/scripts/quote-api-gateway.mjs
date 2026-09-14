@@ -44,6 +44,7 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
     return { id: String(client.id), keyDigest: client.keyDigest };
   });
   const usage = new Map();
+  const completed = new Map();
 
   return async function handleQuote({ authorization, request, traceId }, quote) {
     const safeTrace = TRACE.test(traceId || "") ? traceId : crypto.randomUUID();
@@ -63,6 +64,17 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
 
     try {
       validateCanonicalQuoteRequest(request, now);
+      for (const [key, value] of completed) if (value.expiresAt < now) completed.delete(key);
+      const replayKey = `${client.id}:${request.clientRequestId}`;
+      const previous = completed.get(replayKey);
+      if (previous) {
+        if (previous.requestHash !== request.requestHash) {
+          throw Object.assign(new Error("Quote request id was reused with different content"), { code: "REQUEST_ID_CONFLICT" });
+        }
+        return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
+          "x-lqc-idempotent-replay": "true", "x-ratelimit-limit": String(limit),
+          "x-ratelimit-remaining": String(limit - current.count) }, body: { ...previous.body, traceId: safeTrace } };
+      }
       if (typeof quote !== "function") throw Object.assign(new Error("Quote service unavailable"), { code: "SERVICE_UNAVAILABLE" });
       const result = await quote(request);
       if (!result?.proof || result.requestHash !== request.requestHash || result.proof.chainId !== request.chainId ||
@@ -71,11 +83,13 @@ export function createQuoteApiGateway({ clients, verifyProof, limit = 60, window
           !(await verifyProof(result.proof))) {
         throw Object.assign(new Error("Quote service returned mismatched evidence"), { code: "INVALID_QUOTE_EVIDENCE" });
       }
+      const body = { schemaVersion: 1, requestHash: request.requestHash, proof: result.proof, traceId: safeTrace };
+      completed.set(replayKey, { requestHash: request.requestHash, expiresAt: request.expiresAt, body });
       return { status: 200, headers: { "content-type": "application/json", "x-lqc-trace-id": safeTrace,
         "x-ratelimit-limit": String(limit), "x-ratelimit-remaining": String(limit - current.count) },
-        body: { schemaVersion: 1, requestHash: request.requestHash, proof: result.proof, traceId: safeTrace } };
+        body };
     } catch (error) {
-      const code = ["INVALID_REQUEST", "REQUEST_HASH_MISMATCH", "INVALID_QUOTE_EVIDENCE"].includes(error?.code)
+      const code = ["INVALID_REQUEST", "REQUEST_HASH_MISMATCH", "REQUEST_ID_CONFLICT", "INVALID_QUOTE_EVIDENCE"].includes(error?.code)
         ? error.code : error?.code === "NO_ROUTE" ? "NO_ROUTE" : "SERVICE_UNAVAILABLE";
       return fail(code === "SERVICE_UNAVAILABLE" ? 503 : code === "NO_ROUTE" ? 422 : 400, code, safeTrace,
         code === "SERVICE_UNAVAILABLE");
