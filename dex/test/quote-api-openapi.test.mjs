@@ -69,4 +69,15 @@ describe("LQC quote API OpenAPI contract", function () {
     assert.deepEqual(spec.components.schemas.Counter,
       { type: "integer", minimum: 0, maximum: Number.MAX_SAFE_INTEGER });
   });
+
+  it("pins exact health capacity and policy structures", function () {
+    const health = spec.components.schemas.Health, capacity = spec.components.schemas.HealthCapacity,
+      policy = spec.components.schemas.HealthPolicy;
+    assert.equal(health.additionalProperties, false);
+    assert.equal(health.properties.capacity.$ref, "#/components/schemas/HealthCapacity");
+    assert.equal(health.properties.policy.$ref, "#/components/schemas/HealthPolicy");
+    assert.equal(capacity.additionalProperties, false); assert.equal(policy.additionalProperties, false);
+    assert.deepEqual(capacity.required, ["inFlight", "maxInFlight", "completed", "maxCompletedEntries"]);
+    assert.deepEqual(policy.required, ["providerTimeoutMs", "rateLimit", "rateLimitWindowMs"]);
+  });
 });
