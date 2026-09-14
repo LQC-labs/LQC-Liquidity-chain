@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { ethers } from "ethers";
 
@@ -5,6 +7,18 @@ const ROUTER_ABI = ["function factory() view returns(address)", "function WBNB()
 const ERC20_ABI = ["function balanceOf(address) view returns(uint256)"];
 
 const same = (left, right) => ethers.getAddress(left) === ethers.getAddress(right);
+
+export function minimalMonitorConfigFromDeployment(deployment) {
+  if (Number(deployment?.network?.chainId) !== 97 || deployment?.mode !== "minimal-testnet-smoke") {
+    throw new Error("Minimal deployment record must target BSC testnet chain 97.");
+  }
+  const mapped = { router: deployment?.contracts?.router, factory: deployment?.contracts?.factory,
+    tlqc: deployment?.contracts?.tLQC, wbnb: deployment?.contracts?.wbnb };
+  for (const [name, address] of Object.entries(mapped)) {
+    if (!ethers.isAddress(address) || address === ethers.ZeroAddress) throw new Error(`Minimal deployment record is missing ${name}.`);
+  }
+  return mapped;
+}
 
 export function buildMinimalRouterReport({ checkedAt, blockNumber, router, expectedFactory, expectedWbnb,
   observedFactory, observedWbnb, balances }) {
@@ -57,11 +71,18 @@ export async function monitorMinimalRouter({ provider, router, factory, tlqc, wb
 }
 
 async function main() {
-  const required = ["BSC_TESTNET_RPC_URL", "MINIMAL_ROUTER_ADDRESS", "MINIMAL_FACTORY_ADDRESS", "TLQC_ADDRESS", "WBNB_ADDRESS"];
-  for (const name of required) if (!process.env[name]) throw new Error(`Set ${name}. Never commit RPC credentials or private keys.`);
-  const report = await monitorMinimalRouter({ provider: new ethers.JsonRpcProvider(process.env.BSC_TESTNET_RPC_URL),
-    router: process.env.MINIMAL_ROUTER_ADDRESS, factory: process.env.MINIMAL_FACTORY_ADDRESS,
-    tlqc: process.env.TLQC_ADDRESS, wbnb: process.env.WBNB_ADDRESS });
+  if (!process.env.BSC_TESTNET_RPC_URL) throw new Error("Set BSC_TESTNET_RPC_URL. Never commit RPC credentials or private keys.");
+  const root = path.resolve(import.meta.dirname, "..");
+  const deploymentPath = path.resolve(process.env.MINIMAL_DEPLOYMENT_FILE ||
+    path.join(root, "deployments/minimal-bsc-testnet-97.local.json"));
+  let config;
+  if (fs.existsSync(deploymentPath)) {
+    config = minimalMonitorConfigFromDeployment(JSON.parse(fs.readFileSync(deploymentPath, "utf8")));
+  } else {
+    config = { router: process.env.MINIMAL_ROUTER_ADDRESS, factory: process.env.MINIMAL_FACTORY_ADDRESS,
+      tlqc: process.env.TLQC_ADDRESS, wbnb: process.env.WBNB_ADDRESS };
+  }
+  const report = await monitorMinimalRouter({ provider: new ethers.JsonRpcProvider(process.env.BSC_TESTNET_RPC_URL), ...config });
   console.log(JSON.stringify(report, null, 2));
   if (report.status === "CRITICAL") process.exitCode = 2;
 }
