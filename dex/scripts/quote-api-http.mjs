@@ -37,7 +37,13 @@ export function createQuoteApiHttpAdapter({ gateway, quote, maxBodyBytes = 32_76
     if (method !== "POST") return error(405, "METHOD_NOT_ALLOWED", traceId);
     if (!/^application\/json(?:\s*;|$)/i.test(headers["content-type"] || "")) return error(415, "UNSUPPORTED_MEDIA_TYPE", traceId);
     if (typeof request.body !== "string") return error(400, "INVALID_JSON", traceId);
-    if (Buffer.byteLength(request.body, "utf8") > maxBodyBytes) return error(413, "PAYLOAD_TOO_LARGE", traceId);
+    const bodyBytes = Buffer.byteLength(request.body, "utf8");
+    const contentLength = headers["content-length"];
+    if (headers["transfer-encoding"] || (headers["content-encoding"] && headers["content-encoding"].toLowerCase() !== "identity"))
+      return error(400, "UNSAFE_BODY_FRAMING", traceId);
+    if (contentLength !== undefined && (!/^[0-9]+$/.test(contentLength) || BigInt(contentLength) !== BigInt(bodyBytes)))
+      return error(400, "CONTENT_LENGTH_MISMATCH", traceId);
+    if (bodyBytes > maxBodyBytes) return error(413, "PAYLOAD_TOO_LARGE", traceId);
     let body;
     try { body = JSON.parse(request.body); } catch { return error(400, "INVALID_JSON", traceId); }
     if (!body || Array.isArray(body) || typeof body !== "object") return error(400, "INVALID_JSON", traceId);
