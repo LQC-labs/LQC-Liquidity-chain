@@ -70,6 +70,17 @@ describe("LQC read-only quote API gateway foundation", function () {
     assert.throws(() => validateCanonicalQuoteRequest(inherited, now), /Invalid canonical/);
   });
 
+  it("uses one field-order-independent canonical request hash", function () {
+    const canonical = request({ clientRequestId: "ordered-request" });
+    const reordered = Object.fromEntries(Object.entries(canonical).reverse());
+    assert.doesNotThrow(() => validateCanonicalQuoteRequest(reordered, now));
+    const { requestHash, ...payload } = reordered;
+    const nonCanonical = { ...payload,
+      requestHash: ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase() };
+    assert.notEqual(nonCanonical.requestHash, requestHash);
+    assert.throws(() => validateCanonicalQuoteRequest(nonCanonical, now), /hash mismatch/);
+  });
+
   it("bounds quote amounts to uint256 and request ids to safe ASCII", function () {
     assert.doesNotThrow(() => validateCanonicalQuoteRequest(request({ amountIn: ethers.MaxUint256.toString() }), now));
     assert.throws(() => validateCanonicalQuoteRequest(request({ amountIn: (ethers.MaxUint256 + 1n).toString() }), now),
