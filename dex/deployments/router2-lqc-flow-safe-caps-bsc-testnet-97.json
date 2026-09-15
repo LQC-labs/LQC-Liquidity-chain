@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "network": {
+    "name": "BSC Testnet",
+    "chainId": 97
+  },
+  "phase": "Governance Safe approval for LQC Flow execution caps",
+  "safe": {
+    "address": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+    "version": "1.4.1",
+    "owners": [
+      "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
+      "0xFBF84C81cfF0b400D33Ac2C3c095DC22E4A91B6c",
+      "0x6CEd713de5342b8A9A2869BB132b3f251907970A",
+      "0x1bC23531Eea799B1b7A0a7cbd7E7fC24baCb29FB",
+      "0xE498CAcDa9cE819307AB1292389F270A46471B25",
+      "0x30107526b867Ab345FBd23239157d9Ed225f9Dc0",
+      "0x4A20a68834917d901d7C86bAB06061f3f182d7bC"
+    ],
+    "threshold": 4
+  },
+  "targets": {
+    "riskRegistry": "0xe10a1d467a553900cb4d1755e079b35b0cd0c48b",
+    "dexRegistry": "0x0465c6460deaece522506e09cddc1b62d6d75c84",
+    "lqcFlowAdapter": "0x14db750acf95b469aba3e74032e6db61087ef4cd"
+  },
+  "dexId": "0x7d3375921fc0a5becb9b20cbfdcf03440befc5113d864e8522b8465ca68b8014",
+  "actions": [
+    {
+      "id": 1,
+      "label": "LQC Flow tLQC cap",
+      "token": "0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc",
+      "cap": "1000000000000000000000",
+      "data": "0xa2a1bffa7d3375921fc0a5becb9b20cbfdcf03440befc5113d864e8522b8465ca68b801400000000000000000000000084a30a66cfcbb15453c83204b7e6ec436a0718fc00000000000000000000000000000000000000000000003635c9adc5dea00000"
+    },
+    {
+      "id": 2,
+      "label": "LQC Flow WBNB cap",
+      "token": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+      "cap": "10000000000000000",
+      "data": "0xa2a1bffa7d3375921fc0a5becb9b20cbfdcf03440befc5113d864e8522b8465ca68b8014000000000000000000000000ae13d989dac2f0debff460ac112a837c89baa7cd000000000000000000000000000000000000000000000000002386f26fc10000"
+    }
+  ],
+  "safety": "Two independent Safe transactions. The page reads the current nonce on-chain for each action. No swap, token approval, liquidity movement, token-limit expansion, or Pancake V3 change."
+}
