@@ -1,0 +1,26 @@
+(function () {
+  "use strict";
+  const CHAIN_ID="0x61", SIGNER="0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB", EXECUTION_ROUTER="0x2e0a7f59ca65ed36977add5e71b8b64ba38d939f";
+  const BUNDLE_URL="../deployments/router2-proof-bound-gateway-stage1-bsc-testnet-97.json", STORAGE_KEY="lqc-router2-proof-verifier-chain97-v1";
+  const RUNTIME_HASH="0x5b529479796e79c39d4959695425be49edde0cc9eecce4f49e6605e38ba37f3a";
+  const $=id=>document.getElementById(id); let account=null,deployData=null;
+  function status(message,type="info"){$("status").textContent=message;$("status").dataset.type=type;}
+  async function request(method,params=[]){if(!window.ethereum)throw new Error("TokenPocket DApp 브라우저에서 열어주세요.");return window.ethereum.request({method,params});}
+  async function verifiedCode(address){const code=await request("eth_getCode",[address,"latest"]);if(!code||code==="0x")throw new Error("배포된 Proof 검증계약 코드가 없습니다.");if(ethers.keccak256(code)!==RUNTIME_HASH)throw new Error("배포된 코드가 검토한 Proof 검증계약과 다릅니다.");return code;}
+  async function existing(){const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"null");if(!saved)return false;await verifiedCode(saved.address);$("contract").textContent=saved.address;$("tx").textContent=saved.hash;status("Proof 검증계약 배포와 코드 해시 확인 완료. 다시 배포하지 마세요.","ok");return true;}
+  async function preflight(){try{
+    $("deploy").disabled=true;if(!window.ethers)throw new Error("ethers 검증 라이브러리를 불러오지 못했습니다.");if((await request("eth_chainId")).toLowerCase()!==CHAIN_ID)throw new Error("BSC Testnet(chain 97)이 아닙니다.");
+    const accounts=await request("eth_requestAccounts");if(!accounts[0]||accounts[0].toLowerCase()!==SIGNER.toLowerCase())throw new Error("Signer 1 지갑으로 연결하세요.");account=accounts[0];$("wallet").textContent=account;if(await existing())return;
+    if(await request("eth_getCode",[EXECUTION_ROUTER,"latest"])==="0x")throw new Error("기존 Execution Router 코드를 확인할 수 없습니다.");
+    const bundle=await(await fetch(BUNDLE_URL,{cache:"no-store"})).json();const action=bundle.orderedActions?.[0];
+    if(bundle.network?.chainId!==97||bundle.dependencies?.executionRouter.toLowerCase()!==EXECUTION_ROUTER||bundle.dependencies?.proofVerifier!==null||bundle.orderedActions.length!==1||action.action!=="deploy-best-execution-proof")throw new Error("1단계 배포 준비 기록이 검토 범위와 다릅니다.");
+    deployData=action.data;if(!/^0x[0-9a-f]+$/.test(deployData)||ethers.keccak256(deployData)!==bundle.bytecodeHashes.bestExecutionProof)throw new Error("Proof 검증계약 생성 코드 해시가 다릅니다.");
+    const balance=BigInt(await request("eth_getBalance",[account,"latest"]));if(balance===0n)throw new Error("배포 가스용 tBNB가 없습니다.");const gas=await request("eth_estimateGas",[{from:account,value:"0x0",data:deployData}]);$("gas").textContent=BigInt(gas).toString();$("deploy").disabled=false;status("읽기 전용 사전검증 통과. 2번은 Proof 검증계약 하나를 실제 배포하며 tBNB 가스비가 발생합니다.","ok");
+  }catch(error){status(error.message||String(error),"error");}}
+  async function waitReceipt(hash){for(let i=0;i<90;i+=1){const receipt=await request("eth_getTransactionReceipt",[hash]);if(receipt)return receipt;await new Promise(done=>setTimeout(done,4000));}throw new Error("영수증 확인이 지연됩니다. 다시 배포하지 마세요.");}
+  async function deploy(){try{
+    $("deploy").disabled=true;if(!deployData||!account)throw new Error("먼저 1번 사전검증을 실행하세요.");if(await existing())return;const accounts=await request("eth_accounts");if(!accounts[0]||accounts[0].toLowerCase()!==account.toLowerCase())throw new Error("연결 지갑이 변경됐습니다.");
+    const tx={from:account,value:"0x0",data:deployData};const gas=await request("eth_estimateGas",[tx]);status("Proof 검증계약 1개 배포 확인창입니다. 전송 금액은 0 tBNB이고 가스비만 발생합니다.");const hash=await request("eth_sendTransaction",[{...tx,gas}]);$("tx").textContent=hash;const receipt=await waitReceipt(hash);if(BigInt(receipt.status)!==1n||!receipt.contractAddress)throw new Error("Proof 검증계약 배포 실패");await verifiedCode(receipt.contractAddress);localStorage.setItem(STORAGE_KEY,JSON.stringify({address:receipt.contractAddress,hash,at:Date.now()}));$("contract").textContent=receipt.contractAddress;status("Proof 검증계약 배포 및 런타임 코드 해시 검증 성공. 같은 계약을 다시 배포하지 마세요.","ok");
+  }catch(error){status(error.message||String(error),"error");}}
+  $("router").textContent=EXECUTION_ROUTER;$("preflight").addEventListener("click",preflight);$("deploy").addEventListener("click",deploy);
+})();
