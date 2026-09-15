@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
-import { buildLqcFlowRouteBundle, LQC_FLOW_DEX_ID, LQC_FLOW_ROUTER } from "../scripts/prepare-router2-lqc-flow-route.mjs";
+import { buildLqcFlowRouteBundle, LQC_FLOW_ADAPTER, LQC_FLOW_DEX_ID, LQC_FLOW_ROUTER, recordLqcFlowQuoteComparison } from "../scripts/prepare-router2-lqc-flow-route.mjs";
 
 describe("Router 2.0 LQC Flow second-route preparation", function () {
   it("prepares an isolated chain-97 adapter deployment without a transaction", async function () {
@@ -32,5 +32,14 @@ describe("Router 2.0 LQC Flow second-route preparation", function () {
 
   it("rejects a malformed adapter address", async function () {
     await assert.rejects(buildLqcFlowRouteBundle("0x1234"), /adapterAddress must be valid/);
+  });
+
+  it("records the user-observed read-only comparison without claiming a transaction", async function () {
+    const recorded = recordLqcFlowQuoteComparison(await buildLqcFlowRouteBundle());
+    assert.equal(recorded.comparisonEvidence.adapter, LQC_FLOW_ADAPTER);
+    assert.equal(recorded.comparisonEvidence.status, "success");
+    assert.equal(recorded.comparisonEvidence.preferredQuote, "LQC_FLOW");
+    assert.equal(recorded.comparisonEvidence.transactionOccurred, false);
+    assert.ok(BigInt(recorded.comparisonEvidence.quotes.lqcFlow) > BigInt(recorded.comparisonEvidence.quotes.pancakeV3));
   });
 });
