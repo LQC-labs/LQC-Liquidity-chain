@@ -93,7 +93,10 @@
 - Gate 5 완료: challenge가 verifier `reportHash`를 canonical proof로 보유하며, 검증된 Intent·Solver·fault reason이 모두 일치할 때 누구나 `resolveChallengeWithVerifier`로 Bond slash를 실행. 수동 resolver는 비상 경로로 유지.
 - Gate 5 완료: `prepare-intent-execution-report.mjs`가 2개 이상 BSC testnet RPC에서 chain·성공 receipt·canonical block·Hub target·calldata·mined Gas·gas price·confirmation을 교차 검증하고 RPC 불일치/reorg/finality 부족 시 fail-closed.
 - Gate 5 완료: 교차 검증 결과로 canonical receipt hash와 bounded ExecutionReport를 생성하고, runtime에서만 받은 quorum attester key로 EIP-712 서명한 뒤 주소순 정렬하여 정확한 `submitReport` calldata JSON을 준비. RPC URL·private key는 결과에 기록하지 않으며 트랜잭션은 전송하지 않음.
-- Gate 5 다음 작업: Intent 전용 testnet 배포 manifest와 Governance Safe 실행 순서를 생성하고, 실제 배포 전 주소·role·quorum·threshold dry-run을 추가.
+- Gate 5 완료: `prepare-intent-testnet-stack.mjs`가 검증된 BSC testnet Governance 4-of-7, Risk/Guardian/Treasury 3-of-5 Safe와 기존 Router 2.0 ExecutionRouter를 고정하고 3단계 배포 manifest를 생성.
+- Gate 5 완료: Stage 1 Hub·QuoteManager·SolverRegistry·ExecutionVerifier 독립 배포, Stage 2 Router-bound InternalSolver 배포, Stage 3 Governance Safe 상호 바인딩·Risk resolver·Treasury slash recipient·2인 attester quorum 활성화 순서를 calldata로 준비.
+- Gate 5 완료: 기본 pilot 정책은 18-decimal Bond token 10,000 단위, Solver exposure 1,000 단위, Gas overrun 20%, Price Impact 5%, Oracle Deviation 3%. 주소·Safe threshold·중복 attester·quorum·action target/data를 dry-run하고 트랜잭션은 전송하지 않음.
+- Gate 5 다음 작업: Stage 1 배포 전 BSC testnet에서 Bond token 후보의 bytecode·decimals·liquidity·oracle feed를 검증하고 최종 token을 Governance가 선택.
 
 ## 의도적으로 후순위인 기능
 
