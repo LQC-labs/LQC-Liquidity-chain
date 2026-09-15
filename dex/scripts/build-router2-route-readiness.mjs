@@ -3,7 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { ethers } from "ethers";
 
-export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, executionDeployment = null, recovery = null) {
+export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, executionDeployment = null, recovery = null, lqcFlow = null) {
   if (poolRecord?.network?.chainId !== 97 || !ethers.isAddress(poolRecord?.contracts?.pancakeV3Pool)) {
     throw new Error("A valid chain-97 PancakeSwap V3 pool record is required.");
   }
@@ -30,13 +30,17 @@ export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, 
   if (!v3Ready) blockers.push("PancakeSwap V3 pilot evidence is incomplete");
   if (missingContracts.length) blockers.push(`Router 2.0 testnet contracts missing: ${missingContracts.join(", ")}`);
   if (!v3Registered) blockers.push("Verified V3 pool is not yet registered through the V3 adapter");
-  const comparableRoutes = stagedV3?.status === "success" ? 1 : Array.isArray(routerDeployment?.dexes) ? routerDeployment.dexes.filter(dex => dex.enabled !== false).length : 0;
+  const lqcFlowCompared = lqcFlow?.comparisonEvidence?.status === "success" &&
+    ethers.isAddress(lqcFlow?.comparisonEvidence?.adapter) &&
+    BigInt(lqcFlow?.comparisonEvidence?.quotes?.lqcFlow || 0) > 0n &&
+    BigInt(lqcFlow?.comparisonEvidence?.quotes?.pancakeV3 || 0) > 0n;
+  const comparableRoutes = lqcFlowCompared ? 2 : stagedV3?.status === "success" ? 1 : Array.isArray(routerDeployment?.dexes) ? routerDeployment.dexes.filter(dex => dex.enabled !== false).length : 0;
   const executionReady = ethers.isAddress(executionDeployment?.executions?.riskRegistry?.address) && ethers.isAddress(executionDeployment?.executions?.executionRouter?.address);
   const executionSmokeSucceeded = recovery?.executionEvidence?.status === "success" &&
     recovery?.executionEvidence?.smokeSwap?.status === "success" &&
     ethers.isAddress(recovery?.executionEvidence?.newAdapter) &&
     /^0x[0-9a-f]{64}$/i.test(recovery?.executionEvidence?.smokeSwap?.transactionHash || "");
-  const limitations = comparableRoutes < 2 ? ["A second independent DEX route is required for real best-route comparison"] : [];
+  const limitations = comparableRoutes < 2 ? ["A second independent DEX route is required for real best-route comparison"] : ["LQC Flow execution caps still require Governance Safe approval before routed execution"];
   return {
     schemaVersion: 1,
     network: { name: "BSC Testnet", chainId: 97 },
@@ -52,7 +56,7 @@ export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, 
       residualAllowances: poolRecord.finalStateVerification?.routerResidualAllowances || null,
     },
     router2: {
-      status: blockers.length ? "deployment-required" : executionSmokeSucceeded ? "single-route-execution-smoke-success" : executionReady ? "ready-for-single-route-execution-smoke" : "ready-for-live-route-probes",
+      status: blockers.length ? "deployment-required" : lqcFlowCompared ? "two-route-quote-comparison-success" : executionSmokeSucceeded ? "single-route-execution-smoke-success" : executionReady ? "ready-for-single-route-execution-smoke" : "ready-for-live-route-probes",
       comparableRoutes,
       missingContracts,
       v3Registered,
@@ -70,9 +74,19 @@ export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, 
         amountIn: recovery.executionEvidence.smokeSwap.amountIn,
         duplicateExecutionProhibited: true,
       } : { status: "pending" },
+      quoteComparison: lqcFlowCompared ? {
+        status: "success",
+        amountIn: lqcFlow.comparisonEvidence.amountIn,
+        lqcFlowAdapter: lqcFlow.comparisonEvidence.adapter,
+        quotes: lqcFlow.comparisonEvidence.quotes,
+        preferredQuote: lqcFlow.comparisonEvidence.preferredQuote,
+        transactionOccurred: false,
+      } : { status: "pending" },
     },
     nextSafeStep: blockers.length
       ? "Deploy and verify the Router 2.0 core plus Pancake V3 adapter before any routed wallet transaction."
+      : lqcFlowCompared
+        ? "Prepare Governance Safe approval for LQC Flow DEX token caps, then run a read-only two-route execution preflight before any additional swap."
       : executionSmokeSucceeded
         ? "Preserve the successful single-route evidence and add a second independent DEX route before claiming best-route comparison."
       : executionReady
@@ -91,8 +105,10 @@ function main() {
   const execution = fs.existsSync(executionFile) ? JSON.parse(fs.readFileSync(executionFile, "utf8")) : null;
   const recoveryFile = path.join(root, "deployments/router2-v3-adapter-recovery-bsc-testnet-97.json");
   const recovery = fs.existsSync(recoveryFile) ? JSON.parse(fs.readFileSync(recoveryFile, "utf8")) : null;
+  const lqcFlowFile = path.join(root, "deployments/router2-lqc-flow-route-bsc-testnet-97.json");
+  const lqcFlow = fs.existsSync(lqcFlowFile) ? JSON.parse(fs.readFileSync(lqcFlowFile, "utf8")) : null;
   const output = path.join(root, "deployments/router2-route-readiness-bsc-testnet-97.json");
-  fs.writeFileSync(output, `${JSON.stringify(buildRouter2RouteReadiness(pool, router, execution, recovery), null, 2)}\n`);
+  fs.writeFileSync(output, `${JSON.stringify(buildRouter2RouteReadiness(pool, router, execution, recovery, lqcFlow), null, 2)}\n`);
   console.log(`Wrote ${output}`);
 }
 
