@@ -11,6 +11,8 @@ export const LQC_FLOW_DEX_ID = ethers.id("LQC_FLOW");
 const REGISTRY = "0x0465c6460deaece522506e09cddc1b62d6d75c84";
 const RISK_REGISTRY = "0xe10a1d467a553900cb4d1755e079b35b0cd0c48b";
 const QUOTE_ROUTER = "0xf3128ceed7ef4e4ce48913977fabc341dfbec949";
+const PANCAKE_V3_ADAPTER = "0x823025d02c7619967b3e3880e3f6bc324a2c56d4";
+const PANCAKE_V3_QUOTER = "0xbC203d7f83677c7ed3F7acEc959963E7F4ECC5C2";
 const artifactsRoot = path.resolve(import.meta.dirname, "../artifacts/contracts/router-v2");
 const artifact = relative => JSON.parse(fs.readFileSync(path.join(artifactsRoot, relative), "utf8"));
 
@@ -37,7 +39,7 @@ export async function buildLqcFlowRouteBundle(adapterAddress = null) {
     network: { name: "BSC Testnet", chainId: 97 },
     phase: "Router 2.0 second independent route preparation",
     signer: SIGNER_1,
-    contracts: { lqcFlowRouter: LQC_FLOW_ROUTER, dexRegistry: REGISTRY, riskRegistry: RISK_REGISTRY, quoteRouter: QUOTE_ROUTER },
+    contracts: { lqcFlowRouter: LQC_FLOW_ROUTER, dexRegistry: REGISTRY, riskRegistry: RISK_REGISTRY, quoteRouter: QUOTE_ROUTER, pancakeV3Adapter: PANCAKE_V3_ADAPTER, pancakeV3Quoter: PANCAKE_V3_QUOTER },
     tokens: { tokenIn: TEST_LQC, tokenOut: TEST_WBNB },
     dex: { id: LQC_FLOW_DEX_ID, name: "LQC Flow", priority: 100, adapter: adapterAddress },
     routeProbe: { amountIn: ethers.parseUnits("10", 18).toString(), routeData, callMethod: "eth_call" },
