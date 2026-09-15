@@ -51,6 +51,7 @@ describe("LQC Gate 2 same-chain intent hub", function () {
 
   let provider;
   let owner;
+  let ownerSigningWallet;
   let outsider;
   let tokenA;
   let tokenB;
@@ -64,8 +65,14 @@ describe("LQC Gate 2 same-chain intent hub", function () {
   let routeData;
 
   beforeEach(async () => {
-    provider = new ethers.BrowserProvider(ganache.provider({ logging: { quiet: true } }));
+    const mnemonic = "test test test test test test test test test test test junk";
+    provider = new ethers.BrowserProvider(ganache.provider({
+      logging: { quiet: true },
+      wallet: { mnemonic }
+    }));
     owner = await provider.getSigner(0);
+    ownerSigningWallet = ethers.Wallet.fromPhrase(mnemonic);
+    assert.equal(ownerSigningWallet.address, await owner.getAddress());
     outsider = await provider.getSigner(1);
 
     const deploy = (name, source, ...args) => {
@@ -319,7 +326,7 @@ describe("LQC Gate 2 same-chain intent hub", function () {
         { name: "nonce", type: "uint256" }
       ]
     };
-    const signature = await owner.signTypedData(domain, types, signedIntent);
+    const signature = await ownerSigningWallet.signTypedData(domain, types, signedIntent);
     return { amount, signedIntent, signature };
   }
 
