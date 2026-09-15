@@ -88,7 +88,10 @@
 - Gate 4 완료: QuoteManager는 Registry 적격성을 조회하고 Hub는 동일 Registry인지 확인한 뒤 실행 전 exposure를 열고 성공 후 닫음. 실패 시 전체 트랜잭션과 exposure가 함께 rollback.
 - Gate 4 완료: `NON_DELIVERY`, `BELOW_MINIMUM`, `INVALID_ROUTE`, `FRAUDULENT_RECEIPT` challenge 사유와 7일 증거 제출 창을 정의. 증거 ID는 `keccak256(intentHash, solver, challenger, reason, canonicalProofHash)`로 challenger에 결합하여 proof 복사 선점을 차단.
 - Gate 4 완료: 설정 가능한 resolver가 challenge를 판정하고 최대 100% Bond haircut을 적용. 미해결 challenge는 인출을 차단하며 이미 대기 중인 인출액도 slash 후 잔여 Bond 이하로 축소. 기각된 challenge bond는 slash recipient로 귀속.
-- Gate 5 다음 작업: actual Gas·Price Impact·Oracle Deviation·canonical Receipt를 입력으로 받는 공개 ExecutionVerifier와 challenge 자동 판정 경로를 구현.
+- Gate 5 완료: 누구나 제출 가능한 `LQCExecutionVerifier` 구현. EIP-712 ExecutionReport에 Intent·Solver·Quote·서명/관측 route·예상/관측 execution hash·transaction/block/canonical receipt hash·최소/실제 수령량·예상/실제 Gas·Price Impact·Oracle Deviation을 결합.
+- Gate 5 완료: 정렬된 고유 attester 서명과 설정 가능한 quorum을 강제하고, `BELOW_MINIMUM`, `INVALID_ROUTE`, `FRAUDULENT_RECEIPT`, `QUALITY_BREACH`를 결정론적으로 분류. guardian pause와 owner 정책 변경을 분리.
+- Gate 5 완료: challenge가 verifier `reportHash`를 canonical proof로 보유하며, 검증된 Intent·Solver·fault reason이 모두 일치할 때 누구나 `resolveChallengeWithVerifier`로 Bond slash를 실행. 수동 resolver는 비상 경로로 유지.
+- Gate 5 다음 작업: BSC testnet RPC 다중 소스 attester 운영기와 report 생성·서명·제출 스크립트를 구현하고 reorg/finality 정책을 배포 설정으로 고정.
 
 ## 의도적으로 후순위인 기능
 

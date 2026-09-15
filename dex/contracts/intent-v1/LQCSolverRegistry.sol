@@ -3,6 +3,10 @@ pragma solidity ^0.8.24;
 
 import {SafeTransferLib} from "../libraries/SafeTransferLib.sol";
 
+interface ILQCExecutionVerifierVerdict {
+    function verdicts(bytes32 reportHash) external view returns (bytes32 intentHash, address solver, uint8 reason, uint256 verifiedAt);
+}
+
 /// @notice Gate-4 bonded Solver registry with bounded exposure and delayed withdrawals.
 contract LQCSolverRegistry {
     using SafeTransferLib for address;
@@ -11,11 +15,12 @@ contract LQCSolverRegistry {
     uint256 public constant CHALLENGE_WINDOW = 7 days;
     uint256 public constant BPS = 10_000;
 
-    enum SlashReason { NONE, NON_DELIVERY, BELOW_MINIMUM, INVALID_ROUTE, FRAUDULENT_RECEIPT }
+    enum SlashReason { NONE, NON_DELIVERY, BELOW_MINIMUM, INVALID_ROUTE, FRAUDULENT_RECEIPT, QUALITY_BREACH }
 
     struct Challenge {
         bytes32 intentHash;
         bytes32 evidenceHash;
+        bytes32 canonicalProofHash;
         address solver;
         address challenger;
         uint256 filedAt;
@@ -40,6 +45,7 @@ contract LQCSolverRegistry {
     address public exposureManager;
     address public resolver;
     address public slashRecipient;
+    address public executionVerifier;
     uint256 public minimumBond;
     uint256 public challengeBond;
     bool public paused;
@@ -67,6 +73,7 @@ contract LQCSolverRegistry {
     event ResolverUpdated(address indexed previousResolver, address indexed newResolver);
     event SlashRecipientUpdated(address indexed previousRecipient, address indexed newRecipient);
     event ChallengeBondUpdated(uint256 previousBond, uint256 newBond);
+    event ExecutionVerifierUpdated(address indexed previousVerifier, address indexed newVerifier);
     event GuardianUpdated(address indexed previousGuardian, address indexed newGuardian);
     event PauseUpdated(bool paused);
     event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
@@ -180,12 +187,28 @@ contract LQCSolverRegistry {
         bondToken.safeTransferFrom(msg.sender, address(this), challengeBond);
         evidenceUsed[evidenceHash] = true;
         activeChallenges[solver] += 1;
-        challenges[challengeId] = Challenge(intentHash, evidenceHash, solver, msg.sender, block.timestamp, reason, false, false);
+        challenges[challengeId] = Challenge(intentHash, evidenceHash, canonicalProofHash, solver, msg.sender, block.timestamp, reason, false, false);
         emit ChallengeFiled(challengeId, intentHash, solver, msg.sender, reason, evidenceHash);
     }
 
     function resolveChallenge(bytes32 challengeId, bool upheld, uint256 slashBps) external {
         if (msg.sender != resolver) revert Unauthorized();
+        _resolveChallenge(challengeId, upheld, slashBps);
+    }
+
+    function resolveChallengeWithVerifier(bytes32 challengeId, uint256 slashBps) external {
+        Challenge storage challenge = challenges[challengeId];
+        address verifier = executionVerifier;
+        if (verifier == address(0)) revert ChallengeUnavailable();
+        (bytes32 intentHash, address solver, uint8 reason, uint256 verifiedAt) =
+            ILQCExecutionVerifierVerdict(verifier).verdicts(challenge.canonicalProofHash);
+        if (verifiedAt == 0 || intentHash != challenge.intentHash || solver != challenge.solver || reason != uint8(challenge.reason)) {
+            revert ChallengeUnavailable();
+        }
+        _resolveChallenge(challengeId, true, slashBps);
+    }
+
+    function _resolveChallenge(bytes32 challengeId, bool upheld, uint256 slashBps) private {
         Challenge storage challenge = challenges[challengeId];
         if (challenge.filedAt == 0 || challenge.resolved) revert ChallengeUnavailable();
         if ((upheld && (slashBps == 0 || slashBps > BPS)) || (!upheld && slashBps != 0)) revert InvalidAmount();
@@ -248,6 +271,13 @@ contract LQCSolverRegistry {
         if (newBond == 0) revert InvalidAmount();
         emit ChallengeBondUpdated(challengeBond, newBond);
         challengeBond = newBond;
+    }
+
+    function setExecutionVerifier(address newVerifier) external onlyOwner {
+        if (newVerifier == address(0)) revert ZeroAddress();
+        if (newVerifier.code.length == 0) revert InvalidState();
+        emit ExecutionVerifierUpdated(executionVerifier, newVerifier);
+        executionVerifier = newVerifier;
     }
 
     function setGuardian(address newGuardian) external onlyOwner {
