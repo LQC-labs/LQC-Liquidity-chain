@@ -49,6 +49,15 @@ export async function buildProofBoundGatewayDeployment(proofVerifierAddress = nu
       bestExecutionProof: ethers.keccak256(proofArtifact.bytecode),
       proofBoundGateway: ethers.keccak256(gatewayArtifact.bytecode),
     },
+    runtimeBytecodeHashes: {
+      bestExecutionProof: ethers.keccak256(proofArtifact.deployedBytecode),
+      proofBoundGateway: ethers.keccak256(gatewayArtifact.deployedBytecode),
+    },
+    gatewayTemplate: {
+      bytecode: gatewayArtifact.bytecode,
+      constructorTypes: ["address", "address"],
+      constructorOrder: ["proofVerifier", "executionRouter"],
+    },
     orderedActions,
     safety: "Preparation only. No private key, signature, transaction, approval, token movement, or swap is used.",
   };
