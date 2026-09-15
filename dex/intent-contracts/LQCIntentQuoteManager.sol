@@ -44,7 +44,7 @@ contract LQCIntentQuoteManager {
     error InvalidQuote();
     error InvalidSignature();
     error QuoteExpired();
-    error QuoteNonceInvalidated();
+    error QuoteNonceUnavailable();
     error SolverIneligible();
 
     event QuoteNonceInvalidated(address indexed solver, uint256 indexed nonce);
@@ -162,7 +162,7 @@ contract LQCIntentQuoteManager {
                     != quote.grossAmountOut - quote.gasCostInTokenOut - quote.protocolFeeInTokenOut
         ) revert InvalidQuote();
         if (block.timestamp > quote.validUntil) revert QuoteExpired();
-        if (quoteNonceInvalidated[quote.solver][quote.nonce]) revert QuoteNonceInvalidated();
+        if (quoteNonceInvalidated[quote.solver][quote.nonce]) revert QuoteNonceUnavailable();
         if (!ILQCIntentSolverEligibility(solverRegistry).canExecute(quote.solver, requiredExposure)) {
             revert SolverIneligible();
         }
