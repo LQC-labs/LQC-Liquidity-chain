@@ -1,0 +1,14 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Router 2.0 위험설정 최종 확인</title>
+<style>:root{font-family:system-ui,sans-serif;color:#122126;background:#f3fbf9}body{margin:0;padding:20px 14px}.card{max-width:720px;margin:auto;background:#fff;border:1px solid #d9ece7;border-radius:22px;padding:22px}.badge{display:inline-block;background:#dff8f1;color:#087b69;border-radius:999px;padding:6px 10px;font-weight:700}.notice{background:#fff4dc;border-radius:14px;padding:14px;margin:16px 0}.row{padding:11px 0;border-bottom:1px solid #e5efed}.row span{display:block;margin-top:5px;color:#657873;overflow-wrap:anywhere}.pass{color:#08724f!important;font-weight:800}.fail{color:#ad2140!important;font-weight:800}button{width:100%;border:0;border-radius:14px;padding:15px;margin-top:16px;font-size:17px;font-weight:800;background:#152825;color:#fff}#status{padding:14px;border-radius:14px;background:#edf5f3;margin-top:16px;white-space:pre-line}#status[data-type="error"]{background:#ffe9ed;color:#ad2140}#status[data-type="ok"]{background:#dff8ed;color:#08724f}</style></head><body><main class="card">
+<span class="badge">BSC TESTNET · 읽기 전용</span><h1>Router 2.0 위험설정 최종 확인</h1><p>완료된 배포나 설정을 다시 실행하지 않고 현재 온체인 상태만 확인합니다.</p>
+<div class="notice"><b>안전 범위:</b> 이 화면은 거래 전송, 서명, 승인 또는 가스비를 요구하지 않습니다.</div>
+<div class="row"><b>Risk Registry</b><span id="risk"></span></div>
+<div class="row"><b>1. Governance Safe 소유권</b><span id="owner">확인 전</span></div>
+<div class="row"><b>2. 대기 소유권 해제</b><span id="pending">확인 전</span></div>
+<div class="row"><b>3. Execution Router 연결</b><span id="executor">확인 전</span></div>
+<div class="row"><b>4. tLQC 한도</b><span id="tlqc">확인 전</span></div>
+<div class="row"><b>5. Pancake V3 tLQC 상한</b><span id="tlqcCap">확인 전</span></div>
+<div class="row"><b>6. WBNB 한도</b><span id="wbnb">확인 전</span></div>
+<div class="row"><b>7. Pancake V3 WBNB 상한</b><span id="wbnbCap">확인 전</span></div>
+<button id="verify">온체인 최종 상태 확인</button><div id="status">버튼을 누르면 BSC 테스트넷 상태만 읽습니다.</div>
+</main><script src="./router2-risk-final-state-testnet.js"></script></body></html>
