@@ -17,6 +17,8 @@ describe("LQC Intent v1 core", function () {
   let user;
   let solver;
   let outsider;
+  let newOwner;
+  let newSettler;
   let userSigningWallet;
   let outsiderSigningWallet;
   let tokenIn;
@@ -81,6 +83,8 @@ describe("LQC Intent v1 core", function () {
     user = await provider.getSigner(1);
     solver = await provider.getSigner(2);
     outsider = await provider.getSigner(3);
+    newOwner = await provider.getSigner(4);
+    newSettler = await provider.getSigner(5);
     userSigningWallet = ethers.HDNodeWallet.fromPhrase(mnemonic, undefined, "m/44'/60'/0'/0/1");
     outsiderSigningWallet = ethers.HDNodeWallet.fromPhrase(mnemonic, undefined, "m/44'/60'/0'/0/3");
     chainId = (await provider.getNetwork()).chainId;
@@ -100,7 +104,7 @@ describe("LQC Intent v1 core", function () {
       owner,
       await owner.getAddress(),
       await owner.getAddress(),
-      await owner.getAddress()
+      await outsider.getAddress()
     );
     escrow = new ethers.Contract(
       await hub.sourceEscrow(),
@@ -122,6 +126,10 @@ describe("LQC Intent v1 core", function () {
     const record = await hub.getIntent(hash);
     const deposit = await escrow.getDeposit(hash);
     assert.equal(record.status, 1n);
+    assert.equal(record.destinationChainId, intent.destinationChainId);
+    assert.equal(record.destinationToken, intent.destinationToken);
+    assert.equal(record.recipient, intent.recipient);
+    assert.equal(record.minAmountOut, intent.minAmountOut);
     assert.equal(deposit.user, intent.user);
     assert.equal(deposit.amount, intent.sourceAmount);
     assert.equal(deposit.active, true);
@@ -174,20 +182,51 @@ describe("LQC Intent v1 core", function () {
     const intent = await makeIntent();
     const hash = await hub.hashIntent(intent);
     await (await hub.submitIntent(intent, await signIntent(intent))).wait();
-    const proofHash = ethers.id("destination-payment-proof");
+    const destinationTxHash = ethers.id("destination-payment-transaction");
+    const actualAmountOut = ethers.parseEther("9.5");
 
     await assert.rejects(async () => {
-      const tx = await hub.connect(outsider).settleIntent(hash, await solver.getAddress(), proofHash);
+      const tx = await hub.connect(outsider).settleIntent(
+        hash,
+        await solver.getAddress(),
+        destinationTxHash,
+        actualAmountOut
+      );
+      await tx.wait();
+    });
+
+    await assert.rejects(async () => {
+      const tx = await hub.settleIntent(
+        hash,
+        await solver.getAddress(),
+        destinationTxHash,
+        intent.minAmountOut - 1n
+      );
       await tx.wait();
     });
 
     const solverBefore = await tokenIn.balanceOf(await solver.getAddress());
-    await (await hub.settleIntent(hash, await solver.getAddress(), proofHash)).wait();
+    await (await hub.settleIntent(hash, await solver.getAddress(), destinationTxHash, actualAmountOut)).wait();
     assert.equal(await tokenIn.balanceOf(await solver.getAddress()), solverBefore + intent.sourceAmount);
-    assert.equal((await hub.getIntent(hash)).status, 2n);
+    const record = await hub.getIntent(hash);
+    assert.equal(record.status, 2n);
+    assert.equal(record.actualAmountOut, actualAmountOut);
+    assert.equal(record.destinationTxHash, destinationTxHash);
+    assert.equal(record.executionHash, ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(
+      ["bytes32", "address", "uint256", "address", "address", "uint256", "bytes32"],
+      [
+        hash,
+        await solver.getAddress(),
+        intent.destinationChainId,
+        intent.destinationToken,
+        intent.recipient,
+        actualAmountOut,
+        destinationTxHash
+      ]
+    )));
 
     await assert.rejects(async () => {
-      const tx = await hub.settleIntent(hash, await solver.getAddress(), proofHash);
+      const tx = await hub.settleIntent(hash, await solver.getAddress(), destinationTxHash, actualAmountOut);
       await tx.wait();
     });
   });
@@ -196,7 +235,12 @@ describe("LQC Intent v1 core", function () {
     const intent = await makeIntent();
     const hash = await hub.hashIntent(intent);
     await (await hub.submitIntent(intent, await signIntent(intent))).wait();
-    await (await hub.setPaused(true)).wait();
+    await (await hub.connect(outsider).setPaused(true)).wait();
+
+    await assert.rejects(async () => {
+      const tx = await hub.connect(outsider).setPaused(false);
+      await tx.wait();
+    });
 
     const second = await makeIntent({ nonce: 2n, salt: ethers.id("paused") });
     await assert.rejects(async () => {
@@ -205,5 +249,31 @@ describe("LQC Intent v1 core", function () {
     });
     await (await hub.connect(user).cancelIntent(hash)).wait();
     assert.equal((await hub.getIntent(hash)).status, 3n);
+    await (await hub.setPaused(false)).wait();
+    assert.equal(await hub.paused(), false);
+  });
+
+  it("uses two-step transfers for owner and the high-risk settler role", async () => {
+    const nextOwnerAddress = await newOwner.getAddress();
+    await (await hub.transferOwnership(nextOwnerAddress)).wait();
+    assert.equal(await hub.owner(), await owner.getAddress());
+    assert.equal(await hub.pendingOwner(), nextOwnerAddress);
+    await assert.rejects(async () => {
+      const tx = await hub.connect(outsider).acceptOwnership();
+      await tx.wait();
+    });
+    await (await hub.connect(newOwner).acceptOwnership()).wait();
+    assert.equal(await hub.owner(), nextOwnerAddress);
+
+    const nextSettlerAddress = await newSettler.getAddress();
+    await (await hub.connect(newOwner).setSettler(nextSettlerAddress)).wait();
+    assert.equal(await hub.settler(), await owner.getAddress());
+    assert.equal(await hub.pendingSettler(), nextSettlerAddress);
+    await assert.rejects(async () => {
+      const tx = await hub.connect(outsider).acceptSettler();
+      await tx.wait();
+    });
+    await (await hub.connect(newSettler).acceptSettler()).wait();
+    assert.equal(await hub.settler(), nextSettlerAddress);
   });
 });
