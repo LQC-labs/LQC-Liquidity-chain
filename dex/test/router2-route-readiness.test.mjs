@@ -4,6 +4,8 @@ import { ethers } from "ethers";
 import { buildRouter2RouteReadiness } from "../scripts/build-router2-route-readiness.mjs";
 
 const pool = JSON.parse(fs.readFileSync(new URL("../deployments/pancake-v3-pool-bsc-testnet-97.json", import.meta.url)));
+const quoteStack = JSON.parse(fs.readFileSync(new URL("../deployments/router2-quote-stack-config-bsc-testnet-97.json", import.meta.url)));
+const executionStack = JSON.parse(fs.readFileSync(new URL("../deployments/router2-execution-stack-stage3-bsc-testnet-97.json", import.meta.url)));
 
 describe("Router 2.0 live-route readiness", function () {
   it("marks the completed PancakeSwap V3 pilot ready without overstating Router deployment", function () {
@@ -36,5 +38,16 @@ describe("Router 2.0 live-route readiness", function () {
 
   it("rejects a wrong-network or malformed pool record", function () {
     assert.throws(() => buildRouter2RouteReadiness({ network: { chainId: 56 }, contracts: {} }), /chain-97/);
+  });
+
+  it("recognizes the staged execution-capable V3 adapter without overstating route comparison", function () {
+    const report = buildRouter2RouteReadiness(pool, quoteStack, executionStack);
+    assert.equal(report.router2.status, "ready-for-single-route-execution-smoke");
+    assert.equal(report.router2.executionPhase.status, "deployed");
+    assert.equal(report.router2.v3Registered, true);
+    assert.equal(report.router2.comparableRoutes, 1);
+    assert.deepEqual(report.router2.blockers, []);
+    assert.equal(report.router2.limitations.length, 1);
+    assert.match(report.nextSafeStep, /single-route smoke swap/);
   });
 });

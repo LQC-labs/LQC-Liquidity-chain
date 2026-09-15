@@ -4,7 +4,7 @@
     "name": "BSC Testnet",
     "chainId": 97
   },
-  "generatedAt": "2026-09-14T13:47:48.679Z",
+  "generatedAt": "2026-09-15T01:03:46.232Z",
   "pancakeV3Pilot": {
     "status": "ready",
     "pool": "0x4bfbf746a675153e050f5fbc90eaa18d07014c95",
@@ -19,26 +19,21 @@
     }
   },
   "router2": {
-    "status": "deployment-required",
-    "comparableRoutes": 0,
-    "missingContracts": [
-      "dexRegistry",
-      "quoteRouter",
-      "pancakeV3Adapter"
-    ],
-    "v3Registered": false,
-    "blockers": [
-      "Router 2.0 testnet contracts missing: dexRegistry, quoteRouter, pancakeV3Adapter",
-      "Verified V3 pool is not yet registered through the V3 adapter",
-      "At least two deployed routes are required for real best-route comparison"
+    "status": "ready-for-single-route-execution-smoke",
+    "comparableRoutes": 1,
+    "missingContracts": [],
+    "v3Registered": true,
+    "blockers": [],
+    "limitations": [
+      "A second independent DEX route is required for real best-route comparison"
     ],
     "executionPhase": {
-      "status": "separate-deployment-required",
+      "status": "deployed",
       "requiredContracts": [
         "riskRegistry",
         "executionRouter"
       ]
     }
   },
-  "nextSafeStep": "Deploy and verify the Router 2.0 core plus Pancake V3 adapter before any routed wallet transaction."
+  "nextSafeStep": "Run a read-only execution preflight, then one capped single-route smoke swap. Do not claim best-route comparison until a second DEX route exists."
 }
