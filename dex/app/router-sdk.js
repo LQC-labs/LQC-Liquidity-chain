@@ -26,6 +26,42 @@
     if(expectedOut===0n||amountOut>=expectedOut)return 0;
     return Number((expectedOut-amountOut)*10000n/expectedOut);
   }
+  function constantProductHopEvidence(amountIn,reserveIn,reserveOut,feeBps=30){
+    for(const value of[amountIn,reserveIn,reserveOut])if(typeof value!=='bigint'||value<=0n)throw new Error('Invalid V2 reserve state');
+    feeBps=Number(feeBps);if(!Number.isInteger(feeBps)||feeBps<0||feeBps>=10000)throw new Error('Invalid V2 fee');
+    const feeMultiplier=BigInt(10000-feeBps),amountInWithFee=amountIn*feeMultiplier,denominator=reserveIn*10000n+amountInWithFee,amountOut=amountInWithFee*reserveOut/denominator,spotAmountOutAfterFee=amountInWithFee*reserveOut/(reserveIn*10000n);
+    if(amountOut<=0n||amountOut>=reserveOut||spotAmountOutAfterFee<=0n)throw new Error('Insufficient V2 liquidity');
+    return Object.freeze({amountIn:amountIn.toString(),amountOut:amountOut.toString(),spotAmountOutAfterFee:spotAmountOutAfterFee.toString(),feeBps,priceImpactBps:priceImpactFromExpected(amountOut,spotAmountOutAfterFee),reserveInBefore:reserveIn.toString(),reserveOutBefore:reserveOut.toString(),reserveInAfter:(reserveIn+amountIn).toString(),reserveOutAfter:(reserveOut-amountOut).toString()});
+  }
+  function v2RoutePriceImpactEvidence(input){
+    const{amountIn,hops=[],quotedAmountOut,blockNumber}=input||{};
+    if(typeof amountIn!=='bigint'||amountIn<=0n||!Array.isArray(hops)||hops.length<1||hops.length>3||!Number.isSafeInteger(Number(blockNumber))||Number(blockNumber)<0)throw new Error('Invalid V2 route evidence');
+    let running=amountIn,spot=amountIn;const legs=hops.map((hop,index)=>{
+      const evidence=constantProductHopEvidence(running,BigInt(hop.reserveIn),BigInt(hop.reserveOut),hop.feeBps);const spotEvidence=constantProductHopEvidence(spot,BigInt(hop.reserveIn),BigInt(hop.reserveOut),hop.feeBps);running=BigInt(evidence.amountOut);spot=BigInt(spotEvidence.spotAmountOutAfterFee);
+      return Object.freeze({index,pair:String(hop.pair||'').toLowerCase(),tokenIn:String(hop.tokenIn||'').toLowerCase(),tokenOut:String(hop.tokenOut||'').toLowerCase(),...evidence});
+    });
+    const quoted=quotedAmountOut===undefined?running:BigInt(quotedAmountOut);if(quoted!==running)throw new Error('V2 quote and reserve state mismatch');
+    return Object.freeze({method:'v2-reserve-constant-product',blockNumber:Number(blockNumber),amountIn:amountIn.toString(),amountOut:running.toString(),spotAmountOutAfterFee:spot.toString(),priceImpactBps:priceImpactFromExpected(running,spot),legs:Object.freeze(legs)});
+  }
+  async function readV2RouteReserves(input){
+    const{provider,routerAddress,path,feeBps=30,ethers}=input||{};
+    if(!provider||!ethers||!ethers.isAddress(routerAddress)||!Array.isArray(path)||path.length<2||path.length>4||path.some(token=>!ethers.isAddress(token)))throw new Error('Invalid V2 reserve request');
+    const router=new ethers.Contract(routerAddress,['function factory() view returns(address)'],provider),factoryAddress=await router.factory();if(!ethers.isAddress(factoryAddress)||factoryAddress===ethers.ZeroAddress)throw new Error('Invalid V2 factory');
+    const factory=new ethers.Contract(factoryAddress,['function getPair(address,address) view returns(address)'],provider),blockNumber=await provider.getBlockNumber(),hops=[];
+    for(let i=0;i<path.length-1;i++){
+      const tokenIn=path[i],tokenOut=path[i+1],pairAddress=await factory.getPair(tokenIn,tokenOut);if(!ethers.isAddress(pairAddress)||pairAddress===ethers.ZeroAddress)throw new Error('V2 pair unavailable');
+      const pair=new ethers.Contract(pairAddress,['function token0() view returns(address)','function getReserves() view returns(uint112,uint112,uint32)'],provider),[token0,reserves]=await Promise.all([pair.token0(),pair.getReserves()]),forward=token0.toLowerCase()===tokenIn.toLowerCase(),reserveIn=BigInt(forward?reserves[0]:reserves[1]),reserveOut=BigInt(forward?reserves[1]:reserves[0]);
+      hops.push(Object.freeze({pair:pairAddress,tokenIn,tokenOut,reserveIn,reserveOut,feeBps}));
+    }
+    return Object.freeze({blockNumber:Number(blockNumber),factory:factoryAddress,hops:Object.freeze(hops)});
+  }
+  async function readV2AdapterRouteReserves(input){
+    const{provider,adapterAddress,path,feeBps=30,ethers}=input||{};if(!ethers||!ethers.isAddress(adapterAddress))throw new Error('Invalid V2 adapter');
+    const adapter=new ethers.Contract(adapterAddress,['function flowRouter() view returns(address)','function pancakeRouter() view returns(address)'],provider);let routerAddress;
+    for(const getter of['flowRouter','pancakeRouter']){try{const candidate=await adapter[getter]();if(ethers.isAddress(candidate)&&candidate!==ethers.ZeroAddress){routerAddress=candidate;break}}catch{}}
+    if(!routerAddress)throw new Error('V2 adapter router unavailable');
+    return readV2RouteReserves({provider,routerAddress,path,feeBps,ethers});
+  }
   function estimatedGasWei(dex,gasPriceWei,nativeSwap=false){
     const gasUnits=BigInt(dex?.gasUnits||(nativeSwap?260000:220000));
     if(typeof gasPriceWei!=='bigint'||gasPriceWei<0n)throw new Error('Invalid gas price');
@@ -333,5 +369,5 @@
     if(nativeBalance<requiredNative)throw new Error('insufficient funds: native balance and gas');
     return{sufficient:true,gasCost,requiredNative};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,gasEstimateEvidence,estimateExecutionGas,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,validateExecutionPlanProof,buildExecutionIntent,verifyExecutionIntent,buildIntentBoundSettlementReceipt,verifyIntentBoundSettlementReceipt,buildQuoteApiRequest,validateQuoteApiResponse,recoveryActionForError,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,constantProductHopEvidence,v2RoutePriceImpactEvidence,readV2RouteReserves,readV2AdapterRouteReserves,estimatedGasWei,gasEstimateEvidence,estimateExecutionGas,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,validateExecutionPlanProof,buildExecutionIntent,verifyExecutionIntent,buildIntentBoundSettlementReceipt,verifyIntentBoundSettlementReceipt,buildQuoteApiRequest,validateQuoteApiResponse,recoveryActionForError,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
