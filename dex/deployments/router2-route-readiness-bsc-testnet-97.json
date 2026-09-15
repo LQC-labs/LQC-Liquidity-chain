@@ -79,5 +79,5 @@
       "proofVerifiedOnChain": false
     }
   },
-  "nextSafeStep": "Design and test contract-level proof and intent enforcement offline before any additional automatic-route execution or testnet deployment."
+  "nextSafeStep": "Run isolated Ganache EVM attack-path tests for the compiled proof-bound execution gateway before any testnet deployment."
 }
