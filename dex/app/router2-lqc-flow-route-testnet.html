@@ -1,0 +1,13 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Router 2.0 두 번째 경로 연결</title><style>
+:root{font-family:system-ui,sans-serif;color:#122126;background:#f3fbf9}body{margin:0;padding:24px 14px}.card{max-width:720px;margin:auto;background:#fff;border:1px solid #d9ece7;border-radius:22px;padding:22px;box-shadow:0 10px 30px #193c3420}h1{font-size:25px}.badge{display:inline-block;background:#dff8f1;color:#087b69;border-radius:999px;padding:6px 10px;font-weight:700}.warning{background:#fff4dc;border-radius:14px;padding:14px;margin:18px 0}.row{padding:10px 0;border-bottom:1px solid #e5efed}.row b{display:block}code{display:block;overflow-wrap:anywhere;margin-top:4px;color:#34484d}button{width:100%;border:0;border-radius:14px;padding:16px;margin-top:14px;font-size:18px;font-weight:800;background:#0b8f7d;color:#fff}button:disabled{background:#a5bbb6}.secondary{background:#152825}.state{font-weight:700;color:#607277}.ok{color:#08724f}#status{padding:14px;border-radius:14px;background:#edf5f3;margin-top:16px;white-space:pre-line}#status[data-type=error]{background:#ffe9ed;color:#ad2140}#status[data-type=ok]{background:#dff8ed;color:#08724f}.small{font-size:13px;color:#607277}
+</style></head><body><main class="card"><span class="badge">TESTNET · CHAIN 97</span><h1>LQC Flow 두 번째 경로 연결 1→4</h1>
+<div class="warning"><b>안전 범위:</b> 기존 LQC Flow Router를 Router 2.0 견적 경로로 추가합니다. Pancake V3·유동성·토큰·Risk Registry는 변경하지 않으며 스왑도 실행하지 않습니다. 1·2번은 0 tBNB 거래라 가스비만 발생하고 3·4번은 읽기 전용입니다.</div>
+<div class="row"><b>Signer 1</b><code id="signer"></code></div><div class="row"><b>LQC Flow Router</b><code id="flowRouter"></code></div><div class="row"><b>DEX Registry</b><code id="registry"></code></div><div class="row"><b>신규 Adapter</b><code id="adapter">아직 배포되지 않음</code></div>
+<button id="connect" class="secondary">준비. Signer 1 연결·현재 상태 확인</button><p class="small">연결 지갑: <span id="wallet">미연결</span></p>
+<button id="deploy" disabled>1. LQC Flow Adapter 배포</button><p id="deployState" class="state">대기</p>
+<button id="register" disabled>2. Registry에 LQC Flow 등록</button><p id="registerState" class="state">대기</p>
+<button id="verify" disabled>3. 연결 상태 읽기 전용 검증</button><p id="verifyState" class="state">대기</p>
+<button id="compare" disabled>4. Pancake V3와 견적 비교</button><p id="compareState" class="state">대기</p>
+<div id="status">먼저 준비 버튼을 한 번 누르세요.</div><p><b>최근 거래 해시</b><code id="tx">—</code></p>
+<script src="./router2-lqc-flow-route-testnet.js?v=1"></script></main></body></html>
