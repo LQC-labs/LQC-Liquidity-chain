@@ -73,9 +73,10 @@
 - Gate 1.5 진행: LQC Flow·V2의 factory/pair reserve 기반 constant-product Price Impact, multi-hop·split leg 검산 구현.
 - Gate 1.5 진행: PancakeSwap V3의 `sqrtPriceX96`, 활성 liquidity, 초기화 tick의 `liquidityNet`을 반영한 구간별 Price Impact와 multi-hop 검산 구현.
 - Gate 1.5 진행: Route Price Impact와 Oracle 기준 Market Deviation을 별도 evidence로 분리.
-- Gate 1.5 진행: 단일 블록에 고정된 V3 pool `slot0`·활성 liquidity·tick bitmap·`liquidityNet` 상태 수집기 구현. bitmap word와 초기화 tick 수를 제한하여 fail-closed 처리.
-- Gate 1.5 다음 작업: 신뢰 가능한 Oracle 기준가격 adapter 연결과 V3 live-state 결과의 Router quote 결합.
-- Gate 2 이후: Gate 1.5 완료 후 Router 2.0 Internal Solver 연결.
+- Gate 1.5 완료: 단일 블록에 고정된 V3 pool `slot0`·활성 liquidity·tick bitmap·`liquidityNet` 상태 수집기 구현. bitmap word와 초기화 tick 수를 제한하여 fail-closed 처리.
+- Gate 1.5 완료: 기존 이중 Feed 정책의 신선도·편차·활성 상태를 독립 재검증하는 Oracle adapter와 token decimals 기반 Market Deviation evidence 구현.
+- Gate 1.5 완료: 설정된 V3 직접 경로의 live-state 결과를 Router quote에 결합하고, 미설정 상태는 `probe-fallback`으로 명시. Route Price Impact와 Oracle Market Deviation을 별도 snapshot evidence로 보존.
+- Gate 2 다음 작업: 기존 Router 2.0을 권한 제한된 첫 Internal Solver로 연결하고 Same-chain Intent 원자적 실행·Receipt 검증 구현.
 
 ## 의도적으로 후순위인 기능
 

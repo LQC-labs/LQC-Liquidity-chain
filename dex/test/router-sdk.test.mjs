@@ -125,6 +125,34 @@ describe("LQC Router browser SDK", function () {
     assert.ok(calls.every(item=>item.blockTag===789));
   });
 
+  it("validates fresh dual feeds and converts an oracle pair across token decimals",function(){
+    const price=sdk.dualFeedPriceEvidence({primaryAnswer:600_00000000n,primaryDecimals:8,primaryUpdatedAt:990,secondaryAnswer:606_00000000n,secondaryDecimals:8,secondaryUpdatedAt:989,observedAt:1000,maxAge:60,maxDeviationBps:200,oracleId:"bnb-usd",blockNumber:800});
+    assert.equal(price.price,"600000000000000000000");
+    assert.equal(price.deviationBps,100);
+    assert.equal(sdk.oracleExpectedAmountOut({amountIn:10n**18n,tokenInDecimals:18,tokenOutDecimals:6,tokenInPrice:BigInt(price.price),tokenOutPrice:10n**18n}),600_000000n);
+    assert.throws(()=>sdk.dualFeedPriceEvidence({primaryAnswer:600n,primaryDecimals:0,primaryUpdatedAt:900,secondaryAnswer:606n,secondaryDecimals:0,secondaryUpdatedAt:999,observedAt:1000,maxAge:60,maxDeviationBps:200,oracleId:"stale",blockNumber:800}),/Stale/);
+    assert.throws(()=>sdk.dualFeedPriceEvidence({primaryAnswer:600n,primaryDecimals:0,primaryUpdatedAt:999,secondaryAnswer:900n,secondaryDecimals:0,secondaryUpdatedAt:999,observedAt:1000,maxAge:60,maxDeviationBps:200,oracleId:"divergent",blockNumber:800}),/deviation/);
+  });
+
+  it("builds block-pinned pair market evidence only from enabled validated feeds",async function(){
+    const addr=n=>`0x${n.toString(16).padStart(40,"0")}`,oracleAddress=addr(20),primaryIn=addr(21),secondaryIn=addr(22),primaryOut=addr(23),secondaryOut=addr(24),configs=new Map([
+      [tokenA.toLowerCase(),[primaryIn,secondaryIn,60n,200n,18n,true]],
+      [tokenB.toLowerCase(),[primaryOut,secondaryOut,60n,200n,6n,true]]
+    ]),feeds=new Map([[primaryIn,[8n,600_00000000n]],[secondaryIn,[8n,606_00000000n]],[primaryOut,[8n,1_00000000n]],[secondaryOut,[8n,1_00500000n]]]);
+    class MockContract{
+      constructor(address){this.address=address.toLowerCase()}
+      feedConfigs(token){return configs.get(token.toLowerCase())}
+      decimals(){return feeds.get(this.address)[0]}
+      latestRoundData(){return[1n,feeds.get(this.address)[1],0n,990n,1n]}
+    }
+    const evidence=await sdk.readOraclePairMarketEvidence({provider:{getBlockNumber:async()=>800,getBlock:async()=>({timestamp:1000})},oracleAddress,tokenIn:tokenA,tokenOut:tokenB,amountIn:10n**18n,actualAmountOut:594_000000n,ethers:{...ethers,Contract:MockContract}});
+    assert.equal(evidence.oracleExpectedOut,"600000000");
+    assert.equal(evidence.deviationBps,100);
+    assert.equal(evidence.direction,"worse-than-market");
+    configs.set(tokenB.toLowerCase(),[primaryOut,secondaryOut,60n,200n,6n,false]);
+    await assert.rejects(()=>sdk.readOraclePairMarketEvidence({provider:{getBlockNumber:async()=>800,getBlock:async()=>({timestamp:1000})},oracleAddress,tokenIn:tokenA,tokenOut:tokenB,amountIn:10n**18n,actualAmountOut:594_000000n,ethers:{...ethers,Contract:MockContract}}),/disabled/);
+  });
+
   it("records conservative multi-RPC gas evidence for the actual execution transaction", async function () {
     const target=tokenB,sender=tokenA,data="0x12345678",seen=[];
     const provider=(gasUnits)=>({estimateGas:async tx=>{seen.push(tx);return gasUnits;}});
