@@ -4,7 +4,7 @@
     "name": "BSC Testnet",
     "chainId": 97
   },
-  "generatedAt": "2026-09-15T02:26:12.172Z",
+  "generatedAt": "2026-09-15T02:54:00.478Z",
   "pancakeV3Pilot": {
     "status": "ready",
     "pool": "0x4bfbf746a675153e050f5fbc90eaa18d07014c95",
@@ -19,13 +19,13 @@
     }
   },
   "router2": {
-    "status": "single-route-execution-smoke-success",
-    "comparableRoutes": 1,
+    "status": "two-route-quote-comparison-success",
+    "comparableRoutes": 2,
     "missingContracts": [],
     "v3Registered": true,
     "blockers": [],
     "limitations": [
-      "A second independent DEX route is required for real best-route comparison"
+      "LQC Flow execution caps still require Governance Safe approval before routed execution"
     ],
     "executionPhase": {
       "status": "deployed",
@@ -40,7 +40,19 @@
       "transactionHash": "0x4e969b9cb637bd76bc4c6106dca333d0cfb7e0cb7d2e7a400b60756ca2ca5a5f",
       "amountIn": "10000000000000000000",
       "duplicateExecutionProhibited": true
+    },
+    "quoteComparison": {
+      "status": "success",
+      "amountIn": "10000000000000000000",
+      "lqcFlowAdapter": "0x14db750acf95b469aba3e74032e6db61087ef4cd",
+      "quotes": {
+        "lqcFlow": "532721073104236",
+        "pancakeV3": "9954593766288",
+        "tokenOut": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd"
+      },
+      "preferredQuote": "LQC_FLOW",
+      "transactionOccurred": false
     }
   },
-  "nextSafeStep": "Preserve the successful single-route evidence and add a second independent DEX route before claiming best-route comparison."
+  "nextSafeStep": "Prepare Governance Safe approval for LQC Flow DEX token caps, then run a read-only two-route execution preflight before any additional swap."
 }
