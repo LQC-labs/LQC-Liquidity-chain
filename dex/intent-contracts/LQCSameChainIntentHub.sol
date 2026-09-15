@@ -3,7 +3,49 @@ pragma solidity ^0.8.24;
 
 import {SafeTransferLib} from "../contracts/libraries/SafeTransferLib.sol";
 
+library LQCIntentQuoteTypes {
+    struct QuoteRequest {
+        uint256 chainId;
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+        address recipient;
+        uint16 slippageBps;
+        uint64 validUntil;
+    }
+
+    struct QuoteResult {
+        bytes32 dexId;
+        address adapter;
+        uint256 quoteBlock;
+        uint256 grossAmountOut;
+        uint256 gasCostInTokenOut;
+        uint256 protocolFeeInTokenOut;
+        uint256 netAmountOut;
+        uint256 minimumAmountOut;
+        uint32 priority;
+        bytes32 routeHash;
+    }
+}
+
+interface ILQCIntentProofVerifier {
+    function verifyBestCandidate(
+        LQCIntentQuoteTypes.QuoteRequest calldata request,
+        LQCIntentQuoteTypes.QuoteResult[] calldata candidates,
+        bytes[] calldata routeData,
+        uint256 selectedIndex
+    ) external view returns (bool);
+
+    function bestCandidateProofHash(
+        LQCIntentQuoteTypes.QuoteRequest calldata request,
+        LQCIntentQuoteTypes.QuoteResult[] calldata candidates,
+        uint256 selectedIndex
+    ) external pure returns (bytes32);
+}
+
 interface ILQCIntentExecutionRouter {
+    function registry() external view returns (address);
+
     function swapExactInput(
         bytes32 dexId,
         address tokenIn,
@@ -16,12 +58,16 @@ interface ILQCIntentExecutionRouter {
     ) external returns (uint256 amountOut);
 }
 
+interface ILQCIntentDexRegistry {
+    function getDex(bytes32 dexId) external view returns (address adapter, bool enabled, uint32 priority);
+}
+
 interface IERC20IntentBalance {
     function balanceOf(address account) external view returns (uint256);
 }
 
 /// @notice Gate 2 same-chain intent escrow using Router 2.0 as the first internal solver path.
-/// @dev Deployed separately: it does not modify the existing Router 2.0 bytecode or configuration.
+/// @dev Deployed separately: it does not modify existing Router 2.0 bytecode or configuration.
 contract LQCSameChainIntentHub {
     using SafeTransferLib for address;
 
@@ -44,12 +90,14 @@ contract LQCSameChainIntentHub {
     }
 
     address public immutable executionRouter;
+    address public immutable proofVerifier;
     address public admin;
     uint256 public nextNonce;
     uint256 private unlocked = 1;
 
     mapping(address => bool) public authorizedSolver;
     mapping(bytes32 => Intent) public intents;
+    mapping(bytes32 => bool) public consumedProof;
 
     error ZeroAddress();
     error InvalidTokens();
@@ -58,6 +106,10 @@ contract LQCSameChainIntentHub {
     error Unauthorized();
     error InvalidStatus();
     error NotExpired();
+    error IntentMismatch();
+    error InvalidProof();
+    error ProofAlreadyConsumed();
+    error RegistryAdapterChanged();
     error ResidualToken();
     error Reentrancy();
 
@@ -74,8 +126,9 @@ contract LQCSameChainIntentHub {
     );
     event IntentExecuted(
         bytes32 indexed intentId,
+        bytes32 indexed proofHash,
         address indexed solver,
-        bytes32 indexed dexId,
+        bytes32 dexId,
         uint256 amountIn,
         uint256 amountOut
     );
@@ -88,9 +141,12 @@ contract LQCSameChainIntentHub {
         unlocked = 1;
     }
 
-    constructor(address executionRouter_, address admin_) {
-        if (executionRouter_ == address(0) || admin_ == address(0)) revert ZeroAddress();
+    constructor(address executionRouter_, address proofVerifier_, address admin_) {
+        if (executionRouter_ == address(0) || proofVerifier_ == address(0) || admin_ == address(0)) {
+            revert ZeroAddress();
+        }
         executionRouter = executionRouter_;
+        proofVerifier = proofVerifier_;
         admin = admin_;
     }
 
@@ -147,35 +203,61 @@ contract LQCSameChainIntentHub {
         );
     }
 
-    function executeIntent(bytes32 intentId, bytes32 dexId, bytes calldata routeData)
-        external
-        nonReentrant
-        returns (uint256 amountOut)
-    {
+    function executeProvenIntent(
+        bytes32 intentId,
+        LQCIntentQuoteTypes.QuoteRequest calldata request,
+        LQCIntentQuoteTypes.QuoteResult[] calldata candidates,
+        bytes[] calldata routeData,
+        uint256 selectedIndex
+    ) external nonReentrant returns (bytes32 proofHash, uint256 amountOut) {
         if (!authorizedSolver[msg.sender]) revert Unauthorized();
         Intent storage intent = intents[intentId];
         if (intent.status != Status.Locked) revert InvalidStatus();
         if (block.timestamp > intent.deadline) revert InvalidDeadline();
+        if (
+            request.chainId != block.chainid || request.tokenIn != intent.tokenIn
+                || request.tokenOut != intent.tokenOut || request.amountIn != intent.amountIn
+                || request.recipient != intent.recipient || request.validUntil > intent.deadline
+                || selectedIndex >= candidates.length
+        ) revert IntentMismatch();
+
+        LQCIntentQuoteTypes.QuoteResult calldata selected = candidates[selectedIndex];
+        if (selected.minimumAmountOut < intent.minimumAmountOut) revert IntentMismatch();
+        if (!ILQCIntentProofVerifier(proofVerifier).verifyBestCandidate(
+            request, candidates, routeData, selectedIndex
+        )) revert InvalidProof();
+
+        proofHash = ILQCIntentProofVerifier(proofVerifier).bestCandidateProofHash(
+            request, candidates, selectedIndex
+        );
+        if (proofHash == bytes32(0)) revert InvalidProof();
+        if (consumedProof[proofHash]) revert ProofAlreadyConsumed();
+
+        address registryAddress = ILQCIntentExecutionRouter(executionRouter).registry();
+        (address currentAdapter, bool enabled,) =
+            ILQCIntentDexRegistry(registryAddress).getDex(selected.dexId);
+        if (!enabled || currentAdapter != selected.adapter) revert RegistryAdapterChanged();
 
         intent.status = Status.Executed;
+        consumedProof[proofHash] = true;
         uint256 beforeBalance = IERC20IntentBalance(intent.tokenIn).balanceOf(address(this));
         intent.tokenIn.forceApprove(executionRouter, intent.amountIn);
         amountOut = ILQCIntentExecutionRouter(executionRouter).swapExactInput(
-            dexId,
+            selected.dexId,
             intent.tokenIn,
             intent.tokenOut,
             intent.amountIn,
-            intent.minimumAmountOut,
+            selected.minimumAmountOut,
             intent.recipient,
-            intent.deadline,
-            routeData
+            request.validUntil,
+            routeData[selectedIndex]
         );
         intent.tokenIn.forceApprove(executionRouter, 0);
         if (IERC20IntentBalance(intent.tokenIn).balanceOf(address(this)) + intent.amountIn != beforeBalance) {
             revert ResidualToken();
         }
 
-        emit IntentExecuted(intentId, msg.sender, dexId, intent.amountIn, amountOut);
+        emit IntentExecuted(intentId, proofHash, msg.sender, selected.dexId, intent.amountIn, amountOut);
     }
 
     function cancelIntent(bytes32 intentId) external nonReentrant {
