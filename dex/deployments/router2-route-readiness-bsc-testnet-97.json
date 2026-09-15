@@ -4,7 +4,7 @@
     "name": "BSC Testnet",
     "chainId": 97
   },
-  "generatedAt": "2026-09-15T01:03:46.232Z",
+  "generatedAt": "2026-09-15T02:26:12.172Z",
   "pancakeV3Pilot": {
     "status": "ready",
     "pool": "0x4bfbf746a675153e050f5fbc90eaa18d07014c95",
@@ -19,7 +19,7 @@
     }
   },
   "router2": {
-    "status": "ready-for-single-route-execution-smoke",
+    "status": "single-route-execution-smoke-success",
     "comparableRoutes": 1,
     "missingContracts": [],
     "v3Registered": true,
@@ -33,7 +33,14 @@
         "riskRegistry",
         "executionRouter"
       ]
+    },
+    "executionSmoke": {
+      "status": "success",
+      "adapter": "0x823025d02c7619967b3e3880e3f6bc324a2c56d4",
+      "transactionHash": "0x4e969b9cb637bd76bc4c6106dca333d0cfb7e0cb7d2e7a400b60756ca2ca5a5f",
+      "amountIn": "10000000000000000000",
+      "duplicateExecutionProhibited": true
     }
   },
-  "nextSafeStep": "Run a read-only execution preflight, then one capped single-route smoke swap. Do not claim best-route comparison until a second DEX route exists."
+  "nextSafeStep": "Preserve the successful single-route evidence and add a second independent DEX route before claiming best-route comparison."
 }
