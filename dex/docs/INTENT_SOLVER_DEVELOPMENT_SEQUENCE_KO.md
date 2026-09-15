@@ -84,7 +84,9 @@
 - Gate 3 진행: 2개 이상 16개 이하 Solver 후보에서 검증된 순수령액 최대 Quote를 선택하고 동률은 Quote hash로 결정론적 처리. 위조·비활성·만료 후보는 격리하고 중복 Solver는 차단.
 - Gate 3 완료: `LQCIntentHub.executeSameChainIntent`가 허용된 Solver의 EIP-712 Quote를 `LQCQuoteManager`에서 다시 검증하고, 서명된 DEX·route hash·수령량·만료를 실제 실행 입력과 결합. Quote/DEX/route 치환 시 Escrow release 전에 revert.
 - Gate 3 완료: 선택 `quoteHash`와 `routeHash`를 Intent 상태에 저장하고 `SameChainIntentExecuted` 이벤트 및 v2 Same-chain Receipt에 포함. canonical verifier가 변경된 이벤트 ABI와 Quote hash를 독립 검증.
-- Gate 4 다음 작업: 임시 owner allowlist를 Bond·노출 한도·인출 지연을 갖는 `SolverRegistry`로 교체.
+- Gate 4 완료: 임시 owner allowlist를 `LQCSolverRegistry`로 교체. 최소 ERC-20 Bond, Solver별 누적 exposure limit, Intent별 exposure 추적, 7일 인출 지연, live exposure 중 인출 차단, guardian pause를 구현.
+- Gate 4 완료: QuoteManager는 Registry 적격성을 조회하고 Hub는 동일 Registry인지 확인한 뒤 실행 전 exposure를 열고 성공 후 닫음. 실패 시 전체 트랜잭션과 exposure가 함께 rollback.
+- Gate 4 다음 작업: challenge/slash 사유와 증거 형식을 정의하고 Bond haircut 및 인출 대기 중 slash를 구현.
 
 ## 의도적으로 후순위인 기능
 

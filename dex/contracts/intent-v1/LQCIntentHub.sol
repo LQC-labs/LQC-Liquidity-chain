@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 import {LQCIntentTypes} from "./LQCIntentTypes.sol";
 import {LQCSourceEscrow} from "./LQCSourceEscrow.sol";
 import {LQCQuoteManager} from "./LQCQuoteManager.sol";
+import {LQCSolverRegistry} from "./LQCSolverRegistry.sol";
 
 interface ILQCInternalSolverExecution {
     function intentHub() external view returns (address);
@@ -44,6 +45,7 @@ contract LQCIntentHub {
     address public internalSolver;
     address public pendingInternalSolver;
     LQCQuoteManager public quoteManager;
+    LQCSolverRegistry public solverRegistry;
     bool public paused;
     LQCSourceEscrow public immutable sourceEscrow;
     uint256 private unlocked = 1;
@@ -88,6 +90,7 @@ contract LQCIntentHub {
     event InternalSolverTransferStarted(address indexed currentSolver, address indexed pendingSolver);
     event InternalSolverUpdated(address indexed previousSolver, address indexed newSolver);
     event QuoteManagerUpdated(address indexed previousManager, address indexed newManager);
+    event SolverRegistryUpdated(address indexed previousRegistry, address indexed newRegistry);
     event SameChainIntentExecuted(
         bytes32 indexed intentHash,
         address indexed solver,
@@ -258,10 +261,13 @@ contract LQCIntentHub {
 
         bytes32 routeHash = keccak256(routeData);
         if (quote.solver == address(0) || quote.dexId == bytes32(0) || quote.routeHash != routeHash) revert InvalidIntent();
+        LQCSolverRegistry registry = solverRegistry;
+        if (address(registry) == address(0) || address(manager.solverRegistry()) != address(registry)) revert InvalidIntent();
         (bytes32 quoteHash, uint256 quotedNetAmountOut) =
             manager.verifyQuote(intentHash, record.minAmountOut, quote, quoteSignature);
         if (quotedNetAmountOut < record.minAmountOut || quote.deadline > record.deadline) revert InsufficientOutput();
 
+        registry.openExposure(intentHash, quote.solver, quote.amountOut);
         sourceEscrow.release(intentHash, solver);
         actualAmountOut = ILQCInternalSolverExecution(solver).executeExactInput(
             intentHash,
@@ -284,6 +290,7 @@ contract LQCIntentHub {
         record.executionHash = executionHash;
         record.quoteHash = quoteHash;
         record.routeHash = routeHash;
+        registry.closeExposure(intentHash);
         emit SameChainIntentExecuted(intentHash, quote.solver, quote.dexId, quoteHash, executionHash, actualAmountOut);
     }
 
@@ -293,6 +300,14 @@ contract LQCIntentHub {
         address previousManager = address(quoteManager);
         quoteManager = LQCQuoteManager(newManager);
         emit QuoteManagerUpdated(previousManager, newManager);
+    }
+
+    function setSolverRegistry(address newRegistry) external onlyOwner {
+        if (newRegistry == address(0)) revert ZeroAddress();
+        if (newRegistry.code.length == 0) revert InvalidIntent();
+        address previousRegistry = address(solverRegistry);
+        solverRegistry = LQCSolverRegistry(newRegistry);
+        emit SolverRegistryUpdated(previousRegistry, newRegistry);
     }
 
     function setInternalSolver(address newSolver) external onlyOwner {

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+import {LQCSolverRegistry} from "./LQCSolverRegistry.sol";
+
 /// @notice Gate-3 verifier and deterministic selector for short-lived Solver quotes.
 /// @dev The temporary owner allowlist is intentionally replaced by SolverRegistry in Gate 4.
 contract LQCQuoteManager {
@@ -40,10 +42,10 @@ contract LQCQuoteManager {
     address public owner;
     address public pendingOwner;
     address public guardian;
+    LQCSolverRegistry public solverRegistry;
     bool public paused;
-    mapping(address solver => bool allowed) public solverAllowed;
 
-    event SolverPermissionUpdated(address indexed solver, bool allowed);
+    event SolverRegistryUpdated(address indexed previousRegistry, address indexed newRegistry);
     event GuardianUpdated(address indexed previousGuardian, address indexed newGuardian);
     event PauseUpdated(bool paused);
     event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
@@ -118,10 +120,11 @@ contract LQCQuoteManager {
         netAmountOut = quote.amountOut - quote.solverFeeOut - quote.gasCostOut;
     }
 
-    function setSolverAllowed(address solver, bool allowed) external onlyOwner {
-        if (solver == address(0)) revert ZeroAddress();
-        solverAllowed[solver] = allowed;
-        emit SolverPermissionUpdated(solver, allowed);
+    function setSolverRegistry(address newRegistry) external onlyOwner {
+        if (newRegistry == address(0)) revert ZeroAddress();
+        if (newRegistry.code.length == 0) revert InvalidQuote();
+        emit SolverRegistryUpdated(address(solverRegistry), newRegistry);
+        solverRegistry = LQCSolverRegistry(newRegistry);
     }
 
     function setGuardian(address newGuardian) external onlyOwner {
@@ -157,11 +160,12 @@ contract LQCQuoteManager {
         view
         returns (bool valid, bytes32 quoteHash)
     {
-        if (!solverAllowed[quote.solver] || quote.intentHash != intentHash || quote.dexId == bytes32(0) || quote.routeHash == bytes32(0)) return (false, bytes32(0));
+        LQCSolverRegistry registry = solverRegistry;
+        if (address(registry) == address(0) || quote.intentHash != intentHash || quote.dexId == bytes32(0) || quote.routeHash == bytes32(0)) return (false, bytes32(0));
         if (quote.amountOut < minimumAmountOut || quote.solverFeeOut >= quote.amountOut || quote.gasCostOut >= quote.amountOut - quote.solverFeeOut) return (false, bytes32(0));
         if (quote.issuedAt > block.timestamp || quote.deadline < quote.issuedAt || block.timestamp > quote.deadline || quote.deadline - quote.issuedAt > MAX_QUOTE_LIFETIME) return (false, bytes32(0));
         quoteHash = hashQuote(quote);
-        valid = _recover(quoteHash, signature) == quote.solver;
+        valid = _recover(quoteHash, signature) == quote.solver && registry.isSolverEligible(quote.solver, quote.amountOut);
     }
 
     function _structHash(SolverQuote calldata quote) private pure returns (bytes32) {
