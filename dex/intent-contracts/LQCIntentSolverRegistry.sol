@@ -32,6 +32,7 @@ contract LQCIntentSolverRegistry {
     address public settlementController;
     address public pendingSettlementController;
     uint64 public controllerActivationTime;
+    bool public settlementControllerEnabled;
     uint16 public safetyReserveBps = 2_000;
     uint256 private unlocked = 1;
 
@@ -52,6 +53,7 @@ contract LQCIntentSolverRegistry {
     error InvalidRiskPenalty();
     error InvalidSafetyReserve();
     error ControllerNotReady();
+    error ControllerAlreadySet();
 
     event BondDeposited(address indexed solver, uint256 amount, uint256 totalBond);
     event SolverActivationScheduled(address indexed solver, uint256 activationTime);
@@ -179,7 +181,7 @@ contract LQCIntentSolverRegistry {
     }
 
     function reserveExposure(address solverAddress, uint256 amount) external {
-        if (msg.sender != settlementController) revert Unauthorized();
+        if (msg.sender != settlementController || !settlementControllerEnabled) revert Unauthorized();
         if (amount == 0) revert InvalidAmount();
         Solver storage solver = solvers[solverAddress];
         if (!solver.active || solver.pendingWithdrawal != 0 || amount > availableCapacity(solverAddress)) {
@@ -200,6 +202,7 @@ contract LQCIntentSolverRegistry {
     function scheduleSettlementController(address newController) external {
         if (msg.sender != admin) revert Unauthorized();
         if (newController == address(0)) revert ZeroAddress();
+        if (settlementController != address(0)) revert ControllerAlreadySet();
         pendingSettlementController = newController;
         controllerActivationTime = uint64(block.timestamp + CONTROLLER_ACTIVATION_DELAY);
         emit SettlementControllerScheduled(newController, controllerActivationTime);
@@ -211,6 +214,7 @@ contract LQCIntentSolverRegistry {
             revert ControllerNotReady();
         }
         settlementController = newController;
+        settlementControllerEnabled = true;
         pendingSettlementController = address(0);
         controllerActivationTime = 0;
         emit SettlementControllerActivated(newController);
@@ -219,7 +223,7 @@ contract LQCIntentSolverRegistry {
     function disableSettlementController() external {
         if (msg.sender != admin && msg.sender != guardian) revert Unauthorized();
         address oldController = settlementController;
-        settlementController = address(0);
+        settlementControllerEnabled = false;
         pendingSettlementController = address(0);
         controllerActivationTime = 0;
         emit SettlementControllerDisabled(oldController, msg.sender);
