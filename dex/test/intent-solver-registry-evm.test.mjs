@@ -145,7 +145,7 @@ describe("LQC limited external solver registry", function () {
     await provider.send("evm_increaseTime", [7 * 24 * 60 * 60]);
     await provider.send("evm_mine", []);
     const before = await bondToken.balanceOf(await solver.getAddress());
-    await (await registry.connect(solver).withdrawBond()).wait();
+    await (await registry.connect(solver).withdrawBond({ gasLimit: 500000n })).wait();
     assert.equal(await bondToken.balanceOf(await solver.getAddress()), before + withdrawal);
     assert.equal(
       (await registry.solvers(await solver.getAddress())).bond,
@@ -163,7 +163,7 @@ describe("LQC limited external solver registry", function () {
     });
 
     await (await registry.setGuardian(await outsider.getAddress())).wait();
-    await (await registry.connect(outsider).disableSolver(await solver.getAddress())).wait();
+    await (await registry.connect(outsider).disableSolver(await solver.getAddress(), { gasLimit: 500000n })).wait();
     assert.equal((await registry.solvers(await solver.getAddress())).active, false);
 
     await (await registry.proposeAdmin(await outsider.getAddress())).wait();
