@@ -80,7 +80,9 @@
 - Gate 2 완료(코드·로컬 EVM): Hub·Router 바인딩 검증과 2단계 Solver 역할 수락, source-token 잔액·allowance zero 검증 구현.
 - Gate 2 완료(검증기): 사전 `eth_estimateGas`와 채굴된 `gasUsed × effectiveGasPrice`, V3/V2 Price Impact, Oracle Market Deviation을 전용 Same-chain Intent Receipt에 결합. 정확한 Hub calldata·canonical block·`SameChainIntentExecuted` event를 독립 재검증.
 - Gate 2 테스트넷 활성화는 별도 배포 승인 이후 수행하며 기존 배포 주소는 현재 변경하지 않음.
-- Gate 3 다음 작업: `QuoteManager`, 만료시간이 짧은 EIP-712 Solver Quote와 2개 이상 mock Solver 경쟁 구현.
+- Gate 3 진행: `LQCQuoteManager`와 최대 120초 EIP-712 Solver Quote 구현. Intent·Solver·DEX·Route hash·수령량·Solver fee·Gas cost·발행시각·nonce를 서명에 결합.
+- Gate 3 진행: 2개 이상 16개 이하 Solver 후보에서 검증된 순수령액 최대 Quote를 선택하고 동률은 Quote hash로 결정론적 처리. 위조·비활성·만료 후보는 격리하고 중복 Solver는 차단.
+- Gate 3 다음 작업: 선택된 Quote hash를 `LQCIntentHub.executeSameChainIntent`와 실행 Receipt에 결합하여 견적 교체·route substitution을 차단.
 
 ## 의도적으로 후순위인 기능
 
