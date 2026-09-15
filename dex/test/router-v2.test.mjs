@@ -871,12 +871,14 @@ describe("LQC Router 2.0", function () {
       dexId, tokenIn, tokenOut, amountIn, expectedOut + 1n, await other.getAddress(),
       BigInt(block.timestamp + 3600), packedPath
     ));
+    const deadline = BigInt(block.timestamp + 3600);
     await (await executionRouter.swapExactInput(
       dexId, tokenIn, tokenOut, amountIn, expectedOut, await other.getAddress(),
-      BigInt(block.timestamp + 3600), packedPath
+      deadline, packedPath
     )).wait();
 
     assert.equal((await tokenB.balanceOf(await other.getAddress())) - before, expectedOut);
+    assert.equal(await swapRouter.lastDeadline(), deadline);
     assert.equal(await tokenA.balanceOf(await v3Adapter.getAddress()), 0n);
     assert.equal(await tokenA.allowance(await v3Adapter.getAddress(), await swapRouter.getAddress()), 0n);
 
