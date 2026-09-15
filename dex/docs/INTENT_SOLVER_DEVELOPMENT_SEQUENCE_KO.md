@@ -91,7 +91,9 @@
 - Gate 5 완료: 누구나 제출 가능한 `LQCExecutionVerifier` 구현. EIP-712 ExecutionReport에 Intent·Solver·Quote·서명/관측 route·예상/관측 execution hash·transaction/block/canonical receipt hash·최소/실제 수령량·예상/실제 Gas·Price Impact·Oracle Deviation을 결합.
 - Gate 5 완료: 정렬된 고유 attester 서명과 설정 가능한 quorum을 강제하고, `BELOW_MINIMUM`, `INVALID_ROUTE`, `FRAUDULENT_RECEIPT`, `QUALITY_BREACH`를 결정론적으로 분류. guardian pause와 owner 정책 변경을 분리.
 - Gate 5 완료: challenge가 verifier `reportHash`를 canonical proof로 보유하며, 검증된 Intent·Solver·fault reason이 모두 일치할 때 누구나 `resolveChallengeWithVerifier`로 Bond slash를 실행. 수동 resolver는 비상 경로로 유지.
-- Gate 5 다음 작업: BSC testnet RPC 다중 소스 attester 운영기와 report 생성·서명·제출 스크립트를 구현하고 reorg/finality 정책을 배포 설정으로 고정.
+- Gate 5 완료: `prepare-intent-execution-report.mjs`가 2개 이상 BSC testnet RPC에서 chain·성공 receipt·canonical block·Hub target·calldata·mined Gas·gas price·confirmation을 교차 검증하고 RPC 불일치/reorg/finality 부족 시 fail-closed.
+- Gate 5 완료: 교차 검증 결과로 canonical receipt hash와 bounded ExecutionReport를 생성하고, runtime에서만 받은 quorum attester key로 EIP-712 서명한 뒤 주소순 정렬하여 정확한 `submitReport` calldata JSON을 준비. RPC URL·private key는 결과에 기록하지 않으며 트랜잭션은 전송하지 않음.
+- Gate 5 다음 작업: Intent 전용 testnet 배포 manifest와 Governance Safe 실행 순서를 생성하고, 실제 배포 전 주소·role·quorum·threshold dry-run을 추가.
 
 ## 의도적으로 후순위인 기능
 
