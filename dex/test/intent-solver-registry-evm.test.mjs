@@ -122,8 +122,10 @@ describe("LQC limited external solver registry", function () {
     await deposit();
     await activate();
 
-    assert.equal(await registry.canExecute(await solver.getAddress(), minimumBond), true);
-    assert.equal(await registry.canExecute(await solver.getAddress(), minimumBond + 1n), false);
+    const available = (minimumBond * 80n) / 100n;
+    assert.equal(await registry.availableCapacity(await solver.getAddress()), available);
+    assert.equal(await registry.canExecute(await solver.getAddress(), available), true);
+    assert.equal(await registry.canExecute(await solver.getAddress(), available + 1n), false);
   });
 
   it("disables immediately on withdrawal request and enforces a seven-day delay", async () => {
