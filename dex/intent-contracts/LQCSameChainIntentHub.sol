@@ -80,6 +80,7 @@ contract LQCSameChainIntentHub {
     bytes32 public constant VERSION_HASH = keccak256("1");
     uint256 private constant SECP256K1_HALF_ORDER =
         0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
+    uint64 public constant SOLVER_ACTIVATION_DELAY = 1 days;
 
     enum Status {
         None,
@@ -113,10 +114,14 @@ contract LQCSameChainIntentHub {
     address public immutable executionRouter;
     address public immutable proofVerifier;
     address public admin;
+    address public pendingAdmin;
+    address public guardian;
+    bool public executionPaused;
     uint256 public nextNonce;
     uint256 private unlocked = 1;
 
     mapping(address => bool) public authorizedSolver;
+    mapping(address => uint64) public solverActivationTime;
     mapping(bytes32 => Intent) public intents;
     mapping(bytes32 => bool) public consumedProof;
     mapping(address => mapping(uint256 => bool)) public signedNonceUsed;
@@ -136,7 +141,11 @@ contract LQCSameChainIntentHub {
     error NonceAlreadyUsed();
     error ResidualToken();
     error Reentrancy();
+    error Paused();
+    error ActivationNotReady();
+    error SolverNotScheduled();
 
+    event SolverAuthorizationScheduled(address indexed solver, uint256 activationTime);
     event SolverAuthorizationSet(address indexed solver, bool allowed);
     event IntentLocked(
         bytes32 indexed intentId,
@@ -157,6 +166,16 @@ contract LQCSameChainIntentHub {
         uint256 amountOut
     );
     event IntentRefunded(bytes32 indexed intentId, address indexed owner, uint256 amountIn);
+    event ExecutionPaused(address indexed caller);
+    event ExecutionResumed(address indexed caller);
+    event GuardianSet(address indexed oldGuardian, address indexed newGuardian);
+    event AdminTransferProposed(address indexed currentAdmin, address indexed pendingAdmin);
+    event AdminTransferred(address indexed oldAdmin, address indexed newAdmin);
+
+    modifier whenExecutionActive() {
+        if (executionPaused) revert Paused();
+        _;
+    }
 
     modifier nonReentrant() {
         if (unlocked != 1) revert Reentrancy();
@@ -172,19 +191,67 @@ contract LQCSameChainIntentHub {
         executionRouter = executionRouter_;
         proofVerifier = proofVerifier_;
         admin = admin_;
+        guardian = admin_;
     }
 
-    function setSolver(address solver, bool allowed) external {
+    function scheduleSolver(address solver) external {
         if (msg.sender != admin) revert Unauthorized();
         if (solver == address(0)) revert ZeroAddress();
-        authorizedSolver[solver] = allowed;
-        emit SolverAuthorizationSet(solver, allowed);
+        uint64 activationTime = uint64(block.timestamp + SOLVER_ACTIVATION_DELAY);
+        solverActivationTime[solver] = activationTime;
+        emit SolverAuthorizationScheduled(solver, activationTime);
     }
 
-    function transferAdmin(address newAdmin) external {
+    function activateSolver(address solver) external {
+        uint64 activationTime = solverActivationTime[solver];
+        if (activationTime == 0) revert SolverNotScheduled();
+        if (block.timestamp < activationTime) revert ActivationNotReady();
+        delete solverActivationTime[solver];
+        authorizedSolver[solver] = true;
+        emit SolverAuthorizationSet(solver, true);
+    }
+
+    function revokeSolver(address solver) external {
+        if (msg.sender != admin && msg.sender != guardian) revert Unauthorized();
+        if (solver == address(0)) revert ZeroAddress();
+        delete solverActivationTime[solver];
+        authorizedSolver[solver] = false;
+        emit SolverAuthorizationSet(solver, false);
+    }
+
+    function pauseExecution() external {
+        if (msg.sender != admin && msg.sender != guardian) revert Unauthorized();
+        executionPaused = true;
+        emit ExecutionPaused(msg.sender);
+    }
+
+    function resumeExecution() external {
+        if (msg.sender != admin) revert Unauthorized();
+        executionPaused = false;
+        emit ExecutionResumed(msg.sender);
+    }
+
+    function setGuardian(address newGuardian) external {
+        if (msg.sender != admin) revert Unauthorized();
+        if (newGuardian == address(0)) revert ZeroAddress();
+        address oldGuardian = guardian;
+        guardian = newGuardian;
+        emit GuardianSet(oldGuardian, newGuardian);
+    }
+
+    function proposeAdmin(address newAdmin) external {
         if (msg.sender != admin) revert Unauthorized();
         if (newAdmin == address(0)) revert ZeroAddress();
-        admin = newAdmin;
+        pendingAdmin = newAdmin;
+        emit AdminTransferProposed(admin, newAdmin);
+    }
+
+    function acceptAdmin() external {
+        if (msg.sender != pendingAdmin) revert Unauthorized();
+        address oldAdmin = admin;
+        admin = msg.sender;
+        pendingAdmin = address(0);
+        emit AdminTransferred(oldAdmin, msg.sender);
     }
 
     function domainSeparator() public view returns (bytes32) {
@@ -219,7 +286,7 @@ contract LQCSameChainIntentHub {
         uint256 minimumAmountOut,
         address recipient,
         uint256 deadline
-    ) external nonReentrant returns (bytes32 intentId) {
+    ) external whenExecutionActive nonReentrant returns (bytes32 intentId) {
         uint256 nonce = nextNonce++;
         intentId = keccak256(abi.encode(bytes1(0x00), block.chainid, address(this), msg.sender, nonce));
         _lock(intentId, msg.sender, tokenIn, tokenOut, amountIn, minimumAmountOut, recipient, deadline);
@@ -228,6 +295,7 @@ contract LQCSameChainIntentHub {
     /// @notice Lets any relayer lock a pre-approved owner's funds without changing signed terms.
     function lockIntentBySig(SignedIntent calldata signedIntent, bytes calldata signature)
         external
+        whenExecutionActive
         nonReentrant
         returns (bytes32 intentId)
     {
@@ -314,7 +382,7 @@ contract LQCSameChainIntentHub {
         LQCIntentQuoteTypes.QuoteResult[] calldata candidates,
         bytes[] calldata routeData,
         uint256 selectedIndex
-    ) external nonReentrant returns (bytes32 proofHash, uint256 amountOut) {
+    ) external whenExecutionActive nonReentrant returns (bytes32 proofHash, uint256 amountOut) {
         if (!authorizedSolver[msg.sender]) revert Unauthorized();
         Intent storage intent = intents[intentId];
         if (intent.status != Status.Locked) revert InvalidStatus();
