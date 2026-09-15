@@ -279,4 +279,78 @@ describe("LQC Gate 2 same-chain intent hub", function () {
     assert.equal(await tokenA.balanceOf(await hub.getAddress()), amount);
     assert.equal(await tokenA.allowance(await hub.getAddress(), await router.getAddress()), 0n);
   });
+
+  async function signedIntentFixture(nonce = 77n) {
+    const amount = ethers.parseEther("10");
+    await (await tokenA.mint(await owner.getAddress(), amount)).wait();
+    await (await tokenA.approve(await hub.getAddress(), amount)).wait();
+    const quote = await adapter.quoteExactInput(
+      await tokenA.getAddress(),
+      await tokenB.getAddress(),
+      amount,
+      routeData
+    );
+    const block = await provider.getBlock("latest");
+    const signedIntent = {
+      owner: await owner.getAddress(),
+      recipient: await owner.getAddress(),
+      tokenIn: await tokenA.getAddress(),
+      tokenOut: await tokenB.getAddress(),
+      amountIn: amount,
+      minimumAmountOut: (quote * 99n) / 100n,
+      deadline: BigInt(block.timestamp + 300),
+      nonce
+    };
+    const domain = {
+      name: "LQC Same Chain Intent Hub",
+      version: "1",
+      chainId: (await provider.getNetwork()).chainId,
+      verifyingContract: await hub.getAddress()
+    };
+    const types = {
+      SignedIntent: [
+        { name: "owner", type: "address" },
+        { name: "recipient", type: "address" },
+        { name: "tokenIn", type: "address" },
+        { name: "tokenOut", type: "address" },
+        { name: "amountIn", type: "uint256" },
+        { name: "minimumAmountOut", type: "uint256" },
+        { name: "deadline", type: "uint64" },
+        { name: "nonce", type: "uint256" }
+      ]
+    };
+    const signature = await owner.signTypedData(domain, types, signedIntent);
+    return { amount, signedIntent, signature };
+  }
+
+  it("locks an EIP-712 intent through an untrusted relayer and blocks nonce replay", async () => {
+    const { amount, signedIntent, signature } = await signedIntentFixture();
+    const intentId = await hub.connect(outsider).lockIntentBySig.staticCall(signedIntent, signature);
+    await (await hub.connect(outsider).lockIntentBySig(signedIntent, signature)).wait();
+
+    const stored = await hub.intents(intentId);
+    assert.equal(stored.owner, signedIntent.owner);
+    assert.equal(stored.recipient, signedIntent.recipient);
+    assert.equal(stored.amountIn, amount);
+    assert.equal(await tokenA.balanceOf(await hub.getAddress()), amount);
+    assert.equal(await hub.signedNonceUsed(signedIntent.owner, signedIntent.nonce), true);
+
+    await assert.rejects(async () => {
+      const replay = await hub.connect(outsider).lockIntentBySig(signedIntent, signature);
+      await replay.wait();
+    });
+  });
+
+  it("rejects any relayer mutation of EIP-712 signed terms", async () => {
+    const { signedIntent, signature } = await signedIntentFixture(78n);
+    const tampered = { ...signedIntent, recipient: await outsider.getAddress() };
+
+    await assert.rejects(async () => {
+      const tx = await hub.connect(outsider).lockIntentBySig(tampered, signature);
+      await tx.wait();
+    });
+
+    assert.equal(await hub.signedNonceUsed(signedIntent.owner, signedIntent.nonce), false);
+    assert.equal(await tokenA.balanceOf(await hub.getAddress()), 0n);
+  });
 });
