@@ -153,6 +153,21 @@ describe("LQC limited external solver registry", function () {
     );
   });
 
+  it("bounds risk penalties and reserves updates for the admin", async () => {
+    const solverAddress = await solver.getAddress();
+    await (await registry.setRiskPenalty(solverAddress, 1250)).wait();
+    assert.equal(await registry.riskPenaltyBps(solverAddress), 1250n);
+
+    await assert.rejects(async () => {
+      const tx = await registry.setRiskPenalty(solverAddress, 5001);
+      await tx.wait();
+    });
+    await assert.rejects(async () => {
+      const tx = await registry.connect(outsider).setRiskPenalty(solverAddress, 100);
+      await tx.wait();
+    });
+  });
+
   it("lets only admin or guardian disable and keeps admin transfer two-step", async () => {
     await deposit();
     await activate();
