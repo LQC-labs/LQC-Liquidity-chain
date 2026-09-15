@@ -6,7 +6,14 @@ import {SafeTransferLib} from "../../libraries/SafeTransferLib.sol";
 import {IERC20} from "../../interfaces/IERC20.sol";
 
 interface IPancakeV3SwapRouter {
-    struct ExactInputParams { bytes path; address recipient; uint256 amountIn; uint256 amountOutMinimum; }
+    // PancakeSwap V3's SwapRouter includes a deadline in the exactInput tuple.
+    struct ExactInputParams {
+        bytes path;
+        address recipient;
+        uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+    }
     function exactInput(ExactInputParams calldata params) external payable returns (uint256 amountOut);
 }
 
@@ -86,7 +93,11 @@ contract PancakeV3ExecutionAdapter is ILQCExecutionAdapter {
         }
         tokenIn.forceApprove(address(swapRouter), amountIn);
         amountOut = swapRouter.exactInput(IPancakeV3SwapRouter.ExactInputParams({
-            path: routeData, recipient: recipient, amountIn: amountIn, amountOutMinimum: amountOutMinimum
+            path: routeData,
+            recipient: recipient,
+            deadline: deadline,
+            amountIn: amountIn,
+            amountOutMinimum: amountOutMinimum
         }));
         tokenIn.forceApprove(address(swapRouter), 0);
         if (IERC20(tokenIn).balanceOf(address(this)) != adapterBefore) {
