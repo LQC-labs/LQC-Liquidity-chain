@@ -49,6 +49,27 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.priceImpactFromExpected(1n, 0n));
   });
 
+  it("calculates V2 price impact from exact reserves without mixing the LP fee into impact",function(){
+    const evidence=sdk.constantProductHopEvidence(1000n,10000n,20000n,30);
+    assert.equal(evidence.amountOut,"1813");
+    assert.equal(evidence.spotAmountOutAfterFee,"1994");
+    assert.equal(evidence.priceImpactBps,907);
+    assert.equal(evidence.reserveInAfter,"11000");
+    assert.equal(evidence.reserveOutAfter,"18187");
+  });
+
+  it("recomputes every V2 multi-hop leg and rejects a solver quote that disagrees with reserves",function(){
+    const route=sdk.v2RoutePriceImpactEvidence({amountIn:1000n,blockNumber:123,hops:[
+      {pair:tokenA,tokenIn:tokenA,tokenOut:tokenB,reserveIn:10000n,reserveOut:20000n,feeBps:30},
+      {pair:tokenB,tokenIn:tokenB,tokenOut:tokenC,reserveIn:30000n,reserveOut:15000n,feeBps:25}
+    ]});
+    assert.equal(route.method,"v2-reserve-constant-product");
+    assert.equal(route.legs.length,2);
+    assert.equal(route.legs[1].amountIn,route.legs[0].amountOut);
+    assert.equal(route.amountOut,"852");
+    assert.throws(()=>sdk.v2RoutePriceImpactEvidence({amountIn:1000n,quotedAmountOut:853n,blockNumber:123,hops:[{reserveIn:10000n,reserveOut:20000n,feeBps:30}]}),/mismatch/);
+  });
+
   it("records conservative multi-RPC gas evidence for the actual execution transaction", async function () {
     const target=tokenB,sender=tokenA,data="0x12345678",seen=[];
     const provider=(gasUnits)=>({estimateGas:async tx=>{seen.push(tx);return gasUnits;}});
