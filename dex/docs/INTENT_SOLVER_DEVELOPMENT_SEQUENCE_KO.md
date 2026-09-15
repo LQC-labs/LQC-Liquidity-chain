@@ -76,9 +76,11 @@
 - Gate 1.5 완료: 단일 블록에 고정된 V3 pool `slot0`·활성 liquidity·tick bitmap·`liquidityNet` 상태 수집기 구현. bitmap word와 초기화 tick 수를 제한하여 fail-closed 처리.
 - Gate 1.5 완료: 기존 이중 Feed 정책의 신선도·편차·활성 상태를 독립 재검증하는 Oracle adapter와 token decimals 기반 Market Deviation evidence 구현.
 - Gate 1.5 완료: 설정된 V3 직접 경로의 live-state 결과를 Router quote에 결합하고, 미설정 상태는 `probe-fallback`으로 명시. Route Price Impact와 Oracle Market Deviation을 별도 snapshot evidence로 보존.
-- Gate 2 진행: 권한 제한형 `LQCInternalSolver`를 기존 Router 2.0에 연결. Escrow release·Swap·최소수령 검증·Intent 상태 갱신을 한 트랜잭션에서 원자적으로 실행하며 실패 시 전체 rollback.
-- Gate 2 진행: Hub·Router 바인딩 검증과 2단계 Solver 역할 수락, source-token 잔액·allowance zero 검증 구현.
-- Gate 2 다음 작업: 실제 Gas·V3/V2 Price Impact·Oracle Market Deviation evidence를 Same-chain execution receipt에 결합하고 독립 receipt verifier를 완성.
+- Gate 2 완료(코드·로컬 EVM): 권한 제한형 `LQCInternalSolver`를 기존 Router 2.0에 연결. Escrow release·Swap·최소수령 검증·Intent 상태 갱신을 한 트랜잭션에서 원자적으로 실행하며 실패 시 전체 rollback.
+- Gate 2 완료(코드·로컬 EVM): Hub·Router 바인딩 검증과 2단계 Solver 역할 수락, source-token 잔액·allowance zero 검증 구현.
+- Gate 2 완료(검증기): 사전 `eth_estimateGas`와 채굴된 `gasUsed × effectiveGasPrice`, V3/V2 Price Impact, Oracle Market Deviation을 전용 Same-chain Intent Receipt에 결합. 정확한 Hub calldata·canonical block·`SameChainIntentExecuted` event를 독립 재검증.
+- Gate 2 테스트넷 활성화는 별도 배포 승인 이후 수행하며 기존 배포 주소는 현재 변경하지 않음.
+- Gate 3 다음 작업: `QuoteManager`, 만료시간이 짧은 EIP-712 Solver Quote와 2개 이상 mock Solver 경쟁 구현.
 
 ## 의도적으로 후순위인 기능
 

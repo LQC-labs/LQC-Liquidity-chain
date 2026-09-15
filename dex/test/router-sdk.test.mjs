@@ -374,6 +374,31 @@ describe("LQC Router browser SDK", function () {
     assert.equal(sdk.verifyIntentBoundSettlementReceipt(tampered, proof, intent, ethers), false);
   });
 
+  function sameChainReceiptFixture(){
+    const address=n=>`0x${n.toString(16).padStart(40,"0")}`,hub=address(10),solver=address(11),router=address(12),recipient=address(13),sender=address(14),transactionHash=ethers.id("same-chain-tx"),blockHash=ethers.id("same-chain-block"),intentHash=ethers.id("escrow-intent"),executionHash=ethers.id("hub-execution"),dexId=ethers.id("LQC_FLOW"),data="0x12345678",actualAmountOut=995n;
+    const gasEvidence={method:"eth_estimateGas",confidence:"high",gasUnits:"180000",gasPriceWei:"3000000000",networkFeeWei:"540000000000000",blockNumber:12349,target:hub,sender,calldataHash:ethers.keccak256(data),value:"0",spreadBps:100,sources:[{source:"rpc-a",gasUnits:"179000"},{source:"rpc-b",gasUnits:"180000"}]},priceImpactEvidence={method:"v3-tick-concentrated-liquidity",blockNumber:12349,amountIn:"1000",amountOut:actualAmountOut.toString(),spotAmountOutAfterFee:"1000",priceImpactBps:50,legs:[]},marketDeviationEvidence={method:"oracle-market-deviation",oracleId:"dual-feed",blockNumber:12349,actualAmountOut:actualAmountOut.toString(),oracleExpectedOut:"1000",deviationBps:50,direction:"worse-than-market"};
+    const receipt=sdk.buildSameChainIntentReceipt({chainId:97,intentHash,executionHash,transactionHash,blockHash,blockNumber:12350,settledAt:1788999999,hub,solver,router,dexId,tokenIn:tokenA,tokenOut:tokenB,recipient,amountIn:1000n,minimumAmountOut:990n,actualAmountOut,gasUsed:175000n,effectiveGasPrice:3000000000n,gasEvidence,priceImpactEvidence,marketDeviationEvidence},ethers);
+    return{receipt,data,sender,hub,solver,dexId,intentHash,executionHash,transactionHash,blockHash,actualAmountOut,gasEvidence,priceImpactEvidence,marketDeviationEvidence};
+  }
+
+  it("binds actual gas, pool impact and oracle deviation into one same-chain Intent receipt",function(){
+    const{receipt,gasEvidence,priceImpactEvidence,marketDeviationEvidence}=sameChainReceiptFixture();
+    assert.equal(sdk.verifySameChainIntentReceipt(receipt,ethers),true);
+    const tampered=structuredClone(receipt);tampered.priceImpactEvidence.priceImpactBps=999;
+    assert.equal(sdk.verifySameChainIntentReceipt(tampered,ethers),false);
+    assert.throws(()=>sdk.buildSameChainIntentReceipt({...receipt,amountIn:1000n,minimumAmountOut:990n,actualAmountOut:995n,gasUsed:175000n,effectiveGasPrice:3000000000n,gasEvidence:{...gasEvidence,method:"configured-fallback"},priceImpactEvidence,marketDeviationEvidence},ethers),/actual gas/);
+    assert.throws(()=>sdk.buildSameChainIntentReceipt({...receipt,amountIn:1000n,minimumAmountOut:990n,actualAmountOut:995n,gasUsed:175000n,effectiveGasPrice:3000000000n,gasEvidence,priceImpactEvidence:{...priceImpactEvidence,method:"probe-fallback"},marketDeviationEvidence},ethers),/price impact/);
+  });
+
+  it("independently verifies the canonical Hub event and exact submitted calldata",async function(){
+    const f=sameChainReceiptFixture(),eventData=ethers.AbiCoder.defaultAbiCoder().encode(["bytes32","uint256"],[f.executionHash,f.actualAmountOut]),provider={
+      getTransactionReceipt:async()=>({status:1,hash:f.transactionHash,blockNumber:12350,blockHash:f.blockHash,gasUsed:175000n,gasPrice:3000000000n,logs:[{address:f.hub,topics:[ethers.id("SameChainIntentExecuted(bytes32,address,bytes32,bytes32,uint256)"),f.intentHash,ethers.zeroPadValue(f.solver,32),f.dexId],data:eventData}]}),
+      getTransaction:async()=>({to:f.hub,from:f.sender,data:f.data}),getBlock:async()=>({hash:f.blockHash}),getBlockNumber:async()=>12352
+    },verified=await sdk.verifyCanonicalSameChainIntentReceipt(f.receipt,provider,ethers,3);
+    assert.equal(verified.valid,true);assert.equal(verified.confirmations,3);assert.equal(verified.actualAmountOut,f.actualAmountOut.toString());
+    await assert.rejects(()=>sdk.verifyCanonicalSameChainIntentReceipt(f.receipt,{...provider,getBlock:async()=>({hash:ethers.id("reorg")})},ethers,3),/canonical/);
+  });
+
   it("validates a deterministic multi-DEX quote API request and proof response", function () {
     const proof = singleRouteProof(1788999980);
     const request = sdk.buildQuoteApiRequest({ chainId: 97, tokenIn: tokenA, tokenOut: tokenB, amountIn: 1000n,
