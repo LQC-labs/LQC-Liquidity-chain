@@ -12,5 +12,8 @@ test("LQC Flow route page separates quote onboarding from governed execution cap
   assert.match(js, /DEX Registry 소유자가 Signer 1이 아닙니다/);
   assert.match(js, /LQC_FLOW ID가 이미 등록되어 있습니다/);
   assert.match(js, /PancakeSwap V3/);
+  assert.match(js, /0xcdca1753/);
+  assert.match(js, /pancakeV3Quoter/);
+  assert.doesNotMatch(js, /V3,quoteData/);
   assert.doesNotMatch(js, /setDexTokenCap|swapExact|privateKey|secret|seed phrase/i);
 });
