@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "ganache";
 import { ethers } from "ethers";
+import solc from "solc";
 
 const artifact = (name, source) =>
   JSON.parse(
@@ -9,6 +10,41 @@ const artifact = (name, source) =>
       new URL(`../artifacts/contracts/${source}.sol/${name}.json`, import.meta.url)
     )
   );
+
+function compileIntentArtifact() {
+  const intentSource = fs.readFileSync(
+    new URL("../intent-contracts/LQCSameChainIntentHub.sol", import.meta.url),
+    "utf8"
+  );
+  const safeTransferSource = fs.readFileSync(
+    new URL("../contracts/libraries/SafeTransferLib.sol", import.meta.url),
+    "utf8"
+  );
+  const input = {
+    language: "Solidity",
+    sources: {
+      "intent-contracts/LQCSameChainIntentHub.sol": { content: intentSource },
+      "contracts/libraries/SafeTransferLib.sol": { content: safeTransferSource }
+    },
+    settings: {
+      optimizer: { enabled: true, runs: 200 },
+      viaIR: true,
+      evmVersion: "shanghai",
+      outputSelection: {
+        "intent-contracts/LQCSameChainIntentHub.sol": {
+          LQCSameChainIntentHub: ["abi", "evm.bytecode.object"]
+        }
+      }
+    }
+  };
+  const output = JSON.parse(solc.compile(JSON.stringify(input)));
+  const errors = (output.errors ?? []).filter((entry) => entry.severity === "error");
+  if (errors.length) throw new Error(errors.map((entry) => entry.formattedMessage).join("\n"));
+  const compiled = output.contracts["intent-contracts/LQCSameChainIntentHub.sol"].LQCSameChainIntentHub;
+  return { abi: compiled.abi, bytecode: `0x${compiled.evm.bytecode.object}` };
+}
+
+const intentArtifact = compileIntentArtifact();
 
 describe("LQC Gate 2 same-chain intent hub", function () {
   this.timeout(30000);
@@ -31,8 +67,10 @@ describe("LQC Gate 2 same-chain intent hub", function () {
     owner = await provider.getSigner(0);
     outsider = await provider.getSigner(1);
 
-    const deploy = (name, source, ...args) =>
-      new ethers.ContractFactory(artifact(name, source).abi, artifact(name, source).bytecode, owner).deploy(...args);
+    const deploy = (name, source, ...args) => {
+      const selected = source === "__intent" ? intentArtifact : artifact(name, source);
+      return new ethers.ContractFactory(selected.abi, selected.bytecode, owner).deploy(...args);
+    };
 
     tokenA = await deploy("MockERC20", "mocks/MockERC20", "A", "A");
     tokenB = await deploy("MockERC20", "mocks/MockERC20", "B", "B");
@@ -60,7 +98,7 @@ describe("LQC Gate 2 same-chain intent hub", function () {
 
     hub = await deploy(
       "LQCSameChainIntentHub",
-      "intent/LQCSameChainIntentHub",
+      "__intent",
       await router.getAddress(),
       await owner.getAddress()
     );
