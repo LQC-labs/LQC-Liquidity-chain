@@ -19,7 +19,9 @@ contract LQCIntentHub {
         0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
 
     address public owner;
+    address public pendingOwner;
     address public settler;
+    address public pendingSettler;
     address public guardian;
     bool public paused;
     LQCSourceEscrow public immutable sourceEscrow;
@@ -29,9 +31,15 @@ contract LQCIntentHub {
         address user;
         address sourceToken;
         uint256 sourceAmount;
+        uint256 destinationChainId;
+        address destinationToken;
+        address recipient;
+        uint256 minAmountOut;
         uint256 deadline;
         LQCIntentTypes.IntentStatus status;
         address solver;
+        uint256 actualAmountOut;
+        bytes32 destinationTxHash;
         bytes32 executionHash;
     }
 
@@ -41,11 +49,19 @@ contract LQCIntentHub {
     event IntentSubmitted(bytes32 indexed intentHash, address indexed user, uint256 indexed nonce, uint256 deadline);
     event IntentCancelled(bytes32 indexed intentHash, address indexed user);
     event IntentExpired(bytes32 indexed intentHash, address indexed user);
-    event IntentSettled(bytes32 indexed intentHash, address indexed solver, bytes32 indexed executionHash);
+    event IntentSettled(
+        bytes32 indexed intentHash,
+        address indexed solver,
+        bytes32 indexed executionHash,
+        bytes32 destinationTxHash,
+        uint256 actualAmountOut
+    );
     event SettlerUpdated(address indexed previousSettler, address indexed newSettler);
+    event SettlerTransferStarted(address indexed currentSettler, address indexed pendingSettler);
     event GuardianUpdated(address indexed previousGuardian, address indexed newGuardian);
     event PauseUpdated(bool paused);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
 
     error Unauthorized();
     error ZeroAddress();
@@ -55,6 +71,7 @@ contract LQCIntentHub {
     error NonceAlreadyUsed();
     error Expired();
     error NotExpired();
+    error InsufficientOutput();
     error Paused();
     error Reentrancy();
 
@@ -113,9 +130,15 @@ contract LQCIntentHub {
             user: intent.user,
             sourceToken: intent.sourceToken,
             sourceAmount: intent.sourceAmount,
+            destinationChainId: intent.destinationChainId,
+            destinationToken: intent.destinationToken,
+            recipient: intent.recipient,
+            minAmountOut: intent.minAmountOut,
             deadline: intent.deadline,
             status: LQCIntentTypes.IntentStatus.OPEN,
             solver: address(0),
+            actualAmountOut: 0,
+            destinationTxHash: bytes32(0),
             executionHash: bytes32(0)
         });
         sourceEscrow.lockFrom(intentHash, intent.user, intent.sourceToken, intent.sourceAmount);
@@ -142,28 +165,51 @@ contract LQCIntentHub {
     }
 
     /// @notice Testnet bootstrap settlement. Replaced by SettlementHub + ExecutionVerifier later.
-    function settleIntent(bytes32 intentHash, address solver, bytes32 executionHash)
+    function settleIntent(bytes32 intentHash, address solver, bytes32 destinationTxHash, uint256 actualAmountOut)
         external
         onlySettler
         nonReentrant
     {
         if (paused) revert Paused();
-        if (solver == address(0) || executionHash == bytes32(0)) revert InvalidIntent();
+        if (solver == address(0) || destinationTxHash == bytes32(0)) revert InvalidIntent();
         IntentRecord storage record = records[intentHash];
         if (record.status != LQCIntentTypes.IntentStatus.OPEN) revert InvalidStatus();
         if (block.timestamp > record.deadline) revert Expired();
+        if (actualAmountOut < record.minAmountOut) revert InsufficientOutput();
+
+        bytes32 executionHash = keccak256(
+            abi.encode(
+                intentHash,
+                solver,
+                record.destinationChainId,
+                record.destinationToken,
+                record.recipient,
+                actualAmountOut,
+                destinationTxHash
+            )
+        );
 
         record.status = LQCIntentTypes.IntentStatus.EXECUTED;
         record.solver = solver;
+        record.actualAmountOut = actualAmountOut;
+        record.destinationTxHash = destinationTxHash;
         record.executionHash = executionHash;
         sourceEscrow.release(intentHash, solver);
-        emit IntentSettled(intentHash, solver, executionHash);
+        emit IntentSettled(intentHash, solver, executionHash, destinationTxHash, actualAmountOut);
     }
 
     function setSettler(address newSettler) external onlyOwner {
         if (newSettler == address(0)) revert ZeroAddress();
-        emit SettlerUpdated(settler, newSettler);
-        settler = newSettler;
+        pendingSettler = newSettler;
+        emit SettlerTransferStarted(settler, newSettler);
+    }
+
+    function acceptSettler() external {
+        if (msg.sender != pendingSettler) revert Unauthorized();
+        address previousSettler = settler;
+        settler = msg.sender;
+        pendingSettler = address(0);
+        emit SettlerUpdated(previousSettler, msg.sender);
     }
 
     function setGuardian(address newGuardian) external onlyOwner {
@@ -173,15 +219,27 @@ contract LQCIntentHub {
     }
 
     function setPaused(bool value) external {
-        if (msg.sender != guardian && msg.sender != owner) revert Unauthorized();
+        if (value) {
+            if (msg.sender != guardian && msg.sender != owner) revert Unauthorized();
+        } else if (msg.sender != owner) {
+            revert Unauthorized();
+        }
         paused = value;
         emit PauseUpdated(value);
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
         if (newOwner == address(0)) revert ZeroAddress();
-        emit OwnershipTransferred(owner, newOwner);
-        owner = newOwner;
+        pendingOwner = newOwner;
+        emit OwnershipTransferStarted(owner, newOwner);
+    }
+
+    function acceptOwnership() external {
+        if (msg.sender != pendingOwner) revert Unauthorized();
+        address previousOwner = owner;
+        owner = msg.sender;
+        pendingOwner = address(0);
+        emit OwnershipTransferred(previousOwner, msg.sender);
     }
 
     function _validateIntent(LQCIntentTypes.Intent calldata intent) private view {
