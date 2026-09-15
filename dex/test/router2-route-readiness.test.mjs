@@ -7,6 +7,7 @@ const pool = JSON.parse(fs.readFileSync(new URL("../deployments/pancake-v3-pool-
 const quoteStack = JSON.parse(fs.readFileSync(new URL("../deployments/router2-quote-stack-config-bsc-testnet-97.json", import.meta.url)));
 const executionStack = JSON.parse(fs.readFileSync(new URL("../deployments/router2-execution-stack-stage3-bsc-testnet-97.json", import.meta.url)));
 const recovery = JSON.parse(fs.readFileSync(new URL("../deployments/router2-v3-adapter-recovery-bsc-testnet-97.json", import.meta.url)));
+const lqcFlow = JSON.parse(fs.readFileSync(new URL("../deployments/router2-lqc-flow-route-bsc-testnet-97.json", import.meta.url)));
 
 describe("Router 2.0 live-route readiness", function () {
   it("marks the completed PancakeSwap V3 pilot ready without overstating Router deployment", function () {
@@ -60,5 +61,17 @@ describe("Router 2.0 live-route readiness", function () {
     assert.equal(report.router2.executionSmoke.transactionHash, "0x4e969b9cb637bd76bc4c6106dca333d0cfb7e0cb7d2e7a400b60756ca2ca5a5f");
     assert.equal(report.router2.executionSmoke.duplicateExecutionProhibited, true);
     assert.match(report.nextSafeStep, /second independent DEX route/);
+  });
+
+  it("records two independent read-only quotes while keeping governed execution pending", function () {
+    const report = buildRouter2RouteReadiness(pool, quoteStack, executionStack, recovery, lqcFlow);
+    assert.equal(report.router2.status, "two-route-quote-comparison-success");
+    assert.equal(report.router2.comparableRoutes, 2);
+    assert.equal(report.router2.quoteComparison.status, "success");
+    assert.equal(report.router2.quoteComparison.lqcFlowAdapter, "0x14db750acf95b469aba3e74032e6db61087ef4cd");
+    assert.equal(report.router2.quoteComparison.preferredQuote, "LQC_FLOW");
+    assert.equal(report.router2.quoteComparison.transactionOccurred, false);
+    assert.match(report.router2.limitations[0], /Governance Safe approval/);
+    assert.match(report.nextSafeStep, /two-route execution preflight/);
   });
 });
