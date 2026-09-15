@@ -71,6 +71,16 @@ interface IERC20IntentBalance {
 contract LQCSameChainIntentHub {
     using SafeTransferLib for address;
 
+    bytes32 public constant EIP712_DOMAIN_TYPEHASH =
+        keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)");
+    bytes32 public constant SIGNED_INTENT_TYPEHASH = keccak256(
+        "SignedIntent(address owner,address recipient,address tokenIn,address tokenOut,uint256 amountIn,uint256 minimumAmountOut,uint64 deadline,uint256 nonce)"
+    );
+    bytes32 public constant NAME_HASH = keccak256("LQC Same Chain Intent Hub");
+    bytes32 public constant VERSION_HASH = keccak256("1");
+    uint256 private constant SECP256K1_HALF_ORDER =
+        0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
+
     enum Status {
         None,
         Locked,
@@ -89,6 +99,17 @@ contract LQCSameChainIntentHub {
         Status status;
     }
 
+    struct SignedIntent {
+        address owner;
+        address recipient;
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+        uint256 minimumAmountOut;
+        uint64 deadline;
+        uint256 nonce;
+    }
+
     address public immutable executionRouter;
     address public immutable proofVerifier;
     address public admin;
@@ -98,6 +119,7 @@ contract LQCSameChainIntentHub {
     mapping(address => bool) public authorizedSolver;
     mapping(bytes32 => Intent) public intents;
     mapping(bytes32 => bool) public consumedProof;
+    mapping(address => mapping(uint256 => bool)) public signedNonceUsed;
 
     error ZeroAddress();
     error InvalidTokens();
@@ -110,6 +132,8 @@ contract LQCSameChainIntentHub {
     error InvalidProof();
     error ProofAlreadyConsumed();
     error RegistryAdapterChanged();
+    error InvalidSignature();
+    error NonceAlreadyUsed();
     error ResidualToken();
     error Reentrancy();
 
@@ -163,6 +187,31 @@ contract LQCSameChainIntentHub {
         admin = newAdmin;
     }
 
+    function domainSeparator() public view returns (bytes32) {
+        return keccak256(abi.encode(
+            EIP712_DOMAIN_TYPEHASH,
+            NAME_HASH,
+            VERSION_HASH,
+            block.chainid,
+            address(this)
+        ));
+    }
+
+    function hashSignedIntent(SignedIntent calldata signedIntent) public view returns (bytes32) {
+        bytes32 structHash = keccak256(abi.encode(
+            SIGNED_INTENT_TYPEHASH,
+            signedIntent.owner,
+            signedIntent.recipient,
+            signedIntent.tokenIn,
+            signedIntent.tokenOut,
+            signedIntent.amountIn,
+            signedIntent.minimumAmountOut,
+            signedIntent.deadline,
+            signedIntent.nonce
+        ));
+        return keccak256(abi.encodePacked(bytes2(0x1901), domainSeparator(), structHash));
+    }
+
     function lockIntent(
         address tokenIn,
         address tokenOut,
@@ -171,18 +220,59 @@ contract LQCSameChainIntentHub {
         address recipient,
         uint256 deadline
     ) external nonReentrant returns (bytes32 intentId) {
-        if (tokenIn == address(0) || tokenOut == address(0) || recipient == address(0)) revert ZeroAddress();
+        uint256 nonce = nextNonce++;
+        intentId = keccak256(abi.encode(bytes1(0x00), block.chainid, address(this), msg.sender, nonce));
+        _lock(intentId, msg.sender, tokenIn, tokenOut, amountIn, minimumAmountOut, recipient, deadline);
+    }
+
+    /// @notice Lets any relayer lock a pre-approved owner's funds without changing signed terms.
+    function lockIntentBySig(SignedIntent calldata signedIntent, bytes calldata signature)
+        external
+        nonReentrant
+        returns (bytes32 intentId)
+    {
+        if (signedIntent.owner == address(0)) revert ZeroAddress();
+        if (signedNonceUsed[signedIntent.owner][signedIntent.nonce]) revert NonceAlreadyUsed();
+        bytes32 digest = hashSignedIntent(signedIntent);
+        if (_recoverSigner(digest, signature) != signedIntent.owner) revert InvalidSignature();
+
+        signedNonceUsed[signedIntent.owner][signedIntent.nonce] = true;
+        intentId = keccak256(abi.encode(bytes1(0x01), digest));
+        _lock(
+            intentId,
+            signedIntent.owner,
+            signedIntent.tokenIn,
+            signedIntent.tokenOut,
+            signedIntent.amountIn,
+            signedIntent.minimumAmountOut,
+            signedIntent.recipient,
+            signedIntent.deadline
+        );
+    }
+
+    function _lock(
+        bytes32 intentId,
+        address owner,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 minimumAmountOut,
+        address recipient,
+        uint256 deadline
+    ) private {
+        if (owner == address(0) || tokenIn == address(0) || tokenOut == address(0) || recipient == address(0)) {
+            revert ZeroAddress();
+        }
         if (tokenIn == tokenOut) revert InvalidTokens();
         if (
             amountIn == 0 || minimumAmountOut == 0 || amountIn > type(uint128).max
                 || minimumAmountOut > type(uint128).max
         ) revert InvalidAmount();
         if (deadline <= block.timestamp || deadline > type(uint64).max) revert InvalidDeadline();
+        if (intents[intentId].status != Status.None) revert InvalidStatus();
 
-        uint256 nonce = nextNonce++;
-        intentId = keccak256(abi.encode(block.chainid, address(this), msg.sender, nonce));
         intents[intentId] = Intent({
-            owner: msg.sender,
+            owner: owner,
             recipient: recipient,
             tokenIn: tokenIn,
             tokenOut: tokenOut,
@@ -193,14 +283,29 @@ contract LQCSameChainIntentHub {
         });
 
         uint256 beforeBalance = IERC20IntentBalance(tokenIn).balanceOf(address(this));
-        tokenIn.safeTransferFrom(msg.sender, address(this), amountIn);
+        tokenIn.safeTransferFrom(owner, address(this), amountIn);
         if (IERC20IntentBalance(tokenIn).balanceOf(address(this)) - beforeBalance != amountIn) {
             revert ResidualToken();
         }
 
         emit IntentLocked(
-            intentId, msg.sender, recipient, tokenIn, tokenOut, amountIn, minimumAmountOut, deadline
+            intentId, owner, recipient, tokenIn, tokenOut, amountIn, minimumAmountOut, deadline
         );
+    }
+
+    function _recoverSigner(bytes32 digest, bytes calldata signature) private pure returns (address signer) {
+        if (signature.length != 65) revert InvalidSignature();
+        bytes32 r;
+        bytes32 s;
+        uint8 v;
+        assembly {
+            r := calldataload(signature.offset)
+            s := calldataload(add(signature.offset, 32))
+            v := byte(0, calldataload(add(signature.offset, 64)))
+        }
+        if (uint256(s) > SECP256K1_HALF_ORDER || (v != 27 && v != 28)) revert InvalidSignature();
+        signer = ecrecover(digest, v, r, s);
+        if (signer == address(0)) revert InvalidSignature();
     }
 
     function executeProvenIntent(
