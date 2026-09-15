@@ -9,4 +9,6 @@ describe("Router 2.0 Proof Gateway operational monitor page",function(){
   it("rejects residual Gateway token balance or Router approval",function(){assert.match(js,/token\.balanceOf\(deployment\.proofGateway\)/);assert.match(js,/token\.allowance\(deployment\.proofGateway,ROUTER\)/);assert.match(js,/if\(balance!==0n\)/);assert.match(js,/if\(allowance!==0n\)/);});
   it("requires the last recorded execution proof to remain consumed",function(){assert.match(js,/gateway\.consumedProof\(lastProof\)/);assert.match(js,/마지막 실행 Proof가 소비 상태가 아닙니다/);});
   it("records a block-bound operational snapshot hash",function(){assert.match(js,/solidityPackedKeccak256/);assert.match(js,/blockNumber/);assert.match(js,/localStorage\.setItem\(MONITOR_KEY/);assert.match(html,/상태 Snapshot Hash/);});
+  it("classifies failures and gives a safe operator response",function(){assert.match(js,/function diagnose\(message\)/);assert.match(js,/RISK_PAUSED/);assert.match(js,/GATEWAY_BALANCE/);assert.match(js,/ROUTER_ALLOWANCE/);assert.match(js,/거래를 실행하지 말고/);assert.match(html,/이상 진단 \/ 권장 대응/);});
+  it("stores only local incident evidence and clears it after a pass",function(){assert.match(js,/localStorage\.setItem\(INCIDENT_KEY/);assert.match(js,/localStorage\.removeItem\(INCIDENT_KEY\)/);});
 });
