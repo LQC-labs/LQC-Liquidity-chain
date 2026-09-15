@@ -3,7 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { ethers } from "ethers";
 
-export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, executionDeployment = null) {
+export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, executionDeployment = null, recovery = null) {
   if (poolRecord?.network?.chainId !== 97 || !ethers.isAddress(poolRecord?.contracts?.pancakeV3Pool)) {
     throw new Error("A valid chain-97 PancakeSwap V3 pool record is required.");
   }
@@ -32,6 +32,10 @@ export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, 
   if (!v3Registered) blockers.push("Verified V3 pool is not yet registered through the V3 adapter");
   const comparableRoutes = stagedV3?.status === "success" ? 1 : Array.isArray(routerDeployment?.dexes) ? routerDeployment.dexes.filter(dex => dex.enabled !== false).length : 0;
   const executionReady = ethers.isAddress(executionDeployment?.executions?.riskRegistry?.address) && ethers.isAddress(executionDeployment?.executions?.executionRouter?.address);
+  const executionSmokeSucceeded = recovery?.executionEvidence?.status === "success" &&
+    recovery?.executionEvidence?.smokeSwap?.status === "success" &&
+    ethers.isAddress(recovery?.executionEvidence?.newAdapter) &&
+    /^0x[0-9a-f]{64}$/i.test(recovery?.executionEvidence?.smokeSwap?.transactionHash || "");
   const limitations = comparableRoutes < 2 ? ["A second independent DEX route is required for real best-route comparison"] : [];
   return {
     schemaVersion: 1,
@@ -48,7 +52,7 @@ export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, 
       residualAllowances: poolRecord.finalStateVerification?.routerResidualAllowances || null,
     },
     router2: {
-      status: blockers.length ? "deployment-required" : executionReady ? "ready-for-single-route-execution-smoke" : "ready-for-live-route-probes",
+      status: blockers.length ? "deployment-required" : executionSmokeSucceeded ? "single-route-execution-smoke-success" : executionReady ? "ready-for-single-route-execution-smoke" : "ready-for-live-route-probes",
       comparableRoutes,
       missingContracts,
       v3Registered,
@@ -59,9 +63,18 @@ export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, 
           ? "deployed" : "separate-deployment-required",
         requiredContracts: ["riskRegistry", "executionRouter"],
       },
+      executionSmoke: executionSmokeSucceeded ? {
+        status: "success",
+        adapter: recovery.executionEvidence.newAdapter,
+        transactionHash: recovery.executionEvidence.smokeSwap.transactionHash,
+        amountIn: recovery.executionEvidence.smokeSwap.amountIn,
+        duplicateExecutionProhibited: true,
+      } : { status: "pending" },
     },
     nextSafeStep: blockers.length
       ? "Deploy and verify the Router 2.0 core plus Pancake V3 adapter before any routed wallet transaction."
+      : executionSmokeSucceeded
+        ? "Preserve the successful single-route evidence and add a second independent DEX route before claiming best-route comparison."
       : executionReady
         ? "Run a read-only execution preflight, then one capped single-route smoke swap. Do not claim best-route comparison until a second DEX route exists."
         : "Run read-only live route probes before enabling execution.",
@@ -76,8 +89,10 @@ function main() {
   const router = fs.existsSync(stagedRouterFile) ? JSON.parse(fs.readFileSync(stagedRouterFile, "utf8")) : fs.existsSync(routerFile) ? JSON.parse(fs.readFileSync(routerFile, "utf8")) : null;
   const executionFile = path.join(root, "deployments/router2-execution-stack-stage3-bsc-testnet-97.json");
   const execution = fs.existsSync(executionFile) ? JSON.parse(fs.readFileSync(executionFile, "utf8")) : null;
+  const recoveryFile = path.join(root, "deployments/router2-v3-adapter-recovery-bsc-testnet-97.json");
+  const recovery = fs.existsSync(recoveryFile) ? JSON.parse(fs.readFileSync(recoveryFile, "utf8")) : null;
   const output = path.join(root, "deployments/router2-route-readiness-bsc-testnet-97.json");
-  fs.writeFileSync(output, `${JSON.stringify(buildRouter2RouteReadiness(pool, router, execution), null, 2)}\n`);
+  fs.writeFileSync(output, `${JSON.stringify(buildRouter2RouteReadiness(pool, router, execution, recovery), null, 2)}\n`);
   console.log(`Wrote ${output}`);
 }
 
