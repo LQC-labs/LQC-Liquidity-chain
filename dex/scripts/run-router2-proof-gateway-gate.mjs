@@ -1,0 +1,42 @@
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+import { ethers } from "ethers";
+
+export const REVIEWED_PACKAGE_LOCK_BLOB="871ba530cf90a09cf0da383799960f443961ae18";
+export const PAGE_SCRIPTS=Object.freeze([
+  "router2-proof-verifier-deploy-testnet.js","router2-proof-gateway-deploy-testnet.js",
+  "router2-proof-gateway-final-state-testnet.js","router2-proof-gateway-readiness-testnet.js",
+  "router2-proof-gateway-execution-testnet.js","router2-proof-gateway-execution-final-testnet.js",
+  "router2-proof-gateway-workflow-testnet.js","router2-proof-gateway-evidence-export-testnet.js",
+  "router2-proof-gateway-evidence-import-testnet.js",
+]);
+export const GATE_TESTS=Object.freeze([
+  "test/router2-proof-bound-gateway-source.test.mjs","test/router2-proof-bound-gateway-adversarial-mock.test.mjs",
+  "test/router2-proof-bound-gateway-evm.test.mjs","test/router2-proof-bound-gateway-adversarial-evm.test.mjs",
+  "test/router2-proof-bound-gateway-preparation.test.mjs","test/router2-proof-verifier-deploy-page.test.mjs",
+  "test/router2-proof-gateway-deploy-page.test.mjs","test/router2-proof-gateway-final-state-page.test.mjs",
+  "test/router2-proof-gateway-readiness-page.test.mjs","test/router2-proof-gateway-execution-page.test.mjs",
+  "test/router2-proof-gateway-execution-final-page.test.mjs","test/router2-proof-gateway-workflow-page.test.mjs",
+  "test/router2-proof-gateway-evidence-export-page.test.mjs","test/router2-proof-gateway-evidence-import-page.test.mjs",
+]);
+
+export function gitBlobSha(content){return crypto.createHash("sha1").update(Buffer.from("blob "+content.length+"\0")).update(content).digest("hex");}
+export function assertPackageLockBuffer(content){const actual=gitBlobSha(content);if(actual!==REVIEWED_PACKAGE_LOCK_BLOB)throw new Error("dex/package-lock.json changed: expected reviewed blob "+REVIEWED_PACKAGE_LOCK_BLOB+", received "+actual);return actual;}
+export function assertArtifactHashes(root){
+  const read=relative=>JSON.parse(fs.readFileSync(path.join(root,relative),"utf8")),bundle=read("deployments/router2-proof-bound-gateway-stage1-bsc-testnet-97.json"),proof=read("artifacts/contracts/router-v2/LQCBestExecutionProof.sol/LQCBestExecutionProof.json"),gateway=read("artifacts/contracts/router-v2/LQCProofBoundExecutionGateway.sol/LQCProofBoundExecutionGateway.json");
+  const actual={proofCreation:ethers.keccak256(proof.bytecode),proofRuntime:ethers.keccak256(proof.deployedBytecode),gatewayCreation:ethers.keccak256(gateway.bytecode),gatewayRuntime:ethers.keccak256(gateway.deployedBytecode)};
+  if(actual.proofCreation!==bundle.bytecodeHashes.bestExecutionProof||actual.gatewayCreation!==bundle.bytecodeHashes.proofBoundGateway||actual.proofRuntime!==bundle.runtimeBytecodeHashes.bestExecutionProof||actual.gatewayRuntime!==bundle.runtimeBytecodeHashes.proofBoundGateway||actual.gatewayCreation!==ethers.keccak256(bundle.gatewayTemplate.bytecode))throw new Error("Proof Gateway artifact or deployment bundle hash mismatch.");
+  return actual;
+}
+export function runProofGatewayGate(root=path.resolve(import.meta.dirname,"..")){
+  assertPackageLockBuffer(fs.readFileSync(path.join(root,"package-lock.json")));
+  execFileSync(process.execPath,["scripts/compile.mjs"],{cwd:root,stdio:"inherit"});
+  const hashes=assertArtifactHashes(root);
+  for(const page of PAGE_SCRIPTS)execFileSync(process.execPath,["--check",path.join("app",page)],{cwd:root,stdio:"inherit"});
+  execFileSync(process.execPath,[path.join("node_modules","mocha","bin","mocha.js"),"--timeout","30000",...GATE_TESTS],{cwd:root,stdio:"inherit"});
+  return{status:"pass",network:"BSC Testnet",chainId:97,packageLockBlob:REVIEWED_PACKAGE_LOCK_BLOB,soliditySources:51,pageScripts:PAGE_SCRIPTS.length,testFiles:GATE_TESTS.length,hashes,safety:"Local compile and tests only. No wallet, signature, transaction, approval, token movement, or swap."};
+}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)console.log(JSON.stringify(runProofGatewayGate(),null,2));
