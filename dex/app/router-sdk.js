@@ -31,6 +31,26 @@
     if(typeof gasPriceWei!=='bigint'||gasPriceWei<0n)throw new Error('Invalid gas price');
     return gasUnits*gasPriceWei;
   }
+  function gasEstimateEvidence(input){
+    const{estimates=[],fallbackGasUnits,gasPriceWei,blockNumber,target,sender,calldataHash,value=0n}=input||{};
+    if(typeof gasPriceWei!=='bigint'||gasPriceWei<0n||!Number.isSafeInteger(Number(blockNumber))||Number(blockNumber)<0)throw new Error('Invalid gas estimate context');
+    if(typeof target!=='string'||typeof sender!=='string'||typeof calldataHash!=='string'||typeof value!=='bigint'||value<0n)throw new Error('Invalid gas estimate transaction');
+    const valid=estimates.map((entry,index)=>({source:String(entry?.source||`rpc-${index+1}`),gasUnits:typeof entry?.gasUnits==='bigint'?entry.gasUnits:BigInt(entry?.gasUnits||0)})).filter(entry=>entry.gasUnits>0n);
+    let gasUnits,method,confidence,spreadBps=0;
+    if(valid.length){
+      valid.sort((a,b)=>a.gasUnits<b.gasUnits?-1:a.gasUnits>b.gasUnits?1:0);gasUnits=valid.at(-1).gasUnits;method='eth_estimateGas';
+      spreadBps=Number((gasUnits-valid[0].gasUnits)*10000n/gasUnits);confidence=valid.length>=2&&spreadBps<=1000?'high':valid.length>=2&&spreadBps<=2500?'medium':valid.length===1?'medium':'low';
+    }else{
+      gasUnits=typeof fallbackGasUnits==='bigint'?fallbackGasUnits:BigInt(fallbackGasUnits||0);if(gasUnits<=0n)throw new Error('Gas estimate unavailable');method='configured-fallback';confidence='low';
+    }
+    return Object.freeze({method,confidence,gasUnits:gasUnits.toString(),gasPriceWei:gasPriceWei.toString(),networkFeeWei:(gasUnits*gasPriceWei).toString(),blockNumber:Number(blockNumber),target:target.toLowerCase(),sender:sender.toLowerCase(),calldataHash:calldataHash.toLowerCase(),value:value.toString(),spreadBps,sources:Object.freeze(valid.map(entry=>Object.freeze({source:entry.source,gasUnits:entry.gasUnits.toString()})))});
+  }
+  async function estimateExecutionGas(input){
+    const{providers=[],transaction,sender,fallbackGasUnits,gasPriceWei,blockNumber,calldataHash}=input||{};
+    if(!transaction||typeof transaction.to!=='string'||typeof transaction.data!=='string'||typeof sender!=='string'||!Array.isArray(providers))throw new Error('Invalid execution gas request');
+    const tx={...transaction,from:sender},settled=await Promise.all(providers.map(async(entry,index)=>{try{const provider=entry?.provider||entry;if(!provider||typeof provider.estimateGas!=='function')throw new Error('estimateGas unavailable');return{source:String(entry?.source||`rpc-${index+1}`),gasUnits:await provider.estimateGas(tx)}}catch{return null}}));
+    return gasEstimateEvidence({estimates:settled.filter(Boolean),fallbackGasUnits,gasPriceWei,blockNumber,target:transaction.to,sender,calldataHash,value:BigInt(transaction.value||0)});
+  }
   function routeFeeBps(dex,path){
     if(dex?.kind!=='v3')return Number(dex?.feeBps||0);
     let hundredthsOfBps=0;
@@ -313,5 +333,5 @@
     if(nativeBalance<requiredNative)throw new Error('insufficient funds: native balance and gas');
     return{sufficient:true,gasCost,requiredNative};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,validateExecutionPlanProof,buildExecutionIntent,verifyExecutionIntent,buildIntentBoundSettlementReceipt,verifyIntentBoundSettlementReceipt,buildQuoteApiRequest,validateQuoteApiResponse,recoveryActionForError,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,gasEstimateEvidence,estimateExecutionGas,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,validateExecutionPlanProof,buildExecutionIntent,verifyExecutionIntent,buildIntentBoundSettlementReceipt,verifyIntentBoundSettlementReceipt,buildQuoteApiRequest,validateQuoteApiResponse,recoveryActionForError,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);
