@@ -12,7 +12,7 @@
   const adapterAbi=['function quoteExactInput(address,address,uint256,bytes) view returns (uint256)'];
   const ui={connect:$('connectButton'),language:$('languageSelect'),settings:$('settingsButton'),settingsPanel:$('settingsPanel'),amountIn:$('amountIn'),amountOut:$('amountOut'),minimum:$('minimumReceived'),gas:$('estimatedGas'),impact:$('priceImpact'),split:$('splitRatio'),route:$('routeLabel'),selectedDex:$('selectedDex'),selectedPath:$('selectedPath'),routeStrategy:$('routeStrategy'),alternativeRoute:$('alternativeRoute'),preflightState:$('preflightState'),proofStatus:$('proofStatus'),proofId:$('proofId'),balanceIn:$('balanceIn'),balanceOut:$('balanceOut'),walletDialog:$('walletDialog'),walletList:$('walletList'),positionBalance:$('positionBalance'),portfolioValue:$('portfolioValue'),tokenInButton:$('tokenInButton'),tokenOutButton:$('tokenOutButton'),flip:$('flipButton'),max:$('maxButton'),buy:$('buyAction'),sell:$('sellAction'),quick:$('quickTrade'),order:$('orderPanel'),close:$('closeOrder'),title:$('orderTitle'),execute:$('executeButton'),recovery:$('recoveryButton'),status:$('statusBox'),statusText:$('statusText'),dialog:$('tokenDialog'),tokenList:$('tokenList'),tokenSearch:$('tokenSearch'),slippage:$('slippageInput')};
   const walletMemoryKey='lqc-flow-wallet-connected';
-  let walletProvider,walletRpcProvider,provider,signer,account,router,quoteRouter,executionRouter,nativeRouter,splitOptimizer,autoRouter,gasCostOracle,wallets=[],boundWallets=new WeakSet(),side='in',timer,quoteVersion=0,quoteSnapshot=null,displayedProof=null,pendingExecutionIntent=null,latestGasEvidence=null,mode='buy',tokenIn=cfg.tokens[0],tokenOut=cfg.tokens[2],deploymentReady=false,swapInFlight=false,pendingGuardActive=false;
+  let walletProvider,walletRpcProvider,provider,signer,account,router,quoteRouter,executionRouter,nativeRouter,splitOptimizer,autoRouter,gasCostOracle,wallets=[],boundWallets=new WeakSet(),side='in',timer,quoteVersion=0,quoteSnapshot=null,displayedProof=null,pendingExecutionIntent=null,latestGasEvidence=null,latestPriceImpactEvidence=null,mode='buy',tokenIn=cfg.tokens[0],tokenOut=cfg.tokens[2],deploymentReady=false,swapInFlight=false,pendingGuardActive=false;
   const minimalMode=cfg.deploymentMode==='minimal-testnet-smoke';
   const configured=minimalMode?ethers.isAddress(cfg.routerAddress)&&ethers.isAddress(cfg.tokens.find(t=>t.symbol==='WBNB')?.address)&&ethers.isAddress(cfg.tokens.find(t=>t.symbol==='LQC')?.address):ethers.isAddress(cfg.routerAddress)&&ethers.isAddress(cfg.quoteRouterAddress)&&ethers.isAddress(cfg.executionRouterAddress)&&ethers.isAddress(cfg.nativeRouterAddress)&&ethers.isAddress(cfg.splitOptimizerAddress)&&ethers.isAddress(cfg.autoRouterAddress)&&ethers.isAddress(cfg.gasCostOracleAddress)&&cfg.tokens.filter(t=>t.address!=='native').every(t=>ethers.isAddress(t.address))&&cfg.dexes.length>0&&cfg.dexes.every(d=>ethers.isAddress(d.adapter));
   const address=t=>t.address==='native'?(cfg.tokens.find(x=>x.symbol==='WBNB')?.address||''):t.address;
@@ -98,14 +98,24 @@
   }
   async function planPriceImpact(value,out,probe,path,plan){
     if(plan.kind==='single'){
+      if(plan.single.dex.kind==='v2'){
+        const state=await sdk.readV2AdapterRouteReserves({provider,adapterAddress:plan.single.dex.adapter,path,feeBps:Number(plan.single.dex.feeBps||30),ethers});
+        latestPriceImpactEvidence=sdk.v2RoutePriceImpactEvidence({amountIn:value,hops:state.hops,quotedAmountOut:out,blockNumber:state.blockNumber});
+        return latestPriceImpactEvidence.priceImpactBps;
+      }
       const probeOut=await new ethers.Contract(plan.single.dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),probe,plan.single.routeData);
       return sdk.priceImpactBps(value,out,probe,probeOut);
     }
     const expectedParts=await Promise.all(plan.summary.map(async item=>{
-      const index=cfg.dexes.indexOf(item.dex),probeOut=await new ethers.Contract(item.dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),probe,plan.routes[index]);
-      return item.amountIn*probeOut/probe;
+      const index=cfg.dexes.indexOf(item.dex),quotedOut=plan.split.amountsOut[index];
+      if(item.dex.kind==='v2'){
+        const state=await sdk.readV2AdapterRouteReserves({provider,adapterAddress:item.dex.adapter,path,feeBps:Number(item.dex.feeBps||30),ethers}),evidence=sdk.v2RoutePriceImpactEvidence({amountIn:item.amountIn,hops:state.hops,quotedAmountOut:quotedOut,blockNumber:state.blockNumber});
+        return{expected:BigInt(evidence.spotAmountOutAfterFee),evidence};
+      }
+      const probeOut=await new ethers.Contract(item.dex.adapter,adapterAbi,provider).quoteExactInput(path[0],path.at(-1),probe,plan.routes[index]);return{expected:item.amountIn*probeOut/probe,evidence:null};
     }));
-    return sdk.priceImpactFromExpected(out,expectedParts.reduce((total,part)=>total+part,0n));
+    latestPriceImpactEvidence={method:'split-leg-reconciliation',legs:expectedParts.map(part=>part.evidence).filter(Boolean)};
+    return sdk.priceImpactFromExpected(out,expectedParts.reduce((total,part)=>total+part.expected,0n));
   }
   async function assembleDisplayedProof(plan,value,path,blockNumber){
     const probe=value>1000n?value/1000n:1n,ranked=plan.ranked||await rankedRoutes(value,path,plan.routes,plan.costs);
