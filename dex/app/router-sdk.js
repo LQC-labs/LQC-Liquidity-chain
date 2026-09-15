@@ -62,6 +62,38 @@
     if(!routerAddress)throw new Error('V2 adapter router unavailable');
     return readV2RouteReserves({provider,routerAddress,path,feeBps,ethers});
   }
+  const Q96=1n<<96n,Q192=Q96*Q96,FEE_PIPS=1000000n;
+  function ceilDiv(value,denominator){return(value+denominator-1n)/denominator}
+  function v3ConcentratedLiquidityHopEvidence(input){
+    const{amountIn,sqrtPriceX96,liquidity,zeroForOne,feePips,ticks=[]}=input||{};
+    if(typeof amountIn!=='bigint'||amountIn<=0n||typeof sqrtPriceX96!=='bigint'||sqrtPriceX96<=0n||typeof liquidity!=='bigint'||liquidity<=0n||typeof zeroForOne!=='boolean'||!Number.isInteger(feePips)||feePips<0||feePips>=1000000||!Array.isArray(ticks))throw new Error('Invalid V3 pool state');
+    const ordered=ticks.map(tick=>({sqrtPriceX96:BigInt(tick.sqrtPriceX96),liquidityNet:BigInt(tick.liquidityNet)})).filter(tick=>zeroForOne?tick.sqrtPriceX96<sqrtPriceX96:tick.sqrtPriceX96>sqrtPriceX96).sort((a,b)=>a.sqrtPriceX96===b.sqrtPriceX96?0:(zeroForOne?(a.sqrtPriceX96>b.sqrtPriceX96?-1:1):(a.sqrtPriceX96<b.sqrtPriceX96?-1:1)));
+    const multiplier=FEE_PIPS-BigInt(feePips),netTotal=amountIn*multiplier/FEE_PIPS;
+    let grossRemaining=amountIn,current=sqrtPriceX96,currentLiquidity=liquidity,amountOut=0n,crossedTicks=0;
+    for(const boundary of[...ordered,{sqrtPriceX96:null,liquidityNet:0n}]){
+      if(grossRemaining===0n)break;
+      let netRequired=null;
+      if(boundary.sqrtPriceX96!==null){const target=boundary.sqrtPriceX96;if(target<=0n)throw new Error('Invalid V3 tick state');netRequired=zeroForOne?ceilDiv(currentLiquidity*(current-target)*Q96,current*target):ceilDiv(currentLiquidity*(target-current),Q96)}
+      const grossRequired=netRequired===null?null:ceilDiv(netRequired*FEE_PIPS,multiplier);
+      if(grossRequired!==null&&grossRemaining>=grossRequired){
+        const target=boundary.sqrtPriceX96;amountOut+=zeroForOne?currentLiquidity*(current-target)/Q96:currentLiquidity*(target-current)*Q96/(target*current);grossRemaining-=grossRequired;current=target;currentLiquidity=zeroForOne?currentLiquidity-boundary.liquidityNet:currentLiquidity+boundary.liquidityNet;if(currentLiquidity<=0n)throw new Error('Insufficient V3 liquidity');crossedTicks++;
+      }else{
+        const netIn=grossRemaining*multiplier/FEE_PIPS;if(netIn<=0n)throw new Error('V3 input consumed by fee');const next=zeroForOne?ceilDiv(currentLiquidity*current*Q96,currentLiquidity*Q96+netIn*current):current+netIn*Q96/currentLiquidity;if(next<=0n||next===current)throw new Error('Insufficient V3 liquidity');amountOut+=zeroForOne?currentLiquidity*(current-next)/Q96:currentLiquidity*(next-current)*Q96/(next*current);current=next;grossRemaining=0n;
+      }
+    }
+    if(grossRemaining>0n||amountOut<=0n)throw new Error('Insufficient V3 liquidity');
+    const spotAmountOutAfterFee=zeroForOne?netTotal*sqrtPriceX96*sqrtPriceX96/Q192:netTotal*Q192/(sqrtPriceX96*sqrtPriceX96);if(spotAmountOutAfterFee<=0n)throw new Error('Insufficient V3 liquidity');
+    return Object.freeze({amountIn:amountIn.toString(),amountOut:amountOut.toString(),spotAmountOutAfterFee:spotAmountOutAfterFee.toString(),feePips,zeroForOne,priceImpactBps:priceImpactFromExpected(amountOut,spotAmountOutAfterFee),sqrtPriceX96Before:sqrtPriceX96.toString(),sqrtPriceX96After:current.toString(),liquidityBefore:liquidity.toString(),liquidityAfter:currentLiquidity.toString(),crossedTicks});
+  }
+  function v3RoutePriceImpactEvidence(input){
+    const{amountIn,hops=[],quotedAmountOut,blockNumber}=input||{};if(typeof amountIn!=='bigint'||amountIn<=0n||!Array.isArray(hops)||hops.length<1||hops.length>3||!Number.isSafeInteger(Number(blockNumber))||Number(blockNumber)<0)throw new Error('Invalid V3 route evidence');
+    let running=amountIn,spot=amountIn;const legs=hops.map((hop,index)=>{const evidence=v3ConcentratedLiquidityHopEvidence({...hop,amountIn:running});const spotEvidence=v3ConcentratedLiquidityHopEvidence({...hop,amountIn:spot,ticks:[]});running=BigInt(evidence.amountOut);spot=BigInt(spotEvidence.spotAmountOutAfterFee);return Object.freeze({index,pool:String(hop.pool||'').toLowerCase(),tokenIn:String(hop.tokenIn||'').toLowerCase(),tokenOut:String(hop.tokenOut||'').toLowerCase(),...evidence})});
+    const quoted=quotedAmountOut===undefined?running:BigInt(quotedAmountOut);if(quoted!==running)throw new Error('V3 quote and pool state mismatch');return Object.freeze({method:'v3-tick-concentrated-liquidity',blockNumber:Number(blockNumber),amountIn:amountIn.toString(),amountOut:running.toString(),spotAmountOutAfterFee:spot.toString(),priceImpactBps:priceImpactFromExpected(running,spot),legs:Object.freeze(legs)});
+  }
+  function oracleMarketDeviationEvidence(input){
+    const{actualAmountOut,oracleExpectedOut,oracleId,blockNumber}=input||{};if(typeof actualAmountOut!=='bigint'||actualAmountOut<=0n||typeof oracleExpectedOut!=='bigint'||oracleExpectedOut<=0n||typeof oracleId!=='string'||!oracleId.trim()||!Number.isSafeInteger(Number(blockNumber))||Number(blockNumber)<0)throw new Error('Invalid oracle market reference');
+    const difference=actualAmountOut-oracleExpectedOut,direction=difference===0n?'at-market':difference>0n?'better-than-market':'worse-than-market',deviationBps=Number((difference<0n?-difference:difference)*10000n/oracleExpectedOut);return Object.freeze({method:'oracle-market-deviation',oracleId,blockNumber:Number(blockNumber),actualAmountOut:actualAmountOut.toString(),oracleExpectedOut:oracleExpectedOut.toString(),deviationBps,direction});
+  }
   function estimatedGasWei(dex,gasPriceWei,nativeSwap=false){
     const gasUnits=BigInt(dex?.gasUnits||(nativeSwap?260000:220000));
     if(typeof gasPriceWei!=='bigint'||gasPriceWei<0n)throw new Error('Invalid gas price');
@@ -369,5 +401,5 @@
     if(nativeBalance<requiredNative)throw new Error('insufficient funds: native balance and gas');
     return{sufficient:true,gasCost,requiredNative};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,constantProductHopEvidence,v2RoutePriceImpactEvidence,readV2RouteReserves,readV2AdapterRouteReserves,estimatedGasWei,gasEstimateEvidence,estimateExecutionGas,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,validateExecutionPlanProof,buildExecutionIntent,verifyExecutionIntent,buildIntentBoundSettlementReceipt,verifyIntentBoundSettlementReceipt,buildQuoteApiRequest,validateQuoteApiResponse,recoveryActionForError,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,constantProductHopEvidence,v2RoutePriceImpactEvidence,readV2RouteReserves,readV2AdapterRouteReserves,v3ConcentratedLiquidityHopEvidence,v3RoutePriceImpactEvidence,oracleMarketDeviationEvidence,estimatedGasWei,gasEstimateEvidence,estimateExecutionGas,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,validateExecutionPlanProof,buildExecutionIntent,verifyExecutionIntent,buildIntentBoundSettlementReceipt,verifyIntentBoundSettlementReceipt,buildQuoteApiRequest,validateQuoteApiResponse,recoveryActionForError,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);

@@ -70,6 +70,34 @@ describe("LQC Router browser SDK", function () {
     assert.throws(()=>sdk.v2RoutePriceImpactEvidence({amountIn:1000n,quotedAmountOut:853n,blockNumber:123,hops:[{reserveIn:10000n,reserveOut:20000n,feeBps:30}]}),/mismatch/);
   });
 
+  it("calculates V3 concentrated-liquidity impact and applies initialized tick liquidity",function(){
+    const q96=1n<<96n;
+    const evidence=sdk.v3ConcentratedLiquidityHopEvidence({
+      amountIn:3000n,sqrtPriceX96:q96,liquidity:10000n,zeroForOne:true,feePips:0,
+      ticks:[{sqrtPriceX96:q96*9n/10n,liquidityNet:-5000n}]
+    });
+    assert.equal(evidence.crossedTicks,1);
+    assert.equal(evidence.liquidityAfter,"15000");
+    assert.ok(BigInt(evidence.sqrtPriceX96After)<q96*9n/10n);
+    assert.ok(evidence.priceImpactBps>0);
+  });
+
+  it("recomputes V3 multi-hop evidence and keeps oracle market deviation separate",function(){
+    const q96=1n<<96n;
+    const route=sdk.v3RoutePriceImpactEvidence({amountIn:1000n,blockNumber:456,hops:[
+      {pool:tokenA,tokenIn:tokenA,tokenOut:tokenB,sqrtPriceX96:q96,liquidity:100000n,zeroForOne:true,feePips:2500,ticks:[]},
+      {pool:tokenB,tokenIn:tokenB,tokenOut:tokenC,sqrtPriceX96:q96,liquidity:200000n,zeroForOne:false,feePips:500,ticks:[]}
+    ]});
+    assert.equal(route.method,"v3-tick-concentrated-liquidity");
+    assert.equal(route.legs.length,2);
+    assert.equal(route.legs[1].amountIn,route.legs[0].amountOut);
+    assert.throws(()=>sdk.v3RoutePriceImpactEvidence({amountIn:1000n,quotedAmountOut:1n,blockNumber:456,hops:[{sqrtPriceX96:q96,liquidity:100000n,zeroForOne:true,feePips:2500}]}),/mismatch/);
+    const market=sdk.oracleMarketDeviationEvidence({actualAmountOut:970n,oracleExpectedOut:1000n,oracleId:"chainlink:bnb-usd",blockNumber:456});
+    assert.equal(market.deviationBps,300);
+    assert.equal(market.direction,"worse-than-market");
+    assert.equal(market.method,"oracle-market-deviation");
+  });
+
   it("records conservative multi-RPC gas evidence for the actual execution transaction", async function () {
     const target=tokenB,sender=tokenA,data="0x12345678",seen=[];
     const provider=(gasUnits)=>({estimateGas:async tx=>{seen.push(tx);return gasUnits;}});

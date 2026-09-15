@@ -71,7 +71,9 @@
 - Gate 1: 독립 계약 초안, 권한 강화와 핵심 단위시험 6개 구현.
 - Gate 1.5 진행: 실제 calldata 기반 다중 RPC Gas evidence와 fallback 신뢰도 구분 구현.
 - Gate 1.5 진행: LQC Flow·V2의 factory/pair reserve 기반 constant-product Price Impact, multi-hop·split leg 검산 구현.
-- Gate 1.5 다음 작업: PancakeSwap V3 tick·구간별 liquidity 기반 Price Impact와 Oracle Market Deviation 분리.
+- Gate 1.5 진행: PancakeSwap V3의 `sqrtPriceX96`, 활성 liquidity, 초기화 tick의 `liquidityNet`을 반영한 구간별 Price Impact와 multi-hop 검산 구현.
+- Gate 1.5 진행: Route Price Impact와 Oracle 기준 Market Deviation을 별도 evidence로 분리.
+- Gate 1.5 다음 작업: V3 pool의 실제 `slot0`·tick bitmap 상태 수집기와 신뢰 가능한 Oracle 기준가격 adapter 연결.
 - Gate 2 이후: Gate 1.5 완료 후 Router 2.0 Internal Solver 연결.
 
 ## 의도적으로 후순위인 기능
