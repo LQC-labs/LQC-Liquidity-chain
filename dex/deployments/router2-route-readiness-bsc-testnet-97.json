@@ -4,7 +4,7 @@
     "name": "BSC Testnet",
     "chainId": 97
   },
-  "generatedAt": "2026-09-15T04:37:18.608Z",
+  "generatedAt": "2026-09-15T06:47:00.000Z",
   "pancakeV3Pilot": {
     "status": "ready",
     "pool": "0x4bfbf746a675153e050f5fbc90eaa18d07014c95",
@@ -19,13 +19,13 @@
     }
   },
   "router2": {
-    "status": "two-route-independent-execution-success",
+    "status": "proof-bound-best-route-execution-success",
     "comparableRoutes": 2,
     "missingContracts": [],
     "v3Registered": true,
     "blockers": [],
     "limitations": [
-      "Automatic best-route execution remains pending; only each registered route has been executed independently"
+      "Best Execution Proof and Execution Intent are enforced by the reviewed client and SDK, not verified by the current ExecutionRouter contract on-chain"
     ],
     "executionPhase": {
       "status": "deployed",
@@ -60,7 +60,24 @@
       "amountIn": "10000000000000000000",
       "amountOut": "532721073104236",
       "duplicateExecutionProhibited": true
+    },
+    "proofBoundBestExecution": {
+      "status": "success",
+      "enforcement": "client-and-sdk-bound",
+      "transactionHash": "0xfb5e4b84b75681458b9da22250475dccd4c3e0e7054f5f9d03de762d8273042a",
+      "blockNumber": 131128464,
+      "proofHash": "0x6c63818a21dbc5466b284961a4b3dc6131ee96a29fe15c7af54560b5dc3bdbb7",
+      "intentHash": "0x304924599405b367d3cfc51150ad9b1907401f0be3dd37ed9b080e603682b3ac",
+      "evidenceHash": "0x65a7e54151da403cc7a0c9e9c6221d3d6f54c7d2e7d9488d5ca60b43fa374191",
+      "nonce": 100,
+      "amountIn": "10000000000000000000",
+      "minimumAmountOut": "516674652436055",
+      "actualAmountOut": "521893588319248",
+      "gasUsed": "227192",
+      "residualAllowance": "0",
+      "canonicalReceiptVerified": true,
+      "proofVerifiedOnChain": false
     }
   },
-  "nextSafeStep": "Prepare a read-only automatic best-route execution preflight before any additional swap."
+  "nextSafeStep": "Design and test contract-level proof and intent enforcement offline before any additional automatic-route execution or testnet deployment."
 }
