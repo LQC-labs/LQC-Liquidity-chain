@@ -69,7 +69,9 @@
 
 - Gate 0: 기존 기록상 Router 2.0, Proof, Registry, V3 Adapter와 BSC 테스트넷 실행 기반 존재. 전체 회귀시험으로 재확인 필요.
 - Gate 1: 독립 계약 초안, 권한 강화와 핵심 단위시험 6개 구현.
-- Gate 1.5: 실제 Gas와 DEX별 Price Impact 개선이 다음 필수 작업.
+- Gate 1.5 진행: 실제 calldata 기반 다중 RPC Gas evidence와 fallback 신뢰도 구분 구현.
+- Gate 1.5 진행: LQC Flow·V2의 factory/pair reserve 기반 constant-product Price Impact, multi-hop·split leg 검산 구현.
+- Gate 1.5 다음 작업: PancakeSwap V3 tick·구간별 liquidity 기반 Price Impact와 Oracle Market Deviation 분리.
 - Gate 2 이후: Gate 1.5 완료 후 Router 2.0 Internal Solver 연결.
 
 ## 의도적으로 후순위인 기능
