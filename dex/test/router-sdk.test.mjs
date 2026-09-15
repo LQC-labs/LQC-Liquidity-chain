@@ -49,6 +49,39 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.priceImpactFromExpected(1n, 0n));
   });
 
+  it("records conservative multi-RPC gas evidence for the actual execution transaction", async function () {
+    const target=tokenB,sender=tokenA,data="0x12345678",seen=[];
+    const provider=(gasUnits)=>({estimateGas:async tx=>{seen.push(tx);return gasUnits;}});
+    const evidence=await sdk.estimateExecutionGas({
+      providers:[{source:"canonical",provider:provider(143000n)},{source:"wallet",provider:provider(145000n)}],
+      transaction:{to:target,data,value:7n},sender,fallbackGasUnits:220000n,gasPriceWei:3_000_000_000n,
+      blockNumber:131128464,calldataHash:ethers.keccak256(data)
+    });
+    assert.equal(evidence.method,"eth_estimateGas");
+    assert.equal(evidence.confidence,"high");
+    assert.equal(evidence.gasUnits,"145000");
+    assert.equal(evidence.networkFeeWei,"435000000000000");
+    assert.equal(evidence.sources.length,2);
+    assert.equal(seen.length,2);
+    assert.equal(seen[0].to,target);
+    assert.equal(seen[0].from,sender);
+    assert.equal(seen[0].data,data);
+    assert.equal(seen[0].value,7n);
+  });
+
+  it("labels configured gas as low-confidence fallback only when every RPC estimate fails", async function () {
+    const evidence=await sdk.estimateExecutionGas({
+      providers:[{source:"failed",provider:{estimateGas:async()=>{throw new Error("rpc unavailable");}}}],
+      transaction:{to:tokenB,data:"0x12345678",value:0n},sender:tokenA,fallbackGasUnits:220000n,
+      gasPriceWei:2n,blockNumber:10,calldataHash:ethers.id("calldata")
+    });
+    assert.equal(evidence.method,"configured-fallback");
+    assert.equal(evidence.confidence,"low");
+    assert.equal(evidence.gasUnits,"220000");
+    assert.equal(evidence.networkFeeWei,"440000");
+    assert.equal(evidence.sources.length,0);
+  });
+
   it("summarizes only active split routes as deterministic percentages", function () {
     const dexes = [{ name: "A" }, { name: "B" }, { name: "C" }];
     assert.deepEqual(
