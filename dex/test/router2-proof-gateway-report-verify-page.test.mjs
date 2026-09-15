@@ -9,4 +9,6 @@ describe("Router 2.0 Proof Gateway monitor report verifier page",function(){
   it("requires PASS reports to retain zero residuals and unpaused Risk",function(){assert.match(js,/report\.riskPaused!==false/);assert.match(js,/report\.gatewayBalance!=="0"/);assert.match(js,/report\.routerAllowance!=="0"/);});
   it("recomputes and compares the canonical Report Hash",function(){assert.match(js,/keccak256\(ethers\.toUtf8Bytes\(JSON\.stringify\(core\)\)\)/);assert.match(js,/computed\.toLowerCase\(\)!==report\.reportHash\.toLowerCase\(\)/);});
   it("supports clipboard paste without persisting untrusted input",function(){assert.match(js,/navigator\.clipboard\.readText\(\)/);assert.doesNotMatch(js,/localStorage\.setItem|sessionStorage\.setItem/);});
+  it("separates hash validity from fifteen-minute operational freshness",function(){assert.match(js,/MAX_AGE_MS=15\*60\*1000/);assert.match(js,/age<=MAX_AGE_MS/);assert.match(js,/Report Hash는 일치하지만 15분이 지난 기록입니다/);assert.match(html,/시간 신선도/);});
+  it("rejects reports dated more than five minutes in the future",function(){assert.match(js,/MAX_FUTURE_MS=5\*60\*1000/);assert.match(js,/age < -MAX_FUTURE_MS/);});
 });
