@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "network": { "name": "BSC Testnet", "chainId": 97 },
+  "status": "success",
+  "mode": "OFFCHAIN_PROOF_PREFLIGHT",
+  "quoteBlock": 131113429,
+  "amountIn": "10000000000000000000",
+  "tokenIn": "0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc",
+  "tokenOut": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+  "quotes": {
+    "pancakeV3": "9954594000000",
+    "lqcFlow": "521893588000000",
+    "displayPrecision": 12
+  },
+  "selectedCandidate": "LQC_FLOW",
+  "minimumAmountOut": "516674652000000",
+  "slippageBps": 100,
+  "transactionOccurred": false,
+  "evidence": "TokenPocket read-only corrected preflight using the official PancakeSwap V3 Quoter and LQC Flow adapter"
+}
