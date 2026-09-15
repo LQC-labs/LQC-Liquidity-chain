@@ -39,5 +39,23 @@
     }
   ],
   "status": "deployment-prepared-no-transaction",
-  "safety": "BSC Testnet only. Reuses the already smoke-tested LQC Flow Router and pool. Does not replace Pancake V3, alter token liquidity, or execute a swap."
+  "safety": "BSC Testnet only. Reuses the already smoke-tested LQC Flow Router and pool. Does not replace Pancake V3, alter token liquidity, or execute a swap.",
+  "comparisonEvidence": {
+    "status": "success",
+    "adapter": "0x14db750acf95b469aba3e74032e6db61087ef4cd",
+    "registry": {
+      "status": "enabled",
+      "priority": 100
+    },
+    "amountIn": "10000000000000000000",
+    "quotes": {
+      "lqcFlow": "532721073104236",
+      "pancakeV3": "9954593766288",
+      "tokenOut": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd"
+    },
+    "preferredQuote": "LQC_FLOW",
+    "callMethod": "eth_call",
+    "transactionOccurred": false,
+    "evidence": "TokenPocket chain-97 Adapter/Registry verification and read-only two-route quote comparison"
+  }
 }
