@@ -113,7 +113,10 @@ describe("LQC Gate 2 same-chain intent hub", function () {
       await owner.getAddress()
     );
     await hub.waitForDeployment();
-    await (await hub.setSolver(await owner.getAddress(), true)).wait();
+    await (await hub.scheduleSolver(await owner.getAddress())).wait();
+    await provider.send("evm_increaseTime", [24 * 60 * 60]);
+    await provider.send("evm_mine", []);
+    await (await hub.activateSolver(await owner.getAddress())).wait();
 
     const liquidity = ethers.parseEther("10000");
     await (await tokenA.mint(await owner.getAddress(), liquidity)).wait();
@@ -285,6 +288,77 @@ describe("LQC Gate 2 same-chain intent hub", function () {
     assert.equal((await hub.intents(intentId)).status, 1n);
     assert.equal(await tokenA.balanceOf(await hub.getAddress()), amount);
     assert.equal(await tokenA.allowance(await hub.getAddress(), await router.getAddress()), 0n);
+  });
+
+  it("pauses new locks and execution while preserving owner refunds", async () => {
+    const { intentId, amount, request, candidates } = await lock();
+    await (await hub.setGuardian(await outsider.getAddress())).wait();
+    await (await hub.connect(outsider).pauseExecution()).wait();
+    assert.equal(await hub.executionPaused(), true);
+
+    await assert.rejects(async () => {
+      const tx = await hub.executeProvenIntent(intentId, request, candidates, [routeData], 0);
+      await tx.wait();
+    });
+    const block = await provider.getBlock("latest");
+    await assert.rejects(async () => {
+      const tx = await hub.lockIntent(
+        await tokenA.getAddress(),
+        await tokenB.getAddress(),
+        1n,
+        1n,
+        await owner.getAddress(),
+        block.timestamp + 300
+      );
+      await tx.wait();
+    });
+
+    const before = await tokenA.balanceOf(await owner.getAddress());
+    await (await hub.cancelIntent(intentId)).wait();
+    assert.equal(await tokenA.balanceOf(await owner.getAddress()), before + amount);
+    assert.equal((await hub.intents(intentId)).status, 3n);
+
+    await assert.rejects(async () => {
+      const tx = await hub.connect(outsider).resumeExecution();
+      await tx.wait();
+    });
+    await (await hub.resumeExecution()).wait();
+    assert.equal(await hub.executionPaused(), false);
+  });
+
+  it("delays solver activation and lets the guardian revoke immediately", async () => {
+    const solver = await outsider.getAddress();
+    await (await hub.scheduleSolver(solver)).wait();
+
+    await assert.rejects(async () => {
+      const tx = await hub.activateSolver(solver);
+      await tx.wait();
+    });
+    await provider.send("evm_increaseTime", [24 * 60 * 60]);
+    await provider.send("evm_mine", []);
+    await (await hub.connect(outsider).activateSolver(solver)).wait();
+    assert.equal(await hub.authorizedSolver(solver), true);
+
+    await (await hub.setGuardian(solver)).wait();
+    await (await hub.connect(outsider).revokeSolver(solver)).wait();
+    assert.equal(await hub.authorizedSolver(solver), false);
+    assert.equal(await hub.solverActivationTime(solver), 0n);
+  });
+
+  it("uses nomination and explicit acceptance for admin transfer", async () => {
+    const newAdmin = await outsider.getAddress();
+    await (await hub.proposeAdmin(newAdmin)).wait();
+    assert.equal(await hub.admin(), await owner.getAddress());
+    assert.equal(await hub.pendingAdmin(), newAdmin);
+
+    await (await hub.connect(outsider).acceptAdmin()).wait();
+    assert.equal(await hub.admin(), newAdmin);
+    assert.equal(await hub.pendingAdmin(), ethers.ZeroAddress);
+
+    await assert.rejects(async () => {
+      const tx = await hub.scheduleSolver(await owner.getAddress());
+      await tx.wait();
+    });
   });
 
   async function signedIntentFixture(nonce = 77n) {
