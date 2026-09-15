@@ -15,7 +15,8 @@
 | --- | --- | --- |
 | 0 기준점 | 기존 Router·배포·테스트 보존 | 전체 기존 테스트 통과, 배포 JSON 무변경 |
 | 1 Core Intent | IntentHub, SourceEscrow, EIP-712, nonce, deadline | 서명·replay·취소·만료·환불 테스트 통과 |
-| 2 Internal Solver | Router 2.0을 첫 Solver로 연결 | Same-chain Intent 1회 원자적 실행, Receipt 검증 |
+| 1.5 Execution Quality | 실제 Gas, DEX별 Price Impact, 독립 Quote 재검증 | 실제 calldata `eth_estimateGas`, V2·V3·multi-hop·split 검증, fallback 표시 |
+| 2 Internal Solver | Router 2.0을 첫 Solver로 연결 | Same-chain Intent 1회 원자적 실행, 실제 Gas·Price Impact가 결합된 Receipt 검증 |
 | 3 Quote Competition | QuoteManager, 서명 Quote, 2개 이상 mock Solver | 최고 유효 위험조정 Quote 결정론적 선택 |
 | 4 Solver Risk | Registry, 혼합 Bond, exposure, 인출 지연 | Bond 이하 노출, challenge 중 인출 차단 |
 | 5 Best Execution | Proof 고도화, 공개 verifier | 비교 후보·선택 결과·실수령액 재검증 |
@@ -25,11 +26,51 @@
 | 9 Hardening | MEV·reorg·oracle·bridge 장애 시험 | Critical attack matrix와 회귀시험 통과 |
 | 10 Mainnet Gate | 외부감사, bug bounty, caps | Critical·High 해결 후 제한형 활성화 |
 
+## 필수 실행 품질 기준
+
+### 실제 Gas Estimation
+
+- 실제 선택 Route, calldata, Router 주소와 wallet sender로 `eth_estimateGas`를 실행한다.
+- 현재 gas price를 적용하고 Gas 비용을 output token 단위로 환산한다.
+- 가능하면 복수 RPC 결과를 비교하고 편차가 한도를 넘으면 해당 Quote를 제외한다.
+- 고정 gasUnits는 RPC 실패 시 보수적 fallback으로만 사용한다.
+- UI와 Receipt에는 `estimated`, `fallback`, `confidence`를 구분해 기록한다.
+
+### DEX별 Price Impact
+
+- LQC Flow와 V2는 reserve와 AMM 수식으로 계산한다.
+- V3는 현재 tick, fee tier와 구간별 liquidity를 반영한다.
+- Multi-hop은 hop별 영향을 순차 계산하고 Split은 leg별 결과를 합산한다.
+- 단일 probe 비율은 참고값 또는 fallback으로만 사용한다.
+- Route Price Impact와 Oracle 기준 Market Deviation을 별도 항목으로 기록한다.
+
+### Solver와 Settlement 안전성
+
+- Solver 제출 Gas·Fee·Price Impact를 그대로 신뢰하지 않고 LQC가 독립 재계산한다.
+- 초기 선택은 최소수령량, allowlist, Bond, exposure, deadline을 통과한 후보 중 검증된 순수령액 최대값으로 한다.
+- 목적지 Recipient·Token·Amount·Transaction·Finality 검증 전에는 SourceEscrow를 상환하지 않는다.
+- Bond는 LQC와 승인 Stablecoin 혼합 구조로 구성하고 Oracle haircut을 적용한다.
+- Bridge별 거래·일일·Token·Chain 한도와 자동 circuit breaker를 적용한다.
+- 공개 Intent의 MEV 대응은 짧은 Quote 유효시간과 서명 Quote를 먼저 적용하고 이후 private flow와 commit-reveal로 확장한다.
+
+## 출시 차단 조건
+
+다음 중 하나라도 충족하지 못하면 Cross-chain Mainnet을 활성화하지 않는다.
+
+- 실제 Gas 계산과 계산 출처 표시
+- DEX 유형별 Price Impact 검증
+- 목적지 지급과 finality 검증
+- 검증 전 Solver 상환 차단
+- 혼합 Bond와 미정산 exposure 한도
+- Bridge 장애·reorg·MEV·Oracle 조작 회귀시험
+- 독립감사 Critical·High 해결
+
 ## 현재 진행 상태
 
 - Gate 0: 기존 기록상 Router 2.0, Proof, Registry, V3 Adapter와 BSC 테스트넷 실행 기반 존재. 전체 회귀시험으로 재확인 필요.
-- Gate 1: 독립 계약 초안과 핵심 단위시험 구현.
-- Gate 2 이후: Gate 1 회귀시험 완료 후 진행.
+- Gate 1: 독립 계약 초안, 권한 강화와 핵심 단위시험 6개 구현.
+- Gate 1.5: 실제 Gas와 DEX별 Price Impact 개선이 다음 필수 작업.
+- Gate 2 이후: Gate 1.5 완료 후 Router 2.0 Internal Solver 연결.
 
 ## 의도적으로 후순위인 기능
 
@@ -40,4 +81,3 @@
 - 다중 Bridge Cross-chain split
 - DAO에 의한 즉시 파라미터 변경
 - 무기한계약과 Cross-chain Intent 결합
-
