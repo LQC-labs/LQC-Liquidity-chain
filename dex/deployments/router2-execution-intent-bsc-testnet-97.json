@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "network": "bsc-testnet",
+  "chainId": 97,
+  "recordedAt": "2026-09-15T05:23:00.000Z",
+  "mode": "read-only-execution-intent",
+  "selectedRoute": "LQC_FLOW",
+  "sender": "0x7cf23bb16ed0e1eaf58cd31c9f5a643be438c6ab",
+  "target": "0x2e0a7f59ca65ed36977add5e71b8b64ba38d939f",
+  "nonce": 99,
+  "proofHash": "0xcb98975352882c2e54ecc86ba63137c01e4ff39e51925aa1b78578495e7f6614",
+  "intentHash": "0x37f3f63e16d9af434d72dc1ceb815135491f137021a18bbb5d7a00a0e861d785",
+  "expiresAt": "2026-09-15T05:27:29.000Z",
+  "transactionSent": false,
+  "signatureRequested": false,
+  "selfVerificationPassed": true
+}
