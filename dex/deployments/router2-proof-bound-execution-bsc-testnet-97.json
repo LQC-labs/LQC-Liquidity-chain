@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "network": "bsc-testnet",
+  "chainId": 97,
+  "mode": "client-proof-bound-single-route-execution",
+  "status": "success",
+  "recordedAt": "2026-09-15T06:47:00.000Z",
+  "transaction": {
+    "hash": "0xfb5e4b84b75681458b9da22250475dccd4c3e0e7054f5f9d03de762d8273042a",
+    "blockNumber": 131128464,
+    "blockHash": "0x9db2e79532f30f2e6443cce31cddccf6c2a561ef1c6d4f9b901677e1fc8e36e6",
+    "settledAt": "2026-09-15T06:41:09.000Z",
+    "status": 1,
+    "nonce": 100,
+    "gasUsed": "227192",
+    "sender": "0x7cf23bb16ed0e1eaf58cd31c9f5a643be438c6ab",
+    "target": "0x2e0a7f59ca65ed36977add5e71b8b64ba38d939f",
+    "value": "0"
+  },
+  "route": {
+    "name": "LQC_FLOW",
+    "dexId": "0x7d3375921fc0a5becb9b20cbfdcf03440befc5113d864e8522b8465ca68b8014",
+    "tokenIn": "0x84a30a66cfcbb15453c83204b7e6ec436a0718fc",
+    "tokenOut": "0xae13d989dac2f0debff460ac112a837c89baa7cd",
+    "amountIn": "10000000000000000000",
+    "minimumAmountOut": "516674652436055",
+    "actualAmountOut": "521893588319248",
+    "minimumSatisfied": true
+  },
+  "binding": {
+    "proofHash": "0x6c63818a21dbc5466b284961a4b3dc6131ee96a29fe15c7af54560b5dc3bdbb7",
+    "intentHash": "0x304924599405b367d3cfc51150ad9b1907401f0be3dd37ed9b080e603682b3ac",
+    "evidenceHash": "0x65a7e54151da403cc7a0c9e9c6221d3d6f54c7d2e7d9488d5ca60b43fa374191",
+    "proofSelfVerified": true,
+    "intentSelfVerified": true,
+    "canonicalReceiptVerified": true,
+    "confirmationsObserved": 768
+  },
+  "postExecution": {
+    "userAllowance": "0",
+    "wbnbIncreaseVerified": true,
+    "duplicateExecutionProhibited": true
+  },
+  "scope": {
+    "proofEnforcement": "client-and-sdk-bound",
+    "proofVerifiedOnChain": false,
+    "note": "The current ExecutionRouter executes the committed calldata but does not verify proofHash or intentHash on-chain."
+  }
+}
