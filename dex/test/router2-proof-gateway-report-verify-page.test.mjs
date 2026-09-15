@@ -3,7 +3,7 @@ import fs from "node:fs";
 
 describe("Router 2.0 Proof Gateway monitor report verifier page",function(){
   const js=fs.readFileSync(new URL("../app/router2-proof-gateway-report-verify-testnet.js",import.meta.url),"utf8"),html=fs.readFileSync(new URL("../app/router2-proof-gateway-report-verify-testnet.html",import.meta.url),"utf8");
-  it("is wallet-free and read-only",function(){assert.match(html,/지갑을 연결하지 않고/);assert.doesNotMatch(js,/window\.ethereum|eth_requestAccounts|eth_sendTransaction|\.approve\(/);});
+  it("never requests an account and remains read-only",function(){assert.match(html,/계정 연결 요청 없이/);assert.doesNotMatch(js,/eth_requestAccounts|eth_sendTransaction|\.approve\(|getSigner\(/);});
   it("accepts only the exact PASS and FAIL schemas",function(){assert.match(js,/function exactKeys\(value,keys\)/);assert.match(js,/report\.status==="PASS"/);assert.match(js,/report\.status==="FAIL"/);assert.match(js,/LQC_PROOF_GATEWAY_MONITOR_V1/);});
   it("strictly validates addresses hashes integers and text",function(){assert.match(js,/ADDRESS\.test\(value\)/);assert.match(js,/HASH\.test\(value\)/);assert.match(js,/Number\.isSafeInteger/);assert.match(js,/value\.length>500/);});
   it("requires PASS reports to retain zero residuals and unpaused Risk",function(){assert.match(js,/report\.riskPaused!==false/);assert.match(js,/report\.gatewayBalance!=="0"/);assert.match(js,/report\.routerAllowance!=="0"/);});
@@ -13,4 +13,7 @@ describe("Router 2.0 Proof Gateway monitor report verifier page",function(){
   it("rejects reports dated more than five minutes in the future",function(){assert.match(js,/MAX_FUTURE_MS=5\*60\*1000/);assert.match(js,/age < -MAX_FUTURE_MS/);});
   it("pins PASS reports to the reviewed Router and LQC Flow Adapter",function(){assert.match(js,/ROUTER="0x2e0a7f59ca65ed36977add5e71b8b64ba38d939f"/);assert.match(js,/ADAPTER="0x14db750acf95b469aba3e74032e6db61087ef4cd"/);assert.match(js,/report\.executionRouter\.toLowerCase\(\)!==ROUTER/);});
   it("recomputes the block-bound Snapshot Hash from every safety field",function(){assert.match(js,/function verifyPassBindings\(report\)/);assert.match(js,/solidityPackedKeccak256/);assert.match(js,/BigInt\(report\.gatewayBalance\)/);assert.match(js,/computed\.toLowerCase\(\)!==report\.snapshotHash\.toLowerCase\(\)/);});
+  it("requires a locally verified PASS report before live checking",function(){assert.match(js,/let verifiedReport=null/);assert.match(js,/report\?\.status!=="PASS"/);assert.match(js,/먼저 PASS 운영점검 JSON/);});
+  it("checks live runtime hashes immutable bindings and current safety state",function(){assert.match(js,/PROOF_RUNTIME_HASH/);assert.match(js,/GATEWAY_RUNTIME_HASH/);assert.match(js,/gateway\.proofVerifier\(\)/);assert.match(js,/registry\.getDex\(FLOW\)/);assert.match(js,/risk\.paused\(\)/);assert.match(js,/token\.allowance\(report\.proofGateway,ROUTER\)/);});
+  it("checks the last nonzero proof remains consumed without sending a transaction",function(){assert.match(js,/report\.lastProof!==ethers\.ZeroHash/);assert.match(js,/gateway\.consumedProof\(report\.lastProof\)/);assert.match(html,/현재 온체인 교차검증/);});
 });
