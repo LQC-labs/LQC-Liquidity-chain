@@ -61,6 +61,14 @@ LQC의 공개 차별화 기능은 선택 결과를 재현할 수 있는 Executio
 
 Route 탐색과 점수 계산은 오프체인에서 수행하되 Solver Quote는 서명하고 선택 결과의 commitment를 온체인에 기록한다. 누구나 동일 입력과 공개 규칙으로 결과를 다시 계산할 수 있어야 한다.
 
+### 5.1 Gas 증명 기준
+
+Gas 비용은 고정 gasUnits를 정상값으로 사용하지 않는다. 선택된 실제 Router, calldata, sender와 Route를 사용한 `eth_estimateGas` 결과를 기본값으로 하며, 고정값은 RPC 장애 시 보수적 fallback으로만 사용한다. Receipt는 계산 방식, 기준 block, gas price, output token 환산값과 confidence를 포함한다.
+
+### 5.2 Price Impact 증명 기준
+
+Price Impact는 단일 probe 비율만으로 확정하지 않는다. V2·LQC Flow는 reserve 기반, V3는 tick·fee tier·구간별 liquidity 기반, multi-hop과 split은 각 hop·leg 기반으로 계산한다. 거래 자체의 Route Price Impact와 외부 Oracle 기준 Market Deviation은 분리해 공개한다.
+
 ## 6. 위험조정형 선택
 
 초기 선택 규칙은 복잡한 학습 모델 대신 결정론적 필터를 사용한다.
@@ -71,6 +79,8 @@ Route 탐색과 점수 계산은 오프체인에서 수행하되 Solver Quote는
 4. Quote와 deadline 유효성 확인
 5. 한도 통과 후보 중 위험조정 순수령액 최대 선택
 6. 동률이면 성공률, latency, priority 순서 적용
+
+Solver가 제출한 Gas, Bridge Fee, Price Impact와 성공확률은 자기신고만으로 채택하지 않는다. LQC가 독립적으로 재계산하거나 검증 가능한 Adapter·과거 실행 기록에서 산출한다.
 
 사용자 모드는 Maximum Output, Balanced, Safest Route로 구분하되 각 모드의 가중치와 제외 기준을 공개한다.
 
@@ -84,7 +94,17 @@ Available Capacity = Risk Adjusted Bond - Unsettled Exposure - Safety Reserve
 
 Challenge 중에는 Bond 인출을 금지한다. 허위 증명, 이중 정산, 무단 실행과 확정된 악의적 실패만 Slash 대상으로 삼고 일반 네트워크 지연은 별도 실패 지표로 처리한다.
 
-## 8. Phase 1 제한사항
+Bond는 미정산 exposure를 실질적으로 담보해야 한다. LQC 가격 변동에 따른 담보 약화를 줄이기 위해 승인 Stablecoin을 함께 예치하고 자산별 Oracle haircut과 safety reserve를 적용한다.
+
+## 8. 외부 인프라와 MEV 위험 제한
+
+- Bridge별 maxAmount, dailyLimit, supportedChains, supportedTokens와 riskScore를 적용한다.
+- 특정 Bridge·Solver에 미정산 노출이 집중되지 않도록 exposure cap을 둔다.
+- Bridge 장애, 목적지 지연, reorg 또는 Oracle 이상 시 해당 Chain·Token·Adapter만 부분 중지한다.
+- 초기 MEV 방어는 Solver 서명 Quote, 짧은 유효시간, winning Solver binding과 실행 직전 재검증으로 구성한다.
+- 거래 규모가 커지면 private order flow, encrypted intent 또는 commit-reveal을 단계적으로 추가한다.
+
+## 9. Phase 1 제한사항
 
 현재 `LQCIntentHub`의 settler 역할은 BSC 테스트넷 bootstrap 전용이다. 이는 Cross-chain execution proof를 대체하지 않으며 메인넷 신뢰 최소화 완료를 의미하지 않는다. 다음 조건 전에는 실제 자금 메인넷을 활성화하지 않는다.
 
@@ -94,10 +114,11 @@ Challenge 중에는 Bond 인출을 금지한다. 허위 증명, 이중 정산, �
 - 경제 공격 및 Bridge 장애 시뮬레이션
 - 독립 보안감사에서 Critical과 High 해결
 - Multisig, Timelock, Guardian 권한 분리
+- 실제 calldata 기반 Gas Estimation과 DEX별 Price Impact 검증
+- 목적지 지급 finality 확인 전 Solver 상환 차단
 
-## 9. 최종 포지셔닝
+## 10. 최종 포지셔닝
 
 LQC는 Bridge가 아니라 여러 유동성 공급원과 실행자를 연결하는 검증 가능한 위험조정형 DeFi 실행 계층이다.
 
 > LQC is a verifiable, risk-aware liquidity and execution layer for DeFi.
-
