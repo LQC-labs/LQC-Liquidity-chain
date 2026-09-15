@@ -98,6 +98,33 @@ describe("LQC Router browser SDK", function () {
     assert.equal(market.method,"oracle-market-deviation");
   });
 
+  it("decodes bounded V3 bitmap words and converts canonical ticks without floating point",function(){
+    const q96=1n<<96n;
+    assert.equal(sdk.tickToSqrtPriceX96(0),q96);
+    assert.ok(sdk.tickToSqrtPriceX96(-1)<q96);
+    assert.ok(sdk.tickToSqrtPriceX96(1)>q96);
+    assert.deepEqual(Array.from(sdk.initializedTicksFromBitmapWords({words:[{wordPosition:0,bitmap:5n}],tickSpacing:10,currentTick:25,zeroForOne:true})),[20,0]);
+    assert.deepEqual(Array.from(sdk.initializedTicksFromBitmapWords({words:[{wordPosition:0,bitmap:5n}],tickSpacing:10,currentTick:0,zeroForOne:false})),[20]);
+    assert.throws(()=>sdk.initializedTicksFromBitmapWords({words:[{wordPosition:0,bitmap:7n}],tickSpacing:1,currentTick:4,zeroForOne:true,maxInitializedTicks:2}),/limit exceeded/);
+  });
+
+  it("reads one block-pinned V3 slot0, liquidity and initialized tick state",async function(){
+    const q96=1n<<96n,calls=[];
+    class MockPool{
+      token0(at){calls.push(at);return tokenA} token1(){return tokenB} fee(){return 2500n} tickSpacing(){return 1n} liquidity(){return 100000n} slot0(){return[q96,1n]}
+      tickBitmap(position){return position===0?1n:position===-1?(1n<<255n):0n}
+      ticks(tick){return[1000n,tick===0?100n:-50n,0n,0n,0n,0n,0n,true]}
+    }
+    const mockEthers={...ethers,Contract:MockPool};
+    const state=await sdk.readV3PoolState({provider:{getBlockNumber:async()=>789},poolAddress:tokenC,tokenIn:tokenA,tokenOut:tokenB,ethers:mockEthers,maxTickWords:2});
+    assert.equal(state.method,"v3-slot0-tick-bitmap");
+    assert.equal(state.blockNumber,789);
+    assert.equal(state.feePips,2500);
+    assert.equal(state.zeroForOne,true);
+    assert.deepEqual(Array.from(state.ticks,item=>item.tick),[0,-1]);
+    assert.ok(calls.every(item=>item.blockTag===789));
+  });
+
   it("records conservative multi-RPC gas evidence for the actual execution transaction", async function () {
     const target=tokenB,sender=tokenA,data="0x12345678",seen=[];
     const provider=(gasUnits)=>({estimateGas:async tx=>{seen.push(tx);return gasUnits;}});
