@@ -19,7 +19,7 @@
   }
   function newCycle(){
     const readiness=read(KEYS.readiness),execution=read(KEYS.execution),executionFinal=read(KEYS.executionFinal);if(!execution?.transactionHash||!executionFinal?.evidenceHash){document.getElementById("status").textContent="최종검증까지 완료된 거래만 새 주기로 전환할 수 있습니다.";return;}if(!confirm("완료된 거래 증거를 기록함에 보관하고 새 10 tLQC 테스트 거래를 준비할까요?"))return;
-    const history=read(HISTORY_KEY)||[];history.push({archivedAt:Date.now(),transactionHash:execution.transactionHash,readiness,execution,executionFinal});localStorage.setItem(HISTORY_KEY,JSON.stringify(history.slice(-MAX_HISTORY)));for(const key of [KEYS.readiness,KEYS.execution,KEYS.executionFinal])localStorage.removeItem(key);refresh();document.getElementById("status").textContent="이전 거래 증거를 보관했습니다. 4단계에서 새 견적과 새 Proof를 만드세요.";
+    if(!window.ethers){document.getElementById("status").textContent="이력 봉인 라이브러리를 불러오지 못했습니다. 기록을 변경하지 않았습니다.";return;}const history=read(HISTORY_KEY)||[],core={format:"LQC_PROOF_GATEWAY_EXECUTION_ARCHIVE_V1",archivedAt:Date.now(),transactionHash:execution.transactionHash,readiness,execution,executionFinal},archiveHash=ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(core)));history.push({...core,archiveHash});localStorage.setItem(HISTORY_KEY,JSON.stringify(history.slice(-MAX_HISTORY)));for(const key of [KEYS.readiness,KEYS.execution,KEYS.executionFinal])localStorage.removeItem(key);refresh();document.getElementById("status").textContent="이전 거래 증거를 Hash로 봉인해 보관했습니다. 4단계에서 새 견적과 새 Proof를 만드세요.";
   }
   document.getElementById("refresh").addEventListener("click",refresh);document.getElementById("newCycle").addEventListener("click",newCycle);window.addEventListener("pageshow",refresh);refresh();
 })();
