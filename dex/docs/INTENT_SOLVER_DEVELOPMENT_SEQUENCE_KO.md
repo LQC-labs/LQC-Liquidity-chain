@@ -86,7 +86,9 @@
 - Gate 3 완료: 선택 `quoteHash`와 `routeHash`를 Intent 상태에 저장하고 `SameChainIntentExecuted` 이벤트 및 v2 Same-chain Receipt에 포함. canonical verifier가 변경된 이벤트 ABI와 Quote hash를 독립 검증.
 - Gate 4 완료: 임시 owner allowlist를 `LQCSolverRegistry`로 교체. 최소 ERC-20 Bond, Solver별 누적 exposure limit, Intent별 exposure 추적, 7일 인출 지연, live exposure 중 인출 차단, guardian pause를 구현.
 - Gate 4 완료: QuoteManager는 Registry 적격성을 조회하고 Hub는 동일 Registry인지 확인한 뒤 실행 전 exposure를 열고 성공 후 닫음. 실패 시 전체 트랜잭션과 exposure가 함께 rollback.
-- Gate 4 다음 작업: challenge/slash 사유와 증거 형식을 정의하고 Bond haircut 및 인출 대기 중 slash를 구현.
+- Gate 4 완료: `NON_DELIVERY`, `BELOW_MINIMUM`, `INVALID_ROUTE`, `FRAUDULENT_RECEIPT` challenge 사유와 7일 증거 제출 창을 정의. 증거 ID는 `keccak256(intentHash, solver, challenger, reason, canonicalProofHash)`로 challenger에 결합하여 proof 복사 선점을 차단.
+- Gate 4 완료: 설정 가능한 resolver가 challenge를 판정하고 최대 100% Bond haircut을 적용. 미해결 challenge는 인출을 차단하며 이미 대기 중인 인출액도 slash 후 잔여 Bond 이하로 축소. 기각된 challenge bond는 slash recipient로 귀속.
+- Gate 5 다음 작업: actual Gas·Price Impact·Oracle Deviation·canonical Receipt를 입력으로 받는 공개 ExecutionVerifier와 challenge 자동 판정 경로를 구현.
 
 ## 의도적으로 후순위인 기능
 
