@@ -82,7 +82,9 @@
 - Gate 2 테스트넷 활성화는 별도 배포 승인 이후 수행하며 기존 배포 주소는 현재 변경하지 않음.
 - Gate 3 진행: `LQCQuoteManager`와 최대 120초 EIP-712 Solver Quote 구현. Intent·Solver·DEX·Route hash·수령량·Solver fee·Gas cost·발행시각·nonce를 서명에 결합.
 - Gate 3 진행: 2개 이상 16개 이하 Solver 후보에서 검증된 순수령액 최대 Quote를 선택하고 동률은 Quote hash로 결정론적 처리. 위조·비활성·만료 후보는 격리하고 중복 Solver는 차단.
-- Gate 3 다음 작업: 선택된 Quote hash를 `LQCIntentHub.executeSameChainIntent`와 실행 Receipt에 결합하여 견적 교체·route substitution을 차단.
+- Gate 3 완료: `LQCIntentHub.executeSameChainIntent`가 허용된 Solver의 EIP-712 Quote를 `LQCQuoteManager`에서 다시 검증하고, 서명된 DEX·route hash·수령량·만료를 실제 실행 입력과 결합. Quote/DEX/route 치환 시 Escrow release 전에 revert.
+- Gate 3 완료: 선택 `quoteHash`와 `routeHash`를 Intent 상태에 저장하고 `SameChainIntentExecuted` 이벤트 및 v2 Same-chain Receipt에 포함. canonical verifier가 변경된 이벤트 ABI와 Quote hash를 독립 검증.
+- Gate 4 다음 작업: 임시 owner allowlist를 Bond·노출 한도·인출 지연을 갖는 `SolverRegistry`로 교체.
 
 ## 의도적으로 후순위인 기능
 

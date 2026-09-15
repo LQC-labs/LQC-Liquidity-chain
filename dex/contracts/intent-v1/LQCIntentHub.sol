@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {LQCIntentTypes} from "./LQCIntentTypes.sol";
 import {LQCSourceEscrow} from "./LQCSourceEscrow.sol";
+import {LQCQuoteManager} from "./LQCQuoteManager.sol";
 
 interface ILQCInternalSolverExecution {
     function intentHub() external view returns (address);
@@ -42,6 +43,7 @@ contract LQCIntentHub {
     address public guardian;
     address public internalSolver;
     address public pendingInternalSolver;
+    LQCQuoteManager public quoteManager;
     bool public paused;
     LQCSourceEscrow public immutable sourceEscrow;
     uint256 private unlocked = 1;
@@ -60,6 +62,8 @@ contract LQCIntentHub {
         uint256 actualAmountOut;
         bytes32 destinationTxHash;
         bytes32 executionHash;
+        bytes32 quoteHash;
+        bytes32 routeHash;
     }
 
     mapping(bytes32 intentHash => IntentRecord) private records;
@@ -83,10 +87,12 @@ contract LQCIntentHub {
     event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
     event InternalSolverTransferStarted(address indexed currentSolver, address indexed pendingSolver);
     event InternalSolverUpdated(address indexed previousSolver, address indexed newSolver);
+    event QuoteManagerUpdated(address indexed previousManager, address indexed newManager);
     event SameChainIntentExecuted(
         bytes32 indexed intentHash,
         address indexed solver,
         bytes32 indexed dexId,
+        bytes32 quoteHash,
         bytes32 executionHash,
         uint256 actualAmountOut
     );
@@ -167,7 +173,9 @@ contract LQCIntentHub {
             solver: address(0),
             actualAmountOut: 0,
             destinationTxHash: bytes32(0),
-            executionHash: bytes32(0)
+            executionHash: bytes32(0),
+            quoteHash: bytes32(0),
+            routeHash: bytes32(0)
         });
         sourceEscrow.lockFrom(intentHash, intent.user, intent.sourceToken, intent.sourceAmount);
 
@@ -228,7 +236,12 @@ contract LQCIntentHub {
 
     /// @notice Gate-2 same-chain execution through the permissioned Router 2.0 Internal Solver.
     /// @dev Escrow release, Router execution and the final status update share one transaction.
-    function executeSameChainIntent(bytes32 intentHash, bytes32 dexId, bytes calldata routeData)
+    function executeSameChainIntent(
+        bytes32 intentHash,
+        LQCQuoteManager.SolverQuote calldata quote,
+        bytes calldata quoteSignature,
+        bytes calldata routeData
+    )
         external
         onlySettler
         nonReentrant
@@ -236,34 +249,50 @@ contract LQCIntentHub {
     {
         if (paused) revert Paused();
         address solver = internalSolver;
-        if (solver == address(0) || dexId == bytes32(0)) revert InvalidIntent();
+        LQCQuoteManager manager = quoteManager;
+        if (solver == address(0) || address(manager) == address(0)) revert InvalidIntent();
         IntentRecord storage record = records[intentHash];
         if (record.status != LQCIntentTypes.IntentStatus.OPEN) revert InvalidStatus();
         if (record.destinationChainId != block.chainid) revert InvalidIntent();
         if (block.timestamp > record.deadline) revert Expired();
 
+        bytes32 routeHash = keccak256(routeData);
+        if (quote.solver == address(0) || quote.dexId == bytes32(0) || quote.routeHash != routeHash) revert InvalidIntent();
+        (bytes32 quoteHash, uint256 quotedNetAmountOut) =
+            manager.verifyQuote(intentHash, record.minAmountOut, quote, quoteSignature);
+        if (quotedNetAmountOut < record.minAmountOut || quote.deadline > record.deadline) revert InsufficientOutput();
+
         sourceEscrow.release(intentHash, solver);
         actualAmountOut = ILQCInternalSolverExecution(solver).executeExactInput(
             intentHash,
-            dexId,
+            quote.dexId,
             record.sourceToken,
             record.destinationToken,
             record.sourceAmount,
-            record.minAmountOut,
+            quote.amountOut,
             record.recipient,
             record.deadline,
             routeData
         );
         if (actualAmountOut < record.minAmountOut) revert InsufficientOutput();
 
-        bytes32 executionHash = keccak256(
-            abi.encode(intentHash, solver, block.chainid, dexId, keccak256(routeData), actualAmountOut)
-        );
+        bytes32 executionHash =
+            keccak256(abi.encode(intentHash, quote.solver, solver, block.chainid, quote.dexId, quoteHash, routeHash, actualAmountOut));
         record.status = LQCIntentTypes.IntentStatus.EXECUTED;
-        record.solver = solver;
+        record.solver = quote.solver;
         record.actualAmountOut = actualAmountOut;
         record.executionHash = executionHash;
-        emit SameChainIntentExecuted(intentHash, solver, dexId, executionHash, actualAmountOut);
+        record.quoteHash = quoteHash;
+        record.routeHash = routeHash;
+        emit SameChainIntentExecuted(intentHash, quote.solver, quote.dexId, quoteHash, executionHash, actualAmountOut);
+    }
+
+    function setQuoteManager(address newManager) external onlyOwner {
+        if (newManager == address(0)) revert ZeroAddress();
+        if (newManager.code.length == 0) revert InvalidIntent();
+        address previousManager = address(quoteManager);
+        quoteManager = LQCQuoteManager(newManager);
+        emit QuoteManagerUpdated(previousManager, newManager);
     }
 
     function setInternalSolver(address newSolver) external onlyOwner {

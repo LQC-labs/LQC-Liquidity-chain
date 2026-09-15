@@ -104,6 +104,20 @@ contract LQCQuoteManager {
         if (!found) revert NoValidQuote();
     }
 
+    function verifyQuote(
+        bytes32 intentHash,
+        uint256 minimumAmountOut,
+        SolverQuote calldata quote,
+        bytes calldata signature
+    ) external view returns (bytes32 quoteHash, uint256 netAmountOut) {
+        if (paused) revert Paused();
+        if (intentHash == bytes32(0) || minimumAmountOut == 0) revert InvalidQuote();
+        (bool valid, bytes32 verifiedHash) = _validateQuote(intentHash, minimumAmountOut, quote, signature);
+        if (!valid) revert InvalidQuote();
+        quoteHash = verifiedHash;
+        netAmountOut = quote.amountOut - quote.solverFeeOut - quote.gasCostOut;
+    }
+
     function setSolverAllowed(address solver, bool allowed) external onlyOwner {
         if (solver == address(0)) revert ZeroAddress();
         solverAllowed[solver] = allowed;
