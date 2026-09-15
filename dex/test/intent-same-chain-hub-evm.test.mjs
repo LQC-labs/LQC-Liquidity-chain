@@ -58,6 +58,7 @@ describe("LQC Gate 2 same-chain intent hub", function () {
   let registry;
   let router;
   let adapter;
+  let proof;
   let hub;
   let dexId;
   let routeData;
@@ -94,12 +95,14 @@ describe("LQC Gate 2 same-chain intent hub", function () {
       ethers.ZeroAddress
     );
     adapter = await deploy("LQCFlowAdapter", "router-v2/adapters/LQCFlowAdapter", await flow.getAddress());
-    await Promise.all([router.waitForDeployment(), adapter.waitForDeployment()]);
+    proof = await deploy("LQCBestExecutionProof", "router-v2/LQCBestExecutionProof");
+    await Promise.all([router.waitForDeployment(), adapter.waitForDeployment(), proof.waitForDeployment()]);
 
     hub = await deploy(
       "LQCSameChainIntentHub",
       "__intent",
       await router.getAddress(),
+      await proof.getAddress(),
       await owner.getAddress()
     );
     await hub.waitForDeployment();
@@ -142,47 +145,82 @@ describe("LQC Gate 2 same-chain intent hub", function () {
       routeData
     );
     const block = await provider.getBlock("latest");
+    const deadline = BigInt(block.timestamp + 300);
+    const minimumAmountOut = (quote * 99n) / 100n;
     const intentId = await hub.lockIntent.staticCall(
       await tokenA.getAddress(),
       await tokenB.getAddress(),
       amount,
-      (quote * 99n) / 100n,
+      minimumAmountOut,
       await owner.getAddress(),
-      block.timestamp + 300
+      deadline
     );
     await (
       await hub.lockIntent(
         await tokenA.getAddress(),
         await tokenB.getAddress(),
         amount,
-        (quote * 99n) / 100n,
+        minimumAmountOut,
         await owner.getAddress(),
-        block.timestamp + 300
+        deadline
       )
     ).wait();
-    return { intentId, amount };
+
+    const request = {
+      chainId: (await provider.getNetwork()).chainId,
+      tokenIn: await tokenA.getAddress(),
+      tokenOut: await tokenB.getAddress(),
+      amountIn: amount,
+      recipient: await owner.getAddress(),
+      slippageBps: 100,
+      validUntil: deadline
+    };
+    const quoteBlock = await provider.getBlockNumber();
+    const routeHash = await proof.computeRouteHash(
+      request,
+      quoteBlock,
+      dexId,
+      await adapter.getAddress(),
+      routeData,
+      quote,
+      0,
+      0
+    );
+    const candidates = [{
+      dexId,
+      adapter: await adapter.getAddress(),
+      quoteBlock,
+      grossAmountOut: quote,
+      gasCostInTokenOut: 0,
+      protocolFeeInTokenOut: 0,
+      netAmountOut: quote,
+      minimumAmountOut,
+      priority: 100,
+      routeHash
+    }];
+    return { intentId, amount, request, candidates };
   }
 
   it("locks funds and atomically executes through Router 2.0", async () => {
-    const { intentId, amount } = await lock();
+    const { intentId, amount, request, candidates } = await lock();
     assert.equal(await tokenA.balanceOf(await hub.getAddress()), amount);
 
     const before = await tokenB.balanceOf(await owner.getAddress());
-    await (await hub.executeIntent(intentId, dexId, routeData)).wait();
+    await (await hub.executeProvenIntent(intentId, request, candidates, [routeData], 0)).wait();
     assert((await tokenB.balanceOf(await owner.getAddress())) > before);
     assert.equal(await tokenA.balanceOf(await hub.getAddress()), 0n);
     assert.equal((await hub.intents(intentId)).status, 2n);
 
     await assert.rejects(async () => {
-      const replay = await hub.executeIntent(intentId, dexId, routeData);
+      const replay = await hub.executeProvenIntent(intentId, request, candidates, [routeData], 0);
       await replay.wait();
     });
   });
 
   it("rejects an unauthorized solver and preserves escrow", async () => {
-    const { intentId, amount } = await lock();
+    const { intentId, amount, request, candidates } = await lock();
     await assert.rejects(async () => {
-      const tx = await hub.connect(outsider).executeIntent(intentId, dexId, routeData);
+      const tx = await hub.connect(outsider).executeProvenIntent(intentId, request, candidates, [routeData], 0);
       await tx.wait();
     });
     assert.equal(await tokenA.balanceOf(await hub.getAddress()), amount);
@@ -212,11 +250,28 @@ describe("LQC Gate 2 same-chain intent hub", function () {
   });
 
   it("rolls back status, funds, and approvals when Router execution fails", async () => {
-    const { intentId, amount } = await lock();
-    const impossibleMinimumRoute = ethers.id("DISABLED_ROUTE");
+    const { intentId, amount, request, candidates } = await lock();
+    await (await registry.setDexEnabled(dexId, false)).wait();
 
     await assert.rejects(async () => {
-      const tx = await hub.executeIntent(intentId, impossibleMinimumRoute, routeData);
+      const tx = await hub.executeProvenIntent(intentId, request, candidates, [routeData], 0);
+      await tx.wait();
+    });
+
+    assert.equal((await hub.intents(intentId)).status, 1n);
+    assert.equal(await tokenA.balanceOf(await hub.getAddress()), amount);
+    assert.equal(await tokenA.allowance(await hub.getAddress(), await router.getAddress()), 0n);
+  });
+
+  it("rejects route tampering before Router approval or execution", async () => {
+    const { intentId, amount, request, candidates } = await lock();
+    const forgedRoute = ethers.AbiCoder.defaultAbiCoder().encode(
+      ["address[]"],
+      [[await tokenB.getAddress(), await tokenA.getAddress()]]
+    );
+
+    await assert.rejects(async () => {
+      const tx = await hub.executeProvenIntent(intentId, request, candidates, [forgedRoute], 0);
       await tx.wait();
     });
 
