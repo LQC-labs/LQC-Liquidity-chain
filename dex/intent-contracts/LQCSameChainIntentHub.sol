@@ -62,6 +62,35 @@ interface ILQCIntentDexRegistry {
     function getDex(bytes32 dexId) external view returns (address adapter, bool enabled, uint32 priority);
 }
 
+interface ILQCIntentQuoteManager {
+    struct SolverQuote {
+        bytes32 intentId;
+        address solver;
+        address tokenIn;
+        address tokenOut;
+        uint256 amountIn;
+        uint256 grossAmountOut;
+        uint256 gasCostInTokenOut;
+        uint256 protocolFeeInTokenOut;
+        uint256 netAmountOut;
+        uint256 minimumAmountOut;
+        bytes32 routeHash;
+        uint64 validUntil;
+        uint256 nonce;
+    }
+
+    function selectBestQuote(
+        bytes32 intentId,
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 userMinimumAmountOut,
+        uint256 requiredExposure,
+        SolverQuote[] calldata quotes,
+        bytes[] calldata signatures
+    ) external view returns (uint256 selectedIndex, bytes32 quoteHash, uint256 riskAdjustedAmountOut);
+}
+
 interface IERC20IntentBalance {
     function balanceOf(address account) external view returns (uint256);
 }
@@ -81,6 +110,7 @@ contract LQCSameChainIntentHub {
     uint256 private constant SECP256K1_HALF_ORDER =
         0x7fffffffffffffffffffffffffffffff5d576e7357a4501ddfe92f46681b20a0;
     uint64 public constant SOLVER_ACTIVATION_DELAY = 1 days;
+    uint64 public constant QUOTE_MANAGER_ACTIVATION_DELAY = 2 days;
 
     enum Status {
         None,
@@ -116,6 +146,9 @@ contract LQCSameChainIntentHub {
     address public admin;
     address public pendingAdmin;
     address public guardian;
+    address public quoteManager;
+    address public pendingQuoteManager;
+    uint64 public quoteManagerActivationTime;
     bool public executionPaused;
     uint256 public nextNonce;
     uint256 private unlocked = 1;
@@ -144,6 +177,7 @@ contract LQCSameChainIntentHub {
     error Paused();
     error ActivationNotReady();
     error SolverNotScheduled();
+    error IntegrationNotReady();
 
     event SolverAuthorizationScheduled(address indexed solver, uint256 activationTime);
     event SolverAuthorizationSet(address indexed solver, bool allowed);
@@ -171,6 +205,9 @@ contract LQCSameChainIntentHub {
     event GuardianSet(address indexed oldGuardian, address indexed newGuardian);
     event AdminTransferProposed(address indexed currentAdmin, address indexed pendingAdmin);
     event AdminTransferred(address indexed oldAdmin, address indexed newAdmin);
+    event QuoteManagerScheduled(address indexed quoteManager, uint256 activationTime);
+    event QuoteManagerActivated(address indexed quoteManager);
+    event QuoteManagerDisabled(address indexed quoteManager, address indexed caller);
 
     modifier whenExecutionActive() {
         if (executionPaused) revert Paused();
@@ -237,6 +274,34 @@ contract LQCSameChainIntentHub {
         address oldGuardian = guardian;
         guardian = newGuardian;
         emit GuardianSet(oldGuardian, newGuardian);
+    }
+
+    function scheduleQuoteManager(address newQuoteManager) external {
+        if (msg.sender != admin) revert Unauthorized();
+        if (newQuoteManager == address(0)) revert ZeroAddress();
+        pendingQuoteManager = newQuoteManager;
+        quoteManagerActivationTime = uint64(block.timestamp + QUOTE_MANAGER_ACTIVATION_DELAY);
+        emit QuoteManagerScheduled(newQuoteManager, quoteManagerActivationTime);
+    }
+
+    function activateQuoteManager() external {
+        address newQuoteManager = pendingQuoteManager;
+        if (newQuoteManager == address(0) || block.timestamp < quoteManagerActivationTime) {
+            revert IntegrationNotReady();
+        }
+        quoteManager = newQuoteManager;
+        pendingQuoteManager = address(0);
+        quoteManagerActivationTime = 0;
+        emit QuoteManagerActivated(newQuoteManager);
+    }
+
+    function disableQuoteManager() external {
+        if (msg.sender != admin && msg.sender != guardian) revert Unauthorized();
+        address oldQuoteManager = quoteManager;
+        quoteManager = address(0);
+        pendingQuoteManager = address(0);
+        quoteManagerActivationTime = 0;
+        emit QuoteManagerDisabled(oldQuoteManager, msg.sender);
     }
 
     function proposeAdmin(address newAdmin) external {
@@ -384,6 +449,69 @@ contract LQCSameChainIntentHub {
         uint256 selectedIndex
     ) external whenExecutionActive nonReentrant returns (bytes32 proofHash, uint256 amountOut) {
         if (!authorizedSolver[msg.sender]) revert Unauthorized();
+        return _executeProvenIntent(
+            intentId, request, candidates, routeData, selectedIndex, msg.sender
+        );
+    }
+
+    function executeCompetingIntent(
+        bytes32 intentId,
+        LQCIntentQuoteTypes.QuoteRequest calldata request,
+        LQCIntentQuoteTypes.QuoteResult[] calldata candidates,
+        bytes[] calldata routeData,
+        ILQCIntentQuoteManager.SolverQuote[] calldata quotes,
+        bytes[] calldata signatures
+    ) external whenExecutionActive nonReentrant returns (
+        bytes32 quoteHash,
+        bytes32 proofHash,
+        uint256 amountOut
+    ) {
+        address manager = quoteManager;
+        if (manager == address(0)) revert IntegrationNotReady();
+        Intent storage intent = intents[intentId];
+        if (intent.status != Status.Locked) revert InvalidStatus();
+        if (block.timestamp > intent.deadline) revert InvalidDeadline();
+        if (quotes.length != candidates.length || quotes.length != routeData.length) {
+            revert IntentMismatch();
+        }
+
+        uint256 selectedIndex;
+        (selectedIndex, quoteHash,) = ILQCIntentQuoteManager(manager).selectBestQuote(
+            intentId,
+            intent.tokenIn,
+            intent.tokenOut,
+            intent.amountIn,
+            intent.minimumAmountOut,
+            intent.amountIn,
+            quotes,
+            signatures
+        );
+        if (selectedIndex >= candidates.length) revert IntentMismatch();
+
+        ILQCIntentQuoteManager.SolverQuote calldata quote = quotes[selectedIndex];
+        LQCIntentQuoteTypes.QuoteResult calldata selected = candidates[selectedIndex];
+        if (
+            quote.routeHash != selected.routeHash || quote.grossAmountOut != selected.grossAmountOut
+                || quote.gasCostInTokenOut != selected.gasCostInTokenOut
+                || quote.protocolFeeInTokenOut != selected.protocolFeeInTokenOut
+                || quote.netAmountOut != selected.netAmountOut
+                || quote.minimumAmountOut != selected.minimumAmountOut
+                || request.validUntil > quote.validUntil
+        ) revert IntentMismatch();
+
+        (proofHash, amountOut) = _executeProvenIntent(
+            intentId, request, candidates, routeData, selectedIndex, quote.solver
+        );
+    }
+
+    function _executeProvenIntent(
+        bytes32 intentId,
+        LQCIntentQuoteTypes.QuoteRequest calldata request,
+        LQCIntentQuoteTypes.QuoteResult[] calldata candidates,
+        bytes[] calldata routeData,
+        uint256 selectedIndex,
+        address solver
+    ) private returns (bytes32 proofHash, uint256 amountOut) {
         Intent storage intent = intents[intentId];
         if (intent.status != Status.Locked) revert InvalidStatus();
         if (block.timestamp > intent.deadline) revert InvalidDeadline();
@@ -430,7 +558,7 @@ contract LQCSameChainIntentHub {
             revert ResidualToken();
         }
 
-        emit IntentExecuted(intentId, proofHash, msg.sender, selected.dexId, intent.amountIn, amountOut);
+        emit IntentExecuted(intentId, proofHash, solver, selected.dexId, intent.amountIn, amountOut);
     }
 
     function cancelIntent(bytes32 intentId) external nonReentrant {
