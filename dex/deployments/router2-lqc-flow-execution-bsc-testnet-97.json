@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "network": { "name": "BSC Testnet", "chainId": 97 },
+  "status": "success",
+  "transactionHash": "0xc1da9b744cf954802a59315ac4ce7cc38b1fac952ed6dd8691fb7d2336e7c4d6",
+  "blockNumber": 131109156,
+  "blockHash": "0x49f779b713d6ca85bf645c80712090fddc457ba3aad724e059bd30c2c1296521",
+  "timestamp": "2026-09-15T04:16:20.000Z",
+  "from": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
+  "to": "0x2e0a7f59ca65ed36977add5e71b8b64ba38d939f",
+  "method": "swapExactInput",
+  "selector": "0x5d4d7658",
+  "dexId": "0x7d3375921fc0a5becb9b20cbfdcf03440befc5113d864e8522b8465ca68b8014",
+  "adapter": "0x14db750acf95b469aba3e74032e6db61087ef4cd",
+  "tokenIn": "0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc",
+  "tokenOut": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+  "amountIn": "10000000000000000000",
+  "amountOut": "532721073104236",
+  "minimumAmountOut": "527393862373193",
+  "gasUsed": "227192",
+  "value": "0",
+  "checks": {
+    "receiptSuccess": true,
+    "reviewedSigner": true,
+    "reviewedExecutionRouter": true,
+    "lqcFlowSwapEvent": true,
+    "exactInput10tLQC": true,
+    "positiveWBNBOutput": true,
+    "userAllowanceAfterExecution": "0",
+    "routerAdapterAllowanceAfterExecution": "0"
+  },
+  "safety": "One bounded BSC testnet execution only. Do not replay this transaction. No deployment, liquidity change, or risk-limit change occurred."
+}
