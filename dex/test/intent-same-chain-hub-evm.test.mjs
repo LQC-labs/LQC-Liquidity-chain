@@ -20,31 +20,57 @@ function compileIntentArtifact() {
     new URL("../contracts/libraries/SafeTransferLib.sol", import.meta.url),
     "utf8"
   );
+  const quoteManagerSource = fs.readFileSync(
+    new URL("../intent-contracts/LQCIntentQuoteManager.sol", import.meta.url),
+    "utf8"
+  );
+  const eligibilitySource = `
+    // SPDX-License-Identifier: MIT
+    pragma solidity ^0.8.24;
+    contract MockIntentEligibility {
+      mapping(address => bool) public eligible;
+      mapping(address => uint256) public capacity;
+      mapping(address => uint16) public riskPenaltyBps;
+      function configure(address solver, bool allowed, uint256 cap, uint16 penalty) external {
+        eligible[solver] = allowed;
+        capacity[solver] = cap;
+        riskPenaltyBps[solver] = penalty;
+      }
+      function canExecute(address solver, uint256 exposure) external view returns (bool) {
+        return eligible[solver] && exposure <= capacity[solver];
+      }
+    }
+  `;
   const input = {
     language: "Solidity",
     sources: {
       "intent-contracts/LQCSameChainIntentHub.sol": { content: intentSource },
-      "contracts/libraries/SafeTransferLib.sol": { content: safeTransferSource }
+      "intent-contracts/LQCIntentQuoteManager.sol": { content: quoteManagerSource },
+      "contracts/libraries/SafeTransferLib.sol": { content: safeTransferSource },
+      "test/MockIntentEligibility.sol": { content: eligibilitySource }
     },
     settings: {
       optimizer: { enabled: true, runs: 200 },
       viaIR: true,
       evmVersion: "shanghai",
-      outputSelection: {
-        "intent-contracts/LQCSameChainIntentHub.sol": {
-          LQCSameChainIntentHub: ["abi", "evm.bytecode.object"]
-        }
-      }
+      outputSelection: { "*": { "*": ["abi", "evm.bytecode.object"] } }
     }
   };
   const output = JSON.parse(solc.compile(JSON.stringify(input)));
   const errors = (output.errors ?? []).filter((entry) => entry.severity === "error");
   if (errors.length) throw new Error(errors.map((entry) => entry.formattedMessage).join("\n"));
-  const compiled = output.contracts["intent-contracts/LQCSameChainIntentHub.sol"].LQCSameChainIntentHub;
-  return { abi: compiled.abi, bytecode: `0x${compiled.evm.bytecode.object}` };
+  const pick = (source, name) => {
+    const compiled = output.contracts[source][name];
+    return { abi: compiled.abi, bytecode: `0x${compiled.evm.bytecode.object}` };
+  };
+  return {
+    hub: pick("intent-contracts/LQCSameChainIntentHub.sol", "LQCSameChainIntentHub"),
+    quoteManager: pick("intent-contracts/LQCIntentQuoteManager.sol", "LQCIntentQuoteManager"),
+    eligibility: pick("test/MockIntentEligibility.sol", "MockIntentEligibility")
+  };
 }
 
-const intentArtifact = compileIntentArtifact();
+const intentArtifacts = compileIntentArtifact();
 
 describe("LQC Gate 2 same-chain intent hub", function () {
   this.timeout(30000);
@@ -61,6 +87,8 @@ describe("LQC Gate 2 same-chain intent hub", function () {
   let adapter;
   let proof;
   let hub;
+  let eligibility;
+  let quoteManager;
   let dexId;
   let routeData;
 
@@ -76,7 +104,14 @@ describe("LQC Gate 2 same-chain intent hub", function () {
     outsider = await provider.getSigner(1);
 
     const deploy = (name, source, ...args) => {
-      const selected = source === "__intent" ? intentArtifact : artifact(name, source);
+      const selected =
+        source === "__intent"
+          ? intentArtifacts.hub
+          : source === "__quoteManager"
+            ? intentArtifacts.quoteManager
+            : source === "__eligibility"
+              ? intentArtifacts.eligibility
+              : artifact(name, source);
       return new ethers.ContractFactory(selected.abi, selected.bytecode, owner).deploy(...args);
     };
 
@@ -117,6 +152,27 @@ describe("LQC Gate 2 same-chain intent hub", function () {
     await provider.send("evm_increaseTime", [24 * 60 * 60]);
     await provider.send("evm_mine", []);
     await (await hub.activateSolver(await owner.getAddress())).wait();
+
+    eligibility = await deploy("MockIntentEligibility", "__eligibility");
+    await eligibility.waitForDeployment();
+    quoteManager = await deploy(
+      "LQCIntentQuoteManager",
+      "__quoteManager",
+      await eligibility.getAddress()
+    );
+    await quoteManager.waitForDeployment();
+    await (
+      await eligibility.configure(
+        await owner.getAddress(),
+        true,
+        ethers.MaxUint256,
+        0
+      )
+    ).wait();
+    await (await hub.scheduleQuoteManager(await quoteManager.getAddress())).wait();
+    await provider.send("evm_increaseTime", [2 * 24 * 60 * 60]);
+    await provider.send("evm_mine", []);
+    await (await hub.activateQuoteManager()).wait();
 
     const liquidity = ethers.parseEther("10000");
     await (await tokenA.mint(await owner.getAddress(), liquidity)).wait();
@@ -359,6 +415,90 @@ describe("LQC Gate 2 same-chain intent hub", function () {
       const tx = await hub.scheduleSolver(await owner.getAddress());
       await tx.wait();
     });
+  });
+
+  async function signedSolverQuote(intentId, request, candidate, nonce = 1n) {
+    const quote = {
+      intentId,
+      solver: await owner.getAddress(),
+      tokenIn: request.tokenIn,
+      tokenOut: request.tokenOut,
+      amountIn: request.amountIn,
+      grossAmountOut: candidate.grossAmountOut,
+      gasCostInTokenOut: candidate.gasCostInTokenOut,
+      protocolFeeInTokenOut: candidate.protocolFeeInTokenOut,
+      netAmountOut: candidate.netAmountOut,
+      minimumAmountOut: candidate.minimumAmountOut,
+      routeHash: candidate.routeHash,
+      validUntil: request.validUntil,
+      nonce
+    };
+    const domain = {
+      name: "LQC Intent Quote Manager",
+      version: "1",
+      chainId: (await provider.getNetwork()).chainId,
+      verifyingContract: await quoteManager.getAddress()
+    };
+    const types = {
+      SolverQuote: [
+        { name: "intentId", type: "bytes32" },
+        { name: "solver", type: "address" },
+        { name: "tokenIn", type: "address" },
+        { name: "tokenOut", type: "address" },
+        { name: "amountIn", type: "uint256" },
+        { name: "grossAmountOut", type: "uint256" },
+        { name: "gasCostInTokenOut", type: "uint256" },
+        { name: "protocolFeeInTokenOut", type: "uint256" },
+        { name: "netAmountOut", type: "uint256" },
+        { name: "minimumAmountOut", type: "uint256" },
+        { name: "routeHash", type: "bytes32" },
+        { name: "validUntil", type: "uint64" },
+        { name: "nonce", type: "uint256" }
+      ]
+    };
+    return { quote, signature: await ownerSigningWallet.signTypedData(domain, types, quote) };
+  }
+
+  it("settles the winning signed quote only when it matches the execution proof", async () => {
+    const { intentId, request, candidates } = await lock();
+    const signed = await signedSolverQuote(intentId, request, candidates[0]);
+
+    const before = await tokenB.balanceOf(await owner.getAddress());
+    await (
+      await hub.connect(outsider).executeCompetingIntent(
+        intentId,
+        request,
+        candidates,
+        [routeData],
+        [signed.quote],
+        [signed.signature]
+      )
+    ).wait();
+
+    assert((await tokenB.balanceOf(await owner.getAddress())) > before);
+    assert.equal((await hub.intents(intentId)).status, 2n);
+  });
+
+  it("lets the guardian disable quote integration without disabling direct execution", async () => {
+    const { intentId, request, candidates } = await lock();
+    const signed = await signedSolverQuote(intentId, request, candidates[0], 2n);
+    await (await hub.setGuardian(await outsider.getAddress())).wait();
+    await (await hub.connect(outsider).disableQuoteManager()).wait();
+
+    await assert.rejects(async () => {
+      const tx = await hub.connect(outsider).executeCompetingIntent(
+        intentId,
+        request,
+        candidates,
+        [routeData],
+        [signed.quote],
+        [signed.signature]
+      );
+      await tx.wait();
+    });
+
+    await (await hub.executeProvenIntent(intentId, request, candidates, [routeData], 0)).wait();
+    assert.equal((await hub.intents(intentId)).status, 2n);
   });
 
   async function signedIntentFixture(nonce = 77n) {
