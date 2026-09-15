@@ -11,4 +11,6 @@ describe("Router 2.0 Proof Gateway monitor report verifier page",function(){
   it("supports clipboard paste without persisting untrusted input",function(){assert.match(js,/navigator\.clipboard\.readText\(\)/);assert.doesNotMatch(js,/localStorage\.setItem|sessionStorage\.setItem/);});
   it("separates hash validity from fifteen-minute operational freshness",function(){assert.match(js,/MAX_AGE_MS=15\*60\*1000/);assert.match(js,/age<=MAX_AGE_MS/);assert.match(js,/Report Hash는 일치하지만 15분이 지난 기록입니다/);assert.match(html,/시간 신선도/);});
   it("rejects reports dated more than five minutes in the future",function(){assert.match(js,/MAX_FUTURE_MS=5\*60\*1000/);assert.match(js,/age < -MAX_FUTURE_MS/);});
+  it("pins PASS reports to the reviewed Router and LQC Flow Adapter",function(){assert.match(js,/ROUTER="0x2e0a7f59ca65ed36977add5e71b8b64ba38d939f"/);assert.match(js,/ADAPTER="0x14db750acf95b469aba3e74032e6db61087ef4cd"/);assert.match(js,/report\.executionRouter\.toLowerCase\(\)!==ROUTER/);});
+  it("recomputes the block-bound Snapshot Hash from every safety field",function(){assert.match(js,/function verifyPassBindings\(report\)/);assert.match(js,/solidityPackedKeccak256/);assert.match(js,/BigInt\(report\.gatewayBalance\)/);assert.match(js,/computed\.toLowerCase\(\)!==report\.snapshotHash\.toLowerCase\(\)/);});
 });
