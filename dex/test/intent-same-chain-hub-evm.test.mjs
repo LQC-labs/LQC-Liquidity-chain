@@ -197,4 +197,31 @@ describe("LQC Gate 2 same-chain intent hub", function () {
     assert.equal(await tokenA.balanceOf(await hub.getAddress()), 0n);
     assert.equal((await hub.intents(intentId)).status, 3n);
   });
+
+  it("allows anyone to trigger a safe refund after expiry", async () => {
+    const { intentId, amount } = await lock();
+    const intent = await hub.intents(intentId);
+    await provider.send("evm_setTime", [Number(intent.deadline) * 1000 + 1000]);
+    await provider.send("evm_mine", []);
+
+    const before = await tokenA.balanceOf(await owner.getAddress());
+    await (await hub.connect(outsider).refundExpiredIntent(intentId)).wait();
+    assert.equal(await tokenA.balanceOf(await owner.getAddress()), before + amount);
+    assert.equal(await tokenA.balanceOf(await hub.getAddress()), 0n);
+    assert.equal((await hub.intents(intentId)).status, 3n);
+  });
+
+  it("rolls back status, funds, and approvals when Router execution fails", async () => {
+    const { intentId, amount } = await lock();
+    const impossibleMinimumRoute = ethers.id("DISABLED_ROUTE");
+
+    await assert.rejects(async () => {
+      const tx = await hub.executeIntent(intentId, impossibleMinimumRoute, routeData);
+      await tx.wait();
+    });
+
+    assert.equal((await hub.intents(intentId)).status, 1n);
+    assert.equal(await tokenA.balanceOf(await hub.getAddress()), amount);
+    assert.equal(await tokenA.allowance(await hub.getAddress(), await router.getAddress()), 0n);
+  });
 });
