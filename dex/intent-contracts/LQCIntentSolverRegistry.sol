@@ -31,6 +31,7 @@ contract LQCIntentSolverRegistry {
     uint256 private unlocked = 1;
 
     mapping(address => Solver) public solvers;
+    mapping(address => uint16) public riskPenaltyBps;
 
     error ZeroAddress();
     error InvalidAmount();
@@ -42,6 +43,7 @@ contract LQCIntentSolverRegistry {
     error WithdrawalNotReady();
     error NoPendingWithdrawal();
     error ResidualToken();
+    error InvalidRiskPenalty();
 
     event BondDeposited(address indexed solver, uint256 amount, uint256 totalBond);
     event SolverActivationScheduled(address indexed solver, uint256 activationTime);
@@ -53,6 +55,7 @@ contract LQCIntentSolverRegistry {
     event GuardianSet(address indexed oldGuardian, address indexed newGuardian);
     event AdminTransferProposed(address indexed currentAdmin, address indexed pendingAdmin);
     event AdminTransferred(address indexed oldAdmin, address indexed newAdmin);
+    event RiskPenaltySet(address indexed solver, uint256 oldPenaltyBps, uint256 newPenaltyBps);
 
     modifier nonReentrant() {
         if (unlocked != 1) revert Reentrancy();
@@ -146,6 +149,15 @@ contract LQCIntentSolverRegistry {
     function canExecute(address solverAddress, uint256 exposure) external view returns (bool) {
         Solver storage solver = solvers[solverAddress];
         return solver.active && solver.pendingWithdrawal == 0 && exposure <= solver.bond;
+    }
+
+    function setRiskPenalty(address solverAddress, uint16 newPenaltyBps) external {
+        if (msg.sender != admin) revert Unauthorized();
+        if (solverAddress == address(0)) revert ZeroAddress();
+        if (newPenaltyBps > 5_000) revert InvalidRiskPenalty();
+        uint16 oldPenaltyBps = riskPenaltyBps[solverAddress];
+        riskPenaltyBps[solverAddress] = newPenaltyBps;
+        emit RiskPenaltySet(solverAddress, oldPenaltyBps, newPenaltyBps);
     }
 
     function setGuardian(address newGuardian) external {
