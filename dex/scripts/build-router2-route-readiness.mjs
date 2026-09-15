@@ -3,7 +3,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { ethers } from "ethers";
 
-export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, executionDeployment = null, recovery = null, lqcFlow = null) {
+export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, executionDeployment = null, recovery = null, lqcFlow = null, lqcFlowExecution = null) {
   if (poolRecord?.network?.chainId !== 97 || !ethers.isAddress(poolRecord?.contracts?.pancakeV3Pool)) {
     throw new Error("A valid chain-97 PancakeSwap V3 pool record is required.");
   }
@@ -40,7 +40,19 @@ export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, 
     recovery?.executionEvidence?.smokeSwap?.status === "success" &&
     ethers.isAddress(recovery?.executionEvidence?.newAdapter) &&
     /^0x[0-9a-f]{64}$/i.test(recovery?.executionEvidence?.smokeSwap?.transactionHash || "");
-  const limitations = comparableRoutes < 2 ? ["A second independent DEX route is required for real best-route comparison"] : ["LQC Flow execution caps still require Governance Safe approval before routed execution"];
+  const lqcFlowExecutionSucceeded = lqcFlowExecution?.network?.chainId === 97 &&
+    lqcFlowExecution?.status === "success" &&
+    lqcFlowExecution?.dexId === ethers.id("LQC_FLOW") &&
+    lqcFlowExecution?.amountIn === ethers.parseUnits("10", 18).toString() &&
+    BigInt(lqcFlowExecution?.amountOut || 0) > 0n &&
+    /^0x[0-9a-f]{64}$/i.test(lqcFlowExecution?.transactionHash || "") &&
+    lqcFlowExecution?.checks?.userAllowanceAfterExecution === "0" &&
+    lqcFlowExecution?.checks?.routerAdapterAllowanceAfterExecution === "0";
+  const limitations = comparableRoutes < 2
+    ? ["A second independent DEX route is required for real best-route comparison"]
+    : lqcFlowExecutionSucceeded
+      ? ["Automatic best-route execution remains pending; only each registered route has been executed independently"]
+      : ["LQC Flow execution caps still require Governance Safe approval before routed execution"];
   return {
     schemaVersion: 1,
     network: { name: "BSC Testnet", chainId: 97 },
@@ -56,7 +68,7 @@ export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, 
       residualAllowances: poolRecord.finalStateVerification?.routerResidualAllowances || null,
     },
     router2: {
-      status: blockers.length ? "deployment-required" : lqcFlowCompared ? "two-route-quote-comparison-success" : executionSmokeSucceeded ? "single-route-execution-smoke-success" : executionReady ? "ready-for-single-route-execution-smoke" : "ready-for-live-route-probes",
+      status: blockers.length ? "deployment-required" : lqcFlowExecutionSucceeded ? "two-route-independent-execution-success" : lqcFlowCompared ? "two-route-quote-comparison-success" : executionSmokeSucceeded ? "single-route-execution-smoke-success" : executionReady ? "ready-for-single-route-execution-smoke" : "ready-for-live-route-probes",
       comparableRoutes,
       missingContracts,
       v3Registered,
@@ -82,9 +94,19 @@ export function buildRouter2RouteReadiness(poolRecord, routerDeployment = null, 
         preferredQuote: lqcFlow.comparisonEvidence.preferredQuote,
         transactionOccurred: false,
       } : { status: "pending" },
+      lqcFlowExecution: lqcFlowExecutionSucceeded ? {
+        status: "success",
+        adapter: lqcFlowExecution.adapter,
+        transactionHash: lqcFlowExecution.transactionHash,
+        amountIn: lqcFlowExecution.amountIn,
+        amountOut: lqcFlowExecution.amountOut,
+        duplicateExecutionProhibited: true,
+      } : { status: "pending" },
     },
     nextSafeStep: blockers.length
       ? "Deploy and verify the Router 2.0 core plus Pancake V3 adapter before any routed wallet transaction."
+      : lqcFlowExecutionSucceeded
+        ? "Prepare a read-only automatic best-route execution preflight before any additional swap."
       : lqcFlowCompared
         ? "Prepare Governance Safe approval for LQC Flow DEX token caps, then run a read-only two-route execution preflight before any additional swap."
       : executionSmokeSucceeded
@@ -107,8 +129,10 @@ function main() {
   const recovery = fs.existsSync(recoveryFile) ? JSON.parse(fs.readFileSync(recoveryFile, "utf8")) : null;
   const lqcFlowFile = path.join(root, "deployments/router2-lqc-flow-route-bsc-testnet-97.json");
   const lqcFlow = fs.existsSync(lqcFlowFile) ? JSON.parse(fs.readFileSync(lqcFlowFile, "utf8")) : null;
+  const lqcFlowExecutionFile = path.join(root, "deployments/router2-lqc-flow-execution-bsc-testnet-97.json");
+  const lqcFlowExecution = fs.existsSync(lqcFlowExecutionFile) ? JSON.parse(fs.readFileSync(lqcFlowExecutionFile, "utf8")) : null;
   const output = path.join(root, "deployments/router2-route-readiness-bsc-testnet-97.json");
-  fs.writeFileSync(output, `${JSON.stringify(buildRouter2RouteReadiness(pool, router, execution, recovery, lqcFlow), null, 2)}\n`);
+  fs.writeFileSync(output, `${JSON.stringify(buildRouter2RouteReadiness(pool, router, execution, recovery, lqcFlow, lqcFlowExecution), null, 2)}\n`);
   console.log(`Wrote ${output}`);
 }
 
