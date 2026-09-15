@@ -36,6 +36,26 @@ export async function buildRecoveryBundle() {
     maxHops: 1,
     correctedExactInputSelector: expectedSelector,
     deployment: { value: "0", data: deploy.data },
+    executionEvidence: {
+      status: "success",
+      newAdapter: "0x823025d02c7619967b3e3880e3f6bc324a2c56d4",
+      configuration: { feeTier: 2500, verifiedPool: PANCAKE_V3_POOL, status: "success" },
+      registryCutover: {
+        status: "success",
+        disabledTransactionHash: "0x9ace5920d69d4874f788968eacff5ed96a7290afe79da1a197350b10d0e8d059",
+        updatedTransactionHash: "0x24045b1f9854b4ec1aa9d0db1fb542a3b3bf51ea34d66d95bd65b8fb9c6aca96",
+        enabledTransactionHash: "0x04347b6b4b39cb066161aed9b4af739714a50a17b8c30b3fb9a13baf91880f2f",
+      },
+      smokeSwap: {
+        status: "success",
+        transactionHash: "0x4e969b9cb637bd76bc4c6106dca333d0cfb7e0cb7d2e7a400b60756ca2ca5a5f",
+        amountIn: ethers.parseUnits("10", 18).toString(),
+        minimumAmountOut: "9855441000000",
+        route: "tLQC -> PancakeSwap V3 0.25% -> WBNB",
+        duplicateExecutionProhibited: true,
+      },
+      evidence: "TokenPocket receipts plus post-cutover read-only checks and successful pre-submission simulation",
+    },
     safety: "No risk-limit, Governance Safe, token, liquidity, or router replacement. Registry cutover is disable-update-enable and every stage is read back on-chain.",
   };
 }
