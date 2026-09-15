@@ -6,6 +6,7 @@ import { buildRouter2RouteReadiness } from "../scripts/build-router2-route-readi
 const pool = JSON.parse(fs.readFileSync(new URL("../deployments/pancake-v3-pool-bsc-testnet-97.json", import.meta.url)));
 const quoteStack = JSON.parse(fs.readFileSync(new URL("../deployments/router2-quote-stack-config-bsc-testnet-97.json", import.meta.url)));
 const executionStack = JSON.parse(fs.readFileSync(new URL("../deployments/router2-execution-stack-stage3-bsc-testnet-97.json", import.meta.url)));
+const recovery = JSON.parse(fs.readFileSync(new URL("../deployments/router2-v3-adapter-recovery-bsc-testnet-97.json", import.meta.url)));
 
 describe("Router 2.0 live-route readiness", function () {
   it("marks the completed PancakeSwap V3 pilot ready without overstating Router deployment", function () {
@@ -49,5 +50,15 @@ describe("Router 2.0 live-route readiness", function () {
     assert.deepEqual(report.router2.blockers, []);
     assert.equal(report.router2.limitations.length, 1);
     assert.match(report.nextSafeStep, /single-route smoke swap/);
+  });
+
+  it("records the successful capped Router 2.0 execution without claiming best-route comparison", function () {
+    const report = buildRouter2RouteReadiness(pool, quoteStack, executionStack, recovery);
+    assert.equal(report.router2.status, "single-route-execution-smoke-success");
+    assert.equal(report.router2.executionSmoke.status, "success");
+    assert.equal(report.router2.executionSmoke.adapter, "0x823025d02c7619967b3e3880e3f6bc324a2c56d4");
+    assert.equal(report.router2.executionSmoke.transactionHash, "0x4e969b9cb637bd76bc4c6106dca333d0cfb7e0cb7d2e7a400b60756ca2ca5a5f");
+    assert.equal(report.router2.executionSmoke.duplicateExecutionProhibited, true);
+    assert.match(report.nextSafeStep, /second independent DEX route/);
   });
 });
