@@ -13,6 +13,7 @@ export const PAGE_SCRIPTS=Object.freeze([
   "router2-proof-gateway-workflow-testnet.js","router2-proof-gateway-evidence-export-testnet.js",
   "router2-proof-gateway-evidence-import-testnet.js",
   "router2-proof-gateway-monitor-testnet.js",
+  "router2-proof-gateway-report-verify-testnet.js",
 ]);
 export const GATE_TESTS=Object.freeze([
   "test/router2-proof-bound-gateway-source.test.mjs","test/router2-proof-bound-gateway-adversarial-mock.test.mjs",
@@ -23,6 +24,7 @@ export const GATE_TESTS=Object.freeze([
   "test/router2-proof-gateway-execution-final-page.test.mjs","test/router2-proof-gateway-workflow-page.test.mjs",
   "test/router2-proof-gateway-evidence-export-page.test.mjs","test/router2-proof-gateway-evidence-import-page.test.mjs",
   "test/router2-proof-gateway-monitor-page.test.mjs",
+  "test/router2-proof-gateway-report-verify-page.test.mjs",
 ]);
 
 export function gitBlobSha(content){return crypto.createHash("sha1").update(Buffer.from("blob "+content.length+"\0")).update(content).digest("hex");}
