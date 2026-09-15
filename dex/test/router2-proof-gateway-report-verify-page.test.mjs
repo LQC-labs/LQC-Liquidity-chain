@@ -20,4 +20,6 @@ describe("Router 2.0 Proof Gateway monitor report verifier page",function(){
   it("rejects future blocks and displays current confirmations",function(){assert.match(js,/report\.blockNumber>blockNumber/);assert.match(js,/confirmations=blockNumber-report\.blockNumber\+1/);assert.match(js,/보고서 블록 확인/);});
   it("requires and seals the report block hash into the V2 snapshot",function(){assert.match(js,/hash\(report\.blockHash,"조회 블록"\)/);assert.match(js,/\["uint256","uint256","bytes32"/);assert.match(js,/report\.blockHash,report\.proofVerifier/);});
   it("rejects a report block hash that is no longer canonical",function(){assert.match(js,/reportBlock\.hash\.toLowerCase\(\)!==report\.blockHash\.toLowerCase\(\)/);assert.match(js,/보고서 블록 해시가 현재 체인과 일치하지 않습니다/);});
+  it("requires twelve confirmations before final live verification",function(){assert.match(js,/MIN_CONFIRMATIONS=12/);assert.match(js,/confirmations<MIN_CONFIRMATIONS/);assert.match(js,/최소.*개가 될 때까지 기다린 뒤 다시 확인하세요/);});
+  it("rejects a stalled or future-dated latest RPC block",function(){assert.match(js,/provider\.getBlock\("latest"\)/);assert.match(js,/MAX_LATEST_AGE_MS=2\*60\*1000/);assert.match(js,/latestAge>MAX_LATEST_AGE_MS\|\|latestAge < -60\*1000/);});
 });
