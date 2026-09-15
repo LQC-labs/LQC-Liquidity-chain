@@ -10,7 +10,9 @@
     "lqcFlowRouter": "0xA3E1fbe94055e7A8971b3994C7025B3c16273a24",
     "dexRegistry": "0x0465c6460deaece522506e09cddc1b62d6d75c84",
     "riskRegistry": "0xe10a1d467a553900cb4d1755e079b35b0cd0c48b",
-    "quoteRouter": "0xf3128ceed7ef4e4ce48913977fabc341dfbec949"
+    "quoteRouter": "0xf3128ceed7ef4e4ce48913977fabc341dfbec949",
+    "pancakeV3Adapter": "0x823025d02c7619967b3e3880e3f6bc324a2c56d4",
+    "pancakeV3Quoter": "0xbC203d7f83677c7ed3F7acEc959963E7F4ECC5C2"
   },
   "tokens": {
     "tokenIn": "0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc",
