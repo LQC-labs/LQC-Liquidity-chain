@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "status": "UNAUDITED_TESTNET_MVP",
+  "scope": "LENDING_AND_COMPOSITE_SUPPLY",
+  "contracts": {
+    "LQCOracleManager": {
+      "source": "lending/LQCOracleManager",
+      "entries": [
+        { "signature": "acceptOwnership()", "authority": "pending-owner", "risk": "high", "evidence": ["test/lending-oracle-manager.test.mjs"] },
+        { "signature": "configureAsset(address,address,address,uint32,uint16)", "authority": "governance", "risk": "critical", "evidence": ["test/lending-oracle-manager.test.mjs"] },
+        { "signature": "setAssetEnabled(address,bool)", "authority": "guardian-or-governance", "risk": "critical", "evidence": ["test/lending-oracle-manager.test.mjs"] },
+        { "signature": "setGuardian(address)", "authority": "governance", "risk": "high", "evidence": ["test/lending-oracle-manager.test.mjs"] },
+        { "signature": "transferOwnership(address)", "authority": "governance", "risk": "high", "evidence": ["test/lending-oracle-manager.test.mjs"] }
+      ]
+    },
+    "LQCLendingMarketRegistry": {
+      "source": "lending/LQCLendingMarketRegistry",
+      "entries": [
+        { "signature": "acceptOwnership()", "authority": "pending-owner", "risk": "high", "evidence": ["test/lending-market-registry.test.mjs"] },
+        { "signature": "configureMarket(tuple)", "authority": "governance", "risk": "critical", "evidence": ["test/lending-market-registry.test.mjs"] },
+        { "signature": "setGuardian(address)", "authority": "governance", "risk": "high", "evidence": ["test/lending-market-registry.test.mjs"] },
+        { "signature": "setMarketEnabled(bytes32,bool)", "authority": "guardian-or-governance", "risk": "critical", "evidence": ["test/lending-market-registry.test.mjs", "test/lending-core.test.mjs"] },
+        { "signature": "transferOwnership(address)", "authority": "governance", "risk": "high", "evidence": ["test/lending-market-registry.test.mjs"] }
+      ]
+    },
+    "LQCInterestRateModel": {
+      "source": "lending/LQCInterestRateModel",
+      "entries": [
+        { "signature": "acceptOwnership()", "authority": "pending-owner", "risk": "high", "evidence": ["test/lending-interest.test.mjs"] },
+        { "signature": "configureRate(bytes32,tuple)", "authority": "governance", "risk": "critical", "evidence": ["test/lending-interest.test.mjs"] },
+        { "signature": "setGuardian(address)", "authority": "governance", "risk": "high", "evidence": ["test/lending-interest.test.mjs"] },
+        { "signature": "setRateEnabled(bytes32,bool)", "authority": "guardian-or-governance", "risk": "critical", "evidence": ["test/lending-interest.test.mjs"] },
+        { "signature": "transferOwnership(address)", "authority": "governance", "risk": "high", "evidence": ["test/lending-interest.test.mjs"] }
+      ]
+    },
+    "LQCLendingInterestIndex": {
+      "source": "lending/LQCLendingInterestIndex",
+      "entries": [
+        { "signature": "acceptOwnership()", "authority": "pending-owner", "risk": "high", "evidence": ["test/lending-interest.test.mjs"] },
+        { "signature": "accrue(bytes32,uint256,uint256)", "authority": "lending-core", "risk": "critical", "evidence": ["test/lending-core.test.mjs", "test/lending-interest.test.mjs"] },
+        { "signature": "applySupplyLoss(bytes32,uint256,uint256)", "authority": "lending-core", "risk": "critical", "evidence": ["test/lending-core.test.mjs", "test/lending-economic-invariants.test.mjs"] },
+        { "signature": "initializeMarket(bytes32)", "authority": "governance", "risk": "critical", "evidence": ["test/lending-interest.test.mjs"] },
+        { "signature": "setCore(address)", "authority": "governance", "risk": "critical", "evidence": ["test/lending-interest.test.mjs"] },
+        { "signature": "transferOwnership(address)", "authority": "governance", "risk": "high", "evidence": ["test/lending-interest.test.mjs"] }
+      ]
+    },
+    "LQCLendingCore": {
+      "source": "lending/LQCLendingCore",
+      "entries": [
+        { "signature": "acceptOwnership()", "authority": "pending-owner", "risk": "high", "evidence": ["test/lending-core.test.mjs"] },
+        { "signature": "accrueInterest(bytes32)", "authority": "public-user", "risk": "high", "evidence": ["test/lending-core.test.mjs"] },
+        { "signature": "borrow(bytes32,uint256,address)", "authority": "borrower", "risk": "critical", "evidence": ["test/lending-core.test.mjs", "test/lending-economic-invariants.test.mjs"] },
+        { "signature": "coverBadDebtWithReserves(bytes32,address,uint256)", "authority": "governance", "risk": "critical", "evidence": ["test/lending-core.test.mjs", "test/lending-economic-invariants.test.mjs"] },
+        { "signature": "depositCollateral(bytes32,uint256)", "authority": "public-user", "risk": "critical", "evidence": ["test/lending-core.test.mjs"] },
+        { "signature": "executeLiquidation(bytes32,address,address,address,uint256)", "authority": "liquidation-engine", "risk": "critical", "evidence": ["test/lending-core.test.mjs", "test/lending-economic-invariants.test.mjs"] },
+        { "signature": "realizeBadDebtLoss(bytes32,address,uint256)", "authority": "governance", "risk": "critical", "evidence": ["test/lending-core.test.mjs", "test/lending-economic-invariants.test.mjs"] },
+        { "signature": "recapitalizeBadDebt(bytes32,address,uint256)", "authority": "governance", "risk": "critical", "evidence": ["test/lending-core.test.mjs", "test/lending-economic-invariants.test.mjs"] },
+        { "signature": "repay(bytes32,uint256,address)", "authority": "public-user", "risk": "critical", "evidence": ["test/lending-core.test.mjs"] },
+        { "signature": "setLiquidationEngine(address)", "authority": "governance", "risk": "critical", "evidence": ["test/lending-core.test.mjs"] },
+        { "signature": "supplyLiquidity(bytes32,uint256)", "authority": "public-user", "risk": "critical", "evidence": ["test/lending-core.test.mjs", "test/intent-v1-composite-lending.test.mjs"] },
+        { "signature": "transferOwnership(address)", "authority": "governance", "risk": "high", "evidence": ["test/lending-core.test.mjs"] },
+        { "signature": "withdrawCollateral(bytes32,uint256,address)", "authority": "borrower", "risk": "critical", "evidence": ["test/lending-core.test.mjs"] },
+        { "signature": "withdrawLiquidity(bytes32,uint256,address)", "authority": "supplier", "risk": "critical", "evidence": ["test/lending-core.test.mjs", "test/intent-v1-composite-lending.test.mjs"] },
+        { "signature": "withdrawReserves(bytes32,uint256,address)", "authority": "governance", "risk": "critical", "evidence": ["test/lending-core.test.mjs"] }
+      ]
+    },
+    "LQCLiquidationEngine": {
+      "source": "lending/LQCLiquidationEngine",
+      "entries": [
+        { "signature": "liquidate(bytes32,address,uint256,address)", "authority": "public-liquidator", "risk": "critical", "evidence": ["test/lending-core.test.mjs", "test/lending-economic-invariants.test.mjs"] }
+      ]
+    },
+    "LQCCompositeLendingSupplyAdapter": {
+      "source": "intent-v1/LQCCompositeLendingSupplyAdapter",
+      "entries": [
+        { "signature": "approve(address,uint256)", "authority": "receipt-holder", "risk": "high", "evidence": ["test/intent-v1-composite-lending.test.mjs"] },
+        { "signature": "execute(address,address,uint256,uint256,bytes)", "authority": "composite-executor", "risk": "critical", "evidence": ["test/intent-v1-composite-lending.test.mjs"] },
+        { "signature": "redeem(uint256,address)", "authority": "receipt-holder", "risk": "critical", "evidence": ["test/intent-v1-composite-lending.test.mjs"] },
+        { "signature": "transfer(address,uint256)", "authority": "receipt-holder", "risk": "high", "evidence": ["test/intent-v1-composite-lending.test.mjs"] },
+        { "signature": "transferFrom(address,address,uint256)", "authority": "approved-spender", "risk": "high", "evidence": ["test/intent-v1-composite-lending.test.mjs"] }
+      ]
+    }
+  }
+}

@@ -1,4 +1,4 @@
-# LQC Flow DEX and Router 2.0 — Audit Scope
+# LQC Flow DEX, Router 2.0 and Lending — Audit Scope
 
 Status: **pre-audit, unaudited testnet MVP**
 
@@ -9,6 +9,9 @@ Status: **pre-audit, unaudited testnet MVP**
 - Governance and risk: timelock, emergency controller, risk registry
 - Adapters: LQC Flow, PancakeSwap V2, PancakeSwap V3 quote and execution adapters
 - Liquidity Vault V1, its strategy interface, and the non-yielding reference strategy adapter
+- Lending: dual-feed Oracle Manager, isolated Market Registry, bounded Interest Rate Model,
+  Interest Index, Lending Core, and permissionless Liquidation Engine
+- Composite Lending: market-pinned Supply Adapter and its transferable position receipt
 - Shared interfaces, math, and safe-transfer libraries used by those contracts
 - BSC testnet deployment and validation scripts
 - Browser route encoding and execution-plan SDK
@@ -31,6 +34,15 @@ Test tokens and mocks are excluded from production deployment but remain in scop
     depositor capital, and normal recalls cannot realize losses above the configured bound.
 12. A strategy cannot be replaced with outstanding debt; emergency loss overrides require full
     shutdown and governance authorization.
+13. Lending collateral is valued conservatively, debt is valued aggressively, and stale,
+    divergent, disabled, or invalid Oracle feeds fail closed.
+14. Borrowing, collateral withdrawal, liquidation, reserve use, recapitalization, and supplier-loss
+    realization preserve LTV, liquidity, close-factor, seizure, reserve, and loss bounds.
+15. Composite Lending supply is pinned to one Core, market, asset, and Executor; callback
+    reentrancy, payload substitution, inexact transfers, residual balances, and residual approvals
+    cannot leave partial Router, Core, or receipt-token state.
+16. Every Lending state-changing ABI entry point remains classified in
+    `audit/lending-surface.json`; an unclassified interface change fails the test suite.
 
 ## Reproducible baseline
 
@@ -51,6 +63,8 @@ The repository CI runs the same locked installation, compilation, and complete a
 - final multisig signers, timelock ownership, allowlists, and caps remain pending;
 - protocol-fee accounting, LQC fee conversion or burning, and permit signatures are deferred;
 - production yield strategies are excluded; the included idle adapter is a non-yielding reference;
-- lending, bridge, and perpetual modules require separate scope and audits.
+- bridge and perpetual modules require separate scope and audits;
+- Lending production parameters, assets, Oracle endpoints, and deployment addresses remain
+  excluded until independent review and capped testnet evidence are complete.
 
 Each audit engagement must pin the exact commit SHA, compiler version, optimizer settings, deployment configuration, and contract addresses reviewed.
