@@ -13,9 +13,20 @@ function positiveNumber(value, code) {
   return number;
 }
 
-export function validateDemoOrder(input) {
+function isStepAligned(value, step) {
+  const ratio = value / step;
+  return Math.abs(ratio - Math.round(ratio)) <= 1e-8;
+}
+
+function optionalTrigger(value, code) {
+  if (value === undefined || value === null || value === "") return null;
+  return positiveNumber(value, code);
+}
+
+export function validateDemoOrder(input = {}) {
   const market = getFuturesMarket(input.symbol);
   if (!market) throw new Error("UNKNOWN_MARKET");
+  if (market.status === "SUSPENDED") throw new Error("MARKET_SUSPENDED");
 
   const side = String(input.side || "").toUpperCase();
   const type = String(input.type || "MARKET").toUpperCase();
@@ -23,20 +34,37 @@ export function validateDemoOrder(input) {
   if (!ORDER_TYPES.has(type)) throw new Error("INVALID_ORDER_TYPE");
 
   const quantity = positiveNumber(input.quantity, "INVALID_QUANTITY");
+  if (!isStepAligned(quantity, market.stepSize)) throw new Error("QUANTITY_STEP_MISMATCH");
+
   const leverage = positiveNumber(input.leverage, "INVALID_LEVERAGE");
+  if (!Number.isInteger(leverage)) throw new Error("LEVERAGE_MUST_BE_INTEGER");
   if (leverage > market.maxLeverage) throw new Error("LEVERAGE_EXCEEDS_MARKET_MAX");
 
   const referencePrice = positiveNumber(
     type === "LIMIT" ? input.price : input.markPrice,
     type === "LIMIT" ? "INVALID_LIMIT_PRICE" : "INVALID_MARK_PRICE"
   );
+  if (!isStepAligned(referencePrice, market.tickSize)) throw new Error("PRICE_TICK_MISMATCH");
 
-  return { market, side, type, quantity, leverage, referencePrice };
+  const takeProfit = optionalTrigger(input.takeProfit, "INVALID_TAKE_PROFIT");
+  const stopLoss = optionalTrigger(input.stopLoss, "INVALID_STOP_LOSS");
+  if (takeProfit !== null && !isStepAligned(takeProfit, market.tickSize)) throw new Error("TAKE_PROFIT_TICK_MISMATCH");
+  if (stopLoss !== null && !isStepAligned(stopLoss, market.tickSize)) throw new Error("STOP_LOSS_TICK_MISMATCH");
+
+  if (side === "LONG") {
+    if (takeProfit !== null && takeProfit <= referencePrice) throw new Error("INVALID_LONG_TAKE_PROFIT");
+    if (stopLoss !== null && stopLoss >= referencePrice) throw new Error("INVALID_LONG_STOP_LOSS");
+  } else {
+    if (takeProfit !== null && takeProfit >= referencePrice) throw new Error("INVALID_SHORT_TAKE_PROFIT");
+    if (stopLoss !== null && stopLoss <= referencePrice) throw new Error("INVALID_SHORT_STOP_LOSS");
+  }
+
+  return { market, side, type, quantity, leverage, referencePrice, takeProfit, stopLoss };
 }
 
 export function buildDemoOrder(input) {
   const validated = validateDemoOrder(input);
-  const { market, side, type, quantity, leverage, referencePrice } = validated;
+  const { market, side, type, quantity, leverage, referencePrice, takeProfit, stopLoss } = validated;
   const notional = calculateNotional({ quantity, markPrice: referencePrice });
   const initialMargin = calculateInitialMargin({ quantity, markPrice: referencePrice, leverage });
 
@@ -53,8 +81,8 @@ export function buildDemoOrder(input) {
     notional,
     initialMargin,
     reduceOnly: Boolean(input.reduceOnly),
-    takeProfit: input.takeProfit ? Number(input.takeProfit) : null,
-    stopLoss: input.stopLoss ? Number(input.stopLoss) : null,
+    takeProfit,
+    stopLoss,
     status: "PENDING_DEMO",
     createdAt: new Date().toISOString()
   });
