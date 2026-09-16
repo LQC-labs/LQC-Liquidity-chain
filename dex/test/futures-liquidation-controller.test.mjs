@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { createDemoLiquidationController } from '../app/futures/liquidation-controller.js';
 
-function fixture({ liquidatable = false, settlementError = null, mutateBeforeRemove = false, rollbackError = null, badDebt = 0 } = {}) {
+function fixture({ liquidatable = false, settlementError = null, mutateBeforeRemove = false, rollbackError = null, badDebt = 0, sameSideCross = false } = {}) {
   const crossLong = Object.freeze({ symbol: 'BTCUSDT', side: 'LONG', marginMode: 'CROSS', quantity: 1 });
-  const crossShort = Object.freeze({ symbol: 'SOLUSDT', side: 'SHORT', marginMode: 'CROSS', quantity: 3 });
+  const crossShort = Object.freeze({ symbol: 'SOLUSDT', side: sameSideCross ? 'LONG' : 'SHORT', marginMode: 'CROSS', quantity: 3 });
   const isolated = Object.freeze({ symbol: 'ETHUSDT', side: 'SHORT', marginMode: 'ISOLATED', quantity: 2 });
   const positions = [crossLong, crossShort, isolated];
   let settlements = 0, rollbacks = 0;
@@ -12,13 +12,13 @@ function fixture({ liquidatable = false, settlementError = null, mutateBeforeRem
   const account = {
     health(received) {
       assert.deepEqual(received, expectedCross);
-      return Object.freeze({ liquidatable, equity: liquidatable ? 40 : 1000, maintenanceMargin: 50, positions: [] });
+      return Object.freeze({ liquidatable, equity: badDebt > 0 ? -badDebt : (liquidatable ? 40 : 1000), maintenanceMargin: 50, positions: [] });
     },
     liquidateCross(received) {
       assert.deepEqual(received, expectedCross);
       settlements += 1;
       if (settlementError) throw settlementError;
-      return Object.freeze({ liquidated: true, survivingEquity: 40, badDebt, liquidatedAt: '2026-09-16T00:00:00.000Z', health: { positions: [] } });
+      return Object.freeze({ liquidated: true, survivingEquity: badDebt > 0 ? 0 : 40, badDebt, liquidatedAt: '2026-09-16T00:00:00.000Z', health: { positions: [] } });
     }
   };
   const key = (p) => `${p.symbol}:${p.side}:${p.marginMode}`;
@@ -48,11 +48,7 @@ function fixture({ liquidatable = false, settlementError = null, mutateBeforeRem
 describe('Futures cross-margin liquidation controller', () => {
   it('returns NO_CROSS_POSITIONS without settling the account', () => {
     let settled = false;
-    const controller = createDemoLiquidationController({
-      account: { health: () => ({ liquidatable: false }), liquidateCross: () => { settled = true; } },
-      positionBook: { list: () => [{ symbol: 'ETHUSDT', side: 'LONG', marginMode: 'ISOLATED' }], removeCross: () => [], restoreCross: () => [] },
-      markPriceOf: () => 100
-    });
+    const controller = createDemoLiquidationController({ account: { health: () => ({ liquidatable: false }), liquidateCross: () => { settled = true; } }, positionBook: { list: () => [{ symbol: 'ETHUSDT', side: 'LONG', marginMode: 'ISOLATED' }], removeCross: () => [], restoreCross: () => [] }, markPriceOf: () => 100 });
     assert.deepEqual(controller.liquidateCrossIfRequired(), { liquidated: false, reason: 'NO_CROSS_POSITIONS' });
     assert.equal(settled, false);
   });
@@ -80,29 +76,44 @@ describe('Futures cross-margin liquidation controller', () => {
     assert.equal(events.length, 1);
   });
 
-  it('routes explicit bad debt through insurance before ADL', () => {
-    const f = fixture({ liquidatable: true, badDebt: 75 });
+  it('routes explicit bad debt through insurance using a global ADL candidate provider', () => {
+    const f = fixture({ liquidatable: true, badDebt: 75, sameSideCross: true });
+    const globalShort = Object.freeze({ id: 'global-short', side: 'SHORT', quantity: 2, entryPrice: 120, markPrice: 100, collateral: 20 });
     const calls = [];
-    const insuranceAdl = {
-      coverAndPlan(input) {
-        calls.push(input);
-        return Object.freeze({ insuranceCovered: 50, badDebt: 25, adlPlan: { requiredBadDebt: 25 } });
-      }
-    };
-    const controller = createDemoLiquidationController({ account: f.account, positionBook: f.positionBook, markPriceOf: () => 100, insuranceAdl });
+    const insuranceAdl = { coverAndPlan(input) { calls.push(input); return Object.freeze({ insuranceCovered: 50, badDebt: 25, adlPlan: { requiredBadDebt: 25 } }); } };
+    const controller = createDemoLiquidationController({ account: f.account, positionBook: f.positionBook, markPriceOf: () => 100, insuranceAdl, adlPositions: () => [globalShort] });
     const result = controller.liquidateCrossIfRequired();
     assert.equal(calls.length, 1);
     assert.equal(calls[0].liquidationLoss, 75);
     assert.equal(calls[0].bankruptSide, 'LONG');
-    assert.deepEqual(calls[0].positions, [f.isolated]);
+    assert.deepEqual(calls[0].positions, [globalShort]);
     assert.equal(result.badDebtResolution.insuranceCovered, 50);
-    assert.equal(result.badDebtResolution.adlPlan.requiredBadDebt, 25);
   });
 
-  it('requires bad-debt resolution when liquidation produces bad debt', () => {
-    const f = fixture({ liquidatable: true, badDebt: 10 });
+  it('requires bad-debt resolution before mutating positions or account', () => {
+    const f = fixture({ liquidatable: true, badDebt: 10, sameSideCross: true });
     const controller = createDemoLiquidationController({ account: f.account, positionBook: f.positionBook, markPriceOf: () => 100 });
     assert.throws(() => controller.liquidateCrossIfRequired(), /BAD_DEBT_RESOLUTION_REQUIRED/);
+    assert.equal(f.settlements(), 0);
+    assert.deepEqual(f.positions, [f.crossLong, f.crossShort, f.isolated]);
+  });
+
+  it('rejects mixed-side bad debt before mutating positions or account', () => {
+    const f = fixture({ liquidatable: true, badDebt: 10 });
+    const insuranceAdl = { coverAndPlan: () => { throw new Error('SHOULD_NOT_RUN'); } };
+    const controller = createDemoLiquidationController({ account: f.account, positionBook: f.positionBook, markPriceOf: () => 100, insuranceAdl, adlPositions: () => [] });
+    assert.throws(() => controller.liquidateCrossIfRequired(), /MIXED_SIDE_BAD_DEBT_REQUIRES_ALLOCATION/);
+    assert.equal(f.settlements(), 0);
+    assert.deepEqual(f.positions, [f.crossLong, f.crossShort, f.isolated]);
+  });
+
+  it('requires a global ADL candidate provider before mutation', () => {
+    const f = fixture({ liquidatable: true, badDebt: 10, sameSideCross: true });
+    const insuranceAdl = { coverAndPlan: () => ({}) };
+    const controller = createDemoLiquidationController({ account: f.account, positionBook: f.positionBook, markPriceOf: () => 100, insuranceAdl });
+    assert.throws(() => controller.liquidateCrossIfRequired(), /GLOBAL_ADL_POSITION_PROVIDER_REQUIRED/);
+    assert.equal(f.settlements(), 0);
+    assert.deepEqual(f.positions, [f.crossLong, f.crossShort, f.isolated]);
   });
 
   it('aborts before account settlement when the cross position set changed', () => {
@@ -116,12 +127,7 @@ describe('Futures cross-margin liquidation controller', () => {
   it('restores all cross positions when account settlement fails', () => {
     const f = fixture({ liquidatable: true, settlementError: new Error('LEDGER_UNAVAILABLE') });
     const controller = createDemoLiquidationController({ account: f.account, positionBook: f.positionBook, markPriceOf: () => 100 });
-    assert.throws(() => controller.liquidateCrossIfRequired(), (error) => {
-      assert.equal(error.message, 'CROSS_LIQUIDATION_SETTLEMENT_FAILED');
-      assert.equal(error.cause.message, 'LEDGER_UNAVAILABLE');
-      assert.equal(error.rolledBack, true);
-      return true;
-    });
+    assert.throws(() => controller.liquidateCrossIfRequired(), (error) => { assert.equal(error.message, 'CROSS_LIQUIDATION_SETTLEMENT_FAILED'); assert.equal(error.cause.message, 'LEDGER_UNAVAILABLE'); assert.equal(error.rolledBack, true); return true; });
     assert.equal(f.settlements(), 1);
     assert.equal(f.rollbacks(), 1);
     assert.deepEqual(f.positions, [f.crossLong, f.crossShort, f.isolated]);
@@ -130,12 +136,7 @@ describe('Futures cross-margin liquidation controller', () => {
   it('surfaces rollback failure separately from settlement failure', () => {
     const f = fixture({ liquidatable: true, settlementError: new Error('LEDGER_UNAVAILABLE'), rollbackError: new Error('RESTORE_CONFLICT') });
     const controller = createDemoLiquidationController({ account: f.account, positionBook: f.positionBook, markPriceOf: () => 100 });
-    assert.throws(() => controller.liquidateCrossIfRequired(), (error) => {
-      assert.equal(error.message, 'CROSS_LIQUIDATION_ROLLBACK_FAILED');
-      assert.equal(error.cause.message, 'LEDGER_UNAVAILABLE');
-      assert.equal(error.rollbackError.message, 'RESTORE_CONFLICT');
-      return true;
-    });
+    assert.throws(() => controller.liquidateCrossIfRequired(), (error) => { assert.equal(error.message, 'CROSS_LIQUIDATION_ROLLBACK_FAILED'); assert.equal(error.cause.message, 'LEDGER_UNAVAILABLE'); assert.equal(error.rollbackError.message, 'RESTORE_CONFLICT'); return true; });
   });
 
   it('evaluateCross excludes isolated positions from shared-risk health', () => {
