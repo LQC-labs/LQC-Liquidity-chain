@@ -27,7 +27,7 @@
 | Intent V1 | 계약·로컬 테스트·Stage 1~4 준비/검증 도구 완료 | 실제 Bond 결정, 배포, Safe 설정, Intent 실행 |
 | Composite Intent | Plan·Registry·Executor·Router/Vault Adapter·독립 Coordinator 로컬 구현 및 실제 IntentHub 원자 연동 | 테스트넷 배포·실행 증거와 Lending Adapter |
 | Settlement | SettlementHub·체인별 Finality quorum 검증·Escrow 복구·Solver exposure/challenge/slash 결합을 로컬 완료 | 테스트넷 배포·실행 증거 |
-| Lending | 이중 오라클 안전경계 로컬 구현 중 | 최소 코어·청산·부채 한도와 Composite Adapter 구현 |
+| Lending | 이중 오라클·격리 시장 위험경계 로컬 구현 중 | 최소 코어·이자·청산과 Composite Adapter 구현 |
 | Cross-chain | 미구현 | 같은 체인 정산 안정화와 별도 감사 이후 착수 |
 
 ## 최단 중요 경로
@@ -62,4 +62,4 @@
 
 ## 다음 작업
 
-**Composite Coordinator**와 **SettlementHub·FinalityVerifier·SolverRegistry 결합**의 로컬 구현은 완료했다. Lending은 두 독립 Feed의 신선도·완결성·편차를 검증하고 담보에는 낮은 가격, 부채에는 높은 가격을 적용하는 `LQCOracleManager`부터 구현한다. 다음 저장소 작업은 **시장별 담보·차입 한도와 이자·Health Factor 경계**다. 동시에 운영 승인이 가능해지면 **Intent V1 Stage 0 Bond 선택 증거**부터 실제 테스트넷 경로를 재개한다.
+**Composite Coordinator**와 **SettlementHub·FinalityVerifier·SolverRegistry 결합**의 로컬 구현은 완료했다. Lending은 두 독립 Feed의 보수적 가격을 사용하는 `LQCOracleManager`와 시장별 최대 LTV 50%·청산 기준·공급/차입 Cap·Health Factor를 고정하는 `LQCLendingMarketRegistry`를 구현했다. 다음 저장소 작업은 **실제 자금·부채 회계를 담당하는 최소 Lending 코어와 이자 모델**이다. 동시에 운영 승인이 가능해지면 **Intent V1 Stage 0 Bond 선택 증거**부터 실제 테스트넷 경로를 재개한다.
