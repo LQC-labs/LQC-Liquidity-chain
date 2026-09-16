@@ -1,7 +1,38 @@
-import assert from "node:assert/strict";import fs from "node:fs";import { buildRouter2QuoteStack } from "../scripts/prepare-router2-quote-stack.mjs";
-describe("Router 2.0 V3 Adapter TokenPocket page",function(){
- it("publishes generator-identical V3 Adapter data",async function(){const r=JSON.parse(fs.readFileSync(new URL("../deployments/router2-quote-stack-stage1-bsc-testnet-97.json",import.meta.url)));assert.equal(r.orderedActions[1].data,(await buildRouter2QuoteStack()).orderedActions[1].data);});
- it("verifies official endpoints, owner and max one hop after deployment",function(){const s=fs.readFileSync(new URL("../app/router2-v3-adapter-testnet.js",import.meta.url),"utf8");assert.match(s,/0xe20dccb2/);assert.match(s,/0xc31c9c07/);assert.match(s,/0x8da5cb5b/);assert.match(s,/0x3f888cbb/);assert.match(s,/uintResult\(h\)!==1n/);});
- it("keeps zero value, single-contract scope and duplicate protection",function(){const s=fs.readFileSync(new URL("../app/router2-v3-adapter-testnet.js",import.meta.url),"utf8");const h=fs.readFileSync(new URL("../app/router2-v3-adapter-testnet.html",import.meta.url),"utf8");assert.match(s,/value:"0x0",data:deployData/);assert.match(s,/if\(await existing\(\)\)return/);assert.match(h,/Adapter 계약 하나만 생성/);assert.match(h,/수수료·풀 등록이나 교환을 하지 않습니다/);});
- it("records the successful verified V3 Adapter deployment",function(){const r=JSON.parse(fs.readFileSync(new URL("../deployments/router2-quote-stack-stage1-bsc-testnet-97.json",import.meta.url)));const a=r.executions.pancakeV3Adapter;assert.equal(a.address,"0x1bffac4b93f48d5ea03bae36dbaee6bedd0a73d4");assert.equal(a.transactionHash,"0xa92b6cc863fe4b38b3b672178f36bb6f24aad351b7f48875b80e43660c5a0638");assert.equal(a.owner,r.signer);assert.equal(a.maxHops,1);assert.equal(a.status,"success");});
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import { buildRouter2QuoteStack } from "../scripts/prepare-router2-quote-stack.mjs";
+import { classifyArtifactStatus, getHistoricalAdapterBytecode } from "./router2-v3-adapter-artifact-status.test.mjs";
+
+describe("Router 2.0 V3 Adapter TokenPocket page", function () {
+  it("publishes the current candidate while preserving historical deployed data", async function () {
+    const r = JSON.parse(fs.readFileSync(new URL("../deployments/router2-quote-stack-stage1-bsc-testnet-97.json", import.meta.url)));
+    const historicalBytecode = getHistoricalAdapterBytecode(r);
+    const candidateBytecode = (await buildRouter2QuoteStack()).orderedActions[1].data;
+    const status = classifyArtifactStatus(candidateBytecode, historicalBytecode);
+    assert.ok(["match", "redeploy_required"].includes(status.status));
+    if (status.status === "match") assert.equal(candidateBytecode, historicalBytecode);
+    else {
+      assert.notEqual(candidateBytecode, historicalBytecode);
+      assert.equal(status.releaseReady, false);
+    }
+  });
+
+  it("verifies official endpoints, owner and max one hop after deployment", function () {
+    const s = fs.readFileSync(new URL("../app/router2-v3-adapter-testnet.js", import.meta.url), "utf8");
+    assert.match(s, /0xe20dccb2/); assert.match(s, /0xc31c9c07/); assert.match(s, /0x8da5cb5b/); assert.match(s, /0x3f888cbb/); assert.match(s, /uintResult\(h\)!==1n/);
+  });
+
+  it("keeps zero value, single-contract scope and duplicate protection", function () {
+    const s = fs.readFileSync(new URL("../app/router2-v3-adapter-testnet.js", import.meta.url), "utf8");
+    const h = fs.readFileSync(new URL("../app/router2-v3-adapter-testnet.html", import.meta.url), "utf8");
+    assert.match(s, /value:"0x0",data:deployData/); assert.match(s, /if\(await existing\(\)\)return/); assert.match(h, /Adapter 계약 하나만 생성/); assert.match(h, /수수료·풀 등록이나 교환을 하지 않습니다/);
+  });
+
+  it("records the successful verified V3 Adapter deployment", function () {
+    const r = JSON.parse(fs.readFileSync(new URL("../deployments/router2-quote-stack-stage1-bsc-testnet-97.json", import.meta.url)));
+    const a = r.executions.pancakeV3Adapter;
+    assert.equal(a.address, "0x1bffac4b93f48d5ea03bae36dbaee6bedd0a73d4");
+    assert.equal(a.transactionHash, "0xa92b6cc863fe4b38b3b672178f36bb6f24aad351b7f48875b80e43660c5a0638");
+    assert.equal(a.owner, r.signer); assert.equal(a.maxHops, 1); assert.equal(a.status, "success");
+  });
 });

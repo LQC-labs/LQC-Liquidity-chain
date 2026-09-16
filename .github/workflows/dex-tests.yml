@@ -42,6 +42,12 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
 
+      - name: Compile contracts
+        run: npm run compile
+
+      - name: Report Router 2.0 release readiness
+        run: node scripts/report-router2-release-readiness.mjs
+
       - name: Compile and run tests
         run: npm test
 
