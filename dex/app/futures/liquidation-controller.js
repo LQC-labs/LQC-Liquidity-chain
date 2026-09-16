@@ -2,10 +2,12 @@
 // Coordinates account-level cross liquidation with the position book so UI
 // callers do not mutate shared-risk positions one by one.
 
-export function createDemoLiquidationController({ account, positionBook, markPriceOf, onLiquidated = null }) {
+export function createDemoLiquidationController({ account, positionBook, markPriceOf, insuranceAdl = null, adlPositions = null, onLiquidated = null }) {
   if (!account || typeof account.liquidateCross !== 'function' || typeof account.health !== 'function') throw new Error('MARGIN_ACCOUNT_REQUIRED');
   if (!positionBook || typeof positionBook.list !== 'function' || typeof positionBook.removeCross !== 'function' || typeof positionBook.restoreCross !== 'function') throw new Error('POSITION_BOOK_REQUIRED');
   if (typeof markPriceOf !== 'function') throw new Error('MARK_PRICE_PROVIDER_REQUIRED');
+  if (insuranceAdl !== null && typeof insuranceAdl.coverAndPlan !== 'function') throw new Error('INSURANCE_ADL_CONTROLLER_REQUIRED');
+  if (adlPositions !== null && typeof adlPositions !== 'function') throw new Error('INVALID_ADL_POSITION_PROVIDER');
   if (onLiquidated !== null && typeof onLiquidated !== 'function') throw new Error('INVALID_LIQUIDATION_CALLBACK');
 
   function crossPositions() {
@@ -23,8 +25,6 @@ export function createDemoLiquidationController({ account, positionBook, markPri
     const health = account.health(positions, markPriceOf);
     if (!health.liquidatable) return Object.freeze({ liquidated: false, reason: 'ACCOUNT_HEALTHY', health });
 
-    // Remove exactly the risk-evaluated set. If settlement then fails, restore
-    // the immutable position snapshot so the demo account/book stay consistent.
     const closed = positionBook.removeCross(positions);
     let settlement;
     try {
@@ -45,10 +45,22 @@ export function createDemoLiquidationController({ account, positionBook, markPri
       throw settlementError;
     }
 
+    let badDebtResolution = null;
+    if (settlement.badDebt > 0) {
+      if (!insuranceAdl) throw new Error('BAD_DEBT_RESOLUTION_REQUIRED');
+      const candidates = adlPositions ? adlPositions() : positionBook.list();
+      badDebtResolution = insuranceAdl.coverAndPlan({
+        liquidationLoss: settlement.badDebt,
+        positions: candidates,
+        bankruptSide: settlement.bankruptSide ?? health.bankruptSide ?? positions[0]?.side
+      });
+    }
+
     const event = Object.freeze({
       liquidated: true,
       reason: 'CROSS_ACCOUNT_LIQUIDATION',
       settlement,
+      badDebtResolution,
       closedPositions: closed,
       liquidatedAt: settlement.liquidatedAt
     });
