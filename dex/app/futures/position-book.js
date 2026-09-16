@@ -96,9 +96,23 @@ export function createDemoPositionBook() {
     return current;
   }
 
+  function removeCross(expected = null) {
+    const current = list().filter((position) => position.marginMode === 'CROSS');
+    if (expected !== null) {
+      if (!Array.isArray(expected)) throw new Error('INVALID_EXPECTED_CROSS_POSITIONS');
+      const currentKeys = current.map(keyOf).sort();
+      const expectedKeys = expected.map(keyOf).sort();
+      if (currentKeys.length !== expectedKeys.length || currentKeys.some((key, index) => key !== expectedKeys[index])) {
+        throw new Error('CROSS_POSITION_SET_CHANGED');
+      }
+    }
+    for (const position of current) positions.delete(keyOf(position));
+    return Object.freeze(current);
+  }
+
   function clear() {
     positions.clear();
   }
 
-  return Object.freeze({ list, get, add, reduce, evaluateLiquidation, liquidate, remove, clear });
+  return Object.freeze({ list, get, add, reduce, evaluateLiquidation, liquidate, remove, removeCross, clear });
 }
