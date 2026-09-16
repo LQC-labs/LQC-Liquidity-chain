@@ -5,19 +5,22 @@ import { ethers } from "ethers";
 import { inspectArtifactHashes } from "./run-router2-proof-gateway-gate.mjs";
 
 const readJson=(root,relative)=>JSON.parse(fs.readFileSync(path.join(root,relative),"utf8"));
-function findHistoricalAdapterBytecode(value){
+function findHistoricalAdapterDeploymentData(value){
   if(!value||typeof value!=="object")return null;
-  if(typeof value.bytecode==="string"&&value.bytecode.startsWith("0x")&&value.bytecode.length>100)return value.bytecode;
-  for(const child of Object.values(value)){const found=findHistoricalAdapterBytecode(child);if(found)return found;}
+  if(value.action==="deploy-v3-adapter"&&typeof value.data==="string"&&value.data.startsWith("0x")&&value.data.length>100)return value.data;
+  for(const child of Object.values(value)){const found=findHistoricalAdapterDeploymentData(child);if(found)return found;}
   return null;
 }
 export function inspectV3Adapter(root){
   const artifact=readJson(root,"artifacts/contracts/router-v2/adapters/PancakeV3ExecutionAdapter.sol/PancakeV3ExecutionAdapter.json");
   const deployment=readJson(root,"deployments/router2-quote-stack-config-bsc-testnet-97.json");
-  const historicalBytecode=findHistoricalAdapterBytecode(deployment);
-  if(!historicalBytecode)throw new Error("Historical V3 adapter deployment bytecode is missing");
-  const candidate=ethers.keccak256(artifact.bytecode),deployed=ethers.keccak256(historicalBytecode),redeployRequired=candidate!==deployed;
-  return{status:redeployRequired?"redeploy_required":"match",releaseReady:!redeployRequired,candidate,deployed};
+  const historicalDeploymentData=findHistoricalAdapterDeploymentData(deployment);
+  if(!historicalDeploymentData)throw new Error("Historical V3 adapter deployment transaction data is missing");
+  const candidateCreation=artifact.bytecode.toLowerCase();
+  const deployedCreation=historicalDeploymentData.slice(0,candidateCreation.length).toLowerCase();
+  if(deployedCreation.length!==candidateCreation.length)throw new Error("Historical V3 adapter deployment data is shorter than current candidate creation bytecode");
+  const candidate=ethers.keccak256(candidateCreation),deployed=ethers.keccak256(deployedCreation),redeployRequired=candidate!==deployed;
+  return{status:redeployRequired?"redeploy_required":"match",releaseReady:!redeployRequired,candidate,deployed,evidence:"orderedActions.deploy-v3-adapter.data",comparison:"creation-bytecode-prefix; constructor arguments excluded"};
 }
 export function buildReleaseReadiness(root=path.resolve(import.meta.dirname,"..")){
   const proofGateway=inspectArtifactHashes(root),v3Adapter=inspectV3Adapter(root);
