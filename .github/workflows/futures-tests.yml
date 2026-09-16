@@ -58,5 +58,13 @@ jobs:
       - name: Run Futures contract tests
         run: npx mocha --timeout 30000 test/futures.test.mjs test/lqc-flow-futures.test.mjs
 
-      - name: Run Futures JS risk and rollback tests
-        run: node --test test/futures-liquidation-controller.test.mjs test/futures-position-book-cross-rollback.test.mjs
+      - name: Run Futures JS unit and risk tests
+        run: |
+          files=()
+          for file in test/futures*.test.mjs; do
+            case "$file" in
+              test/futures.test.mjs) ;;
+              *) files+=("$file") ;;
+            esac
+          done
+          node --test "${files[@]}"
