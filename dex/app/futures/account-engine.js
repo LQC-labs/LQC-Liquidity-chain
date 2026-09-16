@@ -10,6 +10,7 @@ export function createDemoMarginAccount(initialBalance = 100000) {
   let cash = initial;
   let isolatedReserved = 0;
   let crossReserved = 0;
+  let cumulativeFunding = 0;
 
   function reserve(amount, marginMode = 'ISOLATED') {
     const value = Number(amount);
@@ -29,6 +30,18 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     if (marginMode === 'CROSS') crossReserved = Math.max(0, crossReserved - value);
     else isolatedReserved = Math.max(0, isolatedReserved - value);
     cash = Math.max(0, cash + value + realized);
+    return snapshot();
+  }
+
+  // Funding payment is signed from the account holder's perspective:
+  // positive = credit, negative = debit. Credits/debits settle directly to
+  // account cash while reserved margin remains unchanged.
+  function settleFunding(payment) {
+    const value = Number(payment);
+    if (!Number.isFinite(value)) throw new Error('INVALID_FUNDING_PAYMENT');
+    if (cash + value < -1e-9) throw new Error('INSUFFICIENT_BALANCE_FOR_FUNDING');
+    cash = Math.max(0, cash + value);
+    cumulativeFunding += value;
     return snapshot();
   }
 
@@ -86,9 +99,10 @@ export function createDemoMarginAccount(initialBalance = 100000) {
       isolatedReserved,
       crossReserved,
       crossWalletBalance: crossWalletBalance(),
-      totalReserved: isolatedReserved + crossReserved
+      totalReserved: isolatedReserved + crossReserved,
+      cumulativeFunding
     });
   }
 
-  return Object.freeze({ reserve, release, consumeLiquidation, available, crossWalletBalance, health, liquidateCross, snapshot });
+  return Object.freeze({ reserve, release, settleFunding, consumeLiquidation, available, crossWalletBalance, health, liquidateCross, snapshot });
 }
