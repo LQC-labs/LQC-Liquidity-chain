@@ -1,0 +1,18 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { canonicalDigest } from "../scripts/build-intent-reproducibility-seal.mjs";
+import { buildIntentStage3ReviewPackage, writeIntentStage3ReviewPackage } from "../scripts/build-intent-stage3-review-package.mjs";
+import { buildIntentTestnetManifest } from "../scripts/prepare-intent-testnet-stack.mjs";
+
+describe("LQC Intent Stage-3 governance binding review package", function () {
+  const bondToken = "0x0000000000000000000000000000000000000001";
+  const addresses = { LQCIntentHub: "0x0000000000000000000000000000000000000010", LQCQuoteManager: "0x0000000000000000000000000000000000000020", LQCSolverRegistry: "0x0000000000000000000000000000000000000030", LQCExecutionVerifier: "0x0000000000000000000000000000000000000040", LQCInternalSolver: "0x0000000000000000000000000000000000000050" };
+  const attesters = ["0x0000000000000000000000000000000000000060", "0x0000000000000000000000000000000000000070"];
+  async function fixture() { const manifest = await buildIntentTestnetManifest({ bondToken, addresses, attesters }); const body = { schemaVersion: 1, recordType: "LQC_INTENT_STAGE3_READINESS", status: "READY_FOR_GOVERNANCE_BINDING_REVIEW", network: { name: "BSC Testnet", chainId: 97 }, stage2VerificationDigest: "sha256:stage2", blockNumber: 123, blockHash: `0x${"ab".repeat(32)}`, rpcCount: 2, addresses: structuredClone(addresses), roles: structuredClone(manifest.roles), dependencies: structuredClone(manifest.dependencies), policy: structuredClone(manifest.policy), attesters: structuredClone(attesters), runtimeDigests: Array(5).fill(`sha256:${"cd".repeat(32)}`), transactionOccurred: false, safety: "read-only" }; return { manifest, readiness: { ...body, readinessDigest: canonicalDigest(body) } }; }
+
+  it("binds every ordered Safe action to readiness evidence", async function () { const inputs = await fixture(), review = buildIntentStage3ReviewPackage(inputs); assert.equal(review.status, "REVIEW_REQUIRED"); assert.equal(review.actions.length, 11); assert.equal(review.actions[8].action, "solver-accept-hub-role"); assert.match(review.reviewDigest, /^sha256:[0-9a-f]{64}$/); assert.equal(review.transactionOccurred, false); });
+  it("rejects tampered readiness, roles, order, calldata, and attesters", async function () { let inputs = await fixture(); inputs.readiness.blockNumber++; assert.throws(() => buildIntentStage3ReviewPackage(inputs), /readiness/); inputs = await fixture(); inputs.manifest.roles.riskSafe = bondToken; assert.throws(() => buildIntentStage3ReviewPackage(inputs), /riskSafe/); inputs = await fixture(); [inputs.manifest.orderedActions[0], inputs.manifest.orderedActions[1]] = [inputs.manifest.orderedActions[1], inputs.manifest.orderedActions[0]]; assert.throws(() => buildIntentStage3ReviewPackage(inputs), /action 1/); inputs = await fixture(); inputs.manifest.orderedActions[0].data = inputs.manifest.orderedActions[1].data; assert.throws(() => buildIntentStage3ReviewPackage(inputs), /action 1/); inputs = await fixture(); inputs.manifest.attesters.reverse(); assert.throws(() => buildIntentStage3ReviewPackage(inputs), /attester/); });
+  it("writes four immutable review files", async function () { const inputs = await fixture(), review = buildIntentStage3ReviewPackage(inputs), directory = fs.mkdtempSync(path.join(os.tmpdir(), "lqc-stage3-review-")), result = writeIntentStage3ReviewPackage(directory, review, inputs); assert.equal(result.fileCount, 4); assert.equal(fs.readdirSync(directory).length, 4); assert.throws(() => writeIntentStage3ReviewPackage(directory, review, inputs), /empty output/); });
+});
