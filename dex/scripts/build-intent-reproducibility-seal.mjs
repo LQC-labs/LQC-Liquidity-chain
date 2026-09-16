@@ -1,0 +1,39 @@
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { execFileSync } from "node:child_process";
+import { pathToFileURL } from "node:url";
+import solc from "solc";
+import { ethers } from "ethers";
+import { buildIntentTestnetManifest } from "./prepare-intent-testnet-stack.mjs";
+
+const SHA256=/^sha256:[0-9a-f]{64}$/,REVISION=/^[0-9a-f]{40}$/,TX=/^0x[0-9a-fA-F]{64}$/;
+const GOVERNANCE_SAFE="0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A";
+const STAGE1_CONTRACTS=["LQCIntentHub","LQCQuoteManager","LQCSolverRegistry","LQCExecutionVerifier"];
+const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof value==="object"?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
+const serialize=value=>JSON.stringify(canonical(value));
+export const sha256=value=>`sha256:${crypto.createHash("sha256").update(value).digest("hex")}`;
+export const canonicalDigest=value=>sha256(serialize(value));
+
+export function validateBondSelection(selection,inspection){
+  if(selection?.network?.chainId!==97||selection.governanceSafe?.toLowerCase()!==GOVERNANCE_SAFE.toLowerCase()||!ethers.isAddress(selection.approvedBondToken)||selection.approvedBondToken===ethers.ZeroAddress||!TX.test(selection.approvalTransaction||"")||!SHA256.test(selection.inspectionDigest||""))throw new Error("Invalid Governance Bond selection");
+  if(selection.inspectionDigest!==sha256(serialize(inspection)))throw new Error("Bond inspection digest mismatch");
+  const matches=(inspection?.results||[]).filter(result=>result.token?.toLowerCase()===selection.approvedBondToken.toLowerCase()&&result.assessment?.eligible===true);if(matches.length!==1)throw new Error("Approved Bond token is not uniquely eligible");
+  if(matches[0].decimals!==18||matches[0].network?.chainId!==97)throw new Error("Approved Bond token inspection is invalid");
+  return{token:ethers.getAddress(selection.approvedBondToken),approvalTransaction:selection.approvalTransaction.toLowerCase(),inspectionDigest:selection.inspectionDigest,observedBlock:matches[0].observedBlock};
+}
+
+export function buildIntentReproducibilitySeal(input){
+  if(!REVISION.test(input?.sourceRevision||"")||!SHA256.test(input.packageLockDigest||"")||!/^0\.8\.30(?:\+|$)/.test(input.compilerVersion||"")||!Array.isArray(input.sourceFiles)||!Array.isArray(input.artifacts)||!Array.isArray(input.stage1Actions)||input.stage1Actions.length!==4)throw new Error("Invalid Intent seal input");
+  const selection=validateBondSelection(input.selection,input.inspection),sourceFiles=input.sourceFiles.map(value=>({path:value.path,digest:value.digest})).sort((a,b)=>a.path.localeCompare(b.path)),artifacts=input.artifacts.map(value=>({contract:value.contract,abiDigest:value.abiDigest,bytecodeDigest:value.bytecodeDigest,deployedBytecodeDigest:value.deployedBytecodeDigest})).sort((a,b)=>a.contract.localeCompare(b.contract)),initCode=input.stage1Actions.map(value=>({action:value.action,initCodeDigest:sha256(value.data)}));
+  if(sourceFiles.length===0||sourceFiles.some(value=>!value.path.startsWith("contracts/")||!SHA256.test(value.digest))||artifacts.length!==STAGE1_CONTRACTS.length||artifacts.some(value=>!STAGE1_CONTRACTS.includes(value.contract)||![value.abiDigest,value.bytecodeDigest,value.deployedBytecodeDigest].every(digest=>SHA256.test(digest)))||new Set(artifacts.map(value=>value.contract)).size!==STAGE1_CONTRACTS.length)throw new Error("Invalid Intent seal sources or artifacts");
+  const body={schemaVersion:1,sealType:"LQC_INTENT_STAGE1_REPRODUCIBILITY_SEAL",network:{name:"BSC Testnet",chainId:97},sourceRevision:input.sourceRevision,runtime:{nodeVersion:input.nodeVersion,packageLockDigest:input.packageLockDigest},compiler:{version:input.compilerVersion,optimizer:{enabled:true,runs:200},viaIR:true,evmVersion:"shanghai"},governance:{safe:GOVERNANCE_SAFE,threshold:4,owners:7,approvalTransaction:selection.approvalTransaction},bondSelection:selection,sourceFiles,sourceTreeDigest:sha256(serialize(sourceFiles)),artifacts,artifactDigest:sha256(serialize(artifacts)),stage1InitCode:initCode,stage1InitCodeDigest:sha256(serialize(initCode)),transactionOccurred:false};return{...body,sealDigest:sha256(serialize(body))};
+}
+
+export function verifyIntentReproducibilitySeal(seal){try{if(seal?.sealType!=="LQC_INTENT_STAGE1_REPRODUCIBILITY_SEAL"||seal.network?.chainId!==97||seal.governance?.safe?.toLowerCase()!==GOVERNANCE_SAFE.toLowerCase()||seal.governance?.threshold!==4||seal.governance?.owners!==7||seal.compiler?.optimizer?.runs!==200||seal.compiler?.viaIR!==true||seal.compiler?.evmVersion!=="shanghai"||seal.transactionOccurred!==false||seal.artifacts?.length!==4||seal.stage1InitCode?.length!==4||!SHA256.test(seal.sealDigest||""))return false;const{sealDigest,...body}=seal;return sha256(serialize(body))===sealDigest&&body.stage1InitCodeDigest===sha256(serialize(body.stage1InitCode))&&body.artifactDigest===sha256(serialize(body.artifacts))&&body.sourceTreeDigest===sha256(serialize(body.sourceFiles));}catch{return false;}}
+
+function collectSources(root){const files=[];const walk=directory=>{for(const entry of fs.readdirSync(directory,{withFileTypes:true})){const absolute=path.join(directory,entry.name);if(entry.isDirectory())walk(absolute);else if(entry.name.endsWith(".sol"))files.push({path:path.relative(root,absolute).split(path.sep).join("/"),digest:sha256(fs.readFileSync(absolute))});}};walk(path.join(root,"contracts/intent-v1"));files.push({path:"contracts/libraries/SafeTransferLib.sol",digest:sha256(fs.readFileSync(path.join(root,"contracts/libraries/SafeTransferLib.sol")))});return files;}
+function collectArtifacts(root){return STAGE1_CONTRACTS.map(contract=>{const value=JSON.parse(fs.readFileSync(path.join(root,`artifacts/contracts/intent-v1/${contract}.sol/${contract}.json`),"utf8"));return{contract,abiDigest:sha256(serialize(value.abi)),bytecodeDigest:sha256(value.bytecode),deployedBytecodeDigest:sha256(value.deployedBytecode)};});}
+
+async function main(){const root=path.resolve(import.meta.dirname,".."),selectionFile=process.env.INTENT_BOND_SELECTION_FILE,inspectionFile=process.env.INTENT_BOND_INSPECTION_FILE;if(!selectionFile||!inspectionFile)throw new Error("Set INTENT_BOND_SELECTION_FILE and INTENT_BOND_INSPECTION_FILE after Governance approval");if(execFileSync("git",["status","--porcelain"],{cwd:root,encoding:"utf8"}).trim())throw new Error("Refusing to seal a dirty worktree");const selection=JSON.parse(fs.readFileSync(path.resolve(selectionFile),"utf8")),inspection=JSON.parse(fs.readFileSync(path.resolve(inspectionFile),"utf8"));validateBondSelection(selection,inspection);const manifest=await buildIntentTestnetManifest({bondToken:selection.approvedBondToken}),seal=buildIntentReproducibilitySeal({sourceRevision:execFileSync("git",["rev-parse","HEAD"],{cwd:root,encoding:"utf8"}).trim().toLowerCase(),nodeVersion:process.version,packageLockDigest:sha256(fs.readFileSync(path.join(root,"package-lock.json"))),compilerVersion:solc.version(),selection,inspection,sourceFiles:collectSources(root),artifacts:collectArtifacts(root),stage1Actions:manifest.orderedActions}),output=path.join(root,"deployments/intent-stage1-reproducibility-seal-bsc-testnet-97.json");fs.writeFileSync(output,`${JSON.stringify(seal,null,2)}\n`);console.log(`Wrote ${output}`);}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href)await main();

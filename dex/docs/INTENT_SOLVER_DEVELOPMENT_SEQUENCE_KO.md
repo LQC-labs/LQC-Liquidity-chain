@@ -98,7 +98,9 @@
 - Gate 5 완료: 기본 pilot 정책은 18-decimal Bond token 10,000 단위, Solver exposure 1,000 단위, Gas overrun 20%, Price Impact 5%, Oracle Deviation 3%. 주소·Safe threshold·중복 attester·quorum·action target/data를 dry-run하고 트랜잭션은 전송하지 않음.
 - Gate 5 완료: `inspect-intent-bond-candidates.mjs`가 2개 이상 RPC의 공통 block에서 후보 token bytecode·18 decimals·total supply, 독립 DEX venue별 token/quote 실잔액, 독립 Oracle 2개 이상의 round 완결성·1시간 freshness·정규화 가격 편차 5% 이하를 교차 검증.
 - Gate 5 완료: 동일 venue/feed 중복, RPC별 상태 불일치, bytecode 부재, 부족한 liquidity, stale/incomplete/divergent Oracle을 개별 blocker로 기록. 결과는 Governance 선택 자료일 뿐 token 선택·승인·이체·배포는 수행하지 않음.
-- Gate 5 다음 작업: Governance가 후보와 최소 유동성 기준을 승인한 뒤 선택된 Bond token 주소를 Stage 1 manifest에 고정하고 배포 bytecode reproducibility seal을 생성.
+- Gate 5 완료: `build-intent-reproducibility-seal.mjs`가 Governance 4-of-7 승인 기록, 정확히 하나의 eligible Bond 검사 결과와 그 canonical digest, Git source revision, package-lock digest, Solidity 0.8.30 설정, Intent source digest, 4개 Stage 1 ABI/creation/runtime bytecode digest, constructor 포함 init-code digest를 하나의 seal로 결합.
+- Gate 5 완료: Bond 주소·검사 결과·소스·artifact·init code·Governance threshold 중 하나라도 바뀌면 seal 검증 실패. dirty worktree 또는 승인/검사 파일 부재 시 실제 seal 파일 생성을 거부하므로 현재는 token을 임의 고정하지 않음.
+- Gate 5 다음 작업: Governance Bond 선택 기록이 준비되면 approval transaction의 Safe 실행 성공·nonce·payload hash를 BSC testnet에서 독립 검증한 뒤 실제 Stage 1 seal을 생성.
 
 ## 의도적으로 후순위인 기능
 
