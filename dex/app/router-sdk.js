@@ -26,10 +26,146 @@
     if(expectedOut===0n||amountOut>=expectedOut)return 0;
     return Number((expectedOut-amountOut)*10000n/expectedOut);
   }
+  function constantProductHopEvidence(amountIn,reserveIn,reserveOut,feeBps=30){
+    for(const value of[amountIn,reserveIn,reserveOut])if(typeof value!=='bigint'||value<=0n)throw new Error('Invalid V2 reserve state');
+    feeBps=Number(feeBps);if(!Number.isInteger(feeBps)||feeBps<0||feeBps>=10000)throw new Error('Invalid V2 fee');
+    const feeMultiplier=BigInt(10000-feeBps),amountInWithFee=amountIn*feeMultiplier,denominator=reserveIn*10000n+amountInWithFee,amountOut=amountInWithFee*reserveOut/denominator,spotAmountOutAfterFee=amountInWithFee*reserveOut/(reserveIn*10000n);
+    if(amountOut<=0n||amountOut>=reserveOut||spotAmountOutAfterFee<=0n)throw new Error('Insufficient V2 liquidity');
+    return Object.freeze({amountIn:amountIn.toString(),amountOut:amountOut.toString(),spotAmountOutAfterFee:spotAmountOutAfterFee.toString(),feeBps,priceImpactBps:priceImpactFromExpected(amountOut,spotAmountOutAfterFee),reserveInBefore:reserveIn.toString(),reserveOutBefore:reserveOut.toString(),reserveInAfter:(reserveIn+amountIn).toString(),reserveOutAfter:(reserveOut-amountOut).toString()});
+  }
+  function v2RoutePriceImpactEvidence(input){
+    const{amountIn,hops=[],quotedAmountOut,blockNumber}=input||{};
+    if(typeof amountIn!=='bigint'||amountIn<=0n||!Array.isArray(hops)||hops.length<1||hops.length>3||!Number.isSafeInteger(Number(blockNumber))||Number(blockNumber)<0)throw new Error('Invalid V2 route evidence');
+    let running=amountIn,spot=amountIn;const legs=hops.map((hop,index)=>{
+      const evidence=constantProductHopEvidence(running,BigInt(hop.reserveIn),BigInt(hop.reserveOut),hop.feeBps);const spotEvidence=constantProductHopEvidence(spot,BigInt(hop.reserveIn),BigInt(hop.reserveOut),hop.feeBps);running=BigInt(evidence.amountOut);spot=BigInt(spotEvidence.spotAmountOutAfterFee);
+      return Object.freeze({index,pair:String(hop.pair||'').toLowerCase(),tokenIn:String(hop.tokenIn||'').toLowerCase(),tokenOut:String(hop.tokenOut||'').toLowerCase(),...evidence});
+    });
+    const quoted=quotedAmountOut===undefined?running:BigInt(quotedAmountOut);if(quoted!==running)throw new Error('V2 quote and reserve state mismatch');
+    return Object.freeze({method:'v2-reserve-constant-product',blockNumber:Number(blockNumber),amountIn:amountIn.toString(),amountOut:running.toString(),spotAmountOutAfterFee:spot.toString(),priceImpactBps:priceImpactFromExpected(running,spot),legs:Object.freeze(legs)});
+  }
+  async function readV2RouteReserves(input){
+    const{provider,routerAddress,path,feeBps=30,ethers}=input||{};
+    if(!provider||!ethers||!ethers.isAddress(routerAddress)||!Array.isArray(path)||path.length<2||path.length>4||path.some(token=>!ethers.isAddress(token)))throw new Error('Invalid V2 reserve request');
+    const router=new ethers.Contract(routerAddress,['function factory() view returns(address)'],provider),factoryAddress=await router.factory();if(!ethers.isAddress(factoryAddress)||factoryAddress===ethers.ZeroAddress)throw new Error('Invalid V2 factory');
+    const factory=new ethers.Contract(factoryAddress,['function getPair(address,address) view returns(address)'],provider),blockNumber=await provider.getBlockNumber(),hops=[];
+    for(let i=0;i<path.length-1;i++){
+      const tokenIn=path[i],tokenOut=path[i+1],pairAddress=await factory.getPair(tokenIn,tokenOut);if(!ethers.isAddress(pairAddress)||pairAddress===ethers.ZeroAddress)throw new Error('V2 pair unavailable');
+      const pair=new ethers.Contract(pairAddress,['function token0() view returns(address)','function getReserves() view returns(uint112,uint112,uint32)'],provider),[token0,reserves]=await Promise.all([pair.token0(),pair.getReserves()]),forward=token0.toLowerCase()===tokenIn.toLowerCase(),reserveIn=BigInt(forward?reserves[0]:reserves[1]),reserveOut=BigInt(forward?reserves[1]:reserves[0]);
+      hops.push(Object.freeze({pair:pairAddress,tokenIn,tokenOut,reserveIn,reserveOut,feeBps}));
+    }
+    return Object.freeze({blockNumber:Number(blockNumber),factory:factoryAddress,hops:Object.freeze(hops)});
+  }
+  async function readV2AdapterRouteReserves(input){
+    const{provider,adapterAddress,path,feeBps=30,ethers}=input||{};if(!ethers||!ethers.isAddress(adapterAddress))throw new Error('Invalid V2 adapter');
+    const adapter=new ethers.Contract(adapterAddress,['function flowRouter() view returns(address)','function pancakeRouter() view returns(address)'],provider);let routerAddress;
+    for(const getter of['flowRouter','pancakeRouter']){try{const candidate=await adapter[getter]();if(ethers.isAddress(candidate)&&candidate!==ethers.ZeroAddress){routerAddress=candidate;break}}catch{}}
+    if(!routerAddress)throw new Error('V2 adapter router unavailable');
+    return readV2RouteReserves({provider,routerAddress,path,feeBps,ethers});
+  }
+  const Q96=1n<<96n,Q192=Q96*Q96,FEE_PIPS=1000000n;
+  function ceilDiv(value,denominator){return(value+denominator-1n)/denominator}
+  function v3ConcentratedLiquidityHopEvidence(input){
+    const{amountIn,sqrtPriceX96,liquidity,zeroForOne,feePips,ticks=[]}=input||{};
+    if(typeof amountIn!=='bigint'||amountIn<=0n||typeof sqrtPriceX96!=='bigint'||sqrtPriceX96<=0n||typeof liquidity!=='bigint'||liquidity<=0n||typeof zeroForOne!=='boolean'||!Number.isInteger(feePips)||feePips<0||feePips>=1000000||!Array.isArray(ticks))throw new Error('Invalid V3 pool state');
+    const ordered=ticks.map(tick=>({sqrtPriceX96:BigInt(tick.sqrtPriceX96),liquidityNet:BigInt(tick.liquidityNet)})).filter(tick=>zeroForOne?tick.sqrtPriceX96<sqrtPriceX96:tick.sqrtPriceX96>sqrtPriceX96).sort((a,b)=>a.sqrtPriceX96===b.sqrtPriceX96?0:(zeroForOne?(a.sqrtPriceX96>b.sqrtPriceX96?-1:1):(a.sqrtPriceX96<b.sqrtPriceX96?-1:1)));
+    const multiplier=FEE_PIPS-BigInt(feePips),netTotal=amountIn*multiplier/FEE_PIPS;
+    let grossRemaining=amountIn,current=sqrtPriceX96,currentLiquidity=liquidity,amountOut=0n,crossedTicks=0;
+    for(const boundary of[...ordered,{sqrtPriceX96:null,liquidityNet:0n}]){
+      if(grossRemaining===0n)break;
+      let netRequired=null;
+      if(boundary.sqrtPriceX96!==null){const target=boundary.sqrtPriceX96;if(target<=0n)throw new Error('Invalid V3 tick state');netRequired=zeroForOne?ceilDiv(currentLiquidity*(current-target)*Q96,current*target):ceilDiv(currentLiquidity*(target-current),Q96)}
+      const grossRequired=netRequired===null?null:ceilDiv(netRequired*FEE_PIPS,multiplier);
+      if(grossRequired!==null&&grossRemaining>=grossRequired){
+        const target=boundary.sqrtPriceX96;amountOut+=zeroForOne?currentLiquidity*(current-target)/Q96:currentLiquidity*(target-current)*Q96/(target*current);grossRemaining-=grossRequired;current=target;currentLiquidity=zeroForOne?currentLiquidity-boundary.liquidityNet:currentLiquidity+boundary.liquidityNet;if(currentLiquidity<=0n)throw new Error('Insufficient V3 liquidity');crossedTicks++;
+      }else{
+        const netIn=grossRemaining*multiplier/FEE_PIPS;if(netIn<=0n)throw new Error('V3 input consumed by fee');const next=zeroForOne?ceilDiv(currentLiquidity*current*Q96,currentLiquidity*Q96+netIn*current):current+netIn*Q96/currentLiquidity;if(next<=0n||next===current)throw new Error('Insufficient V3 liquidity');amountOut+=zeroForOne?currentLiquidity*(current-next)/Q96:currentLiquidity*(next-current)*Q96/(next*current);current=next;grossRemaining=0n;
+      }
+    }
+    if(grossRemaining>0n||amountOut<=0n)throw new Error('Insufficient V3 liquidity');
+    const spotAmountOutAfterFee=zeroForOne?netTotal*sqrtPriceX96*sqrtPriceX96/Q192:netTotal*Q192/(sqrtPriceX96*sqrtPriceX96);if(spotAmountOutAfterFee<=0n)throw new Error('Insufficient V3 liquidity');
+    return Object.freeze({amountIn:amountIn.toString(),amountOut:amountOut.toString(),spotAmountOutAfterFee:spotAmountOutAfterFee.toString(),feePips,zeroForOne,priceImpactBps:priceImpactFromExpected(amountOut,spotAmountOutAfterFee),sqrtPriceX96Before:sqrtPriceX96.toString(),sqrtPriceX96After:current.toString(),liquidityBefore:liquidity.toString(),liquidityAfter:currentLiquidity.toString(),crossedTicks});
+  }
+  function v3RoutePriceImpactEvidence(input){
+    const{amountIn,hops=[],quotedAmountOut,blockNumber}=input||{};if(typeof amountIn!=='bigint'||amountIn<=0n||!Array.isArray(hops)||hops.length<1||hops.length>3||!Number.isSafeInteger(Number(blockNumber))||Number(blockNumber)<0)throw new Error('Invalid V3 route evidence');
+    let running=amountIn,spot=amountIn;const legs=hops.map((hop,index)=>{const evidence=v3ConcentratedLiquidityHopEvidence({...hop,amountIn:running});const spotEvidence=v3ConcentratedLiquidityHopEvidence({...hop,amountIn:spot,ticks:[]});running=BigInt(evidence.amountOut);spot=BigInt(spotEvidence.spotAmountOutAfterFee);return Object.freeze({index,pool:String(hop.pool||'').toLowerCase(),tokenIn:String(hop.tokenIn||'').toLowerCase(),tokenOut:String(hop.tokenOut||'').toLowerCase(),...evidence})});
+    const quoted=quotedAmountOut===undefined?running:BigInt(quotedAmountOut);if(quoted!==running)throw new Error('V3 quote and pool state mismatch');return Object.freeze({method:'v3-tick-concentrated-liquidity',blockNumber:Number(blockNumber),amountIn:amountIn.toString(),amountOut:running.toString(),spotAmountOutAfterFee:spot.toString(),priceImpactBps:priceImpactFromExpected(running,spot),legs:Object.freeze(legs)});
+  }
+  function oracleMarketDeviationEvidence(input){
+    const{actualAmountOut,oracleExpectedOut,oracleId,blockNumber}=input||{};if(typeof actualAmountOut!=='bigint'||actualAmountOut<=0n||typeof oracleExpectedOut!=='bigint'||oracleExpectedOut<=0n||typeof oracleId!=='string'||!oracleId.trim()||!Number.isSafeInteger(Number(blockNumber))||Number(blockNumber)<0)throw new Error('Invalid oracle market reference');
+    const difference=actualAmountOut-oracleExpectedOut,direction=difference===0n?'at-market':difference>0n?'better-than-market':'worse-than-market',deviationBps=Number((difference<0n?-difference:difference)*10000n/oracleExpectedOut);return Object.freeze({method:'oracle-market-deviation',oracleId,blockNumber:Number(blockNumber),actualAmountOut:actualAmountOut.toString(),oracleExpectedOut:oracleExpectedOut.toString(),deviationBps,direction});
+  }
+  function tickToSqrtPriceX96(tick){
+    if(!Number.isInteger(tick)||tick<-887272||tick>887272)throw new Error('Invalid V3 tick');
+    let absTick=BigInt(tick<0?-tick:tick),ratio=(absTick&1n)!==0n?0xfffcb933bd6fad37aa2d162d1a594001n:0x100000000000000000000000000000000n;
+    const factors=[0xfff97272373d413259a46990580e213an,0xfff2e50f5f656932ef12357cf3c7fdccn,0xffe5caca7e10e4e61c3624eaa0941cd0n,0xffcb9843d60f6159c9db58835c926644n,0xff973b41fa98c081472e6896dfb254c0n,0xff2ea16466c96a3843ec78b326b52861n,0xfe5dee046a99a2a811c461f1969c3053n,0xfcbe86c7900a88aedcffc83b479aa3a4n,0xf987a7253ac413176f2b074cf7815e54n,0xf3392b0822b70005940c7a398e4b70f3n,0xe7159475a2c29b7443b29c7fa6e889d9n,0xd097f3bdfd2022b8845ad8f792aa5825n,0xa9f746462d870fdf8a65dc1f90e061e5n,0x70d869a156d2a1b890bb3df62baf32f7n,0x31be135f97d08fd981231505542fcfa6n,0x9aa508b5b7a84e1c677de54f3e99bc9n,0x5d6af8dedb81196699c329225ee604n,0x2216e584f5fa1ea926041bedfe98n,0x48a170391f7dc42444e8fa2n];
+    for(let i=0;i<factors.length;i++)if((absTick&(1n<<BigInt(i+1)))!==0n)ratio=ratio*factors[i]>>128n;
+    if(tick>0)ratio=((1n<<256n)-1n)/ratio;
+    return(ratio>>32n)+((ratio&((1n<<32n)-1n))===0n?0n:1n);
+  }
+  function initializedTicksFromBitmapWords(input){
+    const{words=[],tickSpacing,currentTick,zeroForOne,maxInitializedTicks=128}=input||{};
+    if(!Array.isArray(words)||!Number.isInteger(tickSpacing)||tickSpacing<=0||!Number.isInteger(currentTick)||typeof zeroForOne!=='boolean'||!Number.isInteger(maxInitializedTicks)||maxInitializedTicks<1||maxInitializedTicks>512)throw new Error('Invalid V3 bitmap state');
+    const ticks=[];for(const word of words){if(!Number.isInteger(word.wordPosition)||word.wordPosition<-32768||word.wordPosition>32767)throw new Error('Invalid V3 bitmap word');const bitmap=BigInt(word.bitmap);if(bitmap<0n||bitmap>=(1n<<256n))throw new Error('Invalid V3 bitmap word');for(let bit=0;bit<256;bit++)if((bitmap&(1n<<BigInt(bit)))!==0n){const tick=(word.wordPosition*256+bit)*tickSpacing;if((zeroForOne&&tick<currentTick)||(!zeroForOne&&tick>currentTick))ticks.push(tick)}}
+    ticks.sort((a,b)=>zeroForOne?b-a:a-b);if(ticks.length>maxInitializedTicks)throw new Error('V3 initialized tick limit exceeded');return Object.freeze(ticks);
+  }
+  async function readV3PoolState(input){
+    const{provider,poolAddress,tokenIn,tokenOut,ethers,maxTickWords=8,maxInitializedTicks=128,blockNumber:requestedBlockNumber}=input||{};
+    if(!provider||typeof provider.getBlockNumber!=='function'||!ethers||!ethers.isAddress(poolAddress)||!ethers.isAddress(tokenIn)||!ethers.isAddress(tokenOut)||tokenIn.toLowerCase()===tokenOut.toLowerCase()||!Number.isInteger(maxTickWords)||maxTickWords<1||maxTickWords>16||(requestedBlockNumber!==undefined&&(!Number.isSafeInteger(requestedBlockNumber)||requestedBlockNumber<0)))throw new Error('Invalid V3 pool request');
+    const abi=['function token0() view returns(address)','function token1() view returns(address)','function fee() view returns(uint24)','function tickSpacing() view returns(int24)','function liquidity() view returns(uint128)','function slot0() view returns(uint160 sqrtPriceX96,int24 tick,uint16 observationIndex,uint16 observationCardinality,uint16 observationCardinalityNext,uint8 feeProtocol,bool unlocked)','function tickBitmap(int16) view returns(uint256)','function ticks(int24) view returns(uint128 liquidityGross,int128 liquidityNet,uint256 feeGrowthOutside0X128,uint256 feeGrowthOutside1X128,int56 tickCumulativeOutside,uint160 secondsPerLiquidityOutsideX128,uint32 secondsOutside,bool initialized)'];
+    const pool=new ethers.Contract(poolAddress,abi,provider),blockNumber=requestedBlockNumber??await provider.getBlockNumber(),at={blockTag:blockNumber};
+    const[token0,token1,fee,tickSpacingRaw,activeLiquidity,slot0]=await Promise.all([pool.token0(at),pool.token1(at),pool.fee(at),pool.tickSpacing(at),pool.liquidity(at),pool.slot0(at)]);
+    const forward=token0.toLowerCase()===tokenIn.toLowerCase()&&token1.toLowerCase()===tokenOut.toLowerCase(),reverse=token1.toLowerCase()===tokenIn.toLowerCase()&&token0.toLowerCase()===tokenOut.toLowerCase();if(!forward&&!reverse)throw new Error('V3 pool token mismatch');
+    const tickSpacing=Number(tickSpacingRaw),currentTick=Number(slot0.tick??slot0[1]),sqrtPriceX96=BigInt(slot0.sqrtPriceX96??slot0[0]);if(!Number.isInteger(tickSpacing)||tickSpacing<=0||!Number.isInteger(currentTick)||sqrtPriceX96<=0n||BigInt(activeLiquidity)<=0n)throw new Error('Invalid V3 live state');
+    const compressed=Math.floor(currentTick/tickSpacing),currentWord=Math.floor(compressed/256),zeroForOne=forward,positions=Array.from({length:maxTickWords},(_,index)=>currentWord+(zeroForOne?-index:index));if(positions.some(position=>position<-32768||position>32767))throw new Error('V3 bitmap scan out of range');
+    const bitmaps=await Promise.all(positions.map(async wordPosition=>({wordPosition,bitmap:await pool.tickBitmap(wordPosition,at)}))),tickIndexes=initializedTicksFromBitmapWords({words:bitmaps,tickSpacing,currentTick,zeroForOne,maxInitializedTicks});
+    const tickStates=await Promise.all(tickIndexes.map(async tick=>{const state=await pool.ticks(tick,at);if(!(state.initialized??state[7]))throw new Error('V3 bitmap tick not initialized');return Object.freeze({tick,sqrtPriceX96:tickToSqrtPriceX96(tick),liquidityNet:BigInt(state.liquidityNet??state[1])})}));
+    return Object.freeze({method:'v3-slot0-tick-bitmap',pool:poolAddress.toLowerCase(),blockNumber:Number(blockNumber),token0:token0.toLowerCase(),token1:token1.toLowerCase(),feePips:Number(fee),tickSpacing,currentTick,sqrtPriceX96,liquidity:BigInt(activeLiquidity),zeroForOne,ticks:Object.freeze(tickStates)});
+  }
+  function dualFeedPriceEvidence(input){
+    const{primaryAnswer,primaryDecimals,primaryUpdatedAt,secondaryAnswer,secondaryDecimals,secondaryUpdatedAt,observedAt,maxAge,maxDeviationBps,oracleId,blockNumber}=input||{};
+    if(typeof primaryAnswer!=='bigint'||primaryAnswer<=0n||typeof secondaryAnswer!=='bigint'||secondaryAnswer<=0n||!Number.isInteger(primaryDecimals)||primaryDecimals<0||primaryDecimals>18||!Number.isInteger(secondaryDecimals)||secondaryDecimals<0||secondaryDecimals>18||!Number.isSafeInteger(observedAt)||observedAt<=0||!Number.isSafeInteger(primaryUpdatedAt)||primaryUpdatedAt<=0||primaryUpdatedAt>observedAt||!Number.isSafeInteger(secondaryUpdatedAt)||secondaryUpdatedAt<=0||secondaryUpdatedAt>observedAt||!Number.isInteger(maxAge)||maxAge<=0||!Number.isInteger(maxDeviationBps)||maxDeviationBps<0||maxDeviationBps>2000||typeof oracleId!=='string'||!oracleId||!Number.isSafeInteger(Number(blockNumber))||Number(blockNumber)<0)throw new Error('Invalid dual-feed oracle state');
+    if(observedAt-primaryUpdatedAt>maxAge||observedAt-secondaryUpdatedAt>maxAge)throw new Error('Stale oracle price');
+    const primaryPrice=primaryAnswer*10n**BigInt(18-primaryDecimals),secondaryPrice=secondaryAnswer*10n**BigInt(18-secondaryDecimals),lower=primaryPrice<secondaryPrice?primaryPrice:secondaryPrice,difference=primaryPrice>secondaryPrice?primaryPrice-secondaryPrice:secondaryPrice-primaryPrice,deviationBps=Number(difference*10000n/lower);
+    if(deviationBps>maxDeviationBps)throw new Error('Excessive oracle deviation');
+    return Object.freeze({method:'validated-dual-feed',oracleId,blockNumber:Number(blockNumber),observedAt,price:primaryPrice.toString(),primaryPrice:primaryPrice.toString(),secondaryPrice:secondaryPrice.toString(),primaryUpdatedAt,secondaryUpdatedAt,deviationBps,maxDeviationBps});
+  }
+  function oracleExpectedAmountOut(input){
+    const{amountIn,tokenInDecimals,tokenOutDecimals,tokenInPrice,tokenOutPrice}=input||{};
+    if(typeof amountIn!=='bigint'||amountIn<=0n||!Number.isInteger(tokenInDecimals)||tokenInDecimals<0||tokenInDecimals>36||!Number.isInteger(tokenOutDecimals)||tokenOutDecimals<0||tokenOutDecimals>36||typeof tokenInPrice!=='bigint'||tokenInPrice<=0n||typeof tokenOutPrice!=='bigint'||tokenOutPrice<=0n)throw new Error('Invalid oracle conversion');
+    const expected=amountIn*tokenInPrice*10n**BigInt(tokenOutDecimals)/(10n**BigInt(tokenInDecimals)*tokenOutPrice);if(expected<=0n)throw new Error('Oracle conversion underflow');return expected;
+  }
+  async function readOraclePairMarketEvidence(input){
+    const{provider,oracleAddress,tokenIn,tokenOut,amountIn,actualAmountOut,ethers}=input||{};
+    if(!provider||typeof provider.getBlockNumber!=='function'||typeof provider.getBlock!=='function'||!ethers||!ethers.isAddress(oracleAddress)||!ethers.isAddress(tokenIn)||!ethers.isAddress(tokenOut)||tokenIn.toLowerCase()===tokenOut.toLowerCase())throw new Error('Invalid oracle pair request');
+    const oracle=new ethers.Contract(oracleAddress,['function feedConfigs(address) view returns(address primary,address secondary,uint32 maxAge,uint16 maxDeviationBps,uint8 tokenDecimals,bool enabled)'],provider),feedAbi=['function decimals() view returns(uint8)','function latestRoundData() view returns(uint80,int256,uint256,uint256,uint80)'],blockNumber=await provider.getBlockNumber(),block=await provider.getBlock(blockNumber);if(!block||!Number.isSafeInteger(Number(block.timestamp))||Number(block.timestamp)<=0)throw new Error('Invalid oracle observation block');const at={blockTag:blockNumber};
+    const readToken=async token=>{const config=await oracle.feedConfigs(token,at),primary=config.primary??config[0],secondary=config.secondary??config[1],maxAge=Number(config.maxAge??config[2]),maxDeviationBps=Number(config.maxDeviationBps??config[3]),tokenDecimals=Number(config.tokenDecimals??config[4]),enabled=Boolean(config.enabled??config[5]);if(!enabled||!ethers.isAddress(primary)||primary===ethers.ZeroAddress||!ethers.isAddress(secondary)||secondary===ethers.ZeroAddress)throw new Error('Oracle feed disabled');const primaryFeed=new ethers.Contract(primary,feedAbi,provider),secondaryFeed=new ethers.Contract(secondary,feedAbi,provider),[primaryDecimals,secondaryDecimals,primaryRound,secondaryRound]=await Promise.all([primaryFeed.decimals(at),secondaryFeed.decimals(at),primaryFeed.latestRoundData(at),secondaryFeed.latestRoundData(at)]),evidence=dualFeedPriceEvidence({primaryAnswer:BigInt(primaryRound[1]),primaryDecimals:Number(primaryDecimals),primaryUpdatedAt:Number(primaryRound[3]),secondaryAnswer:BigInt(secondaryRound[1]),secondaryDecimals:Number(secondaryDecimals),secondaryUpdatedAt:Number(secondaryRound[3]),observedAt:Number(block.timestamp),maxAge,maxDeviationBps,oracleId:`${oracleAddress.toLowerCase()}:${token.toLowerCase()}`,blockNumber});return{tokenDecimals,evidence}};
+    const[inState,outState]=await Promise.all([readToken(tokenIn),readToken(tokenOut)]),expected=oracleExpectedAmountOut({amountIn,tokenInDecimals:inState.tokenDecimals,tokenOutDecimals:outState.tokenDecimals,tokenInPrice:BigInt(inState.evidence.price),tokenOutPrice:BigInt(outState.evidence.price)}),market=oracleMarketDeviationEvidence({actualAmountOut,oracleExpectedOut:expected,oracleId:oracleAddress.toLowerCase(),blockNumber});
+    return Object.freeze({...market,amountIn:amountIn.toString(),tokenIn:tokenIn.toLowerCase(),tokenOut:tokenOut.toLowerCase(),tokenInPrice:inState.evidence,tokenOutPrice:outState.evidence});
+  }
   function estimatedGasWei(dex,gasPriceWei,nativeSwap=false){
     const gasUnits=BigInt(dex?.gasUnits||(nativeSwap?260000:220000));
     if(typeof gasPriceWei!=='bigint'||gasPriceWei<0n)throw new Error('Invalid gas price');
     return gasUnits*gasPriceWei;
+  }
+  function gasEstimateEvidence(input){
+    const{estimates=[],fallbackGasUnits,gasPriceWei,blockNumber,target,sender,calldataHash,value=0n}=input||{};
+    if(typeof gasPriceWei!=='bigint'||gasPriceWei<0n||!Number.isSafeInteger(Number(blockNumber))||Number(blockNumber)<0)throw new Error('Invalid gas estimate context');
+    if(typeof target!=='string'||typeof sender!=='string'||typeof calldataHash!=='string'||typeof value!=='bigint'||value<0n)throw new Error('Invalid gas estimate transaction');
+    const valid=estimates.map((entry,index)=>({source:String(entry?.source||`rpc-${index+1}`),gasUnits:typeof entry?.gasUnits==='bigint'?entry.gasUnits:BigInt(entry?.gasUnits||0)})).filter(entry=>entry.gasUnits>0n);
+    let gasUnits,method,confidence,spreadBps=0;
+    if(valid.length){
+      valid.sort((a,b)=>a.gasUnits<b.gasUnits?-1:a.gasUnits>b.gasUnits?1:0);gasUnits=valid.at(-1).gasUnits;method='eth_estimateGas';
+      spreadBps=Number((gasUnits-valid[0].gasUnits)*10000n/gasUnits);confidence=valid.length>=2&&spreadBps<=1000?'high':valid.length>=2&&spreadBps<=2500?'medium':valid.length===1?'medium':'low';
+    }else{
+      gasUnits=typeof fallbackGasUnits==='bigint'?fallbackGasUnits:BigInt(fallbackGasUnits||0);if(gasUnits<=0n)throw new Error('Gas estimate unavailable');method='configured-fallback';confidence='low';
+    }
+    return Object.freeze({method,confidence,gasUnits:gasUnits.toString(),gasPriceWei:gasPriceWei.toString(),networkFeeWei:(gasUnits*gasPriceWei).toString(),blockNumber:Number(blockNumber),target:target.toLowerCase(),sender:sender.toLowerCase(),calldataHash:calldataHash.toLowerCase(),value:value.toString(),spreadBps,sources:Object.freeze(valid.map(entry=>Object.freeze({source:entry.source,gasUnits:entry.gasUnits.toString()})))});
+  }
+  async function estimateExecutionGas(input){
+    const{providers=[],transaction,sender,fallbackGasUnits,gasPriceWei,blockNumber,calldataHash}=input||{};
+    if(!transaction||typeof transaction.to!=='string'||typeof transaction.data!=='string'||typeof sender!=='string'||!Array.isArray(providers))throw new Error('Invalid execution gas request');
+    const tx={...transaction,from:sender},settled=await Promise.all(providers.map(async(entry,index)=>{try{const provider=entry?.provider||entry;if(!provider||typeof provider.estimateGas!=='function')throw new Error('estimateGas unavailable');return{source:String(entry?.source||`rpc-${index+1}`),gasUnits:await provider.estimateGas(tx)}}catch{return null}}));
+    return gasEstimateEvidence({estimates:settled.filter(Boolean),fallbackGasUnits,gasPriceWei,blockNumber,target:transaction.to,sender,calldataHash,value:BigInt(transaction.value||0)});
   }
   function routeFeeBps(dex,path){
     if(dex?.kind!=='v3')return Number(dex?.feeBps||0);
@@ -164,6 +300,33 @@
     if(!evidence||!verifyExecutionIntent(intent,proof,ethers)||evidence.proofHash!==proof.proofHash.toLowerCase()||evidence.intentHash!==intent.intentHash.toLowerCase()||!verifySettlementReceipt(evidence.settlement,proof,ethers)||!ethers.isHexString(evidence.evidenceHash,32))return false;
     const{evidenceHash,...payload}=evidence;
     return payload.version===1&&payload.type==='LQC_INTENT_BOUND_SETTLEMENT'&&ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload))).toLowerCase()===evidenceHash.toLowerCase();
+  }
+  function buildSameChainIntentReceipt(input,ethers){
+    const{chainId,intentHash,quoteHash,routeHash,executionHash,transactionHash,blockHash,blockNumber,settledAt,hub,solver,router,dexId,tokenIn,tokenOut,recipient,amountIn,minimumAmountOut,actualAmountOut,gasUsed,effectiveGasPrice,gasEvidence,priceImpactEvidence,marketDeviationEvidence}=input||{};
+    if(!ethers||!Number.isSafeInteger(chainId)||chainId<=0||![intentHash,quoteHash,routeHash,executionHash,transactionHash,blockHash,dexId].every(value=>ethers.isHexString(value,32))||![hub,solver,router,tokenIn,tokenOut,recipient].every(value=>ethers.isAddress(value))||tokenIn.toLowerCase()===tokenOut.toLowerCase()||!Number.isSafeInteger(blockNumber)||blockNumber<=0||!Number.isSafeInteger(settledAt)||settledAt<=0)throw new Error('Invalid same-chain receipt context');
+    if(typeof amountIn!=='bigint'||amountIn<=0n||typeof minimumAmountOut!=='bigint'||minimumAmountOut<=0n||typeof actualAmountOut!=='bigint'||actualAmountOut<minimumAmountOut)throw new Error('Invalid same-chain receipt amounts');
+    if(typeof gasUsed!=='bigint'||gasUsed<=0n||typeof effectiveGasPrice!=='bigint'||effectiveGasPrice<=0n)throw new Error('Invalid mined gas evidence');
+    if(!gasEvidence||gasEvidence.method!=='eth_estimateGas'||!['high','medium'].includes(gasEvidence.confidence)||String(gasEvidence.target||'').toLowerCase()!==hub.toLowerCase()||!ethers.isHexString(gasEvidence.calldataHash,32)||BigInt(gasEvidence.gasUnits||0)<=0n||BigInt(gasEvidence.networkFeeWei||0)<0n)throw new Error('Invalid actual gas evidence');
+    if(!priceImpactEvidence||!['v2-reserve-constant-product','v3-tick-concentrated-liquidity','split-leg-reconciliation'].includes(priceImpactEvidence.method)||String(priceImpactEvidence.amountIn||'')!==amountIn.toString()||String(priceImpactEvidence.amountOut||'')!==actualAmountOut.toString()||!Number.isInteger(priceImpactEvidence.priceImpactBps)||priceImpactEvidence.priceImpactBps<0)throw new Error('Invalid price impact evidence');
+    if(!marketDeviationEvidence||marketDeviationEvidence.method!=='oracle-market-deviation'||String(marketDeviationEvidence.actualAmountOut||'')!==actualAmountOut.toString()||!Number.isInteger(marketDeviationEvidence.deviationBps)||marketDeviationEvidence.deviationBps<0||!['at-market','better-than-market','worse-than-market'].includes(marketDeviationEvidence.direction))throw new Error('Invalid market deviation evidence');
+    const payload={version:2,type:'LQC_SAME_CHAIN_INTENT_RECEIPT',chainId,intentHash:intentHash.toLowerCase(),quoteHash:quoteHash.toLowerCase(),routeHash:routeHash.toLowerCase(),executionHash:executionHash.toLowerCase(),transactionHash:transactionHash.toLowerCase(),blockHash:blockHash.toLowerCase(),blockNumber,settledAt,hub:hub.toLowerCase(),solver:solver.toLowerCase(),router:router.toLowerCase(),dexId:dexId.toLowerCase(),tokenIn:tokenIn.toLowerCase(),tokenOut:tokenOut.toLowerCase(),recipient:recipient.toLowerCase(),amountIn:amountIn.toString(),minimumAmountOut:minimumAmountOut.toString(),actualAmountOut:actualAmountOut.toString(),gasUsed:gasUsed.toString(),effectiveGasPrice:effectiveGasPrice.toString(),actualNetworkFeeWei:(gasUsed*effectiveGasPrice).toString(),gasEvidence,priceImpactEvidence,marketDeviationEvidence};
+    return Object.freeze({...payload,receiptHash:ethers.keccak256(ethers.toUtf8Bytes(JSON.stringify(payload)))});
+  }
+  function verifySameChainIntentReceipt(receipt,ethers){
+    if(!receipt||!ethers||receipt.version!==2||receipt.type!=='LQC_SAME_CHAIN_INTENT_RECEIPT'||!ethers.isHexString(receipt.receiptHash,32))return false;
+    const{receiptHash,...payload}=receipt;
+    try{const rebuilt=buildSameChainIntentReceipt({...payload,amountIn:BigInt(payload.amountIn),minimumAmountOut:BigInt(payload.minimumAmountOut),actualAmountOut:BigInt(payload.actualAmountOut),gasUsed:BigInt(payload.gasUsed),effectiveGasPrice:BigInt(payload.effectiveGasPrice)},ethers);return rebuilt.actualNetworkFeeWei===payload.actualNetworkFeeWei&&rebuilt.receiptHash.toLowerCase()===receiptHash.toLowerCase()}catch{return false}
+  }
+  async function verifyCanonicalSameChainIntentReceipt(receipt,provider,ethers,requiredConfirmations=3){
+    if(!verifySameChainIntentReceipt(receipt,ethers))throw new Error('Invalid same-chain intent receipt');
+    if(!provider||typeof provider.getTransactionReceipt!=='function'||typeof provider.getTransaction!=='function'||typeof provider.getBlock!=='function'||typeof provider.getBlockNumber!=='function'||!Number.isInteger(requiredConfirmations)||requiredConfirmations<1||requiredConfirmations>100)throw new Error('Invalid same-chain canonical verifier');
+    const[chainReceipt,transaction,canonicalBlock,latestBlock]=await Promise.all([provider.getTransactionReceipt(receipt.transactionHash),provider.getTransaction(receipt.transactionHash),provider.getBlock(receipt.blockNumber),provider.getBlockNumber()]);
+    if(!chainReceipt||Number(chainReceipt.status)!==1||String(chainReceipt.hash||chainReceipt.transactionHash||'').toLowerCase()!==receipt.transactionHash||Number(chainReceipt.blockNumber)!==receipt.blockNumber||String(chainReceipt.blockHash||'').toLowerCase()!==receipt.blockHash||BigInt(chainReceipt.gasUsed||0)!==BigInt(receipt.gasUsed)||BigInt(chainReceipt.gasPrice??chainReceipt.effectiveGasPrice??0)!==BigInt(receipt.effectiveGasPrice))throw new Error('Same-chain transaction receipt mismatch');
+    if(!transaction||String(transaction.to||'').toLowerCase()!==receipt.hub||String(transaction.from||'').toLowerCase()!==String(receipt.gasEvidence.sender||'').toLowerCase()||ethers.keccak256(transaction.data).toLowerCase()!==String(receipt.gasEvidence.calldataHash).toLowerCase())throw new Error('Same-chain transaction binding mismatch');
+    if(!canonicalBlock||String(canonicalBlock.hash||'').toLowerCase()!==receipt.blockHash)throw new Error('Same-chain block is not canonical');const confirmations=Number(latestBlock)-receipt.blockNumber+1;if(!Number.isSafeInteger(Number(latestBlock))||confirmations<requiredConfirmations)throw new Error('Same-chain receipt lacks confirmations');
+    const eventTopic=ethers.id('SameChainIntentExecuted(bytes32,address,bytes32,bytes32,bytes32,uint256)').toLowerCase(),solverTopic=ethers.zeroPadValue(receipt.solver,32).toLowerCase(),matches=(chainReceipt.logs||[]).filter(log=>String(log.address||'').toLowerCase()===receipt.hub&&String(log.topics?.[0]||'').toLowerCase()===eventTopic&&String(log.topics?.[1]||'').toLowerCase()===receipt.intentHash&&String(log.topics?.[2]||'').toLowerCase()===solverTopic&&String(log.topics?.[3]||'').toLowerCase()===receipt.dexId&&ethers.isHexString(log.data,96));
+    if(matches.length!==1)throw new Error('Same-chain intent event mismatch');const[quoteHash,executionHash,actualAmountOut]=ethers.AbiCoder.defaultAbiCoder().decode(['bytes32','bytes32','uint256'],matches[0].data);if(quoteHash.toLowerCase()!==receipt.quoteHash||executionHash.toLowerCase()!==receipt.executionHash||actualAmountOut!==BigInt(receipt.actualAmountOut))throw new Error('Same-chain intent result mismatch');
+    return Object.freeze({valid:true,receiptHash:receipt.receiptHash,transactionHash:receipt.transactionHash,blockNumber:receipt.blockNumber,confirmations,requiredConfirmations,intentHash:receipt.intentHash,executionHash:receipt.executionHash,actualAmountOut:actualAmountOut.toString()});
   }
   function buildQuoteApiRequest(input,ethers){
     if(!ethers||Number(input?.chainId)!==97||!ethers.isAddress(input.tokenIn)||!ethers.isAddress(input.tokenOut)||input.tokenIn.toLowerCase()===input.tokenOut.toLowerCase()||typeof input.amountIn!=='bigint'||input.amountIn<=0n||input.amountIn>ethers.MaxUint256||!Number.isSafeInteger(input.requestedAt)||!Number.isSafeInteger(input.expiresAt)||input.expiresAt<=input.requestedAt||input.expiresAt-input.requestedAt>60000)throw new Error('Invalid quote API request');
@@ -313,5 +476,5 @@
     if(nativeBalance<requiredNative)throw new Error('insufficient funds: native balance and gas');
     return{sufficient:true,gasCost,requiredNative};
   }
-  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,estimatedGasWei,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,validateExecutionPlanProof,buildExecutionIntent,verifyExecutionIntent,buildIntentBoundSettlementReceipt,verifyIntentBoundSettlementReceipt,buildQuoteApiRequest,validateQuoteApiResponse,recoveryActionForError,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
+  global.LQCRouterSDK=Object.freeze({encodeRoute,encodeRoutes,minimumAmountOut,priceImpactBps,priceImpactFromExpected,constantProductHopEvidence,v2RoutePriceImpactEvidence,readV2RouteReserves,readV2AdapterRouteReserves,v3ConcentratedLiquidityHopEvidence,v3RoutePriceImpactEvidence,oracleMarketDeviationEvidence,tickToSqrtPriceX96,initializedTicksFromBitmapWords,readV3PoolState,dualFeedPriceEvidence,oracleExpectedAmountOut,readOraclePairMarketEvidence,estimatedGasWei,gasEstimateEvidence,estimateExecutionGas,routeFeeBps,summarizeSplit,isSplitNetBetter,walletSessionState,validateExecutionSession,validatePendingNonce,requiresTokenApproval,exactApprovalAmounts,isLatestQuote,validateExecutionQuote,rankRouteQuotes,buildBestExecutionProof,verifyBestExecutionProof,validateExecutionPlanProof,buildExecutionIntent,verifyExecutionIntent,buildIntentBoundSettlementReceipt,verifyIntentBoundSettlementReceipt,buildSameChainIntentReceipt,verifySameChainIntentReceipt,verifyCanonicalSameChainIntentReceipt,buildQuoteApiRequest,validateQuoteApiResponse,recoveryActionForError,buildSettlementReceipt,verifySettlementReceipt,verifyCanonicalSettlement,verifyCanonicalNativeSettlement,explainSwapError,verifyUiDeployment,verifyMinimalUiDeployment,validateSwapReceipt,validateTransactionFunds,SUPPORTED_V3_FEES:[...SUPPORTED_V3_FEES]});
 })(typeof window==='undefined'?globalThis:window);

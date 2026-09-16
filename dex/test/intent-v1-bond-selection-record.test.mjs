@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import { ethers } from "ethers";
+import { canonicalDigest } from "../scripts/build-intent-reproducibility-seal.mjs";
+import { buildBondSelectionRecord } from "../scripts/finalize-intent-bond-selection-record.mjs";
+
+describe("LQC Intent Bond selection canonical record",function(){
+  const safe="0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",token="0x0000000000000000000000000000000000000030",selection="0x0000000000000000000000000000000000000020",safeTx=ethers.id("safe-tx"),transactionHash=ethers.id("submitted-transaction"),blockHash=ethers.id("preflight-block"),inspection={results:[{token,decimals:18,network:{chainId:97},assessment:{eligible:true}}]};
+  const input=()=>{const inspectionDigest=canonicalDigest(inspection);return{inspection,approvalPlan:{stage:"stage0-governance-bond-approval",network:{chainId:97},transactionOccurred:false,governanceSafe:safe,bondToken:token,selectionContract:selection,inspectionDigest,safeTransactionHash:safeTx,safeTransaction:{nonce:"7"}},preflight:{status:"PREFLIGHT_VERIFIED",chainId:97,transactionOccurred:false,rpcCount:2,governanceSafe:safe,bondToken:token,selectionContract:selection,inspectionDigest,safeTransactionHash:safeTx,safeNonce:"7",blockNumber:200,blockHash},transactionHash};};
+  it("creates a verification-pending record bound to the exact preflight",function(){const record=buildBondSelectionRecord(input());assert.equal(record.status,"PENDING_MULTI_RPC_VERIFICATION");assert.equal(record.approvalTransaction,transactionHash);assert.equal(record.safeNonce,"7");assert.equal(record.verificationRequired,true);assert.match(record.safety,/not accepted until/i);});
+  it("rejects token, digest, nonce and submitted transaction substitution",function(){let value=input();value.preflight.bondToken="0x0000000000000000000000000000000000000040";assert.throws(()=>buildBondSelectionRecord(value),/identity/);value=input();value.preflight.safeNonce="8";assert.throws(()=>buildBondSelectionRecord(value),/Safe transaction/);value=input();value.approvalPlan.inspectionDigest="sha256:"+"0".repeat(64);assert.throws(()=>buildBondSelectionRecord(value),/digest/);value=input();value.transactionHash="0x1234";assert.throws(()=>buildBondSelectionRecord(value),/transaction hash/);});
+  it("requires one eligible 18-decimal chain-97 candidate",function(){const value=input();value.inspection.results[0].assessment.eligible=false;assert.throws(()=>buildBondSelectionRecord(value),/digest|eligible/);});
+});

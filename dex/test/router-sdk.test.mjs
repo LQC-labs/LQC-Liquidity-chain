@@ -49,6 +49,143 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.priceImpactFromExpected(1n, 0n));
   });
 
+  it("calculates V2 price impact from exact reserves without mixing the LP fee into impact",function(){
+    const evidence=sdk.constantProductHopEvidence(1000n,10000n,20000n,30);
+    assert.equal(evidence.amountOut,"1813");
+    assert.equal(evidence.spotAmountOutAfterFee,"1994");
+    assert.equal(evidence.priceImpactBps,907);
+    assert.equal(evidence.reserveInAfter,"11000");
+    assert.equal(evidence.reserveOutAfter,"18187");
+  });
+
+  it("recomputes every V2 multi-hop leg and rejects a solver quote that disagrees with reserves",function(){
+    const route=sdk.v2RoutePriceImpactEvidence({amountIn:1000n,blockNumber:123,hops:[
+      {pair:tokenA,tokenIn:tokenA,tokenOut:tokenB,reserveIn:10000n,reserveOut:20000n,feeBps:30},
+      {pair:tokenB,tokenIn:tokenB,tokenOut:tokenC,reserveIn:30000n,reserveOut:15000n,feeBps:25}
+    ]});
+    assert.equal(route.method,"v2-reserve-constant-product");
+    assert.equal(route.legs.length,2);
+    assert.equal(route.legs[1].amountIn,route.legs[0].amountOut);
+    assert.equal(route.amountOut,"852");
+    assert.throws(()=>sdk.v2RoutePriceImpactEvidence({amountIn:1000n,quotedAmountOut:853n,blockNumber:123,hops:[{reserveIn:10000n,reserveOut:20000n,feeBps:30}]}),/mismatch/);
+  });
+
+  it("calculates V3 concentrated-liquidity impact and applies initialized tick liquidity",function(){
+    const q96=1n<<96n;
+    const evidence=sdk.v3ConcentratedLiquidityHopEvidence({
+      amountIn:3000n,sqrtPriceX96:q96,liquidity:10000n,zeroForOne:true,feePips:0,
+      ticks:[{sqrtPriceX96:q96*9n/10n,liquidityNet:-5000n}]
+    });
+    assert.equal(evidence.crossedTicks,1);
+    assert.equal(evidence.liquidityAfter,"15000");
+    assert.ok(BigInt(evidence.sqrtPriceX96After)<q96*9n/10n);
+    assert.ok(evidence.priceImpactBps>0);
+  });
+
+  it("recomputes V3 multi-hop evidence and keeps oracle market deviation separate",function(){
+    const q96=1n<<96n;
+    const route=sdk.v3RoutePriceImpactEvidence({amountIn:1000n,blockNumber:456,hops:[
+      {pool:tokenA,tokenIn:tokenA,tokenOut:tokenB,sqrtPriceX96:q96,liquidity:100000n,zeroForOne:true,feePips:2500,ticks:[]},
+      {pool:tokenB,tokenIn:tokenB,tokenOut:tokenC,sqrtPriceX96:q96,liquidity:200000n,zeroForOne:false,feePips:500,ticks:[]}
+    ]});
+    assert.equal(route.method,"v3-tick-concentrated-liquidity");
+    assert.equal(route.legs.length,2);
+    assert.equal(route.legs[1].amountIn,route.legs[0].amountOut);
+    assert.throws(()=>sdk.v3RoutePriceImpactEvidence({amountIn:1000n,quotedAmountOut:1n,blockNumber:456,hops:[{sqrtPriceX96:q96,liquidity:100000n,zeroForOne:true,feePips:2500}]}),/mismatch/);
+    const market=sdk.oracleMarketDeviationEvidence({actualAmountOut:970n,oracleExpectedOut:1000n,oracleId:"chainlink:bnb-usd",blockNumber:456});
+    assert.equal(market.deviationBps,300);
+    assert.equal(market.direction,"worse-than-market");
+    assert.equal(market.method,"oracle-market-deviation");
+  });
+
+  it("decodes bounded V3 bitmap words and converts canonical ticks without floating point",function(){
+    const q96=1n<<96n;
+    assert.equal(sdk.tickToSqrtPriceX96(0),q96);
+    assert.ok(sdk.tickToSqrtPriceX96(-1)<q96);
+    assert.ok(sdk.tickToSqrtPriceX96(1)>q96);
+    assert.deepEqual(Array.from(sdk.initializedTicksFromBitmapWords({words:[{wordPosition:0,bitmap:5n}],tickSpacing:10,currentTick:25,zeroForOne:true})),[20,0]);
+    assert.deepEqual(Array.from(sdk.initializedTicksFromBitmapWords({words:[{wordPosition:0,bitmap:5n}],tickSpacing:10,currentTick:0,zeroForOne:false})),[20]);
+    assert.throws(()=>sdk.initializedTicksFromBitmapWords({words:[{wordPosition:0,bitmap:7n}],tickSpacing:1,currentTick:4,zeroForOne:true,maxInitializedTicks:2}),/limit exceeded/);
+  });
+
+  it("reads one block-pinned V3 slot0, liquidity and initialized tick state",async function(){
+    const q96=1n<<96n,calls=[];
+    class MockPool{
+      token0(at){calls.push(at);return tokenA} token1(){return tokenB} fee(){return 2500n} tickSpacing(){return 1n} liquidity(){return 100000n} slot0(){return[q96,1n]}
+      tickBitmap(position){return position===0?1n:position===-1?(1n<<255n):0n}
+      ticks(tick){return[1000n,tick===0?100n:-50n,0n,0n,0n,0n,0n,true]}
+    }
+    const mockEthers={...ethers,Contract:MockPool};
+    const state=await sdk.readV3PoolState({provider:{getBlockNumber:async()=>789},poolAddress:tokenC,tokenIn:tokenA,tokenOut:tokenB,ethers:mockEthers,maxTickWords:2});
+    assert.equal(state.method,"v3-slot0-tick-bitmap");
+    assert.equal(state.blockNumber,789);
+    assert.equal(state.feePips,2500);
+    assert.equal(state.zeroForOne,true);
+    assert.deepEqual(Array.from(state.ticks,item=>item.tick),[0,-1]);
+    assert.ok(calls.every(item=>item.blockTag===789));
+  });
+
+  it("validates fresh dual feeds and converts an oracle pair across token decimals",function(){
+    const price=sdk.dualFeedPriceEvidence({primaryAnswer:600_00000000n,primaryDecimals:8,primaryUpdatedAt:990,secondaryAnswer:606_00000000n,secondaryDecimals:8,secondaryUpdatedAt:989,observedAt:1000,maxAge:60,maxDeviationBps:200,oracleId:"bnb-usd",blockNumber:800});
+    assert.equal(price.price,"600000000000000000000");
+    assert.equal(price.deviationBps,100);
+    assert.equal(sdk.oracleExpectedAmountOut({amountIn:10n**18n,tokenInDecimals:18,tokenOutDecimals:6,tokenInPrice:BigInt(price.price),tokenOutPrice:10n**18n}),600_000000n);
+    assert.throws(()=>sdk.dualFeedPriceEvidence({primaryAnswer:600n,primaryDecimals:0,primaryUpdatedAt:900,secondaryAnswer:606n,secondaryDecimals:0,secondaryUpdatedAt:999,observedAt:1000,maxAge:60,maxDeviationBps:200,oracleId:"stale",blockNumber:800}),/Stale/);
+    assert.throws(()=>sdk.dualFeedPriceEvidence({primaryAnswer:600n,primaryDecimals:0,primaryUpdatedAt:999,secondaryAnswer:900n,secondaryDecimals:0,secondaryUpdatedAt:999,observedAt:1000,maxAge:60,maxDeviationBps:200,oracleId:"divergent",blockNumber:800}),/deviation/);
+  });
+
+  it("builds block-pinned pair market evidence only from enabled validated feeds",async function(){
+    const addr=n=>`0x${n.toString(16).padStart(40,"0")}`,oracleAddress=addr(20),primaryIn=addr(21),secondaryIn=addr(22),primaryOut=addr(23),secondaryOut=addr(24),configs=new Map([
+      [tokenA.toLowerCase(),[primaryIn,secondaryIn,60n,200n,18n,true]],
+      [tokenB.toLowerCase(),[primaryOut,secondaryOut,60n,200n,6n,true]]
+    ]),feeds=new Map([[primaryIn,[8n,600_00000000n]],[secondaryIn,[8n,606_00000000n]],[primaryOut,[8n,1_00000000n]],[secondaryOut,[8n,1_00500000n]]]);
+    class MockContract{
+      constructor(address){this.address=address.toLowerCase()}
+      feedConfigs(token){return configs.get(token.toLowerCase())}
+      decimals(){return feeds.get(this.address)[0]}
+      latestRoundData(){return[1n,feeds.get(this.address)[1],0n,990n,1n]}
+    }
+    const evidence=await sdk.readOraclePairMarketEvidence({provider:{getBlockNumber:async()=>800,getBlock:async()=>({timestamp:1000})},oracleAddress,tokenIn:tokenA,tokenOut:tokenB,amountIn:10n**18n,actualAmountOut:594_000000n,ethers:{...ethers,Contract:MockContract}});
+    assert.equal(evidence.oracleExpectedOut,"600000000");
+    assert.equal(evidence.deviationBps,100);
+    assert.equal(evidence.direction,"worse-than-market");
+    configs.set(tokenB.toLowerCase(),[primaryOut,secondaryOut,60n,200n,6n,false]);
+    await assert.rejects(()=>sdk.readOraclePairMarketEvidence({provider:{getBlockNumber:async()=>800,getBlock:async()=>({timestamp:1000})},oracleAddress,tokenIn:tokenA,tokenOut:tokenB,amountIn:10n**18n,actualAmountOut:594_000000n,ethers:{...ethers,Contract:MockContract}}),/disabled/);
+  });
+
+  it("records conservative multi-RPC gas evidence for the actual execution transaction", async function () {
+    const target=tokenB,sender=tokenA,data="0x12345678",seen=[];
+    const provider=(gasUnits)=>({estimateGas:async tx=>{seen.push(tx);return gasUnits;}});
+    const evidence=await sdk.estimateExecutionGas({
+      providers:[{source:"canonical",provider:provider(143000n)},{source:"wallet",provider:provider(145000n)}],
+      transaction:{to:target,data,value:7n},sender,fallbackGasUnits:220000n,gasPriceWei:3_000_000_000n,
+      blockNumber:131128464,calldataHash:ethers.keccak256(data)
+    });
+    assert.equal(evidence.method,"eth_estimateGas");
+    assert.equal(evidence.confidence,"high");
+    assert.equal(evidence.gasUnits,"145000");
+    assert.equal(evidence.networkFeeWei,"435000000000000");
+    assert.equal(evidence.sources.length,2);
+    assert.equal(seen.length,2);
+    assert.equal(seen[0].to,target);
+    assert.equal(seen[0].from,sender);
+    assert.equal(seen[0].data,data);
+    assert.equal(seen[0].value,7n);
+  });
+
+  it("labels configured gas as low-confidence fallback only when every RPC estimate fails", async function () {
+    const evidence=await sdk.estimateExecutionGas({
+      providers:[{source:"failed",provider:{estimateGas:async()=>{throw new Error("rpc unavailable");}}}],
+      transaction:{to:tokenB,data:"0x12345678",value:0n},sender:tokenA,fallbackGasUnits:220000n,
+      gasPriceWei:2n,blockNumber:10,calldataHash:ethers.id("calldata")
+    });
+    assert.equal(evidence.method,"configured-fallback");
+    assert.equal(evidence.confidence,"low");
+    assert.equal(evidence.gasUnits,"220000");
+    assert.equal(evidence.networkFeeWei,"440000");
+    assert.equal(evidence.sources.length,0);
+  });
+
   it("summarizes only active split routes as deterministic percentages", function () {
     const dexes = [{ name: "A" }, { name: "B" }, { name: "C" }];
     assert.deepEqual(
@@ -235,6 +372,31 @@ describe("LQC Router browser SDK", function () {
     assert.throws(() => sdk.buildIntentBoundSettlementReceipt(proof, intent, { ...execution, nonce: 8 }, ethers), /match intent/);
     const tampered = structuredClone(evidence); tampered.intentHash = ethers.id("substituted");
     assert.equal(sdk.verifyIntentBoundSettlementReceipt(tampered, proof, intent, ethers), false);
+  });
+
+  function sameChainReceiptFixture(){
+    const address=n=>`0x${n.toString(16).padStart(40,"0")}`,hub=address(10),solver=address(11),router=address(12),recipient=address(13),sender=address(14),transactionHash=ethers.id("same-chain-tx"),blockHash=ethers.id("same-chain-block"),intentHash=ethers.id("escrow-intent"),quoteHash=ethers.id("selected-quote"),routeHash=ethers.id("signed-route"),executionHash=ethers.id("hub-execution"),dexId=ethers.id("LQC_FLOW"),data="0x12345678",actualAmountOut=995n;
+    const gasEvidence={method:"eth_estimateGas",confidence:"high",gasUnits:"180000",gasPriceWei:"3000000000",networkFeeWei:"540000000000000",blockNumber:12349,target:hub,sender,calldataHash:ethers.keccak256(data),value:"0",spreadBps:100,sources:[{source:"rpc-a",gasUnits:"179000"},{source:"rpc-b",gasUnits:"180000"}]},priceImpactEvidence={method:"v3-tick-concentrated-liquidity",blockNumber:12349,amountIn:"1000",amountOut:actualAmountOut.toString(),spotAmountOutAfterFee:"1000",priceImpactBps:50,legs:[]},marketDeviationEvidence={method:"oracle-market-deviation",oracleId:"dual-feed",blockNumber:12349,actualAmountOut:actualAmountOut.toString(),oracleExpectedOut:"1000",deviationBps:50,direction:"worse-than-market"};
+    const receipt=sdk.buildSameChainIntentReceipt({chainId:97,intentHash,quoteHash,routeHash,executionHash,transactionHash,blockHash,blockNumber:12350,settledAt:1788999999,hub,solver,router,dexId,tokenIn:tokenA,tokenOut:tokenB,recipient,amountIn:1000n,minimumAmountOut:990n,actualAmountOut,gasUsed:175000n,effectiveGasPrice:3000000000n,gasEvidence,priceImpactEvidence,marketDeviationEvidence},ethers);
+    return{receipt,data,sender,hub,solver,dexId,intentHash,quoteHash,routeHash,executionHash,transactionHash,blockHash,actualAmountOut,gasEvidence,priceImpactEvidence,marketDeviationEvidence};
+  }
+
+  it("binds actual gas, pool impact and oracle deviation into one same-chain Intent receipt",function(){
+    const{receipt,gasEvidence,priceImpactEvidence,marketDeviationEvidence}=sameChainReceiptFixture();
+    assert.equal(sdk.verifySameChainIntentReceipt(receipt,ethers),true);
+    const tampered=structuredClone(receipt);tampered.quoteHash=ethers.id("substituted-quote");
+    assert.equal(sdk.verifySameChainIntentReceipt(tampered,ethers),false);
+    assert.throws(()=>sdk.buildSameChainIntentReceipt({...receipt,amountIn:1000n,minimumAmountOut:990n,actualAmountOut:995n,gasUsed:175000n,effectiveGasPrice:3000000000n,gasEvidence:{...gasEvidence,method:"configured-fallback"},priceImpactEvidence,marketDeviationEvidence},ethers),/actual gas/);
+    assert.throws(()=>sdk.buildSameChainIntentReceipt({...receipt,amountIn:1000n,minimumAmountOut:990n,actualAmountOut:995n,gasUsed:175000n,effectiveGasPrice:3000000000n,gasEvidence,priceImpactEvidence:{...priceImpactEvidence,method:"probe-fallback"},marketDeviationEvidence},ethers),/price impact/);
+  });
+
+  it("independently verifies the canonical Hub event and exact submitted calldata",async function(){
+    const f=sameChainReceiptFixture(),eventData=ethers.AbiCoder.defaultAbiCoder().encode(["bytes32","bytes32","uint256"],[f.quoteHash,f.executionHash,f.actualAmountOut]),provider={
+      getTransactionReceipt:async()=>({status:1,hash:f.transactionHash,blockNumber:12350,blockHash:f.blockHash,gasUsed:175000n,gasPrice:3000000000n,logs:[{address:f.hub,topics:[ethers.id("SameChainIntentExecuted(bytes32,address,bytes32,bytes32,bytes32,uint256)"),f.intentHash,ethers.zeroPadValue(f.solver,32),f.dexId],data:eventData}]}),
+      getTransaction:async()=>({to:f.hub,from:f.sender,data:f.data}),getBlock:async()=>({hash:f.blockHash}),getBlockNumber:async()=>12352
+    },verified=await sdk.verifyCanonicalSameChainIntentReceipt(f.receipt,provider,ethers,3);
+    assert.equal(verified.valid,true);assert.equal(verified.confirmations,3);assert.equal(verified.actualAmountOut,f.actualAmountOut.toString());
+    await assert.rejects(()=>sdk.verifyCanonicalSameChainIntentReceipt(f.receipt,{...provider,getBlock:async()=>({hash:ethers.id("reorg")})},ethers,3),/canonical/);
   });
 
   it("validates a deterministic multi-DEX quote API request and proof response", function () {
