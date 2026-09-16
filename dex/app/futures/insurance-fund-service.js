@@ -26,11 +26,27 @@ export function createDemoInsuranceFundService({ initialFund }) {
     return commitDeposit(previewDeposit(amount));
   }
 
-  function cover(loss) {
-    const coverage = coverLiquidationLoss(fund, loss);
+  function previewCoverage(loss) {
+    return coverLiquidationLoss(fund, loss);
+  }
+
+  function commitCoverage(coverage) {
+    if (!coverage || !coverage.fund) throw new Error('INVALID_INSURANCE_COVERAGE');
     fund = coverage.fund;
     return coverage;
   }
 
-  return Object.freeze({ snapshot, previewDeposit, commitDeposit, deposit, cover });
+  function cover(loss) {
+    return commitCoverage(previewCoverage(loss));
+  }
+
+  return Object.freeze({
+    snapshot,
+    previewDeposit,
+    commitDeposit,
+    deposit,
+    previewCoverage,
+    commitCoverage,
+    cover
+  });
 }
