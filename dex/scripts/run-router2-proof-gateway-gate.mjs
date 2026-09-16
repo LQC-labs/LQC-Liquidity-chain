@@ -36,7 +36,11 @@ export function assertPackageLockBuffer(content){const actual=gitBlobSha(content
 export function assertArtifactHashes(root){
   const read=relative=>JSON.parse(fs.readFileSync(path.join(root,relative),"utf8")),bundle=read("deployments/router2-proof-bound-gateway-stage1-bsc-testnet-97.json"),proof=read("artifacts/contracts/router-v2/LQCBestExecutionProof.sol/LQCBestExecutionProof.json"),gateway=read("artifacts/contracts/router-v2/LQCProofBoundExecutionGateway.sol/LQCProofBoundExecutionGateway.json");
   const actual={proofCreation:ethers.keccak256(proof.bytecode),proofRuntime:ethers.keccak256(proof.deployedBytecode),gatewayCreation:ethers.keccak256(gateway.bytecode),gatewayRuntime:ethers.keccak256(gateway.deployedBytecode)};
-  if(actual.proofCreation!==bundle.bytecodeHashes.bestExecutionProof||actual.gatewayCreation!==bundle.bytecodeHashes.proofBoundGateway||actual.proofRuntime!==bundle.runtimeBytecodeHashes.bestExecutionProof||actual.gatewayRuntime!==bundle.runtimeBytecodeHashes.proofBoundGateway||actual.gatewayCreation!==ethers.keccak256(bundle.gatewayTemplate.bytecode))throw new Error("Proof Gateway artifact or deployment bundle hash mismatch.");
+  const expected={proofCreation:bundle.bytecodeHashes.bestExecutionProof,proofRuntime:bundle.runtimeBytecodeHashes.bestExecutionProof,gatewayCreation:bundle.bytecodeHashes.proofBoundGateway,gatewayRuntime:bundle.runtimeBytecodeHashes.proofBoundGateway,gatewayTemplate:ethers.keccak256(bundle.gatewayTemplate.bytecode)};
+  const mismatches=[];
+  for(const key of ["proofCreation","proofRuntime","gatewayCreation","gatewayRuntime"])if(actual[key]!==expected[key])mismatches.push({key,expected:expected[key],actual:actual[key]});
+  if(actual.gatewayCreation!==expected.gatewayTemplate)mismatches.push({key:"gatewayTemplate",expected:expected.gatewayTemplate,actual:actual.gatewayCreation});
+  if(mismatches.length)throw new Error("Proof Gateway artifact or deployment bundle hash mismatch: "+mismatches.map(({key,expected,actual})=>`${key} expected=${expected} actual=${actual}`).join("; "));
   return actual;
 }
 export function runProofGatewayGate(root=path.resolve(import.meta.dirname,"..")){
