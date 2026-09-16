@@ -33,7 +33,8 @@ export function createDemoMarginAccount(initialBalance = 100000) {
   }
 
   function consumeLiquidation(amount, marginMode = 'ISOLATED') {
-    const value = Math.max(0, Number(amount) || 0);
+    const value = Number(amount);
+    if (!Number.isFinite(value) || value < 0) throw new Error('INVALID_MARGIN_AMOUNT');
     if (marginMode === 'CROSS') crossReserved = Math.max(0, crossReserved - value);
     else isolatedReserved = Math.max(0, isolatedReserved - value);
     return snapshot();
@@ -53,6 +54,31 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     return crossAccountHealth({ walletBalance: crossWalletBalance(), positions, markPriceOf });
   }
 
+  function liquidateCross(positions, markPriceOf) {
+    const cross = health(positions, markPriceOf);
+    if (!cross.liquidatable) throw new Error('CROSS_ACCOUNT_NOT_LIQUIDATABLE');
+
+    const walletBefore = crossWalletBalance();
+    const survivingEquity = Math.max(0, cross.equity);
+    const realizedLoss = Math.max(0, walletBefore - survivingEquity);
+
+    // Cross liquidation closes the shared-risk pool. Any positive surviving
+    // equity becomes available cash; all cross reservations are released.
+    crossReserved = 0;
+    cash = survivingEquity;
+
+    return Object.freeze({
+      liquidated: true,
+      walletBefore,
+      realizedLoss,
+      survivingEquity,
+      closedPositions: cross.positions,
+      health: cross,
+      account: snapshot(),
+      liquidatedAt: new Date().toISOString()
+    });
+  }
+
   function snapshot() {
     return Object.freeze({
       initialBalance: initial,
@@ -64,5 +90,5 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     });
   }
 
-  return Object.freeze({ reserve, release, consumeLiquidation, available, crossWalletBalance, health, snapshot });
+  return Object.freeze({ reserve, release, consumeLiquidation, available, crossWalletBalance, health, liquidateCross, snapshot });
 }
