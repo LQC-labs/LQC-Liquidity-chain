@@ -17,6 +17,7 @@ interface ILQCLendingIndexes {
     function indexStates(bytes32 id) external view returns(uint128 borrowIndexRay,uint128 supplyIndexRay,uint64 lastAccrued);
     function accrue(bytes32 id,uint256 totalBorrow,uint256 totalLiquidity) external returns(uint256 borrowIndexRay,uint256 supplyIndexRay);
     function preview(bytes32 id,uint256 totalBorrow,uint256 totalLiquidity) external view returns(uint256 borrowIndexRay,uint256 supplyIndexRay);
+    function applySupplyLoss(bytes32 id,uint256 loss,uint256 totalSupply) external returns(uint256 supplyIndexRay);
 }
 
 /// @notice Isolated-market custody with indexed lender shares and borrower debt shares.
@@ -34,6 +35,7 @@ contract LQCLendingCore {
     mapping(bytes32=>mapping(address=>uint256)) public badDebtSharesOf;
     mapping(bytes32=>uint256) public totalBadDebtShares;
     mapping(bytes32=>uint256) public accruedReserves;
+    mapping(bytes32=>uint256) public realizedSupplierLosses;
     uint256 private unlocked=1;
 
     event CollateralDeposited(bytes32 indexed marketId,address indexed account,uint256 amount);
@@ -47,11 +49,13 @@ contract LQCLendingCore {
     event LiquidationEngineUpdated(address indexed previousEngine,address indexed newEngine);
     event PositionLiquidated(bytes32 indexed marketId,address indexed account,address indexed liquidator,uint256 repaid,uint256 collateralSeized);
     event BadDebtRecorded(bytes32 indexed marketId,address indexed account,uint256 debtShares);
+    event BadDebtCovered(bytes32 indexed marketId,address indexed account,uint8 indexed method,uint256 amount,uint256 debtShares);
+    event SupplierLossRealized(bytes32 indexed marketId,address indexed account,uint256 amount,uint256 cumulativeLoss);
     event OwnershipTransferStarted(address indexed owner,address indexed pendingOwner);
     event OwnershipTransferred(address indexed previousOwner,address indexed newOwner);
 
     error Unauthorized(); error ZeroAddress(); error InvalidAmount(); error UnsafePosition();
-    error InsufficientLiquidity(); error InexactTransfer(); error Reentrancy(); error InsufficientReserves(); error NotLiquidatable();
+    error InsufficientLiquidity(); error InexactTransfer(); error Reentrancy(); error InsufficientReserves(); error NotLiquidatable(); error LossLimitExceeded();
     modifier onlyOwner(){if(msg.sender!=owner)revert Unauthorized();_;}
     modifier nonReentrant(){if(unlocked!=1)revert Reentrancy();unlocked=2;_;unlocked=1;}
 
@@ -124,6 +128,25 @@ contract LQCLendingCore {
         accruedReserves[id]-=amount;registry.getMarket(id).debtAsset.safeTransfer(receiver,amount);emit ReservesWithdrawn(id,receiver,amount);
     }
 
+    function coverBadDebtWithReserves(bytes32 id,address account,uint256 maxAmount) external onlyOwner nonReentrant returns(uint256 covered){
+        if(maxAmount==0)revert InvalidAmount();_accrue(id);uint256 available=accruedReserves[id];if(available==0)revert InsufficientReserves();
+        (covered,)=_burnBadDebt(id,account,maxAmount<available?maxAmount:available);accruedReserves[id]-=covered;emit BadDebtCovered(id,account,1,covered,0);
+    }
+
+    function recapitalizeBadDebt(bytes32 id,address account,uint256 maxAmount) external onlyOwner nonReentrant returns(uint256 covered){
+        if(maxAmount==0)revert InvalidAmount();_accrue(id);uint256 shares;(covered,shares)=_burnBadDebt(id,account,maxAmount);
+        _pullExact(registry.getMarket(id).debtAsset,msg.sender,covered);emit BadDebtCovered(id,account,2,covered,shares);
+    }
+
+    function realizeBadDebtLoss(bytes32 id,address account,uint256 maxAmount) external onlyOwner nonReentrant returns(uint256 writtenOff){
+        if(maxAmount==0)revert InvalidAmount();_accrue(id);ILQCLendingMarkets.MarketConfig memory config=registry.getMarket(id);if(config.enabled)revert Unauthorized();
+        MarketState memory state=marketStates[id];uint256 supplyIndex=_supplyIndex(id);uint256 supplyBefore=_totalSupply(state,supplyIndex);uint256 bad=badDebtSharesOf[id][account]*_borrowIndex(id)/RAY;
+        uint256 requested=maxAmount<bad?maxAmount:bad;uint256 historicalBase=supplyBefore+realizedSupplierLosses[id];uint256 remainingLimit=historicalBase*2_000/10_000-realizedSupplierLosses[id];
+        if(requested==0||requested>remainingLimit||requested>=supplyBefore)revert LossLimitExceeded();uint256 newIndex=interestIndex.applySupplyLoss(id,requested,supplyBefore);
+        uint256 actualLoss=supplyBefore-_totalSupply(state,newIndex);uint256 shares;(writtenOff,shares)=_burnBadDebt(id,account,actualLoss);realizedSupplierLosses[id]+=actualLoss;
+        emit BadDebtCovered(id,account,3,writtenOff,shares);emit SupplierLossRealized(id,account,actualLoss,realizedSupplierLosses[id]);
+    }
+
     function debtOf(bytes32 id,address account) public view returns(uint256){MarketState memory state=marketStates[id];(uint256 index,)=_previewIndexes(id,state);return debtSharesOf[id][account]*index/RAY;}
     function liquidityOf(bytes32 id,address account) public view returns(uint256){MarketState memory state=marketStates[id];(,uint256 index)=_previewIndexes(id,state);return liquiditySharesOf[id][account]*index/RAY;}
     function totalBorrow(bytes32 id) public view returns(uint256){MarketState memory state=marketStates[id];(uint256 index,)=_previewIndexes(id,state);return _totalDebt(state,index);}
@@ -146,6 +169,11 @@ contract LQCLendingCore {
     function _pullExact(address token,address from,uint256 amount) private{uint256 beforeBalance=IERC20(token).balanceOf(address(this));token.safeTransferFrom(from,address(this),amount);if(IERC20(token).balanceOf(address(this))!=beforeBalance+amount)revert InexactTransfer();}
     function _toUint128(uint256 value) private pure returns(uint128 result){result=uint128(value);if(result!=value)revert InvalidAmount();}
     function _ceilDiv(uint256 a,uint256 b) private pure returns(uint256){return a==0?0:(a-1)/b+1;}
+    function _burnBadDebt(bytes32 id,address account,uint256 maxAmount) private returns(uint256 amount,uint256 shares){
+        uint256 badShares=badDebtSharesOf[id][account];if(badShares==0)revert InvalidAmount();uint256 index=_borrowIndex(id);uint256 badAmount=badShares*index/RAY;
+        shares=maxAmount>=badAmount?badShares:maxAmount*RAY/index;if(shares==0)revert InvalidAmount();amount=shares*index/RAY;
+        badDebtSharesOf[id][account]=badShares-shares;totalBadDebtShares[id]-=shares;debtSharesOf[id][account]-=shares;marketStates[id].totalDebtShares-=uint128(shares);
+    }
     function setLiquidationEngine(address newEngine) external onlyOwner{if(newEngine==address(0))revert ZeroAddress();emit LiquidationEngineUpdated(liquidationEngine,newEngine);liquidationEngine=newEngine;}
     function transferOwnership(address newOwner) external onlyOwner{if(newOwner==address(0))revert ZeroAddress();pendingOwner=newOwner;emit OwnershipTransferStarted(owner,newOwner);}
     function acceptOwnership() external{if(msg.sender!=pendingOwner)revert Unauthorized();address previous=owner;owner=msg.sender;pendingOwner=address(0);emit OwnershipTransferred(previous,msg.sender);}

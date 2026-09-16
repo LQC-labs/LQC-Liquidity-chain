@@ -31,6 +31,7 @@ contract LQCLendingInterestIndex {
         uint256 supplyIndexRay,
         uint256 utilizationRay
     );
+    event SupplyLossApplied(bytes32 indexed marketId, uint256 loss, uint256 supplyIndexRay);
     event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -89,6 +90,19 @@ contract LQCLendingInterestIndex {
         (uint256 borrowRate, uint256 supplyRate,) = rateModel.rates(id, totalBorrow, totalLiquidity);
         borrowIndexRay = uint256(state.borrowIndexRay) + uint256(state.borrowIndexRay) * borrowRate * elapsed / RAY;
         supplyIndexRay = uint256(state.supplyIndexRay) + uint256(state.supplyIndexRay) * supplyRate * elapsed / RAY;
+    }
+
+    function applySupplyLoss(bytes32 id, uint256 loss, uint256 totalSupply)
+        external returns (uint256 supplyIndexRay)
+    {
+        if (msg.sender != core) revert Unauthorized();
+        IndexState storage state = indexStates[id];
+        if (state.lastAccrued == 0) revert NotInitialized();
+        if (loss == 0 || loss >= totalSupply) revert IndexOverflow();
+        supplyIndexRay = uint256(state.supplyIndexRay) * (totalSupply - loss) / totalSupply;
+        if (supplyIndexRay == 0 || supplyIndexRay > type(uint128).max) revert IndexOverflow();
+        state.supplyIndexRay = uint128(supplyIndexRay);
+        emit SupplyLossApplied(id, loss, supplyIndexRay);
     }
 
     function setCore(address newCore) external onlyOwner {
