@@ -5,7 +5,7 @@ on:
     paths:
       - "dex/app/futures/**"
       - "dex/contracts/futures/**"
-      - "dex/test/futures.test.mjs"
+      - "dex/test/futures*.test.mjs"
       - "dex/test/lqc-flow-futures.test.mjs"
       - ".github/workflows/futures-tests.yml"
   push:
@@ -14,7 +14,7 @@ on:
     paths:
       - "dex/app/futures/**"
       - "dex/contracts/futures/**"
-      - "dex/test/futures.test.mjs"
+      - "dex/test/futures*.test.mjs"
       - "dex/test/lqc-flow-futures.test.mjs"
       - ".github/workflows/futures-tests.yml"
 
@@ -55,5 +55,8 @@ jobs:
       - name: Compile contracts
         run: npm run compile
 
-      - name: Run isolated Futures tests
+      - name: Run Futures contract tests
         run: npx mocha --timeout 30000 test/futures.test.mjs test/lqc-flow-futures.test.mjs
+
+      - name: Run Futures JS risk and rollback tests
+        run: node --test test/futures-liquidation-controller.test.mjs test/futures-position-book-cross-rollback.test.mjs
