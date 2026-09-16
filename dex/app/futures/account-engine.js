@@ -34,9 +34,6 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     return snapshot();
   }
 
-  // Funding payment is signed from the account holder's perspective:
-  // positive = credit, negative = debit. Credits/debits settle directly to
-  // account cash while reserved margin remains unchanged.
   function settleFunding(payment) {
     const value = Number(payment);
     if (!Number.isFinite(value)) throw new Error('INVALID_FUNDING_PAYMENT');
@@ -46,8 +43,6 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     return snapshot();
   }
 
-  // Trading fees are account debits. The fee engine remains independent from
-  // the DEX router; Futures settlement only receives the calculated fee.
   function settleTradingFee(fee) {
     const value = Number(fee);
     if (!Number.isFinite(value) || value < 0) throw new Error('INVALID_TRADING_FEE');
@@ -70,8 +65,6 @@ export function createDemoMarginAccount(initialBalance = 100000) {
   }
 
   function crossWalletBalance() {
-    // Cross collateral is still account equity and therefore participates in
-    // shared-risk calculations even though it is reserved from new orders.
     return cash + crossReserved;
   }
 
@@ -86,9 +79,11 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     const walletBefore = crossWalletBalance();
     const survivingEquity = Math.max(0, cross.equity);
     const realizedLoss = Math.max(0, walletBefore - survivingEquity);
+    // Negative equity is the amount that remains after the account's own
+    // collateral is exhausted. Only this explicit deficit belongs to the
+    // Insurance -> ADL pipeline; realized collateral loss itself does not.
+    const badDebt = Math.max(0, -cross.equity);
 
-    // Cross liquidation closes the shared-risk pool. Any positive surviving
-    // equity becomes available cash; all cross reservations are released.
     crossReserved = 0;
     cash = survivingEquity;
 
@@ -96,6 +91,7 @@ export function createDemoMarginAccount(initialBalance = 100000) {
       liquidated: true,
       walletBefore,
       realizedLoss,
+      badDebt,
       survivingEquity,
       closedPositions: cross.positions,
       health: cross,
