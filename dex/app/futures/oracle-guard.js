@@ -30,13 +30,17 @@ export function validateOracleSources(sources, {
   const currentTime = nonNegativeNumber(now, "INVALID_ORACLE_TIME");
   const maxAge = positiveNumber(maxAgeMs, "INVALID_ORACLE_MAX_AGE");
   const maxDeviation = positiveNumber(maxDeviationRatio, "INVALID_ORACLE_DEVIATION");
+  const sourceIds = new Set();
 
   const valid = sources.map((source) => {
     if (!source?.id) throw new Error("ORACLE_SOURCE_ID_REQUIRED");
+    const id = String(source.id);
+    if (sourceIds.has(id)) throw new Error("DUPLICATE_ORACLE_SOURCE_ID");
+    sourceIds.add(id);
     const price = positiveNumber(source.price, "INVALID_ORACLE_PRICE");
     const timestamp = nonNegativeNumber(source.timestamp, "INVALID_ORACLE_TIMESTAMP");
     if (timestamp > currentTime) throw new Error("ORACLE_TIMESTAMP_IN_FUTURE");
-    return Object.freeze({ id: String(source.id), price, timestamp, ageMs: currentTime - timestamp });
+    return Object.freeze({ id, price, timestamp, ageMs: currentTime - timestamp });
   }).filter((source) => source.ageMs <= maxAge);
 
   if (valid.length < minSources) throw new Error("INSUFFICIENT_FRESH_ORACLE_SOURCES");
