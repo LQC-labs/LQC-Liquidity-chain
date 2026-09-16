@@ -25,6 +25,21 @@ export function createDemoLiquidationController({ account, positionBook, markPri
     const health = account.health(positions, markPriceOf);
     if (!health.liquidatable) return Object.freeze({ liquidated: false, reason: 'ACCOUNT_HEALTHY', health });
 
+    // Validate bad-debt dependencies before mutating either account or book.
+    // Negative health equity is the explicit deficit that insurance/ADL must resolve.
+    const previewBadDebt = Math.max(0, -Number(health.equity || 0));
+    let bankruptSide = null;
+    let candidates = null;
+    if (previewBadDebt > 0) {
+      if (!insuranceAdl) throw new Error('BAD_DEBT_RESOLUTION_REQUIRED');
+      const sides = [...new Set(positions.map((position) => String(position.side).toUpperCase()))];
+      if (sides.length !== 1 || (sides[0] !== 'LONG' && sides[0] !== 'SHORT')) throw new Error('MIXED_SIDE_BAD_DEBT_REQUIRES_ALLOCATION');
+      if (!adlPositions) throw new Error('GLOBAL_ADL_POSITION_PROVIDER_REQUIRED');
+      bankruptSide = sides[0];
+      candidates = adlPositions();
+      if (!Array.isArray(candidates)) throw new Error('INVALID_ADL_POSITIONS');
+    }
+
     const closed = positionBook.removeCross(positions);
     let settlement;
     try {
@@ -47,12 +62,11 @@ export function createDemoLiquidationController({ account, positionBook, markPri
 
     let badDebtResolution = null;
     if (settlement.badDebt > 0) {
-      if (!insuranceAdl) throw new Error('BAD_DEBT_RESOLUTION_REQUIRED');
-      const candidates = adlPositions ? adlPositions() : positionBook.list();
+      if (!insuranceAdl || !adlPositions || !bankruptSide) throw new Error('BAD_DEBT_PRECONDITION_MISMATCH');
       badDebtResolution = insuranceAdl.coverAndPlan({
         liquidationLoss: settlement.badDebt,
         positions: candidates,
-        bankruptSide: settlement.bankruptSide ?? health.bankruptSide ?? positions[0]?.side
+        bankruptSide
       });
     }
 
