@@ -52,14 +52,16 @@ describe("LQC Lending isolated market registry",function(){
     await registry.validateCaps(id,ethers.parseEther("1000000"),ethers.parseEther("400000"));
     await assert.rejects(registry.validateCaps(id,ethers.parseEther("1000001"),0));
     await assert.rejects(registry.validateCaps(id,0,ethers.parseEther("400001")));
-    await assert.rejects(registry.validateCaps(id,0,ethers.parseEther("1")));
+    await registry.validateCaps(id,0,ethers.parseEther("1"));
+    await assert.rejects(registry.validateBorrowAmount(id,ethers.parseEther("1")));
   });
 
   it("lets the guardian disable immediately but only governance recover",async function(){
     const id=await configure();
     await assert.rejects(registry.connect(outsider).setMarketEnabled(id,false));
     await(await registry.connect(guardian).setMarketEnabled(id,false)).wait();
-    await assert.rejects(registry.accountRisk(id,ethers.parseEther("1"),0));
+    await assert.rejects(registry.validateCaps(id,ethers.parseEther("1"),0));
+    assert.equal((await registry.accountRisk(id,ethers.parseEther("1"),0)).borrowAllowed,true);
     await assert.rejects(registry.connect(guardian).setMarketEnabled(id,true));
     await(await registry.setMarketEnabled(id,true)).wait();
     assert.equal((await registry.accountRisk(id,ethers.parseEther("1"),0)).borrowAllowed,true);

@@ -110,7 +110,11 @@ contract LQCLendingMarketRegistry {
     function validateCaps(bytes32 id, uint256 totalSupplyAfter, uint256 totalBorrowAfter) external view {
         MarketConfig memory config = _enabledMarket(id);
         if (totalSupplyAfter > config.supplyCap || totalBorrowAfter > config.borrowCap) revert CapExceeded();
-        if (totalBorrowAfter != 0 && totalBorrowAfter < config.minBorrow) revert InvalidMarket();
+    }
+
+    function validateBorrowAmount(bytes32 id, uint256 accountDebtAfter) external view {
+        MarketConfig memory config = _enabledMarket(id);
+        if (accountDebtAfter != 0 && accountDebtAfter < config.minBorrow) revert InvalidMarket();
     }
 
     function accountRisk(bytes32 id, uint256 collateralAmount, uint256 debtAmount)
@@ -118,7 +122,7 @@ contract LQCLendingMarketRegistry {
         view
         returns (AccountRisk memory risk)
     {
-        MarketConfig memory config = _enabledMarket(id);
+        MarketConfig memory config = _market(id);
         (uint256 collateralPrice,) = oracle.getPrices(config.collateralAsset);
         (, uint256 debtPrice) = oracle.getPrices(config.debtAsset);
         risk.collateralValue = collateralAmount * collateralPrice / (10 ** config.collateralDecimals);
@@ -135,9 +139,13 @@ contract LQCLendingMarketRegistry {
     }
 
     function _enabledMarket(bytes32 id) private view returns (MarketConfig memory config) {
+        config = _market(id);
+        if (!config.enabled) revert MarketDisabled();
+    }
+
+    function _market(bytes32 id) private view returns (MarketConfig memory config) {
         config = markets[id];
         if (config.collateralAsset == address(0)) revert MarketNotFound();
-        if (!config.enabled) revert MarketDisabled();
     }
 
     function setGuardian(address newGuardian) external onlyOwner {
