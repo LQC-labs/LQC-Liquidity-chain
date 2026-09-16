@@ -60,44 +60,50 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     return snapshot();
   }
 
-  function available() {
-    return cash;
-  }
-
-  function crossWalletBalance() {
-    return cash + crossReserved;
-  }
+  function available() { return cash; }
+  function crossWalletBalance() { return cash + crossReserved; }
 
   function health(positions, markPriceOf) {
     return crossAccountHealth({ walletBalance: crossWalletBalance(), positions, markPriceOf });
   }
 
-  function liquidateCross(positions, markPriceOf) {
+  function previewCrossLiquidation(positions, markPriceOf) {
     const cross = health(positions, markPriceOf);
     if (!cross.liquidatable) throw new Error('CROSS_ACCOUNT_NOT_LIQUIDATABLE');
-
     const walletBefore = crossWalletBalance();
     const survivingEquity = Math.max(0, cross.equity);
-    const realizedLoss = Math.max(0, walletBefore - survivingEquity);
-    // Negative equity is the amount that remains after the account's own
-    // collateral is exhausted. Only this explicit deficit belongs to the
-    // Insurance -> ADL pipeline; realized collateral loss itself does not.
-    const badDebt = Math.max(0, -cross.equity);
-
-    crossReserved = 0;
-    cash = survivingEquity;
-
     return Object.freeze({
-      liquidated: true,
       walletBefore,
-      realizedLoss,
-      badDebt,
+      realizedLoss: Math.max(0, walletBefore - survivingEquity),
+      badDebt: Math.max(0, -cross.equity),
       survivingEquity,
       closedPositions: cross.positions,
       health: cross,
+      expectedCash: cash,
+      expectedCrossReserved: crossReserved
+    });
+  }
+
+  function commitCrossLiquidation(preview) {
+    if (!preview || !Number.isFinite(preview.survivingEquity) || !Number.isFinite(preview.badDebt)) throw new Error('INVALID_LIQUIDATION_PREVIEW');
+    if (cash !== preview.expectedCash || crossReserved !== preview.expectedCrossReserved) throw new Error('ACCOUNT_CHANGED_SINCE_LIQUIDATION_PREVIEW');
+    crossReserved = 0;
+    cash = preview.survivingEquity;
+    return Object.freeze({
+      liquidated: true,
+      walletBefore: preview.walletBefore,
+      realizedLoss: preview.realizedLoss,
+      badDebt: preview.badDebt,
+      survivingEquity: preview.survivingEquity,
+      closedPositions: preview.closedPositions,
+      health: preview.health,
       account: snapshot(),
       liquidatedAt: new Date().toISOString()
     });
+  }
+
+  function liquidateCross(positions, markPriceOf) {
+    return commitCrossLiquidation(previewCrossLiquidation(positions, markPriceOf));
   }
 
   function snapshot() {
@@ -113,5 +119,5 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     });
   }
 
-  return Object.freeze({ reserve, release, settleFunding, settleTradingFee, consumeLiquidation, available, crossWalletBalance, health, liquidateCross, snapshot });
+  return Object.freeze({ reserve, release, settleFunding, settleTradingFee, consumeLiquidation, available, crossWalletBalance, health, previewCrossLiquidation, commitCrossLiquidation, liquidateCross, snapshot });
 }
