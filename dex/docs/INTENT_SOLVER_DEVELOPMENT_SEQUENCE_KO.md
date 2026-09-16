@@ -124,6 +124,7 @@
 - Gate 5 완료: `build-intent-stage3-safe-proposal-plan.mjs`가 검증된 최신 Safe nonce부터 11개 Governance 작업을 순차 nonce와 EIP-712 SafeTx hash에 결합. 각 calldata를 review·preflight와 재대조하며, 서명되지 않은 결정론적 계획만 생성하고 Safe proposal·서명·실행은 수행하지 않음.
 - Gate 5 완료: `verify-intent-stage3-governance-executions.mjs`가 11개 Safe 실행의 순서·target·value·calldata·operation·gas/refund 필드·EIP-712 SafeTx hash·`ExecutionSuccess`·canonical block·3 confirmations를 검증. 검증 결과는 별도 multi-RPC 최종 상태 확인 전까지 `PENDING_FINAL_STATE`로 제한함.
 - Gate 5 완료: `verify-intent-stage3-final-state.mjs`가 2개 이상 RPC의 공통 block에서 Safe 최종 nonce, Hub·QuoteManager·Registry·Verifier·Internal Solver 연결, Risk/Treasury 역할, attester 활성화, pause 상태와 runtime을 교차 검증. 모두 일치할 때만 Stage 3 Governance binding 완료로 판정함.
+- Gate 5 완료: `build-intent-stage3-completion-package.mjs`가 Safe proposal plan·11개 실행 검증·multi-RPC 최종 상태를 digest와 nonce로 결합해 5개 파일의 불변 완료 증거 패키지를 생성. 이 패키지는 BSC 테스트넷 Governance binding만 증명하며 Cross-chain·permissionless Solver·메인넷 활성화 권한은 부여하지 않음.
 - 회귀 기준 정리: 이미 성공한 V3 Adapter의 Stage 1 배포 calldata는 현재 개선된 Adapter 생성 코드로 덮어쓰지 않고 고정 keccak256으로 검증. 과거 on-chain 증거와 현재 소스 생성기를 분리하여 재배포 오인과 증거 변조를 방지.
 - 회귀 기준 정리: Proof Gateway는 과거 bundle의 전체 생성 코드 hash를 보존하고, 현재 artifact는 Solidity CBOR metadata를 제외한 실행 생성 코드 hash까지 대조. 소스 집합 확장에 따른 metadata-only drift는 구분하되 실행 코드 변경은 계속 fail-closed.
 - Gate 5 다음 작업: Governance가 Bond token을 확정한 뒤 실제 Stage 0 선택 기록 계약 배포 및 4-of-7 Safe 승인은 별도 사용자 승인으로 진행. 실행 후 canonical receipt와 on-chain 선택 상태를 검증하여 Stage 1 reproducibility seal을 생성.
