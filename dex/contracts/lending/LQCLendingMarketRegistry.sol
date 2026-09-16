@@ -11,7 +11,7 @@ contract LQCLendingMarketRegistry {
     uint256 public constant BPS = 10_000;
     uint256 public constant MAX_LTV_BPS = 5_000;
     uint256 public constant MAX_LIQUIDATION_THRESHOLD_BPS = 8_500;
-    uint256 public constant MAX_LIQUIDATION_BONUS_BPS = 1_000;
+    uint256 public constant MAX_LIQUIDATION_BONUS_BPS = 500;
 
     struct MarketConfig {
         address collateralAsset;
