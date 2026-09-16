@@ -13,13 +13,8 @@ function keyOf({ symbol, side, marginMode = 'ISOLATED' }) {
 export function createDemoPositionBook() {
   const positions = new Map();
 
-  function list() {
-    return [...positions.values()];
-  }
-
-  function get(criteria) {
-    return positions.get(keyOf(criteria)) || null;
-  }
+  function list() { return [...positions.values()]; }
+  function get(criteria) { return positions.get(keyOf(criteria)) || null; }
 
   function add(fill) {
     const marginMode = fill.marginMode === 'CROSS' ? 'CROSS' : 'ISOLATED';
@@ -35,6 +30,18 @@ export function createDemoPositionBook() {
     const next = Object.freeze({ ...opened, marginMode, takeProfit: fill.takeProfit ?? null, stopLoss: fill.stopLoss ?? null });
     positions.set(key, next);
     return Object.freeze({ position: next, merged: false });
+  }
+
+  function replace(expected, next) {
+    if (!expected || !next) throw new Error('POSITION_REPLACEMENT_REQUIRED');
+    const expectedKey = keyOf(expected), nextKey = keyOf(next);
+    if (expectedKey !== nextKey) throw new Error('POSITION_IDENTITY_CHANGE_NOT_ALLOWED');
+    const current = positions.get(expectedKey);
+    if (!current) throw new Error('NO_POSITION_TO_REPLACE');
+    if (current !== expected) throw new Error('POSITION_CHANGED');
+    const replacement = Object.freeze({ ...next, marginMode: current.marginMode, takeProfit: next.takeProfit ?? current.takeProfit ?? null, stopLoss: next.stopLoss ?? current.stopLoss ?? null });
+    positions.set(expectedKey, replacement);
+    return Object.freeze({ previous: current, position: replacement });
   }
 
   function reduce(criteria, quantity) {
@@ -93,5 +100,5 @@ export function createDemoPositionBook() {
 
   function clear() { positions.clear(); }
 
-  return Object.freeze({ list, get, add, reduce, evaluateLiquidation, liquidate, remove, removeCross, restoreCross, clear });
+  return Object.freeze({ list, get, add, replace, reduce, evaluateLiquidation, liquidate, remove, removeCross, restoreCross, clear });
 }
