@@ -59,8 +59,12 @@ export function writeIntentStage3CompletionPackage(outputDirectory, completion, 
     "final-state-verification.json": inputs.finalState,
   };
   for (const [name, value] of Object.entries(files)) fs.writeFileSync(path.join(outputDirectory, name), `${JSON.stringify(value, null, 2)}\n`, { flag: "wx" });
-  fs.writeFileSync(path.join(outputDirectory, "COMPLETION.md"), `# LQC Intent Stage 3 Completion Evidence\n\nStatus: **${completion.status}**\n\nCompletion digest: \`${completion.completionDigest}\`\n\n- Network: BSC Testnet (97)\n- Governance actions: ${completion.proposalCount}\n- Final Safe nonce: ${completion.finalSafeNonce}\n- Canonical final block: ${completion.canonicalFinalBlock.number} (\`${completion.canonicalFinalBlock.hash}\`)\n\nThis package proves only the scope recorded in the manifest. It does not authorize cross-chain settlement, permissionless Solvers, mainnet activation, or custody of user funds.\n`, { flag: "wx" });
+  fs.writeFileSync(path.join(outputDirectory, "COMPLETION.md"), renderIntentStage3CompletionMarkdown(completion), { flag: "wx" });
   return { status: "COMPLETION_PACKAGE_WRITTEN", completionDigest: completion.completionDigest, fileCount: 5, outputDirectory };
+}
+
+export function renderIntentStage3CompletionMarkdown(completion) {
+  return `# LQC Intent Stage 3 Completion Evidence\n\nStatus: **${completion.status}**\n\nCompletion digest: \`${completion.completionDigest}\`\n\n- Network: BSC Testnet (97)\n- Governance actions: ${completion.proposalCount}\n- Final Safe nonce: ${completion.finalSafeNonce}\n- Canonical final block: ${completion.canonicalFinalBlock.number} (\`${completion.canonicalFinalBlock.hash}\`)\n\nThis package proves only the scope recorded in the manifest. It does not authorize cross-chain settlement, permissionless Solvers, mainnet activation, or custody of user funds.\n`;
 }
 
 async function main() {
