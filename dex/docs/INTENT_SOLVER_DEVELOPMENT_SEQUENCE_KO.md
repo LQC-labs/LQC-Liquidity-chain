@@ -134,6 +134,7 @@
 - Gate 6 진행: `verify-intent-stage4-pilot.mjs`가 감사 인계 원본에서 파일럿 계획 전체를 독립 재생성하여 EIP-712 intent hash·route hash·입력 cap·99% 최소수령·deadline·nonce를 대조하고, 결과를 `pilotVerificationDigest`로 봉인함.
 - Gate 6 진행: `preflight-intent-stage4-pilot.mjs`가 2개 이상 BSC 테스트넷 RPC의 공통 block에서 Hub·Escrow·QuoteManager·Registry·InternalSolver·양쪽 token runtime, pause, nonce 재사용, 사용자 잔액과 SourceEscrow allowance를 대조. allowance가 0이면 exact approval 준비, 정확한 입력량과 같으면 서명 검토 준비로만 분류하며 트랜잭션은 수행하지 않음.
 - Gate 6 진행: `prepare-intent-stage4-exact-approval.mjs`가 allowance 0인 최신 preflight에만 SourceEscrow·source token·정확한 intent 입력량을 결합한 단일 `approve` calldata를 생성. 무제한·과다·잔여 승인을 허용하지 않으며 별도 지갑 검토 전에는 서명·전송하지 않음.
+- Gate 6 진행: `verify-intent-stage4-exact-approval.mjs`가 별도로 제출된 승인 transaction의 sender·token target·zero value·정확한 calldata, 성공 receipt·canonical block·3 confirmations와 최종 allowance를 2개 이상 RPC에서 대조. 정확한 입력량 승인만 다음 단계 증거로 인정함.
 - 회귀 기준 정리: 이미 성공한 V3 Adapter의 Stage 1 배포 calldata는 현재 개선된 Adapter 생성 코드로 덮어쓰지 않고 고정 keccak256으로 검증. 과거 on-chain 증거와 현재 소스 생성기를 분리하여 재배포 오인과 증거 변조를 방지.
 - 회귀 기준 정리: Proof Gateway는 과거 bundle의 전체 생성 코드 hash를 보존하고, 현재 artifact는 Solidity CBOR metadata를 제외한 실행 생성 코드 hash까지 대조. 소스 집합 확장에 따른 metadata-only drift는 구분하되 실행 코드 변경은 계속 fail-closed.
 - Gate 5 다음 작업: Governance가 Bond token을 확정한 뒤 실제 Stage 0 선택 기록 계약 배포 및 4-of-7 Safe 승인은 별도 사용자 승인으로 진행. 실행 후 canonical receipt와 on-chain 선택 상태를 검증하여 Stage 1 reproducibility seal을 생성.
