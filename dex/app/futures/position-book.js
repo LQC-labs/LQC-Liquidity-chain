@@ -3,9 +3,11 @@
 // so the demo keeps hedge-style behavior until an explicit one-way mode exists.
 
 import { openDemoPosition, mergeDemoPosition, reduceDemoPosition } from './position-engine.js';
+import { liquidationAction } from './risk-engine.js';
+import { normalizeFuturesSymbol } from './markets.js';
 
 function keyOf({ symbol, side, marginMode = 'ISOLATED' }) {
-  return `${String(symbol).toUpperCase()}:${String(side).toUpperCase()}:${marginMode === 'CROSS' ? 'CROSS' : 'ISOLATED'}`;
+  return `${normalizeFuturesSymbol(symbol)}:${String(side).toUpperCase()}:${marginMode === 'CROSS' ? 'CROSS' : 'ISOLATED'}`;
 }
 
 export function createDemoPositionBook() {
@@ -62,6 +64,31 @@ export function createDemoPositionBook() {
     return Object.freeze({ ...result, previous: current, position: positions.get(key) || null });
   }
 
+  function evaluateLiquidation(criteria, markPrice) {
+    const key = keyOf(criteria);
+    const current = positions.get(key);
+    if (!current) throw new Error('NO_POSITION_TO_LIQUIDATE');
+    if (current.marginMode === 'CROSS') throw new Error('CROSS_LIQUIDATION_REQUIRES_ACCOUNT_HEALTH');
+    return liquidationAction(current, markPrice);
+  }
+
+  function liquidate(criteria, markPrice) {
+    const key = keyOf(criteria);
+    const current = positions.get(key);
+    if (!current) throw new Error('NO_POSITION_TO_LIQUIDATE');
+    if (current.marginMode === 'CROSS') throw new Error('CROSS_LIQUIDATION_REQUIRES_ACCOUNT_HEALTH');
+    const decision = liquidationAction(current, markPrice);
+    if (decision.action !== 'LIQUIDATE') throw new Error('POSITION_NOT_LIQUIDATABLE');
+    positions.delete(key);
+    return Object.freeze({
+      liquidated: true,
+      previous: current,
+      position: null,
+      decision,
+      liquidatedAt: new Date().toISOString()
+    });
+  }
+
   function remove(criteria) {
     const key = keyOf(criteria);
     const current = positions.get(key) || null;
@@ -73,5 +100,5 @@ export function createDemoPositionBook() {
     positions.clear();
   }
 
-  return Object.freeze({ list, get, add, reduce, remove, clear });
+  return Object.freeze({ list, get, add, reduce, evaluateLiquidation, liquidate, remove, clear });
 }
