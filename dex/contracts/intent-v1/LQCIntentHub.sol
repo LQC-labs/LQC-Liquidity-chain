@@ -99,6 +99,10 @@ contract LQCIntentHub {
         bytes32 executionHash,
         uint256 actualAmountOut
     );
+    event SettlementStarted(
+        bytes32 indexed intentHash, address indexed solver, bytes32 indexed reportHash, uint256 actualAmountOut
+    );
+    event SettlementRejected(bytes32 indexed intentHash, address indexed solver, bytes32 indexed reportHash);
 
     error Unauthorized();
     error ZeroAddress();
@@ -147,6 +151,15 @@ contract LQCIntentHub {
 
     function getIntent(bytes32 intentHash) external view returns (IntentRecord memory) {
         return records[intentHash];
+    }
+
+    function settlementTerms(bytes32 intentHash)
+        external
+        view
+        returns (LQCIntentTypes.IntentStatus status, uint256 deadline, uint256 destinationChainId)
+    {
+        IntentRecord storage record = records[intentHash];
+        return (record.status, record.deadline, record.destinationChainId);
     }
 
     function submitIntent(LQCIntentTypes.Intent calldata intent, bytes calldata signature)
@@ -235,6 +248,59 @@ contract LQCIntentHub {
         record.executionHash = executionHash;
         sourceEscrow.release(intentHash, solver);
         emit IntentSettled(intentHash, solver, executionHash, destinationTxHash, actualAmountOut);
+    }
+
+    /// @notice Locks an OPEN cross-chain Intent while a verified execution report completes its challenge window.
+    /// @dev The source asset remains in Escrow. DISPUTED means settlement-pending or challenged in Intent v1.
+    function beginSettlement(bytes32 intentHash, address solver, bytes32 reportHash, uint256 actualAmountOut)
+        external
+        onlySettler
+        nonReentrant
+    {
+        if (paused) revert Paused();
+        if (solver == address(0) || reportHash == bytes32(0)) revert InvalidIntent();
+        IntentRecord storage record = records[intentHash];
+        if (record.status != LQCIntentTypes.IntentStatus.OPEN) revert InvalidStatus();
+        if (actualAmountOut < record.minAmountOut) revert InsufficientOutput();
+
+        record.status = LQCIntentTypes.IntentStatus.DISPUTED;
+        record.solver = solver;
+        record.actualAmountOut = actualAmountOut;
+        record.executionHash = reportHash;
+        emit SettlementStarted(intentHash, solver, reportHash, actualAmountOut);
+    }
+
+    /// @notice Releases Escrow only after SettlementHub completes the verified challenge window.
+    function finalizeSettlement(bytes32 intentHash, bytes32 destinationTxHash) external onlySettler nonReentrant {
+        if (paused) revert Paused();
+        if (destinationTxHash == bytes32(0)) revert InvalidIntent();
+        IntentRecord storage record = records[intentHash];
+        if (record.status != LQCIntentTypes.IntentStatus.DISPUTED) revert InvalidStatus();
+
+        record.status = LQCIntentTypes.IntentStatus.EXECUTED;
+        record.destinationTxHash = destinationTxHash;
+        sourceEscrow.release(intentHash, record.solver);
+        emit IntentSettled(
+            intentHash,
+            record.solver,
+            record.executionHash,
+            destinationTxHash,
+            record.actualAmountOut
+        );
+    }
+
+    /// @notice Restores a challenged settlement to OPEN without releasing Escrow.
+    function rejectSettlement(bytes32 intentHash) external onlySettler nonReentrant {
+        IntentRecord storage record = records[intentHash];
+        if (record.status != LQCIntentTypes.IntentStatus.DISPUTED) revert InvalidStatus();
+        address solver = record.solver;
+        bytes32 reportHash = record.executionHash;
+        record.status = LQCIntentTypes.IntentStatus.OPEN;
+        record.solver = address(0);
+        record.actualAmountOut = 0;
+        record.destinationTxHash = bytes32(0);
+        record.executionHash = bytes32(0);
+        emit SettlementRejected(intentHash, solver, reportHash);
     }
 
     /// @notice Gate-2 same-chain execution through the permissioned Router 2.0 Internal Solver.
