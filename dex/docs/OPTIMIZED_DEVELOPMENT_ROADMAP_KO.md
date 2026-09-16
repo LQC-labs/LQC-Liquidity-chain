@@ -84,6 +84,7 @@
 - **10-3 저장소 완료:** 검증된 Registry·Index만 사용하는 Lending Core Manifest, 의존성 드리프트·예측 주소·가스 다중 RPC 사전검증, 영수증·최종성·정확한 런타임·불변 의존성 사후검증. 실제 배포는 아직 수행하지 않음.
 - **10-4 저장소 완료:** 검증된 Core에만 결합되는 Liquidation Engine 배포, `Interest Index → Core`, `Core → Liquidation Engine`의 두 독립 4-of-7 Governance Safe 실행을 순서·calldata·영수증·최종 상태까지 다중 RPC로 검증. 실제 실행은 아직 수행하지 않음.
 - **10-5 저장소 완료:** 담보·부채 이중 Oracle, 고정 금리, 비활성 격리 시장, 초기 Borrow/Supply Index의 5개 독립 Governance Safe 실행을 순서·calldata·영수증·최종 상태까지 검증. 실제 실행과 시장 활성화는 아직 수행하지 않음.
-- **10-6 다음:** 비활성 시장에서 Oracle freshness, 공급·차입·상환·청산 시뮬레이션과 제한 Cap을 검증한 뒤 별도의 시장 활성화 승인 게이트.
+- **10-6 저장소 완료:** 비활성 시장의 Oracle 가격·편차, Core/Engine/Index 결합, 0 초기회계, 고정 Cap을 다중 RPC로 검증하고 공급·담보·차입·상환·청산·Bad Debt 경제 테스트 파일을 digest로 고정한다. 모든 조건이 통과할 때만 단일 시장 활성화 Safe calldata를 생성하며 실제 활성화는 수행하지 않음.
+- **10-7 다음:** 제한형 테스트넷 시장 활성화 transaction의 Safe payload·영수증·최종 상태를 검증하고 소액 공급·차입 파일럿을 별도 승인으로 준비.
 
 모든 작업 시작 보고에는 `현재 단계 번호 / 작업명 / 완료 기준`을 먼저 표시한다. 실제 배포·Safe 승인은 운영 설정안 확정 후 별도 단계로 수행한다.
