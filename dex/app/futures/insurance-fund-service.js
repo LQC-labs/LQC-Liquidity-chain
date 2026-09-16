@@ -13,12 +13,13 @@ export function createDemoInsuranceFundService({ initialFund }) {
   }
 
   function previewDeposit(amount) {
-    return depositInsurance(fund, amount);
+    return Object.freeze({ baseFund: fund, nextFund: depositInsurance(fund, amount) });
   }
 
-  function commitDeposit(nextFund) {
-    if (!nextFund) throw new Error('INSURANCE_FUND_REQUIRED');
-    fund = nextFund;
+  function commitDeposit(preview) {
+    if (!preview || !preview.baseFund || !preview.nextFund) throw new Error('INVALID_INSURANCE_DEPOSIT_PREVIEW');
+    if (fund !== preview.baseFund) throw new Error('INSURANCE_FUND_CHANGED_SINCE_PREVIEW');
+    fund = preview.nextFund;
     return fund;
   }
 
@@ -27,11 +28,13 @@ export function createDemoInsuranceFundService({ initialFund }) {
   }
 
   function previewCoverage(loss) {
-    return coverLiquidationLoss(fund, loss);
+    const coverage = coverLiquidationLoss(fund, loss);
+    return Object.freeze({ ...coverage, baseFund: fund });
   }
 
   function commitCoverage(coverage) {
-    if (!coverage || !coverage.fund) throw new Error('INVALID_INSURANCE_COVERAGE');
+    if (!coverage || !coverage.fund || !coverage.baseFund) throw new Error('INVALID_INSURANCE_COVERAGE');
+    if (fund !== coverage.baseFund) throw new Error('INSURANCE_FUND_CHANGED_SINCE_PREVIEW');
     fund = coverage.fund;
     return coverage;
   }
