@@ -1,0 +1,59 @@
+name: LQC Flow Futures tests
+
+on:
+  pull_request:
+    paths:
+      - "dex/app/futures/**"
+      - "dex/contracts/futures/**"
+      - "dex/test/futures.test.mjs"
+      - "dex/test/lqc-flow-futures.test.mjs"
+      - ".github/workflows/futures-tests.yml"
+  push:
+    branches:
+      - feature/lqc-flow-futures
+    paths:
+      - "dex/app/futures/**"
+      - "dex/contracts/futures/**"
+      - "dex/test/futures.test.mjs"
+      - "dex/test/lqc-flow-futures.test.mjs"
+      - ".github/workflows/futures-tests.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: futures-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  futures:
+    name: Futures compile and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Syntax-check Futures app modules
+        run: |
+          for file in app/futures/*.js; do node --check "$file"; done
+
+      - name: Compile contracts
+        run: npm run compile
+
+      - name: Run isolated Futures tests
+        run: npx mocha --timeout 30000 test/futures.test.mjs test/lqc-flow-futures.test.mjs
