@@ -118,8 +118,9 @@ export function markDemoPosition(position, markPrice) {
   if (!position) throw new Error("POSITION_REQUIRED");
   const market = getFuturesMarket(position.symbol);
   if (!market) throw new Error("UNKNOWN_MARKET");
+  // Mark/index prices come from market-data/oracle feeds and can legitimately
+  // carry finer precision than the market's order-price tick size.
   const price = positiveNumber(markPrice, "INVALID_MARK_PRICE");
-  if (!isStepAligned(price, market.tickSize)) throw new Error("PRICE_TICK_MISMATCH");
 
   return Object.freeze({
     ...position,
