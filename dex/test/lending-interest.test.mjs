@@ -23,8 +23,9 @@ describe("LQC Lending bounded interest model and indexes",function(){
 
   it("accrues deterministic borrow and supplier indexes over time",async function(){
     const before=await index.indexStates(id);await provider.send("evm_increaseTime",[86400]);await provider.send("evm_mine",[]);
-    const preview=await index.preview(id,800n,1000n);await(await index.connect(core).accrue(id,800n,1000n)).wait();const after=await index.indexStates(id);
-    assert.equal(after.borrowIndexRay,preview[0]);assert.equal(after.supplyIndexRay,preview[1]);assert.ok(after.borrowIndexRay>before.borrowIndexRay);assert.ok(after.supplyIndexRay>before.supplyIndexRay);assert.ok(after.borrowIndexRay>after.supplyIndexRay);
+    await(await index.connect(core).accrue(id,800n,1000n)).wait();const after=await index.indexStates(id),rates=await model.rates(id,800n,1000n),elapsed=after.lastAccrued-before.lastAccrued;
+    const expectedBorrow=before.borrowIndexRay+before.borrowIndexRay*rates[0]*elapsed/10n**27n,expectedSupply=before.supplyIndexRay+before.supplyIndexRay*rates[1]*elapsed/10n**27n;
+    assert.equal(after.borrowIndexRay,expectedBorrow);assert.equal(after.supplyIndexRay,expectedSupply);assert.ok(after.borrowIndexRay>before.borrowIndexRay);assert.ok(after.supplyIndexRay>before.supplyIndexRay);assert.ok(after.borrowIndexRay>after.supplyIndexRay);
   });
 
   it("restricts index updates to the approved core",async function(){
