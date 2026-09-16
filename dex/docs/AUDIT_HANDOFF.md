@@ -81,3 +81,29 @@ The final package should contain:
 7. cryptographically verifiable report publication or stable report URL and checksum.
 
 Any code, configuration, role, address, compiler, or dependency change after the pinned review must be assessed for audit impact. An audit report must never be presented as covering a different commit or deployment.
+
+## 8. Lending handoff automation
+
+The Lending-specific handoff is produced and independently verified with:
+
+```bash
+npm run compile
+npm run build:lending-audit-handoff -- <empty-output-directory>
+npm run verify:lending-audit-handoff -- <handoff-directory>
+```
+
+It binds the exact Git revision, dependency lock, compiler settings, seven Lending/Composite
+contracts, source and artifact hashes, all 42 classified state-changing ABI entries, and the
+required automated evidence. It is review material only and does not claim that an external audit
+has occurred.
+
+Before preparing any BSC testnet deployment, validate the proposed offline configuration with:
+
+```bash
+npm run preflight:lending-testnet-config -- <config.json> [result.json]
+```
+
+The preflight fixes chain 97, separated Safe roles, Governance 4/7, Guardian 3/5, 50% LTV, 70%
+liquidation threshold, 5% liquidation bonus, conservative caps, four distinct dual-feed Oracle
+endpoints, bounded interest parameters, and the Composite Adapter market binding. It performs no
+RPC call, signing, deployment, approval, or token movement.
