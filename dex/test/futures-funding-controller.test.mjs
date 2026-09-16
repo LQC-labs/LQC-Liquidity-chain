@@ -29,7 +29,7 @@ describe('Futures integrated funding settlement', () => {
     assert.equal(positionBook.get(position), result.position);
     assert.equal(result.account.availableBalance, 984.85);
     assert.equal(result.account.cumulativeFunding, -15.15);
-    assert.equal(position.cumulativeFunding, 0);
+    assert.equal(position.cumulativeFunding, undefined);
   });
 
   test('credits a short account without changing reserved margin', () => {
@@ -78,7 +78,9 @@ describe('Futures integrated funding settlement', () => {
       return true;
     });
     assert.deepEqual(account.snapshot(), before);
-    assert.equal(positionBook.get(position), position);
+    const restored = positionBook.get(position);
+    assert.deepEqual(restored, position);
+    assert.equal(restored.cumulativeFunding, undefined);
   });
 
   test('rejects a stale position before changing account or PositionBook', () => {
