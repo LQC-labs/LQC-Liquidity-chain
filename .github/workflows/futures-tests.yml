@@ -63,11 +63,11 @@ jobs:
           files=()
           for file in test/futures*.test.mjs; do
             case "$file" in
-              test/futures.test.mjs|test/futures-liquidation-controller.test.mjs|test/futures-position-book-cross-rollback.test.mjs|test/futures-order-engine.test.mjs|test/futures-position-engine.test.mjs|test/futures-funding-controller.test.mjs) ;;
+              test/futures.test.mjs|test/futures-liquidation-controller.test.mjs|test/futures-position-book-cross-rollback.test.mjs|test/futures-order-engine.test.mjs|test/futures-position-engine.test.mjs|test/futures-funding-controller.test.mjs|test/futures-fee-controller.test.mjs) ;;
               *) files+=("$file") ;;
             esac
           done
           if ((${#files[@]})); then npx mocha --timeout 30000 "${files[@]}"; fi
 
       - name: Run Futures Node JS tests
-        run: node --test test/futures-liquidation-controller.test.mjs test/futures-position-book-cross-rollback.test.mjs test/futures-order-engine.test.mjs test/futures-position-engine.test.mjs test/futures-funding-controller.test.mjs
+        run: node --test test/futures-liquidation-controller.test.mjs test/futures-position-book-cross-rollback.test.mjs test/futures-order-engine.test.mjs test/futures-position-engine.test.mjs test/futures-funding-controller.test.mjs test/futures-fee-controller.test.mjs
