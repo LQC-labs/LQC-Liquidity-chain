@@ -44,7 +44,9 @@ export function validateDemoOrder(input = {}) {
     type === "LIMIT" ? input.price : input.markPrice,
     type === "LIMIT" ? "INVALID_LIMIT_PRICE" : "INVALID_MARK_PRICE"
   );
-  if (!isStepAligned(referencePrice, market.tickSize)) throw new Error("PRICE_TICK_MISMATCH");
+  // Order-price precision belongs to submitted LIMIT prices. Exchange/oracle
+  // mark prices can legitimately carry finer precision than the order tick.
+  if (type === "LIMIT" && !isStepAligned(referencePrice, market.tickSize)) throw new Error("PRICE_TICK_MISMATCH");
 
   const takeProfit = optionalTrigger(input.takeProfit, "INVALID_TAKE_PROFIT");
   const stopLoss = optionalTrigger(input.stopLoss, "INVALID_STOP_LOSS");
