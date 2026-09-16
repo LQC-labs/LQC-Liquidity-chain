@@ -106,7 +106,16 @@
 - Gate 5 완료: Stage 1 reproducibility seal은 Governance 승인 receipt를 2개 이상 RPC와 3 confirmations로 검증한 결과를 필수 입력으로 요구. 선택 계약·SafeTx hash·nonce·검증 digest를 seal에 결합하고 약한 RPC/finality 검증을 거부.
 - Gate 5 완료: `preflight-intent-bond-selection.mjs`가 2개 이상 BSC testnet RPC의 공통 block에서 Governance Safe·Bond token bytecode, 최신 Safe nonce, 선택 기록 계약의 canonical runtime과 immutable Governance 주소, 미사용 상태를 교차 검증.
 - Gate 5 완료: Stage 0 계획의 token·inspection digest·approval calldata·SafeTx hash를 다시 계산하고 RPC별 block/state 불일치, stale nonce, 이미 사용된 선택 계약, 변조된 runtime/calldata를 fail-closed. 트랜잭션은 전송하지 않음.
-- Gate 5 다음 작업: Governance가 Bond token을 확정하면 candidate inspection → Stage 0 deploy plan → 선택 기록 계약 배포 → 최신 nonce approval plan → multi-RPC preflight 순서로 운영 runbook과 증거 묶음을 생성. 별도 승인 전에는 배포나 Safe 트랜잭션을 실행하지 않음.
+- Gate 5 완료: `build-intent-bond-selection-evidence.mjs`가 candidate inspection → Stage 0 deploy plan → 최신 nonce approval plan → multi-RPC preflight를 token·inspection digest·선택 계약·Safe nonce·SafeTx hash로 결합한 불변 증거 묶음과 운영 runbook을 생성. 빈 출력 디렉터리만 허용하며 서명·배포·승인·이체·트랜잭션 전송은 수행하지 않음.
+- Gate 5 완료: `finalize-intent-bond-selection-record.mjs`가 제출된 Safe transaction hash를 직전 approval plan·multi-RPC preflight·단일 eligible candidate와 결합하여 canonical 선택 기록을 생성. 결과는 `PENDING_MULTI_RPC_VERIFICATION`으로만 표시되며 별도 verifier가 2개 이상 RPC와 finality를 확인하기 전에는 Governance 승인으로 인정하지 않음.
+- Gate 5 완료: `build-intent-stage1-readiness.mjs`가 canonical 선택 기록과 `VERIFIED` 결과의 token·inspection digest·selection contract·approval transaction·SafeTx hash·Safe nonce를 모두 교차 검증. 2개 이상 RPC와 3 confirmations를 통과한 경우에만 `READY_FOR_REPRODUCIBILITY_SEAL`을 생성하며 Stage 1 배포나 트랜잭션은 수행하지 않음.
+- Gate 5 완료: Stage 1 reproducibility seal 생성기는 readiness 파일과 그 canonical digest를 필수 입력으로 요구하고 seal 내부에 결합. readiness 누락·변조 또는 selection/verification과의 불일치 시 seal 생성을 거부하여 준비 게이트 우회를 차단.
+- Gate 5 완료: `verify-intent-stage1-seal.mjs`가 Seal을 현재 clean Git revision·package-lock·Solidity compiler·Intent source digests·4개 artifact digests·Stage 1 init code·readiness 원본과 독립 대조. 전부 일치할 때만 `VERIFIED_FOR_STAGE1_DEPLOYMENT_REVIEW`를 반환하며 배포 권한이나 트랜잭션은 생성하지 않음.
+- Gate 5 완료: `build-intent-stage1-review-package.mjs`가 검증된 Seal·build verification·Stage 1 manifest를 4개 계약의 init-code hash와 검토 체크리스트로 결합. 빈 디렉터리에만 불변 검토 패키지를 생성하며 별도 명시적 승인 전 배포·서명·전송을 수행하지 않음.
+- Gate 5 완료: `preflight-intent-stage1-deployment.mjs`가 2개 이상 BSC testnet RPC의 공통 block에서 deployer nonce·balance·4개 예상 CREATE 주소의 code 부재·각 init code gas estimate를 교차 검증. RPC 상태 불일치·기존 code·gas 편차 5% 초과 시 fail-closed하며 트랜잭션은 전송하지 않음.
+- 회귀 기준 정리: 이미 성공한 V3 Adapter의 Stage 1 배포 calldata는 현재 개선된 Adapter 생성 코드로 덮어쓰지 않고 고정 keccak256으로 검증. 과거 on-chain 증거와 현재 소스 생성기를 분리하여 재배포 오인과 증거 변조를 방지.
+- 회귀 기준 정리: Proof Gateway는 과거 bundle의 전체 생성 코드 hash를 보존하고, 현재 artifact는 Solidity CBOR metadata를 제외한 실행 생성 코드 hash까지 대조. 소스 집합 확장에 따른 metadata-only drift는 구분하되 실행 코드 변경은 계속 fail-closed.
+- Gate 5 다음 작업: Governance가 Bond token을 확정한 뒤 실제 Stage 0 선택 기록 계약 배포 및 4-of-7 Safe 승인은 별도 사용자 승인으로 진행. 실행 후 canonical receipt와 on-chain 선택 상태를 검증하여 Stage 1 reproducibility seal을 생성.
 
 ## 의도적으로 후순위인 기능
 
