@@ -107,3 +107,15 @@ The preflight fixes chain 97, separated Safe roles, Governance 4/7, Guardian 3/5
 liquidation threshold, 5% liquidation bonus, conservative caps, four distinct dual-feed Oracle
 endpoints, bounded interest parameters, and the Composite Adapter market binding. It performs no
 RPC call, signing, deployment, approval, or token movement.
+
+The first bounded deployment stage is prepared and checked with:
+
+```bash
+npm run prepare:lending-stage1 -- <config.json> <manifest.json>
+BSC_TESTNET_RPC_URLS=<url1,url2> npm run preflight:lending-stage1 -- <manifest.json> <config.json> <deployer> <result.json>
+```
+
+Stage 1 contains only the dependency-free Oracle Manager and Interest Rate Model deployments.
+The read-only preflight requires two or more chain-97 RPCs to agree on a common canonical block,
+deployer nonce and balance, empty predicted CREATE addresses, base fee, and gas estimates within
+5%. It reserves a 20% gas budget and does not broadcast either deployment.
