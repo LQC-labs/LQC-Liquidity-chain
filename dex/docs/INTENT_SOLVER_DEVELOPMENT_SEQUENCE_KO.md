@@ -136,6 +136,7 @@
 - Gate 6 진행: `prepare-intent-stage4-exact-approval.mjs`가 allowance 0인 최신 preflight에만 SourceEscrow·source token·정확한 intent 입력량을 결합한 단일 `approve` calldata를 생성. 무제한·과다·잔여 승인을 허용하지 않으며 별도 지갑 검토 전에는 서명·전송하지 않음.
 - Gate 6 진행: `verify-intent-stage4-exact-approval.mjs`가 별도로 제출된 승인 transaction의 sender·token target·zero value·정확한 calldata, 성공 receipt·canonical block·3 confirmations와 최종 allowance를 2개 이상 RPC에서 대조. 정확한 입력량 승인만 다음 단계 증거로 인정함.
 - Gate 6 진행: `prepare-intent-stage4-signing-packet.mjs`가 정확한 승인 검증과 재실행한 `READY_FOR_INTENT_SIGNATURE` preflight를 요구하고, domain·Intent message·EIP-712 hash·wallet 검토 필드를 불변 패킷으로 생성. signature는 null로 유지하며 지갑 호출·키 접근·서명·Intent 제출은 수행하지 않음.
+- Gate 6 진행: `verify-intent-stage4-signature.mjs`가 외부 지갑에서 별도로 생성된 65-byte EIP-712 서명을 검토된 signing packet digest와 Intent hash에 대해 오프라인 검증하고 정확한 사용자 주소 복구만 인정. 공개 서명만 기록하며 키·지갑·RPC·Intent 제출 경로는 포함하지 않음.
 - 회귀 기준 정리: 이미 성공한 V3 Adapter의 Stage 1 배포 calldata는 현재 개선된 Adapter 생성 코드로 덮어쓰지 않고 고정 keccak256으로 검증. 과거 on-chain 증거와 현재 소스 생성기를 분리하여 재배포 오인과 증거 변조를 방지.
 - 회귀 기준 정리: Proof Gateway는 과거 bundle의 전체 생성 코드 hash를 보존하고, 현재 artifact는 Solidity CBOR metadata를 제외한 실행 생성 코드 hash까지 대조. 소스 집합 확장에 따른 metadata-only drift는 구분하되 실행 코드 변경은 계속 fail-closed.
 - Gate 5 다음 작업: Governance가 Bond token을 확정한 뒤 실제 Stage 0 선택 기록 계약 배포 및 4-of-7 Safe 승인은 별도 사용자 승인으로 진행. 실행 후 canonical receipt와 on-chain 선택 상태를 검증하여 Stage 1 reproducibility seal을 생성.
