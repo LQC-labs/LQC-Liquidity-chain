@@ -27,7 +27,7 @@
 | Intent V1 | 계약·로컬 테스트·Stage 1~4 준비/검증 도구 완료 | 실제 Bond 결정, 배포, Safe 설정, Intent 실행 |
 | Composite Intent | Plan·Registry·Executor·Router/Vault/Lending Supply Adapter·독립 Coordinator 로컬 구현 및 실제 IntentHub 원자 연동 | 테스트넷 배포·실행 증거와 Adapter 감사 범위 고정 |
 | Settlement | SettlementHub·체인별 Finality quorum 검증·Escrow 복구·Solver exposure/challenge/slash 결합을 로컬 완료 | 테스트넷 배포·실행 증거 |
-| Lending | Oracle·격리 시장·Index 회계·청산·Bad Debt·경제 불변식·Composite 공급 영수증·42개 변경 진입점 감사 범위·독립 감사 인계·Stage 1 배포 Manifest와 다중 RPC 사전검증 로컬 완료 | 실제 설정안 확정·Stage 1 제한형 테스트넷 배포 증거 |
+| Lending | Oracle·격리 시장·Index 회계·청산·Bad Debt·경제 불변식·Composite 공급 영수증·42개 변경 진입점 감사 범위·독립 감사 인계·Stage 1 사전/사후 검증·Stage 2 Registry/Index Manifest 로컬 완료 | 실제 설정안 확정·Stage 1 제한형 테스트넷 배포 증거 |
 | Cross-chain | 자체 Bridge 미운영 원칙과 Intent·Solver·검증형 Settlement 구조 확정 | 같은 체인 정산 안정화와 외부 Adapter 별도 감사 이후 착수 |
 | LQC 자체 메인넷 | EVM 호환 장기 전환 원칙 확정 | BSC Lending·Intent 완성·감사·제한 파일럿 이후 별도 테스트넷 착수 |
 
@@ -79,4 +79,4 @@
 
 ## 다음 작업
 
-**Composite Coordinator**와 **SettlementHub·FinalityVerifier·SolverRegistry 결합**의 로컬 구현은 완료했다. Lending·Composite Supply의 7개 계약과 42개 변경 진입점을 감사 범위로 고정했고, 독립 감사 인계와 설정 검증에 이어 Oracle Manager·Interest Rate Model만 포함하는 Stage 1 배포 Manifest 및 2개 이상 RPC 사전검증을 완료했다. 다음 저장소 작업은 **Stage 1 배포 후 영수증·런타임 검증과 Stage 2 Registry·Index Manifest**다. 실제 배포·Safe 승인은 운영 설정안 확정 후 별도 단계로 수행한다.
+**Composite Coordinator**와 **SettlementHub·FinalityVerifier·SolverRegistry 결합**의 로컬 구현은 완료했다. Lending Stage 1의 Oracle Manager·Interest Rate Model 배포 Manifest, 다중 RPC 사전검증, 영수증·최종성·정확한 런타임 사후검증을 완료했고, 검증된 주소만 사용하는 Stage 2 Market Registry·Interest Index Manifest를 추가했다. 다음 저장소 작업은 **Stage 2 다중 RPC 사전검증과 배포 후 immutable·런타임 검증**이다. 실제 배포·Safe 승인은 운영 설정안 확정 후 별도 단계로 수행한다.

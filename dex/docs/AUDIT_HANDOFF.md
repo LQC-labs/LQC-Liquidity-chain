@@ -119,3 +119,15 @@ Stage 1 contains only the dependency-free Oracle Manager and Interest Rate Model
 The read-only preflight requires two or more chain-97 RPCs to agree on a common canonical block,
 deployer nonce and balance, empty predicted CREATE addresses, base fee, and gas estimates within
 5%. It reserves a 20% gas budget and does not broadcast either deployment.
+
+After separately approved Stage 1 transactions, verification and Stage 2 preparation use:
+
+```bash
+BSC_TESTNET_RPC_URLS=<url1,url2> npm run verify:lending-stage1 -- <manifest.json> <config.json> <preflight.json> <tx1,tx2> <verification.json>
+npm run prepare:lending-stage2 -- <config.json> <verification.json> <stage2-manifest.json>
+```
+
+The verifier requires two unique successful CREATE transactions, exact deployer and sequential
+nonces, canonical receipts, at least three confirmations, and runtime bytecode equal to the pinned
+compiler artifacts across two or more RPCs. Only verified Oracle Manager and Interest Rate Model
+addresses may enter the Stage 2 Market Registry and Interest Index constructors.

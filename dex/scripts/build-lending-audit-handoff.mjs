@@ -7,7 +7,7 @@ import { canonicalDigest, sha256 } from "./build-intent-reproducibility-seal.mjs
 export const LENDING_AUDIT_CONTRACTS=[
   ["LQCOracleManager","lending/LQCOracleManager"],["LQCLendingMarketRegistry","lending/LQCLendingMarketRegistry"],["LQCInterestRateModel","lending/LQCInterestRateModel"],["LQCLendingInterestIndex","lending/LQCLendingInterestIndex"],["LQCLendingCore","lending/LQCLendingCore"],["LQCLiquidationEngine","lending/LQCLiquidationEngine"],["LQCCompositeLendingSupplyAdapter","intent-v1/LQCCompositeLendingSupplyAdapter"]
 ];
-const TESTS=["lending-audit-surface.test.mjs","lending-core.test.mjs","lending-economic-invariants.test.mjs","lending-interest.test.mjs","lending-market-registry.test.mjs","lending-oracle-manager.test.mjs","intent-v1-composite-lending.test.mjs","lending-testnet-config-preflight.test.mjs","lending-stage1-deployment.test.mjs"];
+const TESTS=["lending-audit-surface.test.mjs","lending-core.test.mjs","lending-economic-invariants.test.mjs","lending-interest.test.mjs","lending-market-registry.test.mjs","lending-oracle-manager.test.mjs","intent-v1-composite-lending.test.mjs","lending-testnet-config-preflight.test.mjs","lending-stage1-deployment.test.mjs","lending-stage1-verification-stage2.test.mjs"];
 const revision=value=>{const result=String(value||"").trim().toLowerCase();if(!/^[0-9a-f]{40}$/.test(result))throw new Error("Invalid Lending audit source revision");return result};
 const digestFile=file=>sha256(fs.readFileSync(file));
 
