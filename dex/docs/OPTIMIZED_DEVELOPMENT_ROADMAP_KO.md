@@ -77,6 +77,11 @@
 - Migration Block에서 Token Supply, 사용자 자산, 공급자 청구권, 차입자 부채, Reserve와 Bad Debt를 양 체인에서 대조한다.
 - BSC의 신규 위험을 중지하더라도 기존 이용자의 상환과 안전한 출금 경로는 계속 유지한다.
 
-## 다음 작업
+## 단계 번호와 다음 작업
 
-Lending Stage 1의 Oracle Manager·Interest Rate Model과 Stage 2의 Market Registry·Interest Index에 대해 Manifest, 다중 RPC 사전검증, 영수증·최종성·정확한 런타임 및 Oracle/Rate 결합 사후검증을 완료했다. 다음 저장소 작업은 **검증된 Registry·Index만 사용하는 Stage 3 Lending Core Manifest와 다중 RPC 검증**이다. 실제 배포·Safe 승인은 운영 설정안 확정 후 별도 단계로 수행한다.
+- **10-1 완료:** Oracle Manager·Interest Rate Model Manifest, 다중 RPC 사전검증, 배포 사후검증.
+- **10-2 완료:** Market Registry·Interest Index Manifest, 다중 RPC 사전검증, 런타임 및 Oracle/Rate 결합 사후검증.
+- **10-3 저장소 완료:** 검증된 Registry·Index만 사용하는 Lending Core Manifest, 의존성 드리프트·예측 주소·가스 다중 RPC 사전검증, 영수증·최종성·정확한 런타임·불변 의존성 사후검증. 실제 배포는 아직 수행하지 않음.
+- **10-4 다음:** Governance Safe가 Interest Index를 검증된 Core에 연결하고 Liquidation Engine을 배포·연결하는 Manifest와 검증 게이트.
+
+모든 작업 시작 보고에는 `현재 단계 번호 / 작업명 / 완료 기준`을 먼저 표시한다. 실제 배포·Safe 승인은 운영 설정안 확정 후 별도 단계로 수행한다.
