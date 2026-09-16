@@ -27,7 +27,7 @@
 | Intent V1 | 계약·로컬 테스트·Stage 1~4 준비/검증 도구 완료 | 실제 Bond 결정, 배포, Safe 설정, Intent 실행 |
 | Composite Intent | Plan·Registry·Executor·Router/Vault Adapter·독립 Coordinator 로컬 구현 및 실제 IntentHub 원자 연동 | 테스트넷 배포·실행 증거와 Lending Adapter |
 | Settlement | SettlementHub·체인별 Finality quorum 검증·Escrow 복구·Solver exposure/challenge/slash 결합을 로컬 완료 | 테스트넷 배포·실행 증거 |
-| Lending | Oracle·격리 시장·원금 회계·이자 Index 기반 로컬 구현 중 | Core Index 연동·청산·Composite Adapter 구현 |
+| Lending | Oracle·격리 시장·Index 기반 부채/공급 회계 로컬 구현 중 | 청산·Bad Debt·Composite Adapter 구현 |
 | Cross-chain | 미구현 | 같은 체인 정산 안정화와 별도 감사 이후 착수 |
 
 ## 최단 중요 경로
@@ -62,4 +62,4 @@
 
 ## 다음 작업
 
-**Composite Coordinator**와 **SettlementHub·FinalityVerifier·SolverRegistry 결합**의 로컬 구현은 완료했다. Lending은 보수적 Oracle·최대 LTV 50% 격리 시장·원금 회계 Core에 이어 이용률 Kink 금리와 Borrow/Supply Index 기반을 구현했다. 다음 저장소 작업은 **Index를 Core 지분·부채에 연결한 뒤 청산·Bad Debt 통제**다. 동시에 운영 승인이 가능해지면 **Intent V1 Stage 0 Bond 선택 증거**부터 실제 테스트넷 경로를 재개한다.
+**Composite Coordinator**와 **SettlementHub·FinalityVerifier·SolverRegistry 결합**의 로컬 구현은 완료했다. Lending은 보수적 Oracle·최대 LTV 50% 격리 시장과 이용률 Kink 금리를 실제 Core의 Borrow/Supply 지분에 연결해 부채 이자·공급자 수익·프로토콜 준비금을 분리했다. 다음 저장소 작업은 **청산·Bad Debt 통제와 Composite Lending Adapter**다. 동시에 운영 승인이 가능해지면 **Intent V1 Stage 0 Bond 선택 증거**부터 실제 테스트넷 경로를 재개한다.
