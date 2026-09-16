@@ -54,4 +54,20 @@ describe('Futures insurance and ADL orchestration', () => {
     assert.equal(result.adlPlan.selected[0].absorbAmount, 100);
     assert.equal(result.adlPlan.residualBadDebt, 50);
   });
+
+  test('does not consume insurance fund when ADL planning fails', () => {
+    const insuranceFundService = service({ balance: 30 });
+    const controller = createDemoInsuranceAdlController({ insuranceFundService });
+    const before = insuranceFundService.snapshot();
+
+    assert.throws(
+      () => controller.coverAndPlan({ liquidationLoss: 80, positions: [profitableShort], bankruptSide: 'INVALID' }),
+      /INVALID_SIDE/
+    );
+
+    assert.deepEqual(insuranceFundService.snapshot(), before);
+    assert.equal(insuranceFundService.snapshot().balance, 30);
+    assert.equal(insuranceFundService.snapshot().totalCovered, 0);
+    assert.equal(insuranceFundService.snapshot().totalBadDebt, 0);
+  });
 });
