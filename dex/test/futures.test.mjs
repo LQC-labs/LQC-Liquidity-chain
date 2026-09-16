@@ -14,6 +14,12 @@ const deploy = async (signer, name, source, args = []) => {
   return c;
 };
 
+const setOraclePrice = async (oracle, token, price) => {
+  // Ganache/ethers can occasionally under-estimate this state-changing call after
+  // repeated fixtures. Keep the test deterministic without changing protocol logic.
+  await (await oracle.setPrice(token, price, { gasLimit: 100_000n })).wait();
+};
+
 describe("LQC Flow Futures MVP", function () {
   let provider, owner, trader, liquidator, collateral, indexToken, registry, vault, oracle, engine;
   const usd = ethers.parseEther;
@@ -38,7 +44,7 @@ describe("LQC Flow Futures MVP", function () {
       ethers.encodeBytes32String("BTC/USDT"), await indexToken.getAddress(), await collateral.getAddress(),
       await oracle.getAddress(), 100_000, 500
     )).wait();
-    await (await oracle.setPrice(await indexToken.getAddress(), usd("50000"))).wait();
+    await setOraclePrice(oracle, await indexToken.getAddress(), usd("50000"));
 
     const traderAddress = await trader.getAddress();
     await (await collateral.mint(traderAddress, usd("10000"))).wait();
@@ -60,21 +66,21 @@ describe("LQC Flow Futures MVP", function () {
 
   it("calculates long profit when the oracle price rises", async function () {
     await (await engine.connect(trader).openPosition(1, usd("1000"), usd("5000"), true)).wait();
-    await (await oracle.setPrice(await indexToken.getAddress(), usd("55000"))).wait();
+    await setOraclePrice(oracle, await indexToken.getAddress(), usd("55000"));
     const [pnl] = await engine.getPositionPnl(await trader.getAddress(), 1);
     assert.equal(pnl, usd("500"));
   });
 
   it("calculates short profit when the oracle price falls", async function () {
     await (await engine.connect(trader).openPosition(1, usd("1000"), usd("5000"), false)).wait();
-    await (await oracle.setPrice(await indexToken.getAddress(), usd("45000"))).wait();
+    await setOraclePrice(oracle, await indexToken.getAddress(), usd("45000"));
     const [pnl] = await engine.getPositionPnl(await trader.getAddress(), 1);
     assert.equal(pnl, usd("500"));
   });
 
   it("liquidates when equity falls to maintenance margin", async function () {
     await (await engine.connect(trader).openPosition(1, usd("1000"), usd("5000"), true)).wait();
-    await (await oracle.setPrice(await indexToken.getAddress(), usd("42500"))).wait();
+    await setOraclePrice(oracle, await indexToken.getAddress(), usd("42500"));
     await (await engine.connect(liquidator).liquidate(await trader.getAddress(), 1)).wait();
     const p = await engine.positions(await trader.getAddress(), 1);
     assert.equal(p.open, false);
@@ -82,7 +88,7 @@ describe("LQC Flow Futures MVP", function () {
 
   it("rejects a stale oracle price", async function () {
     const latest = await provider.getBlock("latest");
-    await (await oracle.setPriceWithTimestamp(await indexToken.getAddress(), usd("50000"), BigInt(latest.timestamp - 301))).wait();
+    await (await oracle.setPriceWithTimestamp(await indexToken.getAddress(), usd("50000"), BigInt(latest.timestamp - 301), { gasLimit: 100_000n })).wait();
     await assert.rejects(engine.connect(trader).openPosition(1, usd("1000"), usd("5000"), true));
   });
 });
