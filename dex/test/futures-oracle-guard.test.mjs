@@ -22,6 +22,13 @@ describe("LQC Flow Futures oracle guard", function () {
     ], { now, maxAgeMs: 30_000 }), /INSUFFICIENT_FRESH_ORACLE_SOURCES/);
   });
 
+  it("rejects duplicate source ids so one feed cannot satisfy quorum twice", function () {
+    assert.throws(() => validateOracleSources([
+      { id: "a", price: 50_000, timestamp: now },
+      { id: "a", price: 50_010, timestamp: now }
+    ], { now }), /DUPLICATE_ORACLE_SOURCE_ID/);
+  });
+
   it("filters a deviating source while retaining a healthy quorum", function () {
     const result = validateOracleSources([
       { id: "a", price: 50_000, timestamp: now },
