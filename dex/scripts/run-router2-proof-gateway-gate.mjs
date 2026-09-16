@@ -33,15 +33,19 @@ export const GATE_TESTS=Object.freeze([
 
 export function gitBlobSha(content){return crypto.createHash("sha1").update(Buffer.from("blob "+content.length+"\0")).update(content).digest("hex");}
 export function assertPackageLockBuffer(content){const actual=gitBlobSha(content);if(actual!==REVIEWED_PACKAGE_LOCK_BLOB)throw new Error("dex/package-lock.json changed: expected reviewed blob "+REVIEWED_PACKAGE_LOCK_BLOB+", received "+actual);return actual;}
-export function assertArtifactHashes(root){
+export function inspectArtifactHashes(root){
   const read=relative=>JSON.parse(fs.readFileSync(path.join(root,relative),"utf8")),bundle=read("deployments/router2-proof-bound-gateway-stage1-bsc-testnet-97.json"),proof=read("artifacts/contracts/router-v2/LQCBestExecutionProof.sol/LQCBestExecutionProof.json"),gateway=read("artifacts/contracts/router-v2/LQCProofBoundExecutionGateway.sol/LQCProofBoundExecutionGateway.json");
-  const actual={proofCreation:ethers.keccak256(proof.bytecode),proofRuntime:ethers.keccak256(proof.deployedBytecode),gatewayCreation:ethers.keccak256(gateway.bytecode),gatewayRuntime:ethers.keccak256(gateway.deployedBytecode)};
-  const expected={proofCreation:bundle.bytecodeHashes.bestExecutionProof,proofRuntime:bundle.runtimeBytecodeHashes.bestExecutionProof,gatewayCreation:bundle.bytecodeHashes.proofBoundGateway,gatewayRuntime:bundle.runtimeBytecodeHashes.proofBoundGateway,gatewayTemplate:ethers.keccak256(bundle.gatewayTemplate.bytecode)};
-  const mismatches=[];
-  for(const key of ["proofCreation","proofRuntime","gatewayCreation","gatewayRuntime"])if(actual[key]!==expected[key])mismatches.push({key,expected:expected[key],actual:actual[key]});
-  if(actual.gatewayCreation!==expected.gatewayTemplate)mismatches.push({key:"gatewayTemplate",expected:expected.gatewayTemplate,actual:actual.gatewayCreation});
-  if(mismatches.length)throw new Error("Proof Gateway artifact or deployment bundle hash mismatch: "+mismatches.map(({key,expected,actual})=>`${key} expected=${expected} actual=${actual}`).join("; "));
-  return actual;
+  const candidate={proofCreation:ethers.keccak256(proof.bytecode),proofRuntime:ethers.keccak256(proof.deployedBytecode),gatewayCreation:ethers.keccak256(gateway.bytecode),gatewayRuntime:ethers.keccak256(gateway.deployedBytecode)};
+  const deployed={proofCreation:bundle.bytecodeHashes.bestExecutionProof,proofRuntime:bundle.runtimeBytecodeHashes.bestExecutionProof,gatewayCreation:bundle.bytecodeHashes.proofBoundGateway,gatewayRuntime:bundle.runtimeBytecodeHashes.proofBoundGateway,gatewayTemplate:ethers.keccak256(bundle.gatewayTemplate.bytecode)};
+  const drift=[];
+  for(const key of ["proofCreation","proofRuntime","gatewayCreation","gatewayRuntime"])if(candidate[key]!==deployed[key])drift.push({key,deployed:deployed[key],candidate:candidate[key]});
+  if(deployed.gatewayCreation!==deployed.gatewayTemplate)throw new Error(`Historical Proof Gateway deployment bundle is internally inconsistent: gatewayCreation=${deployed.gatewayCreation} gatewayTemplate=${deployed.gatewayTemplate}`);
+  return{candidate,deployed,drift,redeployRequired:drift.length>0};
+}
+export function assertArtifactHashes(root){
+  const state=inspectArtifactHashes(root);
+  if(state.redeployRequired)throw new Error("Proof Gateway current candidate does not match historical deployed artifact; testnet redeployment/review required before release: "+state.drift.map(({key,deployed,candidate})=>`${key} deployed=${deployed} candidate=${candidate}`).join("; "));
+  return state.candidate;
 }
 export function runProofGatewayGate(root=path.resolve(import.meta.dirname,"..")){
   assertPackageLockBuffer(fs.readFileSync(path.join(root,"package-lock.json")));
