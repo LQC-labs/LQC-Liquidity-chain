@@ -25,9 +25,9 @@
 | Safe 역할 | Governance 4/7, Risk·Guardian·Treasury 3/5 온체인 검증 | 정기 드리프트 검사와 사고 훈련 증거 유지 |
 | Proof-bound Router 실행 | 실제 실행 트랜잭션 있음 | 최종 상태·모니터링 패키지 일원화 |
 | Intent V1 | 계약·로컬 테스트·Stage 1~4 준비/검증 도구 완료 | 실제 Bond 결정, 배포, Safe 설정, Intent 실행 |
-| Composite Intent | Plan·Registry·Executor·Router/Vault Adapter·독립 Coordinator 로컬 구현 및 실제 IntentHub 원자 연동 | 테스트넷 배포·실행 증거와 Lending Adapter |
+| Composite Intent | Plan·Registry·Executor·Router/Vault/Lending Supply Adapter·독립 Coordinator 로컬 구현 및 실제 IntentHub 원자 연동 | 테스트넷 배포·실행 증거와 Adapter 감사 범위 고정 |
 | Settlement | SettlementHub·체인별 Finality quorum 검증·Escrow 복구·Solver exposure/challenge/slash 결합을 로컬 완료 | 테스트넷 배포·실행 증거 |
-| Lending | Oracle·격리 시장·Index 회계·청산·Bad Debt·경제 불변식 로컬 검증 중 | Composite Adapter·감사 범위 고정 |
+| Lending | Oracle·격리 시장·Index 회계·청산·Bad Debt·경제 불변식·Composite 공급 영수증 로컬 검증 중 | 감사 범위 고정·테스트넷 배포 증거 |
 | Cross-chain | 자체 Bridge 미운영 원칙과 Intent·Solver·검증형 Settlement 구조 확정 | 같은 체인 정산 안정화와 외부 Adapter 별도 감사 이후 착수 |
 | LQC 자체 메인넷 | EVM 호환 장기 전환 원칙 확정 | BSC Lending·Intent 완성·감사·제한 파일럿 이후 별도 테스트넷 착수 |
 
@@ -79,4 +79,4 @@
 
 ## 다음 작업
 
-**Composite Coordinator**와 **SettlementHub·FinalityVerifier·SolverRegistry 결합**의 로컬 구현은 완료했다. Lending은 연속 청산, 고이용률 이자, 유동성 고갈, Oracle 편차, Bad Debt 재자본화 과정의 자산·청구권 불변식을 상태 기반으로 검증한다. 다음 저장소 작업은 **Composite Lending Adapter와 독립 감사 범위 고정**이다. 동시에 운영 승인이 가능해지면 **Intent V1 Stage 0 Bond 선택 증거**부터 실제 테스트넷 경로를 재개한다.
+**Composite Coordinator**와 **SettlementHub·FinalityVerifier·SolverRegistry 결합**의 로컬 구현은 완료했다. Lending은 연속 청산, 고이용률 이자, 유동성 고갈, Oracle 편차, Bad Debt 재자본화 과정의 자산·청구권 불변식을 상태 기반으로 검증하고, 시장별 Composite Supply Adapter가 양도·상환 가능한 Position Receipt를 발행한다. 다음 저장소 작업은 **Lending 감사 범위 고정과 통합 공격 테스트 확대**다. 동시에 운영 승인이 가능해지면 **Intent V1 Stage 0 Bond 선택 증거**부터 실제 테스트넷 경로를 재개한다.
