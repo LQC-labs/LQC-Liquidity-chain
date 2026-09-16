@@ -59,15 +59,23 @@ describe('Futures insurance and ADL orchestration', () => {
     const insuranceFundService = service({ balance: 30 });
     const controller = createDemoInsuranceAdlController({ insuranceFundService });
     const before = insuranceFundService.snapshot();
-
-    assert.throws(
-      () => controller.coverAndPlan({ liquidationLoss: 80, positions: [profitableShort], bankruptSide: 'INVALID' }),
-      /INVALID_SIDE/
-    );
-
+    assert.throws(() => controller.coverAndPlan({ liquidationLoss: 80, positions: [profitableShort], bankruptSide: 'INVALID' }), /INVALID_SIDE/);
     assert.deepEqual(insuranceFundService.snapshot(), before);
-    assert.equal(insuranceFundService.snapshot().balance, 30);
-    assert.equal(insuranceFundService.snapshot().totalCovered, 0);
-    assert.equal(insuranceFundService.snapshot().totalBadDebt, 0);
+  });
+
+  test('rejects stale coverage preview after another fund mutation', () => {
+    const insuranceFundService = service({ balance: 100 });
+    const stale = insuranceFundService.previewCoverage(40);
+    insuranceFundService.deposit(10);
+    assert.throws(() => insuranceFundService.commitCoverage(stale), /INSURANCE_FUND_CHANGED_SINCE_PREVIEW/);
+    assert.equal(insuranceFundService.snapshot().balance, 110);
+  });
+
+  test('rejects stale deposit preview after another fund mutation', () => {
+    const insuranceFundService = service({ balance: 100 });
+    const stale = insuranceFundService.previewDeposit(10);
+    insuranceFundService.cover(20);
+    assert.throws(() => insuranceFundService.commitDeposit(stale), /INSURANCE_FUND_CHANGED_SINCE_PREVIEW/);
+    assert.equal(insuranceFundService.snapshot().balance, 80);
   });
 });
