@@ -3,10 +3,10 @@
 // callers do not mutate shared-risk positions one by one.
 
 export function createDemoLiquidationController({ account, positionBook, markPriceOf, insuranceAdl = null, adlPositions = null, onLiquidated = null }) {
-  if (!account || typeof account.liquidateCross !== 'function' || typeof account.health !== 'function') throw new Error('MARGIN_ACCOUNT_REQUIRED');
+  if (!account || typeof account.health !== 'function' || typeof account.previewCrossLiquidation !== 'function' || typeof account.commitCrossLiquidation !== 'function') throw new Error('MARGIN_ACCOUNT_REQUIRED');
   if (!positionBook || typeof positionBook.list !== 'function' || typeof positionBook.removeCross !== 'function' || typeof positionBook.restoreCross !== 'function') throw new Error('POSITION_BOOK_REQUIRED');
   if (typeof markPriceOf !== 'function') throw new Error('MARK_PRICE_PROVIDER_REQUIRED');
-  if (insuranceAdl !== null && typeof insuranceAdl.coverAndPlan !== 'function') throw new Error('INSURANCE_ADL_CONTROLLER_REQUIRED');
+  if (insuranceAdl !== null && (typeof insuranceAdl.previewCoverAndPlan !== 'function' || typeof insuranceAdl.commitResolution !== 'function')) throw new Error('INSURANCE_ADL_CONTROLLER_REQUIRED');
   if (adlPositions !== null && typeof adlPositions !== 'function') throw new Error('INVALID_ADL_POSITION_PROVIDER');
   if (onLiquidated !== null && typeof onLiquidated !== 'function') throw new Error('INVALID_LIQUIDATION_CALLBACK');
 
@@ -25,25 +25,29 @@ export function createDemoLiquidationController({ account, positionBook, markPri
     const health = account.health(positions, markPriceOf);
     if (!health.liquidatable) return Object.freeze({ liquidated: false, reason: 'ACCOUNT_HEALTHY', health });
 
-    // Validate bad-debt dependencies before mutating either account or book.
-    // Negative health equity is the explicit deficit that insurance/ADL must resolve.
-    const previewBadDebt = Math.max(0, -Number(health.equity || 0));
-    let bankruptSide = null;
-    let candidates = null;
-    if (previewBadDebt > 0) {
+    // Build every failure-prone plan before mutating account, book, or insurance.
+    const accountPreview = account.previewCrossLiquidation(positions, markPriceOf);
+    let insurancePreview = null;
+    if (accountPreview.badDebt > 0) {
       if (!insuranceAdl) throw new Error('BAD_DEBT_RESOLUTION_REQUIRED');
       const sides = [...new Set(positions.map((position) => String(position.side).toUpperCase()))];
       if (sides.length !== 1 || (sides[0] !== 'LONG' && sides[0] !== 'SHORT')) throw new Error('MIXED_SIDE_BAD_DEBT_REQUIRES_ALLOCATION');
       if (!adlPositions) throw new Error('GLOBAL_ADL_POSITION_PROVIDER_REQUIRED');
-      bankruptSide = sides[0];
-      candidates = adlPositions();
+      const candidates = adlPositions();
       if (!Array.isArray(candidates)) throw new Error('INVALID_ADL_POSITIONS');
+      insurancePreview = insuranceAdl.previewCoverAndPlan({
+        liquidationLoss: accountPreview.badDebt,
+        positions: candidates,
+        bankruptSide: sides[0]
+      });
     }
 
+    // Remove positions only after all previews succeed. Account commit is guarded
+    // against state drift; book is restored if that commit fails.
     const closed = positionBook.removeCross(positions);
     let settlement;
     try {
-      settlement = account.liquidateCross(positions, markPriceOf);
+      settlement = account.commitCrossLiquidation(accountPreview);
     } catch (error) {
       try {
         positionBook.restoreCross(closed);
@@ -61,13 +65,8 @@ export function createDemoLiquidationController({ account, positionBook, markPri
     }
 
     let badDebtResolution = null;
-    if (settlement.badDebt > 0) {
-      if (!insuranceAdl || !adlPositions || !bankruptSide) throw new Error('BAD_DEBT_PRECONDITION_MISMATCH');
-      badDebtResolution = insuranceAdl.coverAndPlan({
-        liquidationLoss: settlement.badDebt,
-        positions: candidates,
-        bankruptSide
-      });
+    if (insurancePreview) {
+      badDebtResolution = insuranceAdl.commitResolution(insurancePreview);
     }
 
     const event = Object.freeze({
