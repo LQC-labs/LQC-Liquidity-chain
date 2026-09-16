@@ -1,6 +1,6 @@
 // LQC Flow Futures — transport-independent public market-data gateway.
-// This is not an HTTP server. It defines a stable service contract that a
-// future REST/WebSocket adapter can expose without coupling transport to UI.
+// The gateway may consume a shared guarded Oracle/Price service for mark price
+// while depth/trades/klines remain behind an isolated market-data provider.
 
 import { getExchangeInfo, getExchangeSymbolInfo } from './exchange-info.js';
 import { buildTicker, buildDepthSnapshot, buildTrade, buildKline, buildMarkPrice } from './market-data-models.js';
@@ -17,8 +17,16 @@ function normalizeLimit(value, fallback = 100, max = 1000) {
   return number;
 }
 
-export function createMarketDataGateway(provider) {
-  if (!provider || typeof provider.getMarkPrice !== 'function') throw new Error('INVALID_MARKET_DATA_PROVIDER');
+export function createMarketDataGateway(provider, { oraclePriceService = null } = {}) {
+  if (!provider) throw new Error('INVALID_MARKET_DATA_PROVIDER');
+  if (!oraclePriceService && typeof provider.getMarkPrice !== 'function') throw new Error('INVALID_MARKET_DATA_PROVIDER');
+  if (oraclePriceService && typeof oraclePriceService.getMarkPrice !== 'function') throw new Error('INVALID_ORACLE_PRICE_SERVICE');
+
+  function guardedMarkPrice(key) {
+    const price = oraclePriceService ? oraclePriceService.getMarkPrice(key) : provider.getMarkPrice(key);
+    if (!Number.isFinite(Number(price)) || Number(price) <= 0) throw new Error('MARK_PRICE_UNAVAILABLE');
+    return Number(price);
+  }
 
   function exchangeInfo(symbol = null) {
     return symbol ? getExchangeSymbolInfo(normalizeSymbol(symbol)) : getExchangeInfo();
@@ -26,16 +34,14 @@ export function createMarketDataGateway(provider) {
 
   function markPrice(symbol) {
     const key = normalizeSymbol(symbol);
-    const price = provider.getMarkPrice(key);
-    if (!Number.isFinite(Number(price)) || Number(price) <= 0) throw new Error('MARK_PRICE_UNAVAILABLE');
-    return buildMarkPrice({ symbol: key, markPrice: price });
+    return buildMarkPrice({ symbol: key, markPrice: guardedMarkPrice(key) });
   }
 
   function ticker24h(symbol) {
     const key = normalizeSymbol(symbol);
-    if (typeof provider.getTicker24h === 'function') return buildTicker({ symbol: key, ...provider.getTicker24h(key) });
-    const price = provider.getMarkPrice(key);
-    return buildTicker({ symbol: key, lastPrice: price, markPrice: price, openPrice: price, highPrice: price, lowPrice: price, volume: 0, quoteVolume: 0 });
+    const mark = guardedMarkPrice(key);
+    if (typeof provider.getTicker24h === 'function') return buildTicker({ symbol: key, ...provider.getTicker24h(key), markPrice: mark });
+    return buildTicker({ symbol: key, lastPrice: mark, markPrice: mark, openPrice: mark, highPrice: mark, lowPrice: mark, volume: 0, quoteVolume: 0 });
   }
 
   function depth(symbol, limit = 100) {
@@ -63,8 +69,9 @@ export function createMarketDataGateway(provider) {
   function subscribe(symbol, listener) {
     const key = normalizeSymbol(symbol);
     if (typeof listener !== 'function') throw new Error('INVALID_MARKET_DATA_LISTENER');
-    if (typeof provider.subscribe !== 'function') throw new Error('STREAM_UNAVAILABLE');
-    return provider.subscribe((event) => {
+    const stream = oraclePriceService?.subscribe ?? provider.subscribe;
+    if (typeof stream !== 'function') throw new Error('STREAM_UNAVAILABLE');
+    return stream((event) => {
       if (event.symbol === key) listener(Object.freeze({ ...event, symbol: key }));
     });
   }
