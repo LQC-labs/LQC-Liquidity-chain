@@ -29,6 +29,32 @@ describe("LQC Flow Futures oracle guard", function () {
     ], { now }), /DUPLICATE_ORACLE_SOURCE_ID/);
   });
 
+  it("rejects future-dated source observations", function () {
+    assert.throws(() => validateOracleSources([
+      { id: "a", price: 50_000, timestamp: now + 1 },
+      { id: "b", price: 50_010, timestamp: now }
+    ], { now }), /ORACLE_TIMESTAMP_IN_FUTURE/);
+  });
+
+  it("blocks a two-source quorum when the feeds disagree too widely", function () {
+    assert.throws(() => validateOracleSources([
+      { id: "a", price: 50_000, timestamp: now },
+      { id: "b", price: 52_000, timestamp: now }
+    ], { now, maxDeviationRatio: 0.03, maxSourceSpreadRatio: 0.02 }), /ORACLE_SOURCE_SPREAD_TOO_HIGH/);
+  });
+
+  it("requires at least three independent feeds in production mode", function () {
+    assert.throws(() => validateOracleSources([
+      { id: "a", price: 50_000, timestamp: now },
+      { id: "b", price: 50_010, timestamp: now }
+    ], { now, productionMode: true, minSources: 2 }), /PRODUCTION_ORACLE_REQUIRES_THREE_SOURCES/);
+    assert.equal(validateOracleSources([
+      { id: "a", price: 50_000, timestamp: now },
+      { id: "b", price: 50_010, timestamp: now },
+      { id: "c", price: 49_990, timestamp: now }
+    ], { now, productionMode: true, minSources: 3 }).accepted.length, 3);
+  });
+
   it("filters a deviating source while retaining a healthy quorum", function () {
     const result = validateOracleSources([
       { id: "a", price: 50_000, timestamp: now },
