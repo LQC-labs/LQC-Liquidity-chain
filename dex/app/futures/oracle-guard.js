@@ -19,17 +19,28 @@ function median(values) {
   return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
 }
 
+function spreadRatio(sources) {
+  const prices = sources.map((source) => source.price);
+  const minimum = Math.min(...prices);
+  const maximum = Math.max(...prices);
+  return (maximum - minimum) / minimum;
+}
+
 export function validateOracleSources(sources, {
   now = Date.now(),
   maxAgeMs = 30_000,
   maxDeviationRatio = 0.01,
-  minSources = 2
+  maxSourceSpreadRatio = maxDeviationRatio * 2,
+  minSources = 2,
+  productionMode = false
 } = {}) {
   if (!Array.isArray(sources)) throw new Error("ORACLE_SOURCES_REQUIRED");
   if (!Number.isInteger(minSources) || minSources < 2) throw new Error("INVALID_MIN_ORACLE_SOURCES");
+  if (productionMode && minSources < 3) throw new Error("PRODUCTION_ORACLE_REQUIRES_THREE_SOURCES");
   const currentTime = nonNegativeNumber(now, "INVALID_ORACLE_TIME");
   const maxAge = positiveNumber(maxAgeMs, "INVALID_ORACLE_MAX_AGE");
   const maxDeviation = positiveNumber(maxDeviationRatio, "INVALID_ORACLE_DEVIATION");
+  const maxSpread = positiveNumber(maxSourceSpreadRatio, "INVALID_ORACLE_SOURCE_SPREAD");
   const sourceIds = new Set();
 
   const valid = sources.map((source) => {
@@ -44,10 +55,12 @@ export function validateOracleSources(sources, {
   }).filter((source) => source.ageMs <= maxAge);
 
   if (valid.length < minSources) throw new Error("INSUFFICIENT_FRESH_ORACLE_SOURCES");
+  if (valid.length === 2 && spreadRatio(valid) > maxSpread) throw new Error("ORACLE_SOURCE_SPREAD_TOO_HIGH");
 
   const referencePrice = median(valid.map((source) => source.price));
   const accepted = valid.filter((source) => Math.abs(source.price - referencePrice) / referencePrice <= maxDeviation);
   if (accepted.length < minSources) throw new Error("ORACLE_PRICE_DEVIATION_TOO_HIGH");
+  if (spreadRatio(accepted) > maxSpread) throw new Error("ORACLE_SOURCE_SPREAD_TOO_HIGH");
 
   const aggregatePrice = median(accepted.map((source) => source.price));
   return Object.freeze({
@@ -55,6 +68,7 @@ export function validateOracleSources(sources, {
     referencePrice,
     accepted: Object.freeze(accepted),
     rejectedCount: sources.length - accepted.length,
+    sourceSpreadRatio: spreadRatio(accepted),
     healthy: true
   });
 }
