@@ -100,7 +100,9 @@
 - Gate 5 완료: 동일 venue/feed 중복, RPC별 상태 불일치, bytecode 부재, 부족한 liquidity, stale/incomplete/divergent Oracle을 개별 blocker로 기록. 결과는 Governance 선택 자료일 뿐 token 선택·승인·이체·배포는 수행하지 않음.
 - Gate 5 완료: `build-intent-reproducibility-seal.mjs`가 Governance 4-of-7 승인 기록, 정확히 하나의 eligible Bond 검사 결과와 그 canonical digest, Git source revision, package-lock digest, Solidity 0.8.30 설정, Intent source digest, 4개 Stage 1 ABI/creation/runtime bytecode digest, constructor 포함 init-code digest를 하나의 seal로 결합.
 - Gate 5 완료: Bond 주소·검사 결과·소스·artifact·init code·Governance threshold 중 하나라도 바뀌면 seal 검증 실패. dirty worktree 또는 승인/검사 파일 부재 시 실제 seal 파일 생성을 거부하므로 현재는 token을 임의 고정하지 않음.
-- Gate 5 다음 작업: Governance Bond 선택 기록이 준비되면 approval transaction의 Safe 실행 성공·nonce·payload hash를 BSC testnet에서 독립 검증한 뒤 실제 Stage 1 seal을 생성.
+- Gate 5 완료: `LQCBondSelection`은 Governance Safe만 bytecode가 있는 Bond token과 검사 digest를 1회 승인할 수 있고 `BondTokenApproved`를 기록. 재선택·EOA token·빈 digest·비인가 호출을 차단.
+- Gate 5 완료: `verify-intent-bond-selection.mjs`가 2개 이상 BSC testnet RPC에서 Safe receipt/canonical block/finality, `execTransaction` 내부 target·value·CALL operation·`approveBondToken` payload, 전후 nonce +1, EIP-712 SafeTx hash와 `ExecutionSuccess`, 선택 이벤트 및 최종 on-chain state를 모두 검증.
+- Gate 5 다음 작업: Bond 선택 기록 계약의 배포 init code와 Governance Safe 승인 calldata를 Stage 0 manifest로 만들고, 승인 후 검증 결과를 Stage 1 reproducibility seal의 필수 입력으로 연결.
 
 ## 의도적으로 후순위인 기능
 
