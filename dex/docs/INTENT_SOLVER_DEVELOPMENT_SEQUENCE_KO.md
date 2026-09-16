@@ -104,7 +104,9 @@
 - Gate 5 완료: `verify-intent-bond-selection.mjs`가 2개 이상 BSC testnet RPC에서 Safe receipt/canonical block/finality, `execTransaction` 내부 target·value·CALL operation·`approveBondToken` payload, 전후 nonce +1, EIP-712 SafeTx hash와 `ExecutionSuccess`, 선택 이벤트 및 최종 on-chain state를 모두 검증.
 - Gate 5 완료: `prepare-intent-bond-selection.mjs`가 검사 결과의 단일 eligible token을 대상으로 `LQCBondSelection` Stage 0 배포 init code를 생성하고, 배포 주소와 최신 Safe nonce가 주어지면 정확한 `approveBondToken` calldata·SafeTx 구조체·EIP-712 hash를 생성. 트랜잭션은 전송하지 않음.
 - Gate 5 완료: Stage 1 reproducibility seal은 Governance 승인 receipt를 2개 이상 RPC와 3 confirmations로 검증한 결과를 필수 입력으로 요구. 선택 계약·SafeTx hash·nonce·검증 digest를 seal에 결합하고 약한 RPC/finality 검증을 거부.
-- Gate 5 다음 작업: Governance가 실제 Bond token을 선택한 뒤에만 Stage 0 배포/승인 preflight에서 최신 on-chain Safe nonce·배포 bytecode·calldata를 재검증. 별도 승인 전에는 배포나 Safe 트랜잭션을 실행하지 않음.
+- Gate 5 완료: `preflight-intent-bond-selection.mjs`가 2개 이상 BSC testnet RPC의 공통 block에서 Governance Safe·Bond token bytecode, 최신 Safe nonce, 선택 기록 계약의 canonical runtime과 immutable Governance 주소, 미사용 상태를 교차 검증.
+- Gate 5 완료: Stage 0 계획의 token·inspection digest·approval calldata·SafeTx hash를 다시 계산하고 RPC별 block/state 불일치, stale nonce, 이미 사용된 선택 계약, 변조된 runtime/calldata를 fail-closed. 트랜잭션은 전송하지 않음.
+- Gate 5 다음 작업: Governance가 Bond token을 확정하면 candidate inspection → Stage 0 deploy plan → 선택 기록 계약 배포 → 최신 nonce approval plan → multi-RPC preflight 순서로 운영 runbook과 증거 묶음을 생성. 별도 승인 전에는 배포나 Safe 트랜잭션을 실행하지 않음.
 
 ## 의도적으로 후순위인 기능
 

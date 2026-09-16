@@ -27,7 +27,7 @@ function compile(sources) {
       optimizer: { enabled: true, runs: 200 },
       viaIR: true,
       evmVersion: "shanghai",
-      outputSelection: { "*": { "*": ["abi", "evm.bytecode.object", "evm.deployedBytecode.object"] } }
+      outputSelection: { "*": { "*": ["abi", "evm.bytecode.object", "evm.deployedBytecode.object", "evm.deployedBytecode.immutableReferences"] } }
     }
   })));
   const errors = (output.errors ?? []).filter((entry) => entry.severity === "error");
@@ -51,12 +51,14 @@ for (const output of outputs) {
     for (const [contractName, artifact] of Object.entries(contracts)) {
       const outputPath = path.join(artifactsDir, sourceName, `${contractName}.json`);
       fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+      const immutableReferences = artifact.evm.deployedBytecode.immutableReferences;
       fs.writeFileSync(outputPath, JSON.stringify({
         contractName,
         sourceName,
         abi: artifact.abi,
         bytecode: `0x${artifact.evm.bytecode.object}`,
-        deployedBytecode: `0x${artifact.evm.deployedBytecode.object}`
+        deployedBytecode: `0x${artifact.evm.deployedBytecode.object}`,
+        ...(Object.keys(immutableReferences).length ? { immutableReferences } : {})
       }, null, 2));
     }
   }
