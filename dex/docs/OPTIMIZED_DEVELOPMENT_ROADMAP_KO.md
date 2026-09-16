@@ -82,6 +82,7 @@
 - **10-1 완료:** Oracle Manager·Interest Rate Model Manifest, 다중 RPC 사전검증, 배포 사후검증.
 - **10-2 완료:** Market Registry·Interest Index Manifest, 다중 RPC 사전검증, 런타임 및 Oracle/Rate 결합 사후검증.
 - **10-3 저장소 완료:** 검증된 Registry·Index만 사용하는 Lending Core Manifest, 의존성 드리프트·예측 주소·가스 다중 RPC 사전검증, 영수증·최종성·정확한 런타임·불변 의존성 사후검증. 실제 배포는 아직 수행하지 않음.
-- **10-4 다음:** Governance Safe가 Interest Index를 검증된 Core에 연결하고 Liquidation Engine을 배포·연결하는 Manifest와 검증 게이트.
+- **10-4 저장소 완료:** 검증된 Core에만 결합되는 Liquidation Engine 배포, `Interest Index → Core`, `Core → Liquidation Engine`의 두 독립 4-of-7 Governance Safe 실행을 순서·calldata·영수증·최종 상태까지 다중 RPC로 검증. 실제 실행은 아직 수행하지 않음.
+- **10-5 다음:** 단일 격리 시장을 비활성 상태로 설정하고 Oracle·Rate·Index 초기화를 완료한 뒤 제한형 시장 활성화 전 최종 검증.
 
 모든 작업 시작 보고에는 `현재 단계 번호 / 작업명 / 완료 기준`을 먼저 표시한다. 실제 배포·Safe 승인은 운영 설정안 확정 후 별도 단계로 수행한다.

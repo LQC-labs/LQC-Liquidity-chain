@@ -159,6 +159,7 @@
 - 회귀 기준 정리: Proof Gateway는 과거 bundle의 전체 생성 코드 hash를 보존하고, 현재 artifact는 Solidity CBOR metadata를 제외한 실행 생성 코드 hash까지 대조. 소스 집합 확장에 따른 metadata-only drift는 구분하되 실행 코드 변경은 계속 fail-closed.
 - Gate 5 다음 작업: Governance가 Bond token을 확정한 뒤 실제 Stage 0 선택 기록 계약 배포 및 4-of-7 Safe 승인은 별도 사용자 승인으로 진행. 실행 후 canonical receipt와 on-chain 선택 상태를 검증하여 Stage 1 reproducibility seal을 생성.
 - 10-3 Lending Core 저장소 완료: 검증된 Stage 2 Registry·Interest Index 증거에서만 Core 생성 코드를 만들고, 2개 이상 BSC 테스트넷 RPC의 공통 block에서 의존 계약 runtime·Governance/Guardian·Oracle/Rate 결합·미연결 Index 상태·예측 CREATE 주소·가스를 확인한다. 사후 검증은 정확한 transaction envelope·3 confirmations·canonical runtime·Registry/Index immutable·미설정 Liquidation Engine을 요구한다. 실제 배포·Safe 연결·시장 활성화는 수행하지 않음.
+- 10-4 Lending 활성화 결합 저장소 완료: 검증된 10-3 Core에 고정된 Liquidation Engine 생성 코드와 예측 주소를 만들고, Index의 Core 및 Core의 Liquidation Engine이 아직 비어 있는지 2개 이상 RPC에서 확인한다. Engine 배포 후 4-of-7 Governance Safe의 `setCore`와 `setLiquidationEngine`을 각각 독립 실행하도록 고정하며, canonical receipt·3 confirmations·Safe success event·정확한 inner calldata·최종 상호 결합을 검증한다. 실제 배포·Safe 서명·시장 활성화는 수행하지 않음.
 
 ## 의도적으로 후순위인 기능
 
