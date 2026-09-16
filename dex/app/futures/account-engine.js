@@ -11,6 +11,7 @@ export function createDemoMarginAccount(initialBalance = 100000) {
   let isolatedReserved = 0;
   let crossReserved = 0;
   let cumulativeFunding = 0;
+  let cumulativeTradingFees = 0;
 
   function reserve(amount, marginMode = 'ISOLATED') {
     const value = Number(amount);
@@ -42,6 +43,17 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     if (cash + value < -1e-9) throw new Error('INSUFFICIENT_BALANCE_FOR_FUNDING');
     cash = Math.max(0, cash + value);
     cumulativeFunding += value;
+    return snapshot();
+  }
+
+  // Trading fees are account debits. The fee engine remains independent from
+  // the DEX router; Futures settlement only receives the calculated fee.
+  function settleTradingFee(fee) {
+    const value = Number(fee);
+    if (!Number.isFinite(value) || value < 0) throw new Error('INVALID_TRADING_FEE');
+    if (cash - value < -1e-9) throw new Error('INSUFFICIENT_BALANCE_FOR_TRADING_FEE');
+    cash = Math.max(0, cash - value);
+    cumulativeTradingFees += value;
     return snapshot();
   }
 
@@ -100,9 +112,10 @@ export function createDemoMarginAccount(initialBalance = 100000) {
       crossReserved,
       crossWalletBalance: crossWalletBalance(),
       totalReserved: isolatedReserved + crossReserved,
-      cumulativeFunding
+      cumulativeFunding,
+      cumulativeTradingFees
     });
   }
 
-  return Object.freeze({ reserve, release, settleFunding, consumeLiquidation, available, crossWalletBalance, health, liquidateCross, snapshot });
+  return Object.freeze({ reserve, release, settleFunding, settleTradingFee, consumeLiquidation, available, crossWalletBalance, health, liquidateCross, snapshot });
 }
