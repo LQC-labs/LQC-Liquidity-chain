@@ -82,6 +82,8 @@
     "build:lending-audit-handoff": "node scripts/build-lending-audit-handoff.mjs",
     "verify:lending-audit-handoff": "node scripts/verify-lending-audit-handoff.mjs",
     "preflight:lending-testnet-config": "node scripts/validate-lending-testnet-config.mjs",
+    "prepare:lending-stage0-feeds": "node scripts/prepare-lending-stage0-feeds.mjs",
+    "preflight:lending-stage0-feeds": "node scripts/preflight-lending-stage0-feeds.mjs",
     "prepare:lending-stage1": "node scripts/prepare-lending-stage1-manifest.mjs",
     "preflight:lending-stage1": "node scripts/preflight-lending-stage1-deployment.mjs",
     "verify:lending-stage1": "node scripts/verify-lending-stage1-deployment.mjs",
