@@ -18,8 +18,19 @@ export function publicApiPath(resource, symbol = null) {
   return symbol ? `${path}?symbol=${String(symbol).trim().toUpperCase()}` : path;
 }
 
+export function parseKlineChannel(channel) {
+  const normalized = String(channel || '').trim();
+  const match = /^kline\.([A-Za-z0-9]+)$/.exec(normalized);
+  return match ? Object.freeze({ channel: 'kline', interval: match[1] }) : null;
+}
+
 export function recoverySnapshotPath(channel, symbol) {
   const normalized = String(channel || '').trim();
+  const kline = parseKlineChannel(normalized);
+  if (kline) {
+    const key = String(symbol || '').trim().toUpperCase();
+    return `${API_PREFIX}/klines?symbol=${key}&interval=${encodeURIComponent(kline.interval)}`;
+  }
   const resource = recoveryPathByChannel[normalized] || 'exchangeInfo';
   return publicApiPath(resource, symbol);
 }
