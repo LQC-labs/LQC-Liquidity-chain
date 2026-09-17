@@ -168,6 +168,7 @@
 - 10-10 불변 감사 인계 저장소 완료: Stage 1~4 manifest/verification, Stage 5 plan/verification, Stage 6 readiness, Stage 7 activation/pilot, Stage 8의 7개 action preflight, Stage 9 completion 총 21개 정확한 파일을 source revision·package-lock과 결합한다. 독립 검증기는 파일 집합과 모든 단계 digest chain, bundle manifest, 리뷰 문서를 재생성하며 누락·추가·교체·재해시를 거부한다. 이는 외부 검토 준비 자료이며 감사 완료나 메인넷 승인을 의미하지 않는다.
 - 10-11 감사 질문·수정 절차 저장소 완료: 7개 Lending/Composite 계약, 권한·Oracle·Index·회계·청산·Bad Debt·Composite 원자성에 대한 10개 질문, Critical~Informational 5단계 분류, 발견사항별 재현·영향·수정 commit·회귀시험·독립 재검증 필드를 고정한다. Critical/High가 OPEN 또는 재시험 대기이면 배포·시장 활성화·신규 자산·Cap 확대를 차단하며 외부 최종 보고서 없이는 감사 완료 상태로 전환하지 않는다.
 - 10-12 감사 조달 준비 저장소 완료: Lending·경제보안 25점, EVM 15점, Oracle·청산 15점 등 기술 우선 100점 평가표와 최소 등급·자동 탈락 조건을 고정한다. 동일 범위 RFP, 가격·세금·감사일수·재검증·보고서 공개 조건 비교표, 제출 체크리스트, 외부전송·저장소권한·선정·계약·지급·공개발표의 6개 별도 승인 경계를 생성한다. 후보 검색·연락·선정·자료전송은 수행하지 않는다.
+- 10-13 감사기관 공개 실적 조사 저장소 완료: OpenZeppelin·ChainSecurity·Certora의 공식 도메인과 공개 Lending 보고서만 허용한 비교 bundle을 생성한다. 공개 근거 범위와 마케팅 주장 한계를 분리하고 담당자·일정·가격·범위 수락·독립 재검증·이해충돌은 미확인으로 고정한다. 서면 제안 전에는 가중점수·shortlist·선정을 만들 수 없으며 외부 연락·자료전송·권한부여는 수행하지 않는다.
 
 ## 의도적으로 후순위인 기능
 
