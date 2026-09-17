@@ -27,6 +27,6 @@ describe("Lending Stage-0 four-feed preparation", function () {
     await assert.rejects(preflightLendingStage0Feeds({ providers: [provider({ balance: 1n }), provider({ balance: 1n })], manifest, deployer }), /Insufficient/);
   });
   it("contains no private key, signing, approval or transaction broadcast path", function () {
-    for (const file of ["../scripts/prepare-lending-stage0-feeds.mjs", "../scripts/preflight-lending-stage0-feeds.mjs"]) { const source = fs.readFileSync(new URL(file, import.meta.url), "utf8"); assert.doesNotMatch(source, /PRIVATE_KEY|signTransaction|eth_sendTransaction|requestAccounts/); }
+    for (const file of ["../scripts/prepare-lending-stage0-feeds.mjs", "../scripts/preflight-lending-stage0-feeds.mjs", "../scripts/verify-lending-stage0-feeds.mjs"]) { const source = fs.readFileSync(new URL(file, import.meta.url), "utf8"); assert.doesNotMatch(source, /PRIVATE_KEY|signTransaction|eth_sendTransaction|requestAccounts/); }
   });
 });
