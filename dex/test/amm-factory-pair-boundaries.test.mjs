@@ -9,6 +9,7 @@ describe("LQC official 1/1 AMM Factory / Pair boundaries",function(){
   this.timeout(30000);
   let provider,owner,factory,tokenA,tokenB;
   const deploy=async(name,source,signer,...args)=>{const a=artifact(name,source);const c=await new ethers.ContractFactory(a.abi,a.bytecode,signer).deploy(...args);await c.waitForDeployment();return c};
+  const expectTxRevert=async(txPromise)=>{await assert.rejects(async()=>{const tx=await txPromise;await tx.wait();});};
 
   beforeEach(async()=>{
     provider=new ethers.BrowserProvider(ganache.provider({logging:{quiet:true}}));
@@ -44,8 +45,8 @@ describe("LQC official 1/1 AMM Factory / Pair boundaries",function(){
   it("rejects duplicate creation in either token order and preserves the original pair",async()=>{
     await(await factory.createPair(tokenA.target,tokenB.target)).wait();
     const original=await factory.getPair(tokenA.target,tokenB.target);
-    await assert.rejects(factory.createPair(tokenA.target,tokenB.target));
-    await assert.rejects(factory.createPair(tokenB.target,tokenA.target));
+    await expectTxRevert(factory.createPair(tokenA.target,tokenB.target,{gasLimit:1_000_000n}));
+    await expectTxRevert(factory.createPair(tokenB.target,tokenA.target,{gasLimit:1_000_000n}));
     assert.equal(await factory.allPairsLength(),1n);
     assert.equal(await factory.getPair(tokenA.target,tokenB.target),original);
     assert.equal(await factory.getPair(tokenB.target,tokenA.target),original);
