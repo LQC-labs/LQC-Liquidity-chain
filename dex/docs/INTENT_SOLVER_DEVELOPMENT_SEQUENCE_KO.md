@@ -163,6 +163,7 @@
 - 10-5 비활성 시장 초기화 저장소 완료: 승인된 설정에서 담보·부채 Oracle, 금리, `enabled=false` 시장, 초기 Index를 정확히 5개 독립 Governance Safe action으로 생성한다. 다중 RPC preflight는 계약 runtime·Governance owner·미등록 Oracle/Rate/Market/Index를 확인하고, 사후 검증은 실행 순서·Safe inner calldata·canonical receipt·3 confirmations와 최종 Oracle/Rate/Market/Index 값을 모두 대조한다. Market은 검증 후에도 비활성 상태로 유지한다.
 - 10-6 제한형 활성화 준비 저장소 완료: 2개 이상 RPC의 공통 block에서 담보·부채 Oracle 가격과 허용 편차, 비활성 Market, 활성 Rate, 초기 Index, Core/Engine 결합, 담보·공급 share·부채 share·Bad Debt·Reserve·실현손실·Core 현금이 모두 0인지 확인한다. 공급·출금·50% LTV·차입·상환·70% 청산·5% 보너스·Bad Debt 제한 테스트의 source digest를 고정하고, 통과 상태에서만 단일 `setMarketEnabled(true)` Safe calldata를 생성한다. 실제 활성화는 수행하지 않음.
 - 10-7 제한 활성화 검증·파일럿 준비 저장소 완료: Governance Safe의 정확한 `setMarketEnabled(true)` inner calldata, success event, canonical receipt, 3 confirmations와 최종 Market 위험 파라미터·Oracle 가격을 다중 RPC로 검증한다. 검증 후 별도 pilot account의 exact approval·공급·담보·차입·상환을 7개 순차 action으로 만들며 공급과 차입은 각 Cap의 0.1% 이하, 차입은 공급 이하로 제한한다. 실제 거래는 수행하지 않음.
+- 10-8 파일럿 action 사전검증 저장소 완료: 각 단계 직전 공통 block에서 파일럿 잔액, Core exact allowance, 공급 지분, 담보, indexed debt를 2개 이상 RPC로 대조하고 차입 전 accountRisk를 확인한 뒤 오직 다음 action만 `eth_call`한다. 고정 원금 상환은 시간 경과 이자를 남길 수 있으므로 6·7단계의 approve·repay calldata는 현재 `debtOf`를 다시 읽어 동적으로 생성하며 RPC 불일치나 simulation 실패 시 중단한다.
 
 ## 의도적으로 후순위인 기능
 
