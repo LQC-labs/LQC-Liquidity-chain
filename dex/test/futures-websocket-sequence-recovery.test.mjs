@@ -33,9 +33,9 @@ describe('Futures WebSocket REST sequence recovery', () => {
     assert.equal(sequenceRecovery(2, 4, { channel: 'bookTicker', symbol: 'LQCUSDT' }).snapshot, '/api/v1/ticker/24hr?symbol=LQCUSDT');
   });
 
-  it('falls back to exchangeInfo for channels without a dedicated snapshot', () => {
+  it('maps kline channels to the interval-specific REST snapshot', () => {
     const result = sequenceRecovery(5, 7, { channel: 'kline.1m', symbol: 'LQCUSDT' });
     assert.equal(result.action, 'REBUILD_FROM_REST');
-    assert.equal(result.snapshot, '/api/v1/exchangeInfo?symbol=LQCUSDT');
+    assert.equal(result.snapshot, '/api/v1/klines?symbol=LQCUSDT&interval=1m');
   });
 });
