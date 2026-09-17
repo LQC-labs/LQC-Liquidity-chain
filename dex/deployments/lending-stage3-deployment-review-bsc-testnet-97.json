@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_LENDING_STAGE3_DEPLOYMENT_REVIEW",
+  "status": "AWAITING_EXPLICIT_DEPLOYMENT_APPROVAL",
+  "network": {
+    "name": "BSC Testnet",
+    "chainId": 97
+  },
+  "manifestDigest": "sha256:678235215a6f7dbe75f355ad20d92a1fe01636cf5eaedcd4450626e0045bef33",
+  "configPreflightDigest": "sha256:34ec83bcbc2f936b67ee02872339428b6c1fd6351a26fe5d49828c1b1da7d6d9",
+  "stage2VerificationDigest": "sha256:6719957a842f502eba68f564d74297aa53cfd46d50879dc2dad522b5e245e477",
+  "preflightDigest": "sha256:625163f8809b691b4eb2db8939ce33d8970708e395acceb0ec64c4dfec673222",
+  "observedBlocks": [
+    {
+      "blockNumber": 131566191,
+      "blockHash": "0xd1e8be74a613a38eaea8e8f3f5a2872b517c31ac149d94db41370cb646b53c31"
+    },
+    {
+      "blockNumber": 131566234,
+      "blockHash": "0x622e092b846dc3aa5d52ebe7ef36e27f6192bc954b81bf10e6d6ac1235e11509"
+    }
+  ],
+  "deployer": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
+  "dependencies": {
+    "marketRegistry": "0x39e38fA7D944687bc210B00529091dA6a14dF699",
+    "interestIndex": "0x09980642462A9EF2b17d0da9c482b59031a2636F",
+    "oracleManager": "0xcCf1B865d763Ed77558F4c8758B3926b5417DF6b",
+    "interestRateModel": "0xd7abc17e2EA4953C6dA495010fc1022C4d34F3f2"
+  },
+  "deployment": {
+    "order": 1,
+    "contract": "LQCLendingCore",
+    "nonce": "109",
+    "predictedAddress": "0x3a3C7303829318d4cbA955c71812679DAF5699ca",
+    "expectedBindings": {
+      "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+      "registry": "0x39e38fA7D944687bc210B00529091dA6a14dF699",
+      "interestIndex": "0x09980642462A9EF2b17d0da9c482b59031a2636F",
+      "liquidationEngine": "0x0000000000000000000000000000000000000000"
+    },
+    "initCodeDigest": "sha256:5fe9907eeaf4fa507640990c84647ae1feb0c85d14897b5e20f1d6773094c963",
+    "initCodeBytes": 13749,
+    "estimatedGas": "2978529",
+    "approvedGasLimit": "3574234",
+    "transactionValue": "0"
+  },
+  "budget": {
+    "deployerBalanceWei": "999276125087407796",
+    "conservativeGasPriceWei": "100000000",
+    "maximumGasBudgetWei": "357423400000000",
+    "maximumGasBudgetTbnb": "0.0003574234"
+  },
+  "approvalScope": "Exactly one zero-value LQCLendingCore CREATE transaction. Any changed nonce, address, init code, gas, dependency binding or RPC state requires a new review.",
+  "transactionOccurred": false,
+  "safety": "Human review only. No wallet, key, signature, deployment, binding, market activation, token movement or transaction broadcast.",
+  "reviewDigest": "sha256:76a5d3ff8812a982672514d1bdecc6e167d12ea691ef2d3b038a7032eaa92efb"
+}
