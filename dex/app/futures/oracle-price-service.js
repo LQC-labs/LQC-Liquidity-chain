@@ -13,9 +13,11 @@ function normalizeSymbol(symbol) {
 export function createOraclePriceService({
   sourceProvider,
   guardOptions = {},
-  maxMoveRatio = 0.1
+  maxMoveRatio = 0.1,
+  maxReadAgeMs = guardOptions.maxAgeMs ?? 30_000
 } = {}) {
   if (!sourceProvider || typeof sourceProvider.getSources !== 'function') throw new Error('ORACLE_SOURCE_PROVIDER_REQUIRED');
+  if (!Number.isFinite(Number(maxReadAgeMs)) || Number(maxReadAgeMs) < 0) throw new Error('INVALID_ORACLE_READ_AGE');
 
   const prices = new Map();
   const listeners = new Set();
@@ -54,8 +56,22 @@ export function createOraclePriceService({
     return next;
   }
 
-  function getMarkPrice(symbol) {
-    return prices.get(normalizeSymbol(symbol))?.price ?? null;
+  function getStatus(symbol, { now = Date.now() } = {}) {
+    const key = normalizeSymbol(symbol);
+    const current = prices.get(key);
+    if (!current) return Object.freeze({ symbol: key, available: false, healthy: false, stale: true, ageMs: null });
+    const ageMs = Math.max(0, Number(now) - Number(current.updatedAt));
+    const stale = ageMs > Number(maxReadAgeMs);
+    return Object.freeze({ symbol: key, available: true, healthy: Boolean(current.healthy) && !stale, stale, ageMs, updatedAt: current.updatedAt, sourceCount: current.sourceCount, rejectedCount: current.rejectedCount, sourceSpreadRatio: current.sourceSpreadRatio });
+  }
+
+  function getMarkPrice(symbol, { now = Date.now(), allowStale = false } = {}) {
+    const key = normalizeSymbol(symbol);
+    const current = prices.get(key);
+    if (!current) return null;
+    const status = getStatus(key, { now });
+    if (!allowStale && (!status.healthy || status.stale)) return null;
+    return current.price;
   }
 
   function subscribe(listener) {
@@ -64,5 +80,5 @@ export function createOraclePriceService({
     return () => listeners.delete(listener);
   }
 
-  return Object.freeze({ snapshot, refresh, getMarkPrice, subscribe });
+  return Object.freeze({ snapshot, refresh, getStatus, getMarkPrice, subscribe });
 }
