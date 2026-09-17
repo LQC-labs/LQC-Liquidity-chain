@@ -52,6 +52,21 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     return snapshot();
   }
 
+  function restoreSnapshot(previous, expectedCurrent = null) {
+    if (!previous || !Number.isFinite(previous.availableBalance) || !Number.isFinite(previous.isolatedReserved) || !Number.isFinite(previous.crossReserved) || !Number.isFinite(previous.cumulativeFunding) || !Number.isFinite(previous.cumulativeTradingFees)) throw new Error('INVALID_ACCOUNT_SNAPSHOT');
+    if (expectedCurrent) {
+      const current = snapshot();
+      const fields = ['availableBalance', 'isolatedReserved', 'crossReserved', 'cumulativeFunding', 'cumulativeTradingFees'];
+      if (fields.some((field) => current[field] !== expectedCurrent[field])) throw new Error('ACCOUNT_CHANGED_SINCE_TRANSACTION_COMMIT');
+    }
+    cash = previous.availableBalance;
+    isolatedReserved = previous.isolatedReserved;
+    crossReserved = previous.crossReserved;
+    cumulativeFunding = previous.cumulativeFunding;
+    cumulativeTradingFees = previous.cumulativeTradingFees;
+    return snapshot();
+  }
+
   function consumeLiquidation(amount, marginMode = 'ISOLATED') {
     const value = Number(amount);
     if (!Number.isFinite(value) || value < 0) throw new Error('INVALID_MARGIN_AMOUNT');
@@ -72,16 +87,7 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     if (!cross.liquidatable) throw new Error('CROSS_ACCOUNT_NOT_LIQUIDATABLE');
     const walletBefore = crossWalletBalance();
     const survivingEquity = Math.max(0, cross.equity);
-    return Object.freeze({
-      walletBefore,
-      realizedLoss: Math.max(0, walletBefore - survivingEquity),
-      badDebt: Math.max(0, -cross.equity),
-      survivingEquity,
-      closedPositions: cross.positions,
-      health: cross,
-      expectedCash: cash,
-      expectedCrossReserved: crossReserved
-    });
+    return Object.freeze({ walletBefore, realizedLoss: Math.max(0, walletBefore - survivingEquity), badDebt: Math.max(0, -cross.equity), survivingEquity, closedPositions: cross.positions, health: cross, expectedCash: cash, expectedCrossReserved: crossReserved });
   }
 
   function commitCrossLiquidation(preview) {
@@ -89,35 +95,14 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     if (cash !== preview.expectedCash || crossReserved !== preview.expectedCrossReserved) throw new Error('ACCOUNT_CHANGED_SINCE_LIQUIDATION_PREVIEW');
     crossReserved = 0;
     cash = preview.survivingEquity;
-    return Object.freeze({
-      liquidated: true,
-      walletBefore: preview.walletBefore,
-      realizedLoss: preview.realizedLoss,
-      badDebt: preview.badDebt,
-      survivingEquity: preview.survivingEquity,
-      closedPositions: preview.closedPositions,
-      health: preview.health,
-      account: snapshot(),
-      liquidatedAt: new Date().toISOString()
-    });
+    return Object.freeze({ liquidated: true, walletBefore: preview.walletBefore, realizedLoss: preview.realizedLoss, badDebt: preview.badDebt, survivingEquity: preview.survivingEquity, closedPositions: preview.closedPositions, health: preview.health, account: snapshot(), liquidatedAt: new Date().toISOString() });
   }
 
-  function liquidateCross(positions, markPriceOf) {
-    return commitCrossLiquidation(previewCrossLiquidation(positions, markPriceOf));
-  }
+  function liquidateCross(positions, markPriceOf) { return commitCrossLiquidation(previewCrossLiquidation(positions, markPriceOf)); }
 
   function snapshot() {
-    return Object.freeze({
-      initialBalance: initial,
-      availableBalance: cash,
-      isolatedReserved,
-      crossReserved,
-      crossWalletBalance: crossWalletBalance(),
-      totalReserved: isolatedReserved + crossReserved,
-      cumulativeFunding,
-      cumulativeTradingFees
-    });
+    return Object.freeze({ initialBalance: initial, availableBalance: cash, isolatedReserved, crossReserved, crossWalletBalance: crossWalletBalance(), totalReserved: isolatedReserved + crossReserved, cumulativeFunding, cumulativeTradingFees });
   }
 
-  return Object.freeze({ reserve, release, settleFunding, settleTradingFee, consumeLiquidation, available, crossWalletBalance, health, previewCrossLiquidation, commitCrossLiquidation, liquidateCross, snapshot });
+  return Object.freeze({ reserve, release, settleFunding, settleTradingFee, restoreSnapshot, consumeLiquidation, available, crossWalletBalance, health, previewCrossLiquidation, commitCrossLiquidation, liquidateCross, snapshot });
 }
