@@ -162,6 +162,7 @@
 - 10-4 Lending 활성화 결합 저장소 완료: 검증된 10-3 Core에 고정된 Liquidation Engine 생성 코드와 예측 주소를 만들고, Index의 Core 및 Core의 Liquidation Engine이 아직 비어 있는지 2개 이상 RPC에서 확인한다. Engine 배포 후 4-of-7 Governance Safe의 `setCore`와 `setLiquidationEngine`을 각각 독립 실행하도록 고정하며, canonical receipt·3 confirmations·Safe success event·정확한 inner calldata·최종 상호 결합을 검증한다. 실제 배포·Safe 서명·시장 활성화는 수행하지 않음.
 - 10-5 비활성 시장 초기화 저장소 완료: 승인된 설정에서 담보·부채 Oracle, 금리, `enabled=false` 시장, 초기 Index를 정확히 5개 독립 Governance Safe action으로 생성한다. 다중 RPC preflight는 계약 runtime·Governance owner·미등록 Oracle/Rate/Market/Index를 확인하고, 사후 검증은 실행 순서·Safe inner calldata·canonical receipt·3 confirmations와 최종 Oracle/Rate/Market/Index 값을 모두 대조한다. Market은 검증 후에도 비활성 상태로 유지한다.
 - 10-6 제한형 활성화 준비 저장소 완료: 2개 이상 RPC의 공통 block에서 담보·부채 Oracle 가격과 허용 편차, 비활성 Market, 활성 Rate, 초기 Index, Core/Engine 결합, 담보·공급 share·부채 share·Bad Debt·Reserve·실현손실·Core 현금이 모두 0인지 확인한다. 공급·출금·50% LTV·차입·상환·70% 청산·5% 보너스·Bad Debt 제한 테스트의 source digest를 고정하고, 통과 상태에서만 단일 `setMarketEnabled(true)` Safe calldata를 생성한다. 실제 활성화는 수행하지 않음.
+- 10-7 제한 활성화 검증·파일럿 준비 저장소 완료: Governance Safe의 정확한 `setMarketEnabled(true)` inner calldata, success event, canonical receipt, 3 confirmations와 최종 Market 위험 파라미터·Oracle 가격을 다중 RPC로 검증한다. 검증 후 별도 pilot account의 exact approval·공급·담보·차입·상환을 7개 순차 action으로 만들며 공급과 차입은 각 Cap의 0.1% 이하, 차입은 공급 이하로 제한한다. 실제 거래는 수행하지 않음.
 
 ## 의도적으로 후순위인 기능
 

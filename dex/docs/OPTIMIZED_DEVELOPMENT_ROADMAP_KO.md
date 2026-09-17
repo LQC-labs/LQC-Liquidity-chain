@@ -85,6 +85,7 @@
 - **10-4 저장소 완료:** 검증된 Core에만 결합되는 Liquidation Engine 배포, `Interest Index → Core`, `Core → Liquidation Engine`의 두 독립 4-of-7 Governance Safe 실행을 순서·calldata·영수증·최종 상태까지 다중 RPC로 검증. 실제 실행은 아직 수행하지 않음.
 - **10-5 저장소 완료:** 담보·부채 이중 Oracle, 고정 금리, 비활성 격리 시장, 초기 Borrow/Supply Index의 5개 독립 Governance Safe 실행을 순서·calldata·영수증·최종 상태까지 검증. 실제 실행과 시장 활성화는 아직 수행하지 않음.
 - **10-6 저장소 완료:** 비활성 시장의 Oracle 가격·편차, Core/Engine/Index 결합, 0 초기회계, 고정 Cap을 다중 RPC로 검증하고 공급·담보·차입·상환·청산·Bad Debt 경제 테스트 파일을 digest로 고정한다. 모든 조건이 통과할 때만 단일 시장 활성화 Safe calldata를 생성하며 실제 활성화는 수행하지 않음.
-- **10-7 다음:** 제한형 테스트넷 시장 활성화 transaction의 Safe payload·영수증·최종 상태를 검증하고 소액 공급·차입 파일럿을 별도 승인으로 준비.
+- **10-7 저장소 완료:** 제한형 시장 활성화 Safe payload·canonical receipt·3 confirmations·활성화 후 불변 위험정책과 Oracle 가격을 다중 RPC로 검증한다. 공급·담보·차입·상환을 exact approval과 함께 7개 독립 action으로 만들고 공급·차입을 각 Cap의 0.1% 이하로 제한한다. 실제 활성화와 파일럿 실행은 별도 승인 전 수행하지 않음.
+- **10-8 다음:** 활성화된 테스트넷에서 파일럿 계정 잔액·allowance·accountRisk·각 action `eth_call`을 순차 검증하는 최종 제출 전 게이트.
 
 모든 작업 시작 보고에는 `현재 단계 번호 / 작업명 / 완료 기준`을 먼저 표시한다. 실제 배포·Safe 승인은 운영 설정안 확정 후 별도 단계로 수행한다.
