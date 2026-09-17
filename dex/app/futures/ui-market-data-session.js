@@ -14,6 +14,7 @@ export function createUiMarketDataSession({ view, demoMarketData, onSourceChange
   const livePrices = new Map();
   let activeSymbol = null;
   let source = 'DEMO';
+  let marketState = Object.freeze({ symbol: null, bids: [], asks: [], trades: [], oracle: null, live: false });
 
   function normalize(symbol) {
     const key = String(symbol || '').trim().toUpperCase();
@@ -36,6 +37,14 @@ export function createUiMarketDataSession({ view, demoMarketData, onSourceChange
 
   function accept(state) {
     if (!state || state.symbol !== activeSymbol) return state;
+    marketState = Object.freeze({
+      symbol: state.symbol,
+      bids: Array.isArray(state.bids) ? state.bids : marketState.bids,
+      asks: Array.isArray(state.asks) ? state.asks : marketState.asks,
+      trades: Array.isArray(state.trades) ? state.trades : marketState.trades,
+      oracle: state.oracle ?? marketState.oracle,
+      live: Boolean(state.live)
+    });
     const price = Number(state.markPrice);
     if (Number.isFinite(price) && price > 0) {
       livePrices.set(state.symbol, price);
@@ -48,14 +57,15 @@ export function createUiMarketDataSession({ view, demoMarketData, onSourceChange
     const key = normalize(symbol);
     view.stop();
     activeSymbol = key;
+    marketState = Object.freeze({ symbol: key, bids: [], asks: [], trades: [], oracle: null, live: false });
     setSource('DEMO');
     try {
       accept(await view.load(key));
       view.start(key);
-      return Object.freeze({ symbol: key, source, markPrice: markPrice(key) });
+      return snapshot();
     } catch (error) {
       if (activeSymbol === key) setSource('DEMO', error?.message || 'MARKET_DATA_UNAVAILABLE');
-      return Object.freeze({ symbol: key, source: 'DEMO', markPrice: markPrice(key), error });
+      return Object.freeze({ ...snapshot(), error });
     }
   }
 
@@ -65,11 +75,21 @@ export function createUiMarketDataSession({ view, demoMarketData, onSourceChange
 
   function stop() {
     activeSymbol = null;
+    marketState = Object.freeze({ symbol: null, bids: [], asks: [], trades: [], oracle: null, live: false });
     view.stop();
   }
 
   function snapshot() {
-    return Object.freeze({ symbol: activeSymbol, source, markPrice: activeSymbol ? markPrice(activeSymbol) : null });
+    return Object.freeze({
+      symbol: activeSymbol,
+      source,
+      markPrice: activeSymbol ? markPrice(activeSymbol) : null,
+      bids: marketState.bids,
+      asks: marketState.asks,
+      trades: marketState.trades,
+      oracle: marketState.oracle,
+      live: marketState.live
+    });
   }
 
   return Object.freeze({ select, stop, markPrice, onViewUpdate, snapshot });
