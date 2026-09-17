@@ -7,7 +7,7 @@ describe("Lending Stage-0 live preflight page",function(){
   it("checks exact four-feed CREATE state and bounded gas across two RPCs",function(){
     for(const value of ["eth_chainId","eth_getBlockByNumber","eth_getTransactionCount","eth_getBalance","eth_getCode","eth_estimateGas","eth_gasPrice"])assert.match(js,new RegExp(value));
     assert.match(js,/FEEDS=\[/);assert.match(js,/FEEDS\.map/);assert.match(js,/\*100n>high\*5n/);
-    assert.match(js,/gasPrice=a\.gasPrice>b\.gasPrice/);assert.match(js,/total\*gasPrice\*120n\/100n/);assert.match(js,/block hash \$\{a\.blockHash\}/);
+    assert.match(js,/gasPrice=a\.gasPrice>b\.gasPrice/);assert.match(js,/value\*120n\+99n/);assert.match(js,/required=totalApproved\*gasPrice/);assert.match(js,/block hash \$\{a\.blockHash\}/);
   });
   it("is read-only and keeps the private endpoint ephemeral",function(){
     assert.match(html,/type="password"/);assert.match(js,/credentials:"omit"/);assert.match(js,/history\.replaceState/);assert.match(js,/pagehide/);
