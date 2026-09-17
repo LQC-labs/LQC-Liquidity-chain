@@ -53,4 +53,22 @@ describe("LQC Lending economic attack invariants",function(){
     const beforeAssets=await core.availableLiquidity(id)+await core.totalBorrow(id),beforeClaims=await core.totalLiquidity(id)+await core.accruedReserves(id);assert.ok(beforeAssets+10n>=beforeClaims);
     await(await core.recapitalizeBadDebt(id,borrowers[0].address,ethers.parseEther("10"),gas)).wait();const afterAssets=await core.availableLiquidity(id)+await core.totalBorrow(id),afterClaims=await core.totalLiquidity(id)+await core.accruedReserves(id);assert.ok(afterAssets+10n>=afterClaims);assert.ok(afterAssets>=beforeAssets-10n);
   });
+
+  it("keeps three years of monthly accrual monotonic and clears rounding dust on full repayment",async function(){
+    await(await core.connect(lender).supplyLiquidity(id,ethers.parseEther("500"),gas)).wait();await open(borrowers[0],"3","100");let previousDebt=await core.debtOf(id,borrowers[0].address),previousSupply=await core.liquidityOf(id,lender.address),previousReserve=0n;
+    for(let month=0;month<36;month++){await provider.send("evm_increaseTime",[30*86400]);await provider.send("evm_mine",[]);await(await core.accrueInterest(id,gas)).wait();const nextDebt=await core.debtOf(id,borrowers[0].address),nextSupply=await core.liquidityOf(id,lender.address),nextReserve=await core.accruedReserves(id);assert.ok(nextDebt>=previousDebt);assert.ok(nextSupply>=previousSupply);assert.ok(nextReserve>=previousReserve);previousDebt=nextDebt;previousSupply=nextSupply;previousReserve=nextReserve;}
+    await(await debt.mint(borrowers[0].address,previousDebt)).wait();await(await debt.connect(borrowers[0]).approve(core.target,previousDebt)).wait();await(await core.connect(borrowers[0]).repay(id,previousDebt,borrowers[0].address,gas)).wait();assert.equal(await core.debtOf(id,borrowers[0].address),0n);assert.equal(await core.debtSharesOf(id,borrowers[0].address),0n);
+  });
+
+  it("preserves the position during a one-feed price shock and liquidates only after corroboration",async function(){
+    await(await core.connect(lender).supplyLiquidity(id,ethers.parseEther("300"),gas)).wait();await open(borrowers[0]);const collateralBefore=await core.collateralOf(id,borrowers[0].address),sharesBefore=await core.debtSharesOf(id,borrowers[0].address);
+    await(await cp.setAnswer(10_00000000n,gas)).wait();await assert.rejects(engine.connect(liquidator).liquidate(id,borrowers[0].address,ethers.parseEther("90"),liquidator.address));assert.equal(await core.collateralOf(id,borrowers[0].address),collateralBefore);assert.equal(await core.debtSharesOf(id,borrowers[0].address),sharesBefore);
+    await(await cs.setAnswer(10_00000000n,gas)).wait();await(await engine.connect(liquidator).liquidate(id,borrowers[0].address,ethers.parseEther("90"),liquidator.address,gas)).wait();assert.equal(await core.collateralOf(id,borrowers[0].address),0n);assert.ok(await core.badDebtOf(id,borrowers[0].address)>0n);
+  });
+
+  it("isolates multiple underwater accounts and never seizes beyond their aggregate collateral",async function(){
+    await(await core.connect(lender).supplyLiquidity(id,ethers.parseEther("500"),gas)).wait();for(const borrower of borrowers.slice(0,3))await open(borrower);await(await cp.setAnswer(10_00000000n,gas)).wait();await(await cs.setAnswer(10_00000000n,gas)).wait();let seized=0n,badDebt=0n;
+    for(const borrower of borrowers.slice(0,3)){const before=await collateral.balanceOf(liquidator.address);await(await engine.connect(liquidator).liquidate(id,borrower.address,ethers.parseEther("90"),liquidator.address,gas)).wait();seized+=await collateral.balanceOf(liquidator.address)-before;const accountBadDebt=await core.badDebtOf(id,borrower.address);assert.ok(accountBadDebt>0n);badDebt+=accountBadDebt;assert.equal(await core.collateralOf(id,borrower.address),0n);}
+    assert.ok(seized<=ethers.parseEther("6"));assert.ok(badDebt>0n);assert.ok(await core.totalBadDebtShares(id)>0n);assert.equal(await core.badDebtOf(id,borrowers[3].address),0n);
+  });
 });
