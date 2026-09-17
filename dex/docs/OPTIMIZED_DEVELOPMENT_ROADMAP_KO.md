@@ -89,6 +89,7 @@
 - **10-8 저장소 완료:** 활성화된 테스트넷에서 파일럿 계정 잔액·exact allowance·공급 share·담보·현재 indexed debt·accountRisk를 단계별로 2개 이상 RPC에서 대조하고, 다음 한 action만 `eth_call`한다. 상환 승인과 repay calldata는 직전 block의 현재 부채로 동적 해석하여 이자 잔여 부채를 방지한다.
 - **10-9 저장소 완료:** 별도로 실행된 7개 파일럿 transaction을 검토된 단계별 preflight와 결합해 sender·target·calldata·순서·canonical receipt·3 confirmations·필수 Approval/Lending event를 검증한다. 최종 담보·공급 지분, 양 토큰 allowance 0, indexed debt 0을 2개 이상 RPC에서 확인한 경우에만 완료 digest를 생성한다.
 - **10-10 저장소 완료:** Stage 1~9 배포·설정·활성화·파일럿의 정확한 21개 증거 파일을 digest chain, source revision, package-lock과 결합해 불변 감사 인계 bundle로 생성한다. 독립 검증기는 파일 누락·추가·교체·재해시와 단계 간 digest 단절을 차단하며 상태를 `외부 검토 준비, 미감사`로 명시한다.
-- **10-11 다음:** 외부 감사 제출용 계약·위험 파라미터·운영 역할 질문서와 발견사항 수정·재검증 절차를 고정.
+- **10-11 저장소 완료:** 외부 감사 제출용 7개 계약 범위, 10개 핵심 질문, 5단계 심각도, 발견사항 필수 필드, 수정·재검증 8단계 절차를 불변 bundle로 고정한다. Critical/High 미해결 시 배포·활성화·신규 자산·Cap 확대를 차단하고 상태를 `제출 준비, 미감사`로 유지한다.
+- **10-12 다음:** 실제 감사기관 선정 기준·제안요청서·견적 비교표와 제출 체크리스트를 작성하되 계약 체결과 외부 전송은 별도 승인으로 분리.
 
 모든 작업 시작 보고에는 `현재 단계 번호 / 작업명 / 완료 기준`을 먼저 표시한다. 실제 배포·Safe 승인은 운영 설정안 확정 후 별도 단계로 수행한다.

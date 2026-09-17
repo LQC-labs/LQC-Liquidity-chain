@@ -166,6 +166,7 @@
 - 10-8 파일럿 action 사전검증 저장소 완료: 각 단계 직전 공통 block에서 파일럿 잔액, Core exact allowance, 공급 지분, 담보, indexed debt를 2개 이상 RPC로 대조하고 차입 전 accountRisk를 확인한 뒤 오직 다음 action만 `eth_call`한다. 고정 원금 상환은 시간 경과 이자를 남길 수 있으므로 6·7단계의 approve·repay calldata는 현재 `debtOf`를 다시 읽어 동적으로 생성하며 RPC 불일치나 simulation 실패 시 중단한다.
 - 10-9 파일럿 완료 검증 저장소 완료: 7개 transaction을 각 단계의 digest-bound preflight와 연결해 파일럿 sender·target·zero value·정확한 calldata·실행 순서·canonical receipt·3 confirmations를 확인하고 Approval, LiquiditySupplied, CollateralDeposited, Borrowed, Repaid 이벤트를 요구한다. 완료 시 debt/collateral allowance 0, indexed debt 0, 계획된 담보와 최소 공급 지분을 2개 이상 RPC에서 대조해 단일 completion digest로 봉인한다.
 - 10-10 불변 감사 인계 저장소 완료: Stage 1~4 manifest/verification, Stage 5 plan/verification, Stage 6 readiness, Stage 7 activation/pilot, Stage 8의 7개 action preflight, Stage 9 completion 총 21개 정확한 파일을 source revision·package-lock과 결합한다. 독립 검증기는 파일 집합과 모든 단계 digest chain, bundle manifest, 리뷰 문서를 재생성하며 누락·추가·교체·재해시를 거부한다. 이는 외부 검토 준비 자료이며 감사 완료나 메인넷 승인을 의미하지 않는다.
+- 10-11 감사 질문·수정 절차 저장소 완료: 7개 Lending/Composite 계약, 권한·Oracle·Index·회계·청산·Bad Debt·Composite 원자성에 대한 10개 질문, Critical~Informational 5단계 분류, 발견사항별 재현·영향·수정 commit·회귀시험·독립 재검증 필드를 고정한다. Critical/High가 OPEN 또는 재시험 대기이면 배포·시장 활성화·신규 자산·Cap 확대를 차단하며 외부 최종 보고서 없이는 감사 완료 상태로 전환하지 않는다.
 
 ## 의도적으로 후순위인 기능
 
