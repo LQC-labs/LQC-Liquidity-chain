@@ -1,0 +1,10 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+describe("Lending Stage-1 sequential deployment page template",function(){
+  const html=fs.readFileSync(new URL("../app/lending-stage1-deploy-testnet.html",import.meta.url),"utf8"),js=fs.readFileSync(new URL("../app/lending-stage1-deploy-testnet.js",import.meta.url),"utf8");
+  it("is locked until the exact approved packet digest is inserted",function(){assert.match(js,/PACKET="__APPROVED_PACKET_DIGEST__"/);assert.match(js,/if\(PACKET\.startsWith\("__"\)\)throw Error/);assert.match(js,/cb6c10ded28b9e85247fc413a8ea4e2a64a0755555b547652fe89385bd8af589/)});
+  it("pins the two contracts, deployer, roles and reviewed gas price",function(){for(const value of["LQCOracleManager","LQCInterestRateModel","0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB","0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A","0xDc8003a7046be67F257D294b2680C20988A6bC2B"])assert.match(js,new RegExp(value));assert.match(js,/MAX_GAS_PRICE=100000000n/);assert.match(html,/0\.0001684342 tBNB/)});
+  it("revalidates two RPCs and sends exactly one CREATE at a time",function(){for(const value of["eth_getBlockByNumber","eth_getTransactionCount","eth_getBalance","eth_getCode","eth_estimateGas","eth_gasPrice","eth_sendTransaction","eth_getTransactionReceipt"])assert.match(js,new RegExp(value));assert.match(js,/if\(index!==saved\(\)\.length\)/);assert.match(js,/await dual\(index\)/);assert.match(js,/await verifyAt\(index\)/);assert.match(js,/gasPrice:"0x"\+MAX_GAS_PRICE/)});
+  it("verifies owner and guardian before enabling the next action",function(){assert.match(js,/function owner\(\)/);assert.match(js,/function guardian\(\)/);assert.match(js,/receipt\.contractAddress/);assert.match(js,/if\(done\.length===2\)/)});
+  it("keeps QuickNode ephemeral and embeds no credential or key",function(){assert.match(js,/history\.replaceState/);assert.match(js,/pagehide/);assert.doesNotMatch(html+js,/quiknode\.pro\/[^\s"']+/i);assert.doesNotMatch(js,/privateKey|mnemonic/)});
+});
