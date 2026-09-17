@@ -16,6 +16,8 @@ describe("Lending RPC readiness page",function(){
     assert.match(html,/type="password"/);
     assert.match(js,/credentials:"omit"/);
     assert.match(js,/pagehide/);
+    assert.match(js,/location\.hash\.match/);
+    assert.match(js,/history\.replaceState/);
     assert.doesNotMatch(js,/localStorage|sessionStorage|window\.ethereum|eth_sendTransaction|eth_requestAccounts/);
   });
 
