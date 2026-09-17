@@ -14,6 +14,7 @@ export function createUiMarketDataSession({ view, demoMarketData, onSourceChange
   const livePrices = new Map();
   let activeSymbol = null;
   let source = 'DEMO';
+  let selectionId = 0;
   let marketState = Object.freeze({ symbol: null, bids: [], asks: [], trades: [], oracle: null, live: false });
 
   function normalize(symbol) {
@@ -23,7 +24,7 @@ export function createUiMarketDataSession({ view, demoMarketData, onSourceChange
   }
 
   function setSource(next, detail = null) {
-    if (source === next) return;
+    if (source === next && detail == null) return;
     source = next;
     onSourceChange(Object.freeze({ source, symbol: activeSymbol, detail }));
   }
@@ -55,16 +56,23 @@ export function createUiMarketDataSession({ view, demoMarketData, onSourceChange
 
   async function select(symbol) {
     const key = normalize(symbol);
+    const id = ++selectionId;
     view.stop();
     activeSymbol = key;
+    livePrices.delete(key);
     marketState = Object.freeze({ symbol: key, bids: [], asks: [], trades: [], oracle: null, live: false });
     setSource('DEMO');
     try {
-      accept(await view.load(key));
+      const state = await view.load(key);
+      if (id !== selectionId || activeSymbol !== key) return snapshot();
+      accept(state);
+      if (id !== selectionId || activeSymbol !== key) return snapshot();
       view.start(key);
       return snapshot();
     } catch (error) {
-      if (activeSymbol === key) setSource('DEMO', error?.message || 'MARKET_DATA_UNAVAILABLE');
+      if (id !== selectionId || activeSymbol !== key) return snapshot();
+      livePrices.delete(key);
+      setSource('DEMO', error?.message || 'MARKET_DATA_UNAVAILABLE');
       return Object.freeze({ ...snapshot(), error });
     }
   }
@@ -74,6 +82,7 @@ export function createUiMarketDataSession({ view, demoMarketData, onSourceChange
   }
 
   function stop() {
+    selectionId += 1;
     activeSymbol = null;
     marketState = Object.freeze({ symbol: null, bids: [], asks: [], trades: [], oracle: null, live: false });
     view.stop();
