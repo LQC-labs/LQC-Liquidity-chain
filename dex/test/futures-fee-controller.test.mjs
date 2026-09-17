@@ -61,4 +61,32 @@ describe('Futures integrated trading fee settlement', () => {
     assert.deepEqual(account.snapshot(), before);
     assert.equal(insuranceFundService.snapshot().balance, 10);
   });
+
+  test('rolls back the account debit when insurance commit becomes stale', () => {
+    const account = createDemoMarginAccount(1000);
+    const realFund = createDemoInsuranceFundService({ initialFund: createInsuranceFund({ balance: 10 }) });
+    let firstPreview = true;
+    const racingFund = {
+      snapshot: () => realFund.snapshot(),
+      previewDeposit(amount) {
+        const preview = realFund.previewDeposit(amount);
+        if (firstPreview) {
+          firstPreview = false;
+          realFund.deposit(0.01);
+        }
+        return preview;
+      },
+      commitDeposit: (preview) => realFund.commitDeposit(preview)
+    };
+    const controller = createDemoFeeController({ account, schedule, feeShares: { insuranceShare: 0.2, treasuryShare: 0.8 }, insuranceFundService: racingFund });
+    const accountBefore = account.snapshot();
+    assert.throws(() => controller.settleTrade({ quantity: 0.1, price: 50000, liquidityRole: 'TAKER' }), (error) => {
+      assert.equal(error.message, 'FEE_INSURANCE_COMMIT_FAILED');
+      assert.equal(error.rolledBack, true);
+      assert.match(error.cause?.message ?? '', /INSURANCE_FUND_CHANGED_SINCE_PREVIEW/);
+      return true;
+    });
+    assert.deepEqual(account.snapshot(), accountBefore);
+    assert.equal(realFund.snapshot().balance, 10.01);
+  });
 });
