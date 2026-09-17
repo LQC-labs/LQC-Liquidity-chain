@@ -172,6 +172,7 @@
 - 10-14 외부 전달 승인·제안서 접수 게이트 저장소 완료: Stage 12 RFP와 Stage 13 후보를 digest로 결합하고 4-of-7 Governance 승인 기록, 정확한 수신 후보·자료 digest·만료·기밀성 확인 전에는 외부 연락과 전송을 금지한다. 완전한 서면 제안서만 기술 우선 100점 평가와 자동 탈락 검사를 수행하며, 평가와 업체 선정은 분리한다. 현재 제안서 0개·승인 없음·연락 없음이다.
 - 10-15 감사 전 보안 강화 저장소 완료: 36개월 반복 이자·반올림 완전상환, 단일 Oracle 충격 격리 후 이중 확인 복구, 다중 부실계정의 담보·Bad Debt 격리 테스트를 추가한다. 경제·Core·Interest 테스트 파일을 digest로 고정하고 실제 Stage 1~9 테스트넷 증거 9개가 모두 채워질 때까지 감사 착수와 외부 연락을 차단한다. 현재 상태는 코드 강화 완료·실제 테스트넷 실행 대기이다.
 - 10-16 Lending 실배포 준비 진행: 검증된 Governance/Guardian/Treasury Safe와 배포자·tLQC는 유지한다. Stage 1 설정에서 미래 Composite 계약을 필수로 요구하던 순환 의존성을 제거하고, Governance 전용 가격 갱신·양수 가격·완결 round·2단계 소유권 이전을 갖춘 테스트넷 Feed를 추가한다. 부채자산·4개 독립 Feed·2개 이상 RPC가 확정되기 전에는 실제 배포하지 않는다.
+- 10-16 Stage 0 저장소 완료: 부채자산을 WBNB로 고정하고 tLQC/WBNB 각각 Primary·Secondary 테스트넷 Feed를 독립 CREATE하도록 준비한다. 두 RPC의 canonical 상태·nonce·잔액·빈 예상주소·가스를 대조하고, 승인 digest와 무서명 패킷을 결합한 뒤 서명 직전에 같은 조건을 재검증한다. 배포 후에는 정확한 init code, receipt, 3 confirmations, runtime, Governance owner, decimals, answer, round를 검증하고 그 주소만 Lending 설정에 반영해 완료 digest를 생성한다. 공개 RPC 두 번째 공급자가 불안정하므로 실제 transaction은 아직 없다.
 
 ## 의도적으로 후순위인 기능
 
