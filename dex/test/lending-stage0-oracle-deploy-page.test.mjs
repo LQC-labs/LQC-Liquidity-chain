@@ -1,0 +1,9 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+describe("Lending Stage-0 sequential Oracle deployment page",function(){
+  const html=fs.readFileSync(new URL("../app/lending-stage0-oracle-deploy-testnet.html",import.meta.url),"utf8"),js=fs.readFileSync(new URL("../app/lending-stage0-oracle-deploy-testnet.js",import.meta.url),"utf8");
+  it("binds the approved review, packet and four exact transactions",function(){assert.match(js,/05837815d39154d77724edf89c1e07220b240a165a896b888ce495e469c8ac90/);assert.match(js,/8ed26fef797677357cb38f3c027e61519da5d26d78e9a03ce5babfd4bb54e93d/);assert.match(js,/nonce:101/);assert.match(js,/nonce:104/);assert.match(js,/gas:469785n/);assert.match(js,/gas:469799n/);assert.equal((js.match(/digest:"sha256:/g)||[]).length,4)});
+  it("revalidates two RPCs and executes exactly one CREATE at a time",function(){for(const value of ["eth_getBlockByNumber","eth_getTransactionCount","eth_getBalance","eth_getCode","eth_estimateGas","eth_gasPrice","eth_sendTransaction","eth_getTransactionReceipt"])assert.match(js,new RegExp(value));assert.match(js,/if\(index!==saved\(\)\.length\)/);assert.match(js,/await dual\(index\)/);assert.match(js,/await verifyAt\(index\)/);assert.match(js,/value:"0x0"/)});
+  it("pins chain, deployer, nonce, address, gas and post-deployment state",function(){assert.match(js,/CHAIN="0x61"/);assert.match(js,/account\.toLowerCase\(\)!==DEPLOYER\.toLowerCase\(\)/);assert.match(js,/a\.nonce!==ITEMS\[index\]\.nonce/);assert.match(js,/estimate>ITEMS\[index\]\.gas/);assert.match(js,/receipt\.contractAddress/);assert.match(js,/function owner\(\)/);assert.match(js,/function decimals\(\)/);assert.match(js,/function answer\(\)/)});
+  it("keeps QuickNode ephemeral and embeds no credential",function(){assert.match(js,/history\.replaceState/);assert.match(js,/pagehide/);assert.doesNotMatch(html+js,/quiknode\.pro\/[^\s"']+/i);assert.doesNotMatch(js,/privateKey|mnemonic/)});
+});

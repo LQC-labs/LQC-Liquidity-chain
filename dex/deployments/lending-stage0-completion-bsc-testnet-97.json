@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_LENDING_STAGE0_COMPLETION",
+  "status": "COMPLETE_READY_FOR_LENDING_STAGE1",
+  "network": { "name": "BSC Testnet", "chainId": 97 },
+  "evidence": {
+    "manifestDigest": "sha256:3aaccbfb6667f096c462ef632886488154d3157b180f951983468990b0835602",
+    "preflightDigest": "sha256:f3c4ca89cc583cfccf2dabd74f2f16d2ebab010ce7d5c9e065d84cb34e4025e0",
+    "reviewDigest": "sha256:05837815d39154d77724edf89c1e07220b240a165a896b888ce495e469c8ac90",
+    "packetDigest": "sha256:8ed26fef797677357cb38f3c027e61519da5d26d78e9a03ce5babfd4bb54e93d",
+    "signingPreflightDigest": "sha256:73a88ce8d37dd3564fe7fb29799855984e7b4d2b540f12cd99b42772d1553bf3",
+    "verificationDigest": "sha256:3cae8fde4c6c2d14bc06c126426b38b4590f5eaa3a619d571fade6ee086549fd",
+    "finalizedConfigDigest": "sha256:bdab22c9d54ff4738fa12080b80801f130d51923c198482307a8a82579325329",
+    "configPreflightDigest": "sha256:34ec83bcbc2f936b67ee02872339428b6c1fd6351a26fe5d49828c1b1da7d6d9"
+  },
+  "market": {
+    "collateralAsset": "0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc",
+    "debtAsset": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+    "collateralSymbol": "tLQC",
+    "debtSymbol": "WBNB"
+  },
+  "feeds": [
+    { "id": "collateral-primary", "address": "0x7370c4747283C0Dc8e68Cb1c91B9Cf00Cb2B737B", "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A", "answer": "100000000", "transactionHash": "0x9adcce02d1ed6237e81e0e497e24fd3d8e58d5e5694c407e86d805d142f38f6d", "blockNumber": 131528163 },
+    { "id": "collateral-secondary", "address": "0x95bBe0560864B8DA2a13f0c67A4d8006D920161a", "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A", "answer": "99000000", "transactionHash": "0x19e4c677438c812bb46ac736908e0c2bebc5af2ac391f23a20925ba7c91ccd0b", "blockNumber": 131528261 },
+    { "id": "debt-primary", "address": "0x74FBe899DB9Ff4800D30C0e44DA5f7F067ac7379", "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A", "answer": "60000000000", "transactionHash": "0x213be53297bb147275884f71c8eaaf6b6fe9097f98c9d477aed8692bf7c1d66b", "blockNumber": 131528390 },
+    { "id": "debt-secondary", "address": "0xF51Cac509A5352B48D930D7B54B41757b4395EE5", "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A", "answer": "59400000000", "transactionHash": "0x1158089eea0d43e1813914fbb529d824a11e2d4d0e398587d42e6491673cdb79", "blockNumber": 131528432 }
+  ],
+  "nextStage": "Use only the digest-bound finalized configuration to prepare Lending Stage 1.",
+  "transactionOccurred": true,
+  "safety": "Completion evidence only. It cannot sign, broadcast, deploy, move tokens or alter configuration.",
+  "completionDigest": "sha256:d6964d742152cdf43c5655da349bd1ec98b0fcff97d8db9f625d7e35952c1522"
+}

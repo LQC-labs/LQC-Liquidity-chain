@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LQC Lending RPC 준비검증</title>
+  <style>
+    :root{font-family:system-ui,sans-serif;color:#152326;background:#f2faf8}body{margin:0;padding:20px 14px}.card{max-width:720px;margin:auto;background:#fff;border:1px solid #d7e9e5;border-radius:22px;padding:22px}.badge{display:inline-block;background:#ddf7ef;color:#087562;border-radius:999px;padding:6px 10px;font-weight:800}.warning{background:#fff3d8;border-radius:14px;padding:14px;margin:16px 0}label{display:block;font-weight:800;margin:16px 0 7px}input{box-sizing:border-box;width:100%;border:1px solid #a9c3bd;border-radius:12px;padding:14px;font-size:16px}button{width:100%;border:0;border-radius:14px;padding:16px;margin-top:16px;font-size:17px;font-weight:800;background:#087f6d;color:#fff}button:disabled{background:#a6b9b5}.row{padding:11px 0;border-bottom:1px solid #e5efed}code{display:block;overflow-wrap:anywhere;margin-top:5px}#status{padding:14px;border-radius:14px;background:#edf5f3;margin-top:16px;white-space:pre-line}#status[data-type="error"]{background:#ffe9ed;color:#a51f3d}#status[data-type="ok"]{background:#ddf7eb;color:#086c4c}.small{font-size:14px;color:#526966}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <span class="badge">BSC TESTNET · 읽기 전용 · 거래 없음</span>
+    <h1>Lending RPC 준비검증</h1>
+    <p>PublicNode와 QuickNode가 같은 BSC 테스트넷 상태를 반환하는지 휴대전화에서 직접 비교합니다.</p>
+    <div class="warning"><b>안전 범위:</b> 지갑 연결·서명·승인·거래·가스비가 없습니다. 입력한 RPC 주소는 저장하거나 전송하지 않습니다.</div>
+    <label for="publicRpc">RPC 1 · PublicNode</label>
+    <input id="publicRpc" value="https://bsc-testnet-rpc.publicnode.com" inputmode="url" autocomplete="off" spellcheck="false">
+    <label for="privateRpc">RPC 2 · QuickNode</label>
+    <input id="privateRpc" type="password" placeholder="QuickNode HTTPS 주소를 붙여 넣으세요" inputmode="url" autocomplete="off" spellcheck="false">
+    <p class="small">주소는 화면 메모리에서만 사용되며 결과에는 도메인만 표시됩니다.</p>
+    <button id="verify">두 RPC 읽기 전용 검사</button>
+    <div class="row"><b>네트워크</b><code id="network">확인 전</code></div>
+    <div class="row"><b>공통 블록</b><code id="block">확인 전</code></div>
+    <div class="row"><b>배포자 nonce</b><code id="nonce">확인 전</code></div>
+    <div class="row"><b>배포자 잔액</b><code id="balance">확인 전</code></div>
+    <div id="status">QuickNode 주소를 붙여 넣고 검사 버튼을 누르세요.</div>
+  </main>
+  <script src="./lending-rpc-readiness-testnet.js?v=2"></script>
+</body>
+</html>
