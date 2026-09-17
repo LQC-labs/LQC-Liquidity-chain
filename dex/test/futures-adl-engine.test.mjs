@@ -32,13 +32,15 @@ describe("LQC Flow Futures ADL engine", function () {
     assert.equal(plan.selected[0].reduceQuantity, 0.2);
     assert.equal(plan.selected[1].absorbAmount, 200);
     assert.equal(plan.selected[1].reduceQuantity, 0.04);
-    assert.equal(plan.selected[1].remainingQuantity, 0.06);
+    assert.ok(Math.abs(plan.selected[1].remainingQuantity - 0.06) < 1e-12);
     assert.equal(plan.residualBadDebt, 0);
   });
 
   it("keeps residual bad debt explicit when opposing profit is insufficient", function () {
     const plan = buildAdlPlan({ positions: candidates, bankruptSide: "LONG", badDebt: 3_000 });
-    assert.equal(plan.selected.reduce, undefined);
+    assert.equal(plan.selected.length, 2);
+    assert.equal(plan.selected[0].absorbAmount, 2_000);
+    assert.equal(plan.selected[1].absorbAmount, 500);
     assert.equal(plan.residualBadDebt, 500);
   });
 
