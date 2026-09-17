@@ -21,30 +21,13 @@ export function createWebSocketStreamGateway(provider, sequencer = createStreamS
   if (!provider || typeof provider.subscribe !== 'function') throw new Error('STREAM_PROVIDER_REQUIRED');
   if (oracleStatus != null && typeof oracleStatus !== 'function') throw new Error('INVALID_ORACLE_STATUS_PROVIDER');
   if (typeof now !== 'function') throw new Error('INVALID_CLOCK');
-
-  function envelope(channel, symbol, data) {
-    const key = normalizeSymbol(symbol); const stream = streamName(channel, key);
-    return Object.freeze({ schemaVersion: WS_SCHEMA_VERSION, stream, channel: normalizeChannel(channel), symbol: key, eventTime: now(), sequence: sequencer.next(stream), data: Object.freeze({ ...data }) });
-  }
-
-  function isOracleHealthy(key) {
-    if (!oracleStatus) return true;
-    const status = oracleStatus(key, { now: now() });
-    return Boolean(status?.available && status?.healthy && !status?.stale);
-  }
-
+  function envelope(channel, symbol, data) { const key = normalizeSymbol(symbol); const stream = streamName(channel, key); return Object.freeze({ schemaVersion: WS_SCHEMA_VERSION, stream, channel: normalizeChannel(channel), symbol: key, eventTime: now(), sequence: sequencer.next(stream), data: Object.freeze({ ...data }) }); }
+  function isOracleHealthy(key) { if (!oracleStatus) return true; const status = oracleStatus(key, { now: now() }); return Boolean(status?.available && status?.healthy && !status?.stale); }
   function subscribe({ channel = 'markPrice', symbol }, listener) {
     const key = normalizeSymbol(symbol); const normalizedChannel = normalizeChannel(channel);
     if (typeof listener !== 'function') throw new Error('INVALID_STREAM_LISTENER');
-    return provider.subscribe((event) => {
-      if (String(event.symbol || '').toUpperCase() !== key) return;
-      // Never publish a mark-price event after the shared Oracle has become
-      // unavailable, unhealthy or stale. Consumers must recover from REST.
-      if (normalizedChannel === 'markPrice' && !isOracleHealthy(key)) return;
-      listener(envelope(normalizedChannel, key, event));
-    });
+    return provider.subscribe((event) => { if (String(event.symbol || '').toUpperCase() !== key) return; if (normalizedChannel === 'markPrice' && !isOracleHealthy(key)) return; listener(envelope(normalizedChannel, key, event)); });
   }
-
   return Object.freeze({ subscribe, envelope, sequencer });
 }
 
@@ -55,5 +38,16 @@ export function detectSequenceGap(previousSequence, incomingSequence) {
   return Object.freeze({ gap: previous > 0 && incoming !== previous + 1, expected: previous > 0 ? previous + 1 : incoming, received: incoming, duplicateOrOld: previous > 0 && incoming <= previous });
 }
 
+// Converts sequence validation into an explicit transport-neutral recovery
+// contract. On a gap, clients must stop incremental application, fetch the
+// indicated REST snapshot, rebuild state, then resume from the next WS event.
+export function sequenceRecovery(previousSequence, incomingSequence, { channel, symbol }) {
+  const key = normalizeSymbol(symbol); const normalizedChannel = normalizeChannel(channel);
+  const check = detectSequenceGap(previousSequence, incomingSequence);
+  if (!check.gap) return Object.freeze({ ...check, action: 'APPLY_EVENT', snapshot: null });
+  const snapshotByChannel = { depth: `/api/v1/depth?symbol=${key}`, trade: `/api/v1/trades?symbol=${key}`, markPrice: `/api/v1/markPrice?symbol=${key}`, ticker: `/api/v1/ticker/24hr?symbol=${key}`, bookTicker: `/api/v1/ticker/24hr?symbol=${key}` };
+  return Object.freeze({ ...check, action: 'REBUILD_FROM_REST', snapshot: snapshotByChannel[normalizedChannel] || `/api/v1/exchangeInfo?symbol=${key}` });
+}
+
 // Public streams include ticker, bookTicker, depth, trade, kline and markPrice.
-// A sequence gap requires a REST snapshot before incremental processing resumes.
+// A sequence gap requires the REST snapshot named by sequenceRecovery().
