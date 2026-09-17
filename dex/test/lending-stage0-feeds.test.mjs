@@ -5,6 +5,7 @@ import { buildLendingStage0FeedManifest, LENDING_STAGE0_DEFAULTS } from "../scri
 import { preflightLendingStage0Feeds } from "../scripts/preflight-lending-stage0-feeds.mjs";
 import { verifyLendingStage0Feeds } from "../scripts/verify-lending-stage0-feeds.mjs";
 import { canonicalDigest } from "../scripts/build-intent-reproducibility-seal.mjs";
+import { finalizeLendingStage0Config } from "../scripts/finalize-lending-stage0-config.mjs";
 
 const artifact = JSON.parse(fs.readFileSync(new URL("../artifacts/contracts/lending/LQCTestnetPriceFeed.sol/LQCTestnetPriceFeed.json", import.meta.url)));
 const deployer = "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB", blockHash = ethers.id("stage0-block");
@@ -16,6 +17,7 @@ async function verificationContext() {
   return { manifest, preflight: { ...preflightBody, preflightDigest: canonicalDigest(preflightBody) }, hashes: deployments.map((_, i) => ethers.id(`feed-${i}`)) };
 }
 function verificationProvider(context, options = {}) { return { getNetwork: async () => ({ chainId: 97n }), getBlockNumber: async () => options.weakFinality ? 101 : 110, getTransaction: async hash => { const i = context.hashes.indexOf(hash); return { to: null, from: deployer, data: options.substitute && i === 0 ? "0x1234" : context.manifest.orderedActions[i].data }; }, getTransactionReceipt: async hash => { const i = context.hashes.indexOf(hash), blockNumber = 100 + i; return { status: 1, contractAddress: context.preflight.deployments[i].predictedAddress, blockNumber, blockHash: ethers.id(`block-${blockNumber}`) }; }, getBlock: async number => ({ hash: ethers.id(`block-${number}`) }), getCode: async () => options.runtime || "0x6001600055", call: async req => { const action = context.manifest.orderedActions.find(x => context.preflight.deployments.find(d => d.id === x.id).predictedAddress.toLowerCase() === req.to.toLowerCase()), selector = req.data.slice(0, 10); if (selector === feedI.getFunction("owner").selector) return feedI.encodeFunctionResult("owner", [options.badOwner ? ethers.ZeroAddress : action.owner]); if (selector === feedI.getFunction("decimals").selector) return feedI.encodeFunctionResult("decimals", [action.decimals]); if (selector === feedI.getFunction("answer").selector) return feedI.encodeFunctionResult("answer", [BigInt(action.initialAnswer)]); if (selector === feedI.getFunction("updatedAt").selector) return feedI.encodeFunctionResult("updatedAt", [1000n]); return feedI.encodeFunctionResult("roundId", [1n]); } }; }
+function baseConfig() { return { schemaVersion: 1, network: { chainId: 97 }, roles: { governanceSafe: LENDING_STAGE0_DEFAULTS.governanceSafe, guardianSafe: "0xdc8003a7046be67f257d294b2680c20988a6bc2b", treasurySafe: "0x0771fbc76ec3e89345bbdd803d0774bbd4943103", governanceThreshold: 4, governanceOwners: 7, guardianThreshold: 3, guardianOwners: 5 }, market: { collateralAsset: LENDING_STAGE0_DEFAULTS.collateralAsset, debtAsset: LENDING_STAGE0_DEFAULTS.debtAsset, collateralDecimals: 18, debtDecimals: 18, maxLtvBps: 5000, liquidationThresholdBps: 7000, liquidationBonusBps: 500, supplyCap: "1000000000000000000000", borrowCap: "900000000000000000000", minBorrow: "10000000000000000000" }, oracle: { maxStalenessSeconds: 3600, maxDeviationBps: 200 }, rate: { baseAprBps: 200, slope1AprBps: 800, slope2AprBps: 9000, optimalUtilizationBps: 8000, reserveFactorBps: 1000 } }; }
 
 describe("Lending Stage-0 four-feed preparation", function () {
   it("pins tLQC collateral, WBNB debt and four distinct feed deployments", async function () {
@@ -45,6 +47,16 @@ describe("Lending Stage-0 four-feed preparation", function () {
     await assert.rejects(verifyLendingStage0Feeds({ providers: [verificationProvider(c, { badOwner: true }), verificationProvider(c, { badOwner: true })], manifest: c.manifest, preflight: c.preflight, transactionHashes: c.hashes }), /state mismatch/);
     await assert.rejects(verifyLendingStage0Feeds({ providers: [verificationProvider(c, { weakFinality: true }), good], manifest: c.manifest, preflight: c.preflight, transactionHashes: c.hashes }), /weak-finality/);
     await assert.rejects(verifyLendingStage0Feeds({ providers: [good, verificationProvider(c, { runtime: "0x6002600055" })], manifest: c.manifest, preflight: c.preflight, transactionHashes: c.hashes }), /RPC disagreement/);
+  });
+  it("binds only the four verified feed addresses into the Stage-1 config", async function () {
+    const c = await verificationContext(), verification = await verifyLendingStage0Feeds({ providers: [verificationProvider(c), verificationProvider(c)], manifest: c.manifest, preflight: c.preflight, transactionHashes: c.hashes }), finalized = finalizeLendingStage0Config({ baseConfig: baseConfig(), manifest: c.manifest, verification });
+    assert.equal(finalized.status, "READY_FOR_LENDING_STAGE1_REVIEW"); assert.deepEqual(Object.values(finalized.config.oracle).slice(2), verification.deployments.map(x => x.address));
+  });
+  it("rejects asset, feed order and verification digest substitution", async function () {
+    const c = await verificationContext(), verification = await verifyLendingStage0Feeds({ providers: [verificationProvider(c), verificationProvider(c)], manifest: c.manifest, preflight: c.preflight, transactionHashes: c.hashes });
+    const wrongAsset = baseConfig(); wrongAsset.market.debtAsset = ethers.getAddress("0x0000000000000000000000000000000000000099"); assert.throws(() => finalizeLendingStage0Config({ baseConfig: wrongAsset, manifest: c.manifest, verification }), /market mismatch/);
+    const reordered = structuredClone(verification); [reordered.deployments[0], reordered.deployments[1]] = [reordered.deployments[1], reordered.deployments[0]]; const { verificationDigest: _, ...rb } = reordered; reordered.verificationDigest = canonicalDigest(rb); assert.throws(() => finalizeLendingStage0Config({ baseConfig: baseConfig(), manifest: c.manifest, verification: reordered }), /order or state/);
+    verification.verificationDigest = ethers.id("tampered"); assert.throws(() => finalizeLendingStage0Config({ baseConfig: baseConfig(), manifest: c.manifest, verification }), /Invalid verified/);
   });
   it("contains no private key, signing, approval or transaction broadcast path", function () {
     for (const file of ["../scripts/prepare-lending-stage0-feeds.mjs", "../scripts/preflight-lending-stage0-feeds.mjs", "../scripts/verify-lending-stage0-feeds.mjs"]) { const source = fs.readFileSync(new URL(file, import.meta.url), "utf8"); assert.doesNotMatch(source, /PRIVATE_KEY|signTransaction|eth_sendTransaction|requestAccounts/); }
