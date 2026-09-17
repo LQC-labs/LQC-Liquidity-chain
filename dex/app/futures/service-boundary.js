@@ -8,6 +8,24 @@ function requirePort(name, value, methods) {
   return value;
 }
 
+function isolatedCall(domain, monitoring, operation, invoke) {
+  try {
+    return invoke();
+  } catch (error) {
+    try {
+      monitoring?.emit?.({
+        type: 'SERVICE_BOUNDARY_FAILURE',
+        domain,
+        operation,
+        code: error?.code || error?.message || 'UNKNOWN_ERROR'
+      });
+    } catch {
+      // Monitoring failure must never cascade into a sibling engine.
+    }
+    throw error;
+  }
+}
+
 export function createSharedServices({ tokenRegistry, oracle, account, monitoring } = {}) {
   return Object.freeze({
     tokenRegistry: requirePort('TOKEN_REGISTRY', tokenRegistry, ['get']),
@@ -21,12 +39,17 @@ export function createLqcFlowServiceBoundary({ dexRouter, futuresEngine, sharedS
   const dex = requirePort('DEX_ROUTER', dexRouter, ['quote']);
   const futures = requirePort('FUTURES_ENGINE', futuresEngine, ['placeOrder']);
   if (!sharedServices || typeof sharedServices !== 'object') throw new Error('SHARED_SERVICES_REQUIRED');
+  const monitoring = sharedServices.monitoring;
 
-  // Expose sibling domains independently. Cross-domain collaboration must go
-  // through Shared Services/API/Event adapters, never direct engine ownership.
+  // Sibling failures are observed at the boundary and rethrown only to the
+  // caller of that domain. No fallback invokes the other engine.
   return Object.freeze({
-    dex: Object.freeze({ quote: (...args) => dex.quote(...args) }),
-    futures: Object.freeze({ placeOrder: (...args) => futures.placeOrder(...args) }),
+    dex: Object.freeze({
+      quote: (...args) => isolatedCall('DEX_ROUTER', monitoring, 'quote', () => dex.quote(...args))
+    }),
+    futures: Object.freeze({
+      placeOrder: (...args) => isolatedCall('FUTURES_ENGINE', monitoring, 'placeOrder', () => futures.placeOrder(...args))
+    }),
     shared: sharedServices
   });
 }
