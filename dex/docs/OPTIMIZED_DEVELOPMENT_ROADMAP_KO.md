@@ -88,6 +88,7 @@
 - **10-7 저장소 완료:** 제한형 시장 활성화 Safe payload·canonical receipt·3 confirmations·활성화 후 불변 위험정책과 Oracle 가격을 다중 RPC로 검증한다. 공급·담보·차입·상환을 exact approval과 함께 7개 독립 action으로 만들고 공급·차입을 각 Cap의 0.1% 이하로 제한한다. 실제 활성화와 파일럿 실행은 별도 승인 전 수행하지 않음.
 - **10-8 저장소 완료:** 활성화된 테스트넷에서 파일럿 계정 잔액·exact allowance·공급 share·담보·현재 indexed debt·accountRisk를 단계별로 2개 이상 RPC에서 대조하고, 다음 한 action만 `eth_call`한다. 상환 승인과 repay calldata는 직전 block의 현재 부채로 동적 해석하여 이자 잔여 부채를 방지한다.
 - **10-9 저장소 완료:** 별도로 실행된 7개 파일럿 transaction을 검토된 단계별 preflight와 결합해 sender·target·calldata·순서·canonical receipt·3 confirmations·필수 Approval/Lending event를 검증한다. 최종 담보·공급 지분, 양 토큰 allowance 0, indexed debt 0을 2개 이상 RPC에서 확인한 경우에만 완료 digest를 생성한다.
-- **10-10 다음:** Stage 1~9 배포·설정·활성화·파일럿 증거를 하나의 불변 감사 인계 패키지로 통합하고 외부 감사 범위를 재고정.
+- **10-10 저장소 완료:** Stage 1~9 배포·설정·활성화·파일럿의 정확한 21개 증거 파일을 digest chain, source revision, package-lock과 결합해 불변 감사 인계 bundle로 생성한다. 독립 검증기는 파일 누락·추가·교체·재해시와 단계 간 digest 단절을 차단하며 상태를 `외부 검토 준비, 미감사`로 명시한다.
+- **10-11 다음:** 외부 감사 제출용 계약·위험 파라미터·운영 역할 질문서와 발견사항 수정·재검증 절차를 고정.
 
 모든 작업 시작 보고에는 `현재 단계 번호 / 작업명 / 완료 기준`을 먼저 표시한다. 실제 배포·Safe 승인은 운영 설정안 확정 후 별도 단계로 수행한다.

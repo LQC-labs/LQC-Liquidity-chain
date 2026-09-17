@@ -165,6 +165,7 @@
 - 10-7 제한 활성화 검증·파일럿 준비 저장소 완료: Governance Safe의 정확한 `setMarketEnabled(true)` inner calldata, success event, canonical receipt, 3 confirmations와 최종 Market 위험 파라미터·Oracle 가격을 다중 RPC로 검증한다. 검증 후 별도 pilot account의 exact approval·공급·담보·차입·상환을 7개 순차 action으로 만들며 공급과 차입은 각 Cap의 0.1% 이하, 차입은 공급 이하로 제한한다. 실제 거래는 수행하지 않음.
 - 10-8 파일럿 action 사전검증 저장소 완료: 각 단계 직전 공통 block에서 파일럿 잔액, Core exact allowance, 공급 지분, 담보, indexed debt를 2개 이상 RPC로 대조하고 차입 전 accountRisk를 확인한 뒤 오직 다음 action만 `eth_call`한다. 고정 원금 상환은 시간 경과 이자를 남길 수 있으므로 6·7단계의 approve·repay calldata는 현재 `debtOf`를 다시 읽어 동적으로 생성하며 RPC 불일치나 simulation 실패 시 중단한다.
 - 10-9 파일럿 완료 검증 저장소 완료: 7개 transaction을 각 단계의 digest-bound preflight와 연결해 파일럿 sender·target·zero value·정확한 calldata·실행 순서·canonical receipt·3 confirmations를 확인하고 Approval, LiquiditySupplied, CollateralDeposited, Borrowed, Repaid 이벤트를 요구한다. 완료 시 debt/collateral allowance 0, indexed debt 0, 계획된 담보와 최소 공급 지분을 2개 이상 RPC에서 대조해 단일 completion digest로 봉인한다.
+- 10-10 불변 감사 인계 저장소 완료: Stage 1~4 manifest/verification, Stage 5 plan/verification, Stage 6 readiness, Stage 7 activation/pilot, Stage 8의 7개 action preflight, Stage 9 completion 총 21개 정확한 파일을 source revision·package-lock과 결합한다. 독립 검증기는 파일 집합과 모든 단계 digest chain, bundle manifest, 리뷰 문서를 재생성하며 누락·추가·교체·재해시를 거부한다. 이는 외부 검토 준비 자료이며 감사 완료나 메인넷 승인을 의미하지 않는다.
 
 ## 의도적으로 후순위인 기능
 
