@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_LENDING_STAGE0_FINALIZED_CONFIG",
+  "status": "READY_FOR_LENDING_STAGE1_REVIEW",
+  "manifestDigest": "sha256:3aaccbfb6667f096c462ef632886488154d3157b180f951983468990b0835602",
+  "verificationDigest": "sha256:3cae8fde4c6c2d14bc06c126426b38b4590f5eaa3a619d571fade6ee086549fd",
+  "config": {
+    "schemaVersion": 1,
+    "network": { "chainId": 97 },
+    "roles": {
+      "governanceSafe": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+      "guardianSafe": "0xdc8003a7046be67f257d294b2680c20988a6bc2b",
+      "treasurySafe": "0x0771fbc76ec3e89345bbdd803d0774bbd4943103",
+      "governanceThreshold": 4,
+      "governanceOwners": 7,
+      "guardianThreshold": 3,
+      "guardianOwners": 5
+    },
+    "market": {
+      "collateralAsset": "0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc",
+      "debtAsset": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+      "collateralDecimals": 18,
+      "debtDecimals": 18,
+      "maxLtvBps": 5000,
+      "liquidationThresholdBps": 7000,
+      "liquidationBonusBps": 500,
+      "supplyCap": "1000000000000000000000",
+      "borrowCap": "900000000000000000000",
+      "minBorrow": "10000000000000000000"
+    },
+    "oracle": {
+      "maxStalenessSeconds": 3600,
+      "maxDeviationBps": 200,
+      "collateralPrimary": "0x7370c4747283C0Dc8e68Cb1c91B9Cf00Cb2B737B",
+      "collateralSecondary": "0x95bBe0560864B8DA2a13f0c67A4d8006D920161a",
+      "debtPrimary": "0x74FBe899DB9Ff4800D30C0e44DA5f7F067ac7379",
+      "debtSecondary": "0xF51Cac509A5352B48D930D7B54B41757b4395EE5"
+    },
+    "rate": {
+      "baseAprBps": 200,
+      "slope1AprBps": 800,
+      "slope2AprBps": 9000,
+      "optimalUtilizationBps": 8000,
+      "reserveFactorBps": 1000
+    }
+  },
+  "configPreflightDigest": "sha256:34ec83bcbc2f936b67ee02872339428b6c1fd6351a26fe5d49828c1b1da7d6d9",
+  "transactionOccurred": false,
+  "safety": "Deterministic configuration binding only. No RPC, wallet, key, signature, approval, deployment, token movement, or transaction.",
+  "finalizedConfigDigest": "sha256:bdab22c9d54ff4738fa12080b80801f130d51923c198482307a8a82579325329"
+}
