@@ -16,6 +16,7 @@ const deploy = async (signer, name, source, args = []) => {
 
 describe("LQC Futures Aggregator Oracle Adapter", function () {
   let provider, owner, outsider, token;
+  const HEARTBEAT = 300;
 
   beforeEach(async function () {
     provider = new ethers.BrowserProvider(ganache.provider({ logging: { quiet: true } }));
@@ -24,10 +25,10 @@ describe("LQC Futures Aggregator Oracle Adapter", function () {
     token = await deploy(owner, "MockERC20", "mocks/MockERC20", ["Mock BTC", "mBTC"]);
   });
 
-  const fixture = async (decimals) => {
+  const fixture = async (decimals, heartbeat = HEARTBEAT) => {
     const adapter = await deploy(owner, "LQCAggregatorOracleAdapter", "futures/LQCAggregatorOracleAdapter", [await owner.getAddress()]);
     const feed = await deploy(owner, "MockAggregatorV3", "futures/mocks/MockAggregatorV3", [decimals]);
-    await (await adapter.setFeed(await token.getAddress(), await feed.getAddress())).wait();
+    await (await adapter.setFeed(await token.getAddress(), await feed.getAddress(), heartbeat)).wait();
     return { adapter, feed };
   };
 
@@ -75,6 +76,20 @@ describe("LQC Futures Aggregator Oracle Adapter", function () {
     await assert.rejects(adapter.getPrice(await token.getAddress()));
   });
 
+  it("rejects stale prices using the market heartbeat", async function () {
+    const { adapter, feed } = await fixture(8, 120);
+    const now = BigInt((await provider.getBlock("latest")).timestamp);
+    await (await feed.setRoundData(5, 100n * 10n ** 8n, now - 121n, 5)).wait();
+    await assert.rejects(adapter.getPrice(await token.getAddress()));
+  });
+
+  it("rejects invalid heartbeat configuration", async function () {
+    const adapter = await deploy(owner, "LQCAggregatorOracleAdapter", "futures/LQCAggregatorOracleAdapter", [await owner.getAddress()]);
+    const feed = await deploy(owner, "MockAggregatorV3", "futures/mocks/MockAggregatorV3", [8]);
+    await assert.rejects(adapter.setFeed(await token.getAddress(), await feed.getAddress(), 0));
+    await assert.rejects(adapter.setFeed(await token.getAddress(), await feed.getAddress(), 86_401));
+  });
+
   it("rejects unsupported feed decimals", async function () {
     const { adapter, feed } = await fixture(37);
     const now = BigInt((await provider.getBlock("latest")).timestamp);
@@ -85,6 +100,6 @@ describe("LQC Futures Aggregator Oracle Adapter", function () {
   it("only allows the adapter owner to configure feeds", async function () {
     const adapter = await deploy(owner, "LQCAggregatorOracleAdapter", "futures/LQCAggregatorOracleAdapter", [await owner.getAddress()]);
     const feed = await deploy(owner, "MockAggregatorV3", "futures/mocks/MockAggregatorV3", [8]);
-    await assert.rejects(adapter.connect(outsider).setFeed(await token.getAddress(), await feed.getAddress()));
+    await assert.rejects(adapter.connect(outsider).setFeed(await token.getAddress(), await feed.getAddress(), HEARTBEAT));
   });
 });
