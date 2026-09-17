@@ -11,7 +11,7 @@ describe("LQC Lending Stage-2 approved deployment page", function () {
     assert.ok(js.includes(packet.approvedReviewDigest));
     assert.ok(js.includes(packet.packetDigest));
     assert.ok(js.includes(packet.maximumGasBudgetWei));
-    assert.match(html, /0\.0001987488 tBNB/);
+    assert.match(html, /0\.00023849856 tBNB/);
   });
   it("requires chain 97, the approved deployer and exact sequential nonces", function () {
     assert.match(js, /CHAIN="0x61"/);
