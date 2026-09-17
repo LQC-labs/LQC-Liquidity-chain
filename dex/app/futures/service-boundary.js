@@ -8,20 +8,31 @@ function requirePort(name, value, methods) {
   return value;
 }
 
+function reportFailure(domain, monitoring, operation, error) {
+  try {
+    monitoring?.emit?.({
+      type: 'SERVICE_BOUNDARY_FAILURE',
+      domain,
+      operation,
+      code: error?.code || error?.message || 'UNKNOWN_ERROR'
+    });
+  } catch {
+    // Monitoring failure must never cascade into a sibling engine.
+  }
+}
+
 function isolatedCall(domain, monitoring, operation, invoke) {
   try {
-    return invoke();
-  } catch (error) {
-    try {
-      monitoring?.emit?.({
-        type: 'SERVICE_BOUNDARY_FAILURE',
-        domain,
-        operation,
-        code: error?.code || error?.message || 'UNKNOWN_ERROR'
+    const result = invoke();
+    if (result && typeof result.then === 'function') {
+      return Promise.resolve(result).catch((error) => {
+        reportFailure(domain, monitoring, operation, error);
+        throw error;
       });
-    } catch {
-      // Monitoring failure must never cascade into a sibling engine.
     }
+    return result;
+  } catch (error) {
+    reportFailure(domain, monitoring, operation, error);
     throw error;
   }
 }
@@ -42,7 +53,8 @@ export function createLqcFlowServiceBoundary({ dexRouter, futuresEngine, sharedS
   const monitoring = sharedServices.monitoring;
 
   // Sibling failures are observed at the boundary and rethrown only to the
-  // caller of that domain. No fallback invokes the other engine.
+  // caller of that domain. Sync throws and async rejections are isolated alike;
+  // no fallback invokes the other engine.
   return Object.freeze({
     dex: Object.freeze({
       quote: (...args) => isolatedCall('DEX_ROUTER', monitoring, 'quote', () => dex.quote(...args))
