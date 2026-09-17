@@ -7,6 +7,7 @@ import { verifyLendingStage0Feeds } from "../scripts/verify-lending-stage0-feeds
 import { canonicalDigest } from "../scripts/build-intent-reproducibility-seal.mjs";
 import { finalizeLendingStage0Config } from "../scripts/finalize-lending-stage0-config.mjs";
 import { buildLendingStage0DeploymentReview } from "../scripts/build-lending-stage0-deployment-review.mjs";
+import { prepareLendingStage0ExecutionPacket } from "../scripts/prepare-lending-stage0-execution-packet.mjs";
 
 const artifact = JSON.parse(fs.readFileSync(new URL("../artifacts/contracts/lending/LQCTestnetPriceFeed.sol/LQCTestnetPriceFeed.json", import.meta.url)));
 const deployer = "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB", blockHash = ethers.id("stage0-block");
@@ -45,6 +46,15 @@ describe("Lending Stage-0 four-feed preparation", function () {
   it("invalidates deployment review after address, price, order or preflight mutation", async function () {
     const c = await verificationContext();
     for (const mutate of [p => { p.deployments[0].predictedAddress = ethers.ZeroAddress; }, p => { p.deployments[0].initialAnswer = "2"; }, p => { [p.deployments[0], p.deployments[1]] = [p.deployments[1], p.deployments[0]]; }, p => { p.totalConservativeGas = "1"; }]) { const changed = structuredClone(c.preflight); mutate(changed); assert.throws(() => buildLendingStage0DeploymentReview({ manifest: c.manifest, preflight: changed }), /Invalid|mismatch/); }
+  });
+  it("creates exactly four sequential unsigned transactions only for the approved review digest", async function () {
+    const c = await verificationContext(), review = buildLendingStage0DeploymentReview({ manifest: c.manifest, preflight: c.preflight }), packet = prepareLendingStage0ExecutionPacket({ manifest: c.manifest, preflight: c.preflight, review, approvedReviewDigest: review.reviewDigest });
+    assert.equal(packet.status, "APPROVED_PACKET_REQUIRES_FRESH_SIGNING_PREFLIGHT"); assert.deepEqual(packet.transactions.map(x => x.nonce), ["10", "11", "12", "13"]); assert.ok(packet.transactions.every(x => x.to === null && x.value === "0" && BigInt(x.gasLimit) === 120000n)); assert.equal(packet.transactionOccurred, false);
+  });
+  it("rejects absent approval, changed approval and transaction substitution", async function () {
+    const c = await verificationContext(), review = buildLendingStage0DeploymentReview({ manifest: c.manifest, preflight: c.preflight });
+    for (const digest of [undefined, ethers.id("another-review")]) assert.throws(() => prepareLendingStage0ExecutionPacket({ manifest: c.manifest, preflight: c.preflight, review, approvedReviewDigest: digest }), /explicit Stage-0 approval/);
+    const changed = structuredClone(c.preflight); changed.deployments[0].predictedAddress = ethers.getAddress("0x0000000000000000000000000000000000000099"); const { preflightDigest: _, ...body } = changed; changed.preflightDigest = canonicalDigest(body); assert.throws(() => prepareLendingStage0ExecutionPacket({ manifest: c.manifest, preflight: changed, review, approvedReviewDigest: review.reviewDigest }), /invalid explicit|substitution/);
   });
   it("verifies four canonical deployments and their exact initialized state", async function () {
     const context = await verificationContext(), result = await verifyLendingStage0Feeds({ providers: [verificationProvider(context), verificationProvider(context)], manifest: context.manifest, preflight: context.preflight, transactionHashes: context.hashes });

@@ -86,6 +86,7 @@
     "prepare:lending-stage0-feeds": "node scripts/prepare-lending-stage0-feeds.mjs",
     "preflight:lending-stage0-feeds": "node scripts/preflight-lending-stage0-feeds.mjs",
     "build:lending-stage0-review": "node scripts/build-lending-stage0-deployment-review.mjs",
+    "prepare:lending-stage0-execution": "node scripts/prepare-lending-stage0-execution-packet.mjs",
     "verify:lending-stage0-feeds": "node scripts/verify-lending-stage0-feeds.mjs",
     "finalize:lending-stage0-config": "node scripts/finalize-lending-stage0-config.mjs",
     "prepare:lending-stage1": "node scripts/prepare-lending-stage1-manifest.mjs",
