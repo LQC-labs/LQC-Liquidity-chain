@@ -19,15 +19,20 @@ function normalizedSide(side) {
   return value;
 }
 
-export function adlScore({ side, quantity, entryPrice, markPrice, collateral }) {
+export function unrealizedPnl({ side, quantity, entryPrice, markPrice }) {
   const positionSide = normalizedSide(side);
   const qty = positiveNumber(quantity, "INVALID_QUANTITY");
   const entry = positiveNumber(entryPrice, "INVALID_ENTRY_PRICE");
   const mark = positiveNumber(markPrice, "INVALID_MARK_PRICE");
-  const margin = positiveNumber(collateral, "INVALID_COLLATERAL");
   const direction = positionSide === "LONG" ? 1 : -1;
-  const pnl = direction * qty * (mark - entry);
-  const profit = Math.max(0, pnl);
+  return direction * qty * (mark - entry);
+}
+
+export function adlScore(position) {
+  const margin = positiveNumber(position.collateral, "INVALID_COLLATERAL");
+  const mark = positiveNumber(position.markPrice, "INVALID_MARK_PRICE");
+  const qty = positiveNumber(position.quantity, "INVALID_QUANTITY");
+  const profit = Math.max(0, unrealizedPnl(position));
   const notional = qty * mark;
   const leverage = notional / margin;
   const profitRatio = profit / margin;
@@ -46,8 +51,8 @@ export function rankAdlCandidates(positions, bankruptSide) {
     .sort((a, b) => b.adlScore - a.adlScore || String(a.id).localeCompare(String(b.id))));
 }
 
-// Selects enough profitable opposing notional to absorb explicit bad debt.
-// This only produces an ADL plan; execution/position mutation belongs elsewhere.
+// Selects profitable opposing positions, but never treats full position notional as
+// available loss absorption. Each candidate is capped by its realizable unrealized profit.
 export function buildAdlPlan({ positions, bankruptSide, badDebt }) {
   const debt = finiteNumber(badDebt, "INVALID_BAD_DEBT");
   if (debt < 0) throw new Error("INVALID_BAD_DEBT");
@@ -59,9 +64,20 @@ export function buildAdlPlan({ positions, bankruptSide, badDebt }) {
 
   for (const position of ranked) {
     if (remaining <= 0) break;
-    const notional = positiveNumber(position.quantity, "INVALID_QUANTITY") * positiveNumber(position.markPrice, "INVALID_MARK_PRICE");
-    const absorb = Math.min(remaining, notional);
-    selected.push(Object.freeze({ id: position.id, side: position.side, adlScore: position.adlScore, absorbAmount: absorb }));
+    const profit = Math.max(0, unrealizedPnl(position));
+    if (profit <= 0) continue;
+    const absorb = Math.min(remaining, profit);
+    const priceMovePerUnit = Math.abs(positiveNumber(position.markPrice, "INVALID_MARK_PRICE") - positiveNumber(position.entryPrice, "INVALID_ENTRY_PRICE"));
+    const reduceQuantity = absorb / priceMovePerUnit;
+    selected.push(Object.freeze({
+      id: position.id,
+      side: position.side,
+      adlScore: position.adlScore,
+      availableProfit: profit,
+      absorbAmount: absorb,
+      reduceQuantity,
+      remainingQuantity: Math.max(0, positiveNumber(position.quantity, "INVALID_QUANTITY") - reduceQuantity)
+    }));
     remaining -= absorb;
   }
 
