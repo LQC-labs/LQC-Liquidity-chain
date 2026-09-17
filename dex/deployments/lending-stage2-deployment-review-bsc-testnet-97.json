@@ -9,10 +9,10 @@
   "manifestDigest": "sha256:4aadaf0967412ba2c8ebf692a597fa22666fc08b942113cf89d69bfc75eb1d18",
   "configPreflightDigest": "sha256:34ec83bcbc2f936b67ee02872339428b6c1fd6351a26fe5d49828c1b1da7d6d9",
   "stage1VerificationDigest": "sha256:7cf2d78ab646610051ba9c386382faee5df29e9591db05b9fe78a758160d2ba3",
-  "preflightDigest": "sha256:1c8292fcad747a19c915f13c57b75a807096faa7d70cf632e36a0f739b478caf",
+  "preflightDigest": "sha256:8500f4f9c92697a73047ec30583fc32a2214cacf106096f885523e7909c7a7d2",
   "canonicalBlock": {
-    "number": 131551303,
-    "hash": "0x2dfaa3f9255e452c184db5b5b1cba632f75386ae0734883a017c9f3b98c08dd0"
+    "number": 131557093,
+    "hash": "0x4d5cd991481051f24b6b1825f6f38af0ad2c44bf8302c8b5c28c23e7c07bfa76"
   },
   "deployer": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
   "dependencies": {
@@ -55,14 +55,14 @@
   ],
   "budget": {
     "deployerBalanceWei": "999473030927407796",
-    "conservativeGasPriceWei": "100000000",
+    "conservativeGasPriceWei": "120000000",
     "totalConservativeGas": "1656239",
     "totalApprovedGasLimit": "1987488",
-    "maximumGasBudgetWei": "198748800000000",
-    "maximumGasBudgetTbnb": "0.0001987488"
+    "maximumGasBudgetWei": "238498560000000",
+    "maximumGasBudgetTbnb": "0.00023849856"
   },
   "approvalScope": "Exactly two zero-value CREATE transactions in listed nonce order. Any changed block, nonce, address, init code, gas, dependency binding or RPC state requires a new review.",
   "transactionOccurred": false,
   "safety": "Human review only. No wallet, key, signature, deployment, token movement, configuration or transaction broadcast.",
-  "reviewDigest": "sha256:ca2dc1cc8b8ad2e5e3d303f384d7c464cbe42076ef4c3abe99c9e8a4cbf3daaf"
+  "reviewDigest": "sha256:015b2b06aba2e24063d64a918239bc58f84deb81cb2cab031d931e07c2cb6e4e"
 }

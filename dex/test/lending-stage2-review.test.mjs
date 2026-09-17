@@ -13,7 +13,7 @@ describe("LQC Lending Stage-2 deployment review", function () {
     assert.equal(review.status, "AWAITING_EXPLICIT_DEPLOYMENT_APPROVAL");
     assert.equal(review.deployments.length, 2);
     assert.deepEqual(review.deployments.map(item => item.nonce), ["107", "108"]);
-    assert.equal(review.budget.maximumGasBudgetTbnb, "0.0001987488");
+    assert.equal(review.budget.maximumGasBudgetTbnb, "0.00023849856");
     assert.equal(review.reviewDigest, canonicalDigest(Object.fromEntries(Object.entries(review).filter(([key]) => key !== "reviewDigest"))));
   });
 

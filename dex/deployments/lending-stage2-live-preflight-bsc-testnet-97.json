@@ -10,14 +10,14 @@
   "configPreflightDigest": "sha256:34ec83bcbc2f936b67ee02872339428b6c1fd6351a26fe5d49828c1b1da7d6d9",
   "stage1VerificationDigest": "sha256:7cf2d78ab646610051ba9c386382faee5df29e9591db05b9fe78a758160d2ba3",
   "deployer": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
-  "blockNumber": 131551303,
-  "blockHash": "0x2dfaa3f9255e452c184db5b5b1cba632f75386ae0734883a017c9f3b98c08dd0",
+  "blockNumber": 131557093,
+  "blockHash": "0x4d5cd991481051f24b6b1825f6f38af0ad2c44bf8302c8b5c28c23e7c07bfa76",
   "baseFeePerGas": "0",
-  "conservativeGasPrice": "100000000",
+  "conservativeGasPrice": "120000000",
   "deployerNonce": "107",
   "deployerBalance": "999473030927407796",
   "rpcCount": 2,
-  "requiredGasBudget": "198748800000000",
+  "requiredGasBudget": "238498560000000",
   "deployments": [
     {
       "id": 1,
@@ -40,5 +40,5 @@
   "totalApprovedGasLimit": "1987488",
   "transactionOccurred": false,
   "safety": "Read-only Stage-2 preflight. No wallet, key, signature, approval, deployment, token movement, or transaction.",
-  "preflightDigest": "sha256:1c8292fcad747a19c915f13c57b75a807096faa7d70cf632e36a0f739b478caf"
+  "preflightDigest": "sha256:8500f4f9c92697a73047ec30583fc32a2214cacf106096f885523e7909c7a7d2"
 }
