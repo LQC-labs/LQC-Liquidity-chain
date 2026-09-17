@@ -9,17 +9,25 @@ import {IAggregatorV3} from "./interfaces/IAggregatorV3.sol";
 contract LQCAggregatorOracleAdapter is ILQCFuturesOracle {
     uint8 public constant TARGET_DECIMALS = 18;
     uint8 public constant MAX_FEED_DECIMALS = 36;
+    uint256 public constant MAX_HEARTBEAT = 1 days;
+
+    struct FeedConfig {
+        address feed;
+        uint32 heartbeat;
+    }
 
     address public immutable owner;
-    mapping(address => address) public feeds;
+    mapping(address => FeedConfig) public feedConfigs;
 
-    event FeedConfigured(address indexed indexToken, address indexed feed);
+    event FeedConfigured(address indexed indexToken, address indexed feed, uint32 heartbeat);
 
     error NotOwner();
     error InvalidAddress();
+    error InvalidHeartbeat();
     error FeedNotConfigured();
     error InvalidFeedAnswer();
     error InvalidFeedTimestamp();
+    error StaleFeedPrice();
     error InvalidFeedRound();
     error UnsupportedFeedDecimals();
 
@@ -28,21 +36,27 @@ contract LQCAggregatorOracleAdapter is ILQCFuturesOracle {
         owner = owner_;
     }
 
-    function setFeed(address indexToken, address feed) external {
+    function setFeed(address indexToken, address feed, uint32 heartbeat) external {
         if (msg.sender != owner) revert NotOwner();
         if (indexToken == address(0) || feed == address(0)) revert InvalidAddress();
-        feeds[indexToken] = feed;
-        emit FeedConfigured(indexToken, feed);
+        if (heartbeat == 0 || heartbeat > MAX_HEARTBEAT) revert InvalidHeartbeat();
+        feedConfigs[indexToken] = FeedConfig({feed: feed, heartbeat: heartbeat});
+        emit FeedConfigured(indexToken, feed, heartbeat);
+    }
+
+    function feeds(address indexToken) external view returns (address) {
+        return feedConfigs[indexToken].feed;
     }
 
     function getPrice(address indexToken) external view returns (uint256 price, uint256 updatedAt) {
-        address feed = feeds[indexToken];
-        if (feed == address(0)) revert FeedNotConfigured();
+        FeedConfig memory config = feedConfigs[indexToken];
+        if (config.feed == address(0)) revert FeedNotConfigured();
 
-        IAggregatorV3 aggregator = IAggregatorV3(feed);
+        IAggregatorV3 aggregator = IAggregatorV3(config.feed);
         (uint80 roundId, int256 answer,, uint256 sourceUpdatedAt, uint80 answeredInRound) = aggregator.latestRoundData();
         if (answer <= 0) revert InvalidFeedAnswer();
         if (sourceUpdatedAt == 0 || sourceUpdatedAt > block.timestamp) revert InvalidFeedTimestamp();
+        if (block.timestamp - sourceUpdatedAt > config.heartbeat) revert StaleFeedPrice();
         if (answeredInRound < roundId) revert InvalidFeedRound();
 
         uint8 feedDecimals = aggregator.decimals();
