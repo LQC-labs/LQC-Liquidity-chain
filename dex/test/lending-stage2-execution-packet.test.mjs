@@ -19,7 +19,7 @@ describe("LQC Lending Stage-2 execution packet", function () {
     assert.ok(packet.transactions.every(x => x.to === null && x.value === "0"));
     assert.equal(packet.transactions[0].expectedBindings.oracle, manifest.dependencies.oracleManager);
     assert.equal(packet.transactions[1].expectedBindings.rateModel, manifest.dependencies.interestRateModel);
-    assert.equal(packet.maximumGasBudgetWei, "198748800000000");
+    assert.equal(packet.maximumGasBudgetWei, "238498560000000");
     assert.equal(packet.transactionOccurred, false);
   });
   it("rejects modified review evidence", function () {

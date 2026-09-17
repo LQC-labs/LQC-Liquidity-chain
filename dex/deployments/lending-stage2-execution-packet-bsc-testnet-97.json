@@ -7,8 +7,8 @@
     "chainId": 97
   },
   "manifestDigest": "sha256:4aadaf0967412ba2c8ebf692a597fa22666fc08b942113cf89d69bfc75eb1d18",
-  "preflightDigest": "sha256:1c8292fcad747a19c915f13c57b75a807096faa7d70cf632e36a0f739b478caf",
-  "approvedReviewDigest": "sha256:ca2dc1cc8b8ad2e5e3d303f384d7c464cbe42076ef4c3abe99c9e8a4cbf3daaf",
+  "preflightDigest": "sha256:8500f4f9c92697a73047ec30583fc32a2214cacf106096f885523e7909c7a7d2",
+  "approvedReviewDigest": "sha256:015b2b06aba2e24063d64a918239bc58f84deb81cb2cab031d931e07c2cb6e4e",
   "deployer": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
   "transactions": [
     {
@@ -48,7 +48,7 @@
       "initCodeDigest": "sha256:280999cea603e48c4ee08bf7adc25ed5693ccbcdce17477accf33bebe633da36"
     }
   ],
-  "maximumGasBudgetWei": "198748800000000",
+  "maximumGasBudgetWei": "238498560000000",
   "signingRequirements": [
     "recheck-chain-97",
     "recheck-current-nonce-107",
@@ -60,5 +60,5 @@
   ],
   "transactionOccurred": false,
   "safety": "Unsigned packet only. No private key, wallet request, signature or transaction broadcast mechanism.",
-  "packetDigest": "sha256:2a6a7af28b7bea456478c61c23263a343aab4400220bc6cc71326faf54b47ce1"
+  "packetDigest": "sha256:db283d19e1a213cab4b5f9d890151ee885fbd8ff71b9bb7e21fbc2c32054269d"
 }
