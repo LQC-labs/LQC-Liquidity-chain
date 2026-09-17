@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_LENDING_STAGE2_DEPLOYMENT_REVIEW",
+  "status": "AWAITING_EXPLICIT_DEPLOYMENT_APPROVAL",
+  "network": {
+    "name": "BSC Testnet",
+    "chainId": 97
+  },
+  "manifestDigest": "sha256:4aadaf0967412ba2c8ebf692a597fa22666fc08b942113cf89d69bfc75eb1d18",
+  "configPreflightDigest": "sha256:34ec83bcbc2f936b67ee02872339428b6c1fd6351a26fe5d49828c1b1da7d6d9",
+  "stage1VerificationDigest": "sha256:7cf2d78ab646610051ba9c386382faee5df29e9591db05b9fe78a758160d2ba3",
+  "preflightDigest": "sha256:1c8292fcad747a19c915f13c57b75a807096faa7d70cf632e36a0f739b478caf",
+  "canonicalBlock": {
+    "number": 131551303,
+    "hash": "0x2dfaa3f9255e452c184db5b5b1cba632f75386ae0734883a017c9f3b98c08dd0"
+  },
+  "deployer": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
+  "dependencies": {
+    "oracleManager": "0xcCf1B865d763Ed77558F4c8758B3926b5417DF6b",
+    "interestRateModel": "0xd7abc17e2EA4953C6dA495010fc1022C4d34F3f2"
+  },
+  "deployments": [
+    {
+      "order": 1,
+      "contract": "LQCLendingMarketRegistry",
+      "nonce": "107",
+      "predictedAddress": "0x39e38fA7D944687bc210B00529091dA6a14dF699",
+      "expectedBindings": {
+        "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+        "guardian": "0xDc8003a7046be67F257D294b2680C20988A6bC2B",
+        "oracle": "0xcCf1B865d763Ed77558F4c8758B3926b5417DF6b"
+      },
+      "initCodeDigest": "sha256:e3ad32bb38950b491b7379cc8f27e6cdb9d3b483223b08cba8cb556ae58f2d49",
+      "initCodeBytes": 4579,
+      "conservativeGas": "1004692",
+      "approvedGasLimit": "1205631",
+      "transactionValue": "0"
+    },
+    {
+      "order": 2,
+      "contract": "LQCLendingInterestIndex",
+      "nonce": "108",
+      "predictedAddress": "0x09980642462A9EF2b17d0da9c482b59031a2636F",
+      "expectedBindings": {
+        "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+        "rateModel": "0xd7abc17e2EA4953C6dA495010fc1022C4d34F3f2",
+        "core": "0x0000000000000000000000000000000000000000"
+      },
+      "initCodeDigest": "sha256:280999cea603e48c4ee08bf7adc25ed5693ccbcdce17477accf33bebe633da36",
+      "initCodeBytes": 2965,
+      "conservativeGas": "651547",
+      "approvedGasLimit": "781857",
+      "transactionValue": "0"
+    }
+  ],
+  "budget": {
+    "deployerBalanceWei": "999473030927407796",
+    "conservativeGasPriceWei": "100000000",
+    "totalConservativeGas": "1656239",
+    "totalApprovedGasLimit": "1987488",
+    "maximumGasBudgetWei": "198748800000000",
+    "maximumGasBudgetTbnb": "0.0001987488"
+  },
+  "approvalScope": "Exactly two zero-value CREATE transactions in listed nonce order. Any changed block, nonce, address, init code, gas, dependency binding or RPC state requires a new review.",
+  "transactionOccurred": false,
+  "safety": "Human review only. No wallet, key, signature, deployment, token movement, configuration or transaction broadcast.",
+  "reviewDigest": "sha256:ca2dc1cc8b8ad2e5e3d303f384d7c464cbe42076ef4c3abe99c9e8a4cbf3daaf"
+}
