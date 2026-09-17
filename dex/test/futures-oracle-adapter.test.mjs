@@ -83,6 +83,47 @@ describe("LQC Futures Aggregator Oracle Adapter", function () {
     await assert.rejects(adapter.getPrice(await token.getAddress()));
   });
 
+  it("accepts primary and reference feeds within configured deviation", async function () {
+    const { adapter, feed } = await fixture(8);
+    const reference = await deploy(owner, "MockAggregatorV3", "futures/mocks/MockAggregatorV3", [8]);
+    const now = BigInt((await provider.getBlock("latest")).timestamp);
+    await (await feed.setRoundData(10, 100n * 10n ** 8n, now, 10)).wait();
+    await (await reference.setRoundData(10, 99n * 10n ** 8n, now, 10)).wait();
+    await (await adapter.setCircuitBreaker(await token.getAddress(), await reference.getAddress(), 200)).wait();
+    const [price] = await adapter.getPrice(await token.getAddress());
+    assert.equal(price, ethers.parseEther("100"));
+  });
+
+  it("rejects primary price beyond reference deviation", async function () {
+    const { adapter, feed } = await fixture(8);
+    const reference = await deploy(owner, "MockAggregatorV3", "futures/mocks/MockAggregatorV3", [8]);
+    const now = BigInt((await provider.getBlock("latest")).timestamp);
+    await (await feed.setRoundData(11, 110n * 10n ** 8n, now, 11)).wait();
+    await (await reference.setRoundData(11, 100n * 10n ** 8n, now, 11)).wait();
+    await (await adapter.setCircuitBreaker(await token.getAddress(), await reference.getAddress(), 500)).wait();
+    await assert.rejects(adapter.getPrice(await token.getAddress()));
+  });
+
+  it("rejects stale reference feed", async function () {
+    const { adapter, feed } = await fixture(8, 120);
+    const reference = await deploy(owner, "MockAggregatorV3", "futures/mocks/MockAggregatorV3", [8]);
+    const now = BigInt((await provider.getBlock("latest")).timestamp);
+    await (await feed.setRoundData(12, 100n * 10n ** 8n, now, 12)).wait();
+    await (await reference.setRoundData(12, 100n * 10n ** 8n, now - 121n, 12)).wait();
+    await (await adapter.setCircuitBreaker(await token.getAddress(), await reference.getAddress(), 500)).wait();
+    await assert.rejects(adapter.getPrice(await token.getAddress()));
+  });
+
+  it("rejects invalid circuit breaker configuration", async function () {
+    const { adapter, feed } = await fixture(8);
+    const reference = await deploy(owner, "MockAggregatorV3", "futures/mocks/MockAggregatorV3", [8]);
+    await assert.rejects(adapter.setCircuitBreaker(await token.getAddress(), ethers.ZeroAddress, 500));
+    await assert.rejects(adapter.setCircuitBreaker(await token.getAddress(), await feed.getAddress(), 500));
+    await assert.rejects(adapter.setCircuitBreaker(await token.getAddress(), await reference.getAddress(), 0));
+    await assert.rejects(adapter.setCircuitBreaker(await token.getAddress(), await reference.getAddress(), 5001));
+    await assert.rejects(adapter.connect(outsider).setCircuitBreaker(await token.getAddress(), await reference.getAddress(), 500));
+  });
+
   it("rejects invalid heartbeat configuration", async function () {
     const adapter = await deploy(owner, "LQCAggregatorOracleAdapter", "futures/LQCAggregatorOracleAdapter", [await owner.getAddress()]);
     const feed = await deploy(owner, "MockAggregatorV3", "futures/mocks/MockAggregatorV3", [8]);
