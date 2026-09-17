@@ -168,7 +168,9 @@ describe("LQC DEX pre-submission simulation", function () {
 
   it("checks token input and native gas funds before simulation and submission", function () {
     assert.match(app, /async function validateFunds\(transaction,value\)/);
-    assert.match(app, /executionRpc\('estimateGas',\{\.\.\.transaction,from:account\}\)/);
+    assert.match(app, /sdk\.estimateExecutionGas\(\{providers:/);
+    assert.match(app, /transaction,sender:account/);
+    assert.match(app, /calldataHash:ethers\.keccak256\(transaction\.data\)/);
     assert.match(app, /sdk\.validateTransactionFunds\(\{nativeBalance,tokenBalance,amountIn:value,estimatedGas/);
     assert.ok(app.indexOf("await validateFunds(executionTransaction,value)") < app.indexOf("await simulateExecution(executionTransaction)"));
   });

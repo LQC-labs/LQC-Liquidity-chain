@@ -23,12 +23,16 @@ This is the official dependency-ordered development sequence for LQC. It priorit
 
 ## Current position
 
-Stage 1 repository evidence has a reproducible exit gate. A minimal BSC testnet Router smoke flow has
-passed manual buy, sell, cancellation, retry, and consecutive-transaction checks, but this is only partial
-Stage 2 evidence. Full Router 2.0 deployment remains blocked until adequate tBNB, the reviewed BSC
-testnet Governance, Risk, Guardian, Treasury, and deployer addresses, and the approved V3 pool are
-available and pass on-chain validation. Gasless Policy V1 is an isolated safety foundation; actual
-sponsorship integration remains Stage 5 and must not bypass Stages 2-4.
+Stages 1-3 have repository evidence and real BSC testnet evidence for the DEX, Router 2.0, reviewed
+Safe roles, LQC Flow execution, and proof-bound execution. Some older operational records still need
+receipt, event, balance, and final-state reconciliation into one canonical evidence package.
+
+Intent V1 and Composite Intent are a separate expansion scope. Their contracts and local tooling are
+substantially implemented, but fixture-tested readiness packages are not real deployment evidence.
+No Intent V1 or Composite deployment is treated as BSC testnet complete until the actual Bond decision,
+deployment transactions, Safe bindings, Intent submission, solver quote, execution receipt, and final
+state are verified. The detailed current critical path is maintained in
+`dex/docs/OPTIMIZED_DEVELOPMENT_ROADMAP_KO.md`.
 
 ## Efficiency rules
 
@@ -88,10 +92,9 @@ LQC will compete as a verifiable global liquidity operating layer, not by copyin
 
 ## Immediate next milestone
 
-Complete Stage 1 Router-Vault-Risk-Adapter integration evidence. Then prepare Stage 2 without deploying until reviewed BSC testnet governance, risk-admin, guardian, treasury, and deployment addresses are supplied.
+Consolidate the existing Router 2.0 BSC evidence, then execute the Intent V1 testnet pilot from Bond
+selection through one verified same-chain Intent. In parallel, complete the Composite Coordinator and
+its adversarial local tests without changing the deployed IntentHub interface.
 
-Run the repository-level Stage 1 exit gate from `dex/` with `npm run gate:stage1`. The gate fails
-closed unless browser syntax checks, Solidity compilation, the complete contract/security suite, and
-the Router SDK coverage threshold all pass. Passing this gate confirms repository evidence only; it
-does not authorize deployment or replace the reviewed addresses and operational evidence required by
-Stage 2.
+Repository gates confirm local evidence only. Every wallet signature, Safe proposal, deployment, and
+value-moving transaction remains an explicit operational approval boundary.
