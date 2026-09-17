@@ -1,0 +1,16 @@
+import fs from "node:fs";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { ethers } from "ethers";
+import { canonicalDigest } from "./build-intent-reproducibility-seal.mjs";
+
+export function buildLendingStage0DeploymentReview({ manifest, preflight }) {
+  const { manifestDigest, ...manifestBody } = manifest, { preflightDigest, ...preflightBody } = preflight;
+  if (canonicalDigest(manifestBody) !== manifestDigest || canonicalDigest(preflightBody) !== preflightDigest || preflight.manifestDigest !== manifestDigest || preflight.status !== "PREFLIGHT_VERIFIED_FOR_REVIEW" || manifest.orderedActions?.length !== 4 || preflight.deployments?.length !== 4) throw new Error("Invalid Stage-0 review evidence");
+  const deployments = manifest.orderedActions.map((action, index) => { const observed = preflight.deployments[index]; if (action.id !== observed.id || action.asset !== observed.asset || action.role !== observed.role || action.initialAnswer !== observed.initialAnswer || !ethers.isAddress(observed.predictedAddress)) throw new Error("Stage-0 deployment review mismatch"); return { order: index + 1, id: action.id, asset: action.asset, role: action.role, predictedAddress: ethers.getAddress(observed.predictedAddress), owner: action.owner, decimals: action.decimals, initialAnswer: action.initialAnswer, humanPriceUsd: ethers.formatUnits(action.initialAnswer, action.decimals), conservativeGas: observed.conservativeGas, initCodeDigest: action.initCodeDigest, transactionValue: "0" }; });
+  const body = { schemaVersion: 1, recordType: "LQC_LENDING_STAGE0_DEPLOYMENT_REVIEW", status: "AWAITING_EXPLICIT_DEPLOYMENT_APPROVAL", network: manifest.network, manifestDigest, preflightDigest, canonicalBlock: { number: preflight.blockNumber, hash: preflight.blockHash }, deployer: preflight.deployer, finalOwner: manifest.governanceSafe, market: manifest.market, deployments, budget: { deployerBalanceWei: preflight.deployerBalance, requiredGasBudgetWei: preflight.requiredGasBudget, requiredGasBudgetTbnb: ethers.formatEther(preflight.requiredGasBudget), totalConservativeGas: preflight.totalConservativeGas }, approvalScope: "Exactly four zero-value CREATE transactions in listed nonce order. Any changed nonce, address, init code, gas evidence, owner, price or RPC state requires a new review.", transactionOccurred: false, safety: "Human review packet only. No wallet, key, signature, Safe proposal, deployment, token movement or transaction broadcast." };
+  return { ...body, reviewDigest: canonicalDigest(body) };
+}
+
+async function main() { const [manifestFile, preflightFile, outputFile] = process.argv.slice(2); if (!manifestFile || !preflightFile) throw new Error("Usage: node build-lending-stage0-deployment-review.mjs <manifest> <preflight> [output]"); const read = file => JSON.parse(fs.readFileSync(path.resolve(file))), result = buildLendingStage0DeploymentReview({ manifest: read(manifestFile), preflight: read(preflightFile) }); if (outputFile) fs.writeFileSync(path.resolve(outputFile), `${JSON.stringify(result, null, 2)}\n`, { flag: "wx" }); else console.log(JSON.stringify(result, null, 2)); }
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main();

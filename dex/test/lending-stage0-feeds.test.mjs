@@ -6,6 +6,7 @@ import { preflightLendingStage0Feeds } from "../scripts/preflight-lending-stage0
 import { verifyLendingStage0Feeds } from "../scripts/verify-lending-stage0-feeds.mjs";
 import { canonicalDigest } from "../scripts/build-intent-reproducibility-seal.mjs";
 import { finalizeLendingStage0Config } from "../scripts/finalize-lending-stage0-config.mjs";
+import { buildLendingStage0DeploymentReview } from "../scripts/build-lending-stage0-deployment-review.mjs";
 
 const artifact = JSON.parse(fs.readFileSync(new URL("../artifacts/contracts/lending/LQCTestnetPriceFeed.sol/LQCTestnetPriceFeed.json", import.meta.url)));
 const deployer = "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB", blockHash = ethers.id("stage0-block");
@@ -36,6 +37,14 @@ describe("Lending Stage-0 four-feed preparation", function () {
     const manifest = await buildLendingStage0FeedManifest({ artifact });
     await assert.rejects(preflightLendingStage0Feeds({ providers: [provider(), provider({ nonce: 11 })], manifest, deployer }), /disagreement/);
     await assert.rejects(preflightLendingStage0Feeds({ providers: [provider({ balance: 1n }), provider({ balance: 1n })], manifest, deployer }), /Insufficient/);
+  });
+  it("builds one explicit human approval packet for four zero-value deployments", async function () {
+    const c = await verificationContext(), review = buildLendingStage0DeploymentReview({ manifest: c.manifest, preflight: c.preflight });
+    assert.equal(review.status, "AWAITING_EXPLICIT_DEPLOYMENT_APPROVAL"); assert.equal(review.deployments.length, 4); assert.deepEqual(review.deployments.map(x => x.humanPriceUsd), ["1.0", "0.99", "600.0", "594.0"]); assert.ok(review.deployments.every(x => x.transactionValue === "0")); assert.equal(review.transactionOccurred, false);
+  });
+  it("invalidates deployment review after address, price, order or preflight mutation", async function () {
+    const c = await verificationContext();
+    for (const mutate of [p => { p.deployments[0].predictedAddress = ethers.ZeroAddress; }, p => { p.deployments[0].initialAnswer = "2"; }, p => { [p.deployments[0], p.deployments[1]] = [p.deployments[1], p.deployments[0]]; }, p => { p.totalConservativeGas = "1"; }]) { const changed = structuredClone(c.preflight); mutate(changed); assert.throws(() => buildLendingStage0DeploymentReview({ manifest: c.manifest, preflight: changed }), /Invalid|mismatch/); }
   });
   it("verifies four canonical deployments and their exact initialized state", async function () {
     const context = await verificationContext(), result = await verifyLendingStage0Feeds({ providers: [verificationProvider(context), verificationProvider(context)], manifest: context.manifest, preflight: context.preflight, transactionHashes: context.hashes });
