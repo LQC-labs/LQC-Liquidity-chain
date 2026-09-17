@@ -3,6 +3,7 @@
 // DEX Router remain sibling services and do not own each other's streams.
 
 import { getExchangeSymbolInfo } from './exchange-info.js';
+import { recoverySnapshotPath } from './api-contract.js';
 
 export const WS_SCHEMA_VERSION = '1.0.0-demo';
 function normalizeSymbol(symbol) { const value = String(symbol || '').trim().toUpperCase(); if (!value || !getExchangeSymbolInfo(value)) throw new Error('UNKNOWN_MARKET'); return value; }
@@ -38,15 +39,13 @@ export function detectSequenceGap(previousSequence, incomingSequence) {
   return Object.freeze({ gap: previous > 0 && incoming !== previous + 1, expected: previous > 0 ? previous + 1 : incoming, received: incoming, duplicateOrOld: previous > 0 && incoming <= previous });
 }
 
-// Converts sequence validation into an explicit transport-neutral recovery
-// contract. On a gap, clients must stop incremental application, fetch the
-// indicated REST snapshot, rebuild state, then resume from the next WS event.
+// Sequence recovery consumes the shared transport-neutral API contract rather
+// than duplicating REST version/prefix knowledge inside the WebSocket adapter.
 export function sequenceRecovery(previousSequence, incomingSequence, { channel, symbol }) {
   const key = normalizeSymbol(symbol); const normalizedChannel = normalizeChannel(channel);
   const check = detectSequenceGap(previousSequence, incomingSequence);
   if (!check.gap) return Object.freeze({ ...check, action: 'APPLY_EVENT', snapshot: null });
-  const snapshotByChannel = { depth: `/api/v1/depth?symbol=${key}`, trade: `/api/v1/trades?symbol=${key}`, markPrice: `/api/v1/markPrice?symbol=${key}`, ticker: `/api/v1/ticker/24hr?symbol=${key}`, bookTicker: `/api/v1/ticker/24hr?symbol=${key}` };
-  return Object.freeze({ ...check, action: 'REBUILD_FROM_REST', snapshot: snapshotByChannel[normalizedChannel] || `/api/v1/exchangeInfo?symbol=${key}` });
+  return Object.freeze({ ...check, action: 'REBUILD_FROM_REST', snapshot: recoverySnapshotPath(normalizedChannel, key) });
 }
 
 // Public streams include ticker, bookTicker, depth, trade, kline and markPrice.
