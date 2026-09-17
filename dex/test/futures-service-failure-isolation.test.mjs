@@ -38,6 +38,45 @@ describe('LQC Flow sibling failure isolation', () => {
     assert.equal(events[0].domain, 'FUTURES_ENGINE');
   });
 
+  it('isolates an async DEX rejection without invoking Futures Engine', async () => {
+    const events = [];
+    let futuresCalls = 0;
+    const original = new Error('DEX_ASYNC_DOWN');
+    const boundary = createLqcFlowServiceBoundary({
+      dexRouter: { async quote() { throw original; } },
+      futuresEngine: { placeOrder() { futuresCalls += 1; return true; } },
+      sharedServices: services(events)
+    });
+    await assert.rejects(boundary.dex.quote('LQCUSDT'), error => error === original);
+    assert.equal(futuresCalls, 0);
+    assert.deepEqual(events[0], { type: 'SERVICE_BOUNDARY_FAILURE', domain: 'DEX_ROUTER', operation: 'quote', code: 'DEX_ASYNC_DOWN' });
+  });
+
+  it('isolates an async Futures rejection without invoking DEX Router', async () => {
+    const events = [];
+    let dexCalls = 0;
+    const original = new Error('FUTURES_ASYNC_DOWN');
+    const boundary = createLqcFlowServiceBoundary({
+      dexRouter: { quote() { dexCalls += 1; return {}; } },
+      futuresEngine: { async placeOrder() { throw original; } },
+      sharedServices: services(events)
+    });
+    await assert.rejects(boundary.futures.placeOrder({ symbol: 'LQCUSDT' }), error => error === original);
+    assert.equal(dexCalls, 0);
+    assert.deepEqual(events[0], { type: 'SERVICE_BOUNDARY_FAILURE', domain: 'FUTURES_ENGINE', operation: 'placeOrder', code: 'FUTURES_ASYNC_DOWN' });
+  });
+
+  it('preserves the original async domain error when Monitoring also fails', async () => {
+    const original = new Error('DEX_ASYNC_PRIMARY_FAILURE');
+    const boundary = createLqcFlowServiceBoundary({
+      dexRouter: { async quote() { throw original; } },
+      futuresEngine: { placeOrder() { return true; } },
+      sharedServices: services([], () => { throw new Error('MONITORING_DOWN'); })
+    });
+    await assert.rejects(boundary.dex.quote('LQCUSDT'), error => error === original);
+    assert.equal(boundary.futures.placeOrder({ symbol: 'LQCUSDT' }), true);
+  });
+
   it('preserves the original domain error when Monitoring also fails', () => {
     const original = new Error('DEX_PRIMARY_FAILURE');
     const boundary = createLqcFlowServiceBoundary({
