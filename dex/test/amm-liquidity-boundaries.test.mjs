@@ -15,7 +15,7 @@ describe("LQC official 1/2 Liquidity boundaries",function(){
     provider=new ethers.BrowserProvider(ganache.provider({logging:{quiet:true}}));
     owner=await provider.getSigner(0);
     factory=await deploy("LQCFlowFactory","LQCFlowFactory",owner,owner.address);
-    wbnb=await deploy("WBNB","WBNB",owner);
+    wbnb=await deploy("MockWBNB","mocks/MockWBNB",owner);
     router=await deploy("LQCFlowRouter","LQCFlowRouter",owner,factory.target,wbnb.target);
     tokenA=await deploy("MockERC20","mocks/MockERC20",owner,"Token A","TKA");
     tokenB=await deploy("MockERC20","mocks/MockERC20",owner,"Token B","TKB");
