@@ -4,38 +4,41 @@
 import { calculateTradingFee, splitTradingFee } from './fee-engine.js';
 
 export function createDemoFeeController({ account, schedule, feeShares = undefined, insuranceFundService = undefined }) {
-  if (!account || typeof account.settleTradingFee !== 'function') throw new Error('MARGIN_ACCOUNT_REQUIRED');
+  if (!account || typeof account.settleTradingFee !== 'function' || typeof account.snapshot !== 'function' || typeof account.restoreSnapshot !== 'function') throw new Error('MARGIN_ACCOUNT_REQUIRED');
   if (!schedule) throw new Error('TRADING_FEE_SCHEDULE_REQUIRED');
   if (insuranceFundService !== undefined && (!insuranceFundService || typeof insuranceFundService.snapshot !== 'function' || typeof insuranceFundService.previewDeposit !== 'function' || typeof insuranceFundService.commitDeposit !== 'function')) throw new Error('INVALID_INSURANCE_FUND_SERVICE');
 
-  function insuranceSnapshot() {
-    return insuranceFundService?.snapshot();
-  }
+  function insuranceSnapshot() { return insuranceFundService?.snapshot(); }
 
   function settleTrade({ quantity, price, liquidityRole }) {
     const calculated = calculateTradingFee({ quantity, price, liquidityRole, schedule });
     const allocation = splitTradingFee(calculated.fee, feeShares);
-
     if (allocation.insuranceAmount > 0 && !insuranceFundService) throw new Error('INSURANCE_FUND_SERVICE_REQUIRED');
 
-    // Preview the immutable fund transition before touching the account. This
-    // validates the deposit while keeping the shared service unchanged.
     const nextInsuranceFund = allocation.insuranceAmount > 0
       ? insuranceFundService.previewDeposit(allocation.insuranceAmount)
       : insuranceFundService?.snapshot();
 
-    // Account debit is the fallible ledger operation. Only after it succeeds do
-    // we commit the already-validated shared Insurance Fund transition.
+    const accountBefore = account.snapshot();
     const accountSnapshot = account.settleTradingFee(calculated.fee);
-    if (allocation.insuranceAmount > 0) insuranceFundService.commitDeposit(nextInsuranceFund);
+    try {
+      if (allocation.insuranceAmount > 0) insuranceFundService.commitDeposit(nextInsuranceFund);
+    } catch (error) {
+      try {
+        account.restoreSnapshot(accountBefore, accountSnapshot);
+      } catch (rollbackError) {
+        const consistencyError = new Error('FEE_SETTLEMENT_ROLLBACK_FAILED');
+        consistencyError.cause = error;
+        consistencyError.rollbackError = rollbackError;
+        throw consistencyError;
+      }
+      const settlementError = new Error('FEE_INSURANCE_COMMIT_FAILED');
+      settlementError.cause = error;
+      settlementError.rolledBack = true;
+      throw settlementError;
+    }
 
-    return Object.freeze({
-      ...calculated,
-      ...allocation,
-      account: accountSnapshot,
-      insuranceFund: insuranceFundService?.snapshot(),
-      settledAt: new Date().toISOString()
-    });
+    return Object.freeze({ ...calculated, ...allocation, account: accountSnapshot, insuranceFund: insuranceFundService?.snapshot(), settledAt: new Date().toISOString() });
   }
 
   return Object.freeze({ settleTrade, insuranceSnapshot });
