@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_LENDING_STAGE1_DEPLOYMENT_REVIEW",
+  "status": "AWAITING_EXPLICIT_DEPLOYMENT_APPROVAL",
+  "network": {
+    "name": "BSC Testnet",
+    "chainId": 97
+  },
+  "manifestDigest": "sha256:481f45aa7792bc9f4445838bc2f7c18be440bbc0871040d8da932bdbd08ea618",
+  "configPreflightDigest": "sha256:34ec83bcbc2f936b67ee02872339428b6c1fd6351a26fe5d49828c1b1da7d6d9",
+  "preflightDigest": "sha256:ac7b05ed0514a471e2e9942c2cf29670324274d7fedfc8e99070085ed8109b48",
+  "canonicalBlock": {
+    "number": 131536271,
+    "hash": "0x36f6f3f883d6d1168a17568af9f2fc6b128582d9f241d2f24da3c893c395a276"
+  },
+  "deployer": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
+  "deployments": [
+    {
+      "order": 1,
+      "contract": "LQCOracleManager",
+      "nonce": "105",
+      "predictedAddress": "0xcCf1B865d763Ed77558F4c8758B3926b5417DF6b",
+      "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+      "guardian": "0xDc8003a7046be67F257D294b2680C20988A6bC2B",
+      "initCodeDigest": "sha256:8a43908a9f998bbfa32cc909e17211a9c8304ec62accb1c5e18a4160441b70cd",
+      "initCodeBytes": 3206,
+      "conservativeGas": "724190",
+      "approvedGasLimit": "869028",
+      "transactionValue": "0"
+    },
+    {
+      "order": 2,
+      "contract": "LQCInterestRateModel",
+      "nonce": "106",
+      "predictedAddress": "0xd7abc17e2EA4953C6dA495010fc1022C4d34F3f2",
+      "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+      "guardian": "0xDc8003a7046be67F257D294b2680C20988A6bC2B",
+      "initCodeDigest": "sha256:e5c8cad51f75a978ff3322e41bdb8834dae9327d32bec171e224539e55332d2f",
+      "initCodeBytes": 3004,
+      "conservativeGas": "679428",
+      "approvedGasLimit": "815314",
+      "transactionValue": "0"
+    }
+  ],
+  "budget": {
+    "deployerBalanceWei": "699612055927407796",
+    "conservativeGasPriceWei": "100000000",
+    "totalConservativeGas": "1403618",
+    "totalApprovedGasLimit": "1684342",
+    "maximumGasBudgetWei": "168434200000000",
+    "maximumGasBudgetTbnb": "0.0001684342"
+  },
+  "approvalScope": "Exactly two zero-value CREATE transactions in listed nonce order. Any changed block, nonce, address, init code, gas, owner, guardian or RPC state requires a new review.",
+  "transactionOccurred": false,
+  "safety": "Human review only. No wallet, key, signature, deployment, token movement or transaction broadcast.",
+  "reviewDigest": "sha256:cb6c10ded28b9e85247fc413a8ea4e2a64a0755555b547652fe89385bd8af589"
+}
