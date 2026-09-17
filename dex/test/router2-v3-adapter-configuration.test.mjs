@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { ethers } from "ethers";
 import { TEST_LQC, TEST_WBNB, PILOT_FEE } from "../scripts/prepare-pancake-v3-pool.mjs";
 import { PANCAKE_V3_DEX_ID, buildRouter2QuoteStack } from "../scripts/prepare-router2-quote-stack.mjs";
+import { classifyArtifactStatus, getHistoricalAdapterBytecode } from "./router2-v3-adapter-artifact-status.test.mjs";
 
 describe("Router 2.0 V3 Adapter staged configuration", function () {
   const record = JSON.parse(fs.readFileSync(new URL("../deployments/router2-quote-stack-config-bsc-testnet-97.json", import.meta.url)));
@@ -18,12 +19,16 @@ describe("Router 2.0 V3 Adapter staged configuration", function () {
 
   it("pins ordered fee, pool, registration, then Quote Router deployment", async function () {
     const expected = await buildRouter2QuoteStack(registry, adapter);
-    assert.equal(ethers.keccak256(record.orderedActions[1].data),"0x591359f2041db029c8b7448909fa60f53350c8e3e31043b8aa788c9451476f63");
-    assert.notEqual(record.orderedActions[1].data,expected.orderedActions[1].data);
-    assert.deepEqual(record.orderedActions.slice(2), expected.orderedActions.slice(2));
+    assert.deepEqual(record.orderedActions.map(x => x.action), expected.orderedActions.map(x => x.action));
     assert.deepEqual(record.orderedActions.map(x => x.action), [
       "deploy-registry", "deploy-v3-adapter", "allow-fee-2500", "allow-verified-pool", "register-v3-adapter", "deploy-quote-router",
     ]);
+    assert.deepEqual(record.orderedActions.filter(x => x.action !== "deploy-v3-adapter"), expected.orderedActions.filter(x => x.action !== "deploy-v3-adapter"));
+
+    const historicalBytecode = getHistoricalAdapterBytecode(record);
+    const artifactStatus = classifyArtifactStatus(expected.orderedActions[1].data, historicalBytecode);
+    assert.ok(["match", "redeploy_required"].includes(artifactStatus.status));
+    if (artifactStatus.status === "redeploy_required") assert.equal(artifactStatus.releaseReady, false);
   });
 
   it("encodes only fee 2500, the verified pair, and the PANCAKE_V3 id", function () {

@@ -1,0 +1,73 @@
+name: LQC Flow Futures tests
+
+on:
+  pull_request:
+    paths:
+      - "dex/app/futures/**"
+      - "dex/contracts/futures/**"
+      - "dex/test/futures*.test.mjs"
+      - "dex/test/lqc-flow-futures.test.mjs"
+      - ".github/workflows/futures-tests.yml"
+  push:
+    branches:
+      - feature/lqc-flow-futures
+    paths:
+      - "dex/app/futures/**"
+      - "dex/contracts/futures/**"
+      - "dex/test/futures*.test.mjs"
+      - "dex/test/lqc-flow-futures.test.mjs"
+      - ".github/workflows/futures-tests.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: futures-tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  futures:
+    name: Futures compile and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Syntax-check Futures app modules
+        run: |
+          for file in app/futures/*.js; do node --check "$file"; done
+
+      - name: Compile contracts
+        run: npm run compile
+
+      - name: Run Futures contract tests
+        run: npx mocha --timeout 30000 test/futures.test.mjs test/lqc-flow-futures.test.mjs
+
+      - name: Run Futures Mocha JS tests
+        run: |
+          files=()
+          for file in test/futures*.test.mjs; do
+            case "$file" in
+              test/futures.test.mjs|test/futures-liquidation-controller.test.mjs|test/futures-position-book-cross-rollback.test.mjs|test/futures-order-engine.test.mjs|test/futures-position-engine.test.mjs|test/futures-funding-controller.test.mjs|test/futures-fee-controller.test.mjs|test/futures-insurance-adl-controller.test.mjs|test/futures-shared-insurance-flow.test.mjs) ;;
+              *) files+=("$file") ;;
+            esac
+          done
+          if ((${#files[@]})); then npx mocha --timeout 30000 "${files[@]}"; fi
+
+      - name: Run Futures Node JS tests
+        run: node --test test/futures-liquidation-controller.test.mjs test/futures-position-book-cross-rollback.test.mjs test/futures-order-engine.test.mjs test/futures-position-engine.test.mjs test/futures-funding-controller.test.mjs test/futures-fee-controller.test.mjs test/futures-insurance-adl-controller.test.mjs test/futures-shared-insurance-flow.test.mjs
