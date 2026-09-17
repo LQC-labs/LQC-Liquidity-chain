@@ -18,7 +18,7 @@ function state(symbol, markPrice, extra = {}) {
 }
 
 describe('Futures UI market data session', () => {
-  it('stores REST depth, trades, oracle and promotes stream updates to LIVE', async () => {
+  it('stores REST depth, trades, oracle and promotes mark-price stream updates to LIVE without clearing REST book data', async () => {
     const starts = [];
     const view = {
       stop() {},
@@ -39,12 +39,14 @@ describe('Futures UI market data session', () => {
     assert.deepEqual(rest.oracle, { healthy: true });
     assert.deepEqual(starts, ['BTCUSDT']);
 
-    session.onViewUpdate(state('BTCUSDT', 102, { live: true }));
+    session.onViewUpdate({ symbol: 'BTCUSDT', markPrice: 102, live: true });
     const live = session.snapshot();
     assert.equal(live.source, 'LIVE');
     assert.equal(live.markPrice, 102);
     assert.deepEqual(live.bids, [[99, 2]]);
+    assert.deepEqual(live.asks, [[101, 3]]);
     assert.equal(live.trades.length, 1);
+    assert.deepEqual(live.oracle, { healthy: true });
   });
 
   it('does not start a stale symbol after a newer selection wins', async () => {
