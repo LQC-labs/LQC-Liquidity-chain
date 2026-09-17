@@ -21,6 +21,11 @@ function artifact(name, source) {
   return JSON.parse(fs.readFileSync(path.resolve(import.meta.dirname, `../artifacts/contracts/${source}.sol/${name}.json`), "utf8"));
 }
 
+function normalizeImmutableAddress(code, address) {
+  const needle = ethers.getAddress(address).slice(2).toLowerCase();
+  return `0x${code.slice(2).toLowerCase().split(needle).join("0".repeat(40))}`;
+}
+
 async function bindings(provider, address, definition, blockNumber) {
   const iface = new ethers.Interface(definition.abi);
   const result = {};
@@ -62,10 +67,20 @@ export async function verifyLendingStage2AcrossRpcs({ providers, manifest, prefl
     if (!block?.hash || block.hash.toLowerCase() !== receipt.blockHash.toLowerCase()) throw new Error("Lending Stage-2 canonical block mismatch");
     const confirmations = heads[rpcIndex] - receipt.blockNumber + 1;
     if (confirmations < minConfirmations) throw new Error("Lending Stage-2 finality is insufficient");
-    const code = await provider.getCode(receipt.contractAddress, receipt.blockNumber);
+    // Public BSC testnet RPCs prune historical state and can return
+    // "missing trie node" for a receipt-block state read. The receipt and its
+    // canonical block are still checked above; runtime and dependency bindings
+    // are checked against the current finalized head on every independent RPC.
+    const code = await provider.getCode(receipt.contractAddress);
     const expectedRuntime = artifact(action.contract, definition.artifact).deployedBytecode;
-    if (sha256(code) !== sha256(expectedRuntime)) throw new Error("Lending Stage-2 runtime bytecode mismatch");
-    const contractBindings = await bindings(provider, receipt.contractAddress, definition, receipt.blockNumber);
+    const immutableAddress = action.contract === "LQCLendingMarketRegistry"
+      ? manifest.dependencies.oracleManager
+      : manifest.dependencies.interestRateModel;
+    if (
+      sha256(code) !== sha256(expectedRuntime)
+      && sha256(normalizeImmutableAddress(code, immutableAddress)) !== sha256(expectedRuntime)
+    ) throw new Error("Lending Stage-2 runtime bytecode mismatch");
+    const contractBindings = await bindings(provider, receipt.contractAddress, definition);
     if (action.contract === "LQCLendingMarketRegistry" && (contractBindings.owner.toLowerCase() !== manifest.roles.governanceSafe.toLowerCase() || contractBindings.guardian.toLowerCase() !== manifest.roles.guardianSafe.toLowerCase() || contractBindings.oracle.toLowerCase() !== manifest.dependencies.oracleManager.toLowerCase())) throw new Error("Lending Stage-2 dependency binding mismatch");
     if (action.contract === "LQCLendingInterestIndex" && (contractBindings.owner.toLowerCase() !== manifest.roles.governanceSafe.toLowerCase() || contractBindings.rateModel.toLowerCase() !== manifest.dependencies.interestRateModel.toLowerCase() || contractBindings.core !== ethers.ZeroAddress)) throw new Error("Lending Stage-2 dependency binding mismatch");
     return { transactionHash: hash.toLowerCase(), transactionIndex: receipt.index, blockNumber: receipt.blockNumber, blockHash: receipt.blockHash.toLowerCase(), contractAddress: ethers.getAddress(receipt.contractAddress), runtimeCodeDigest: sha256(code), bindings: contractBindings, confirmations };
@@ -74,7 +89,7 @@ export async function verifyLendingStage2AcrossRpcs({ providers, manifest, prefl
   const stripConfirmations = value => { const { confirmations, ...rest } = value; return rest; };
   for (const rpc of observations.slice(1)) for (let index = 0; index < 2; index++) if (canonicalDigest(stripConfirmations(rpc[index])) !== canonicalDigest(stripConfirmations(observations[0][index]))) throw new Error("Lending Stage-2 verification RPC disagreement");
   const deployments = observations[0].map((value, index) => ({ id: manifest.orderedActions[index].id, contract: manifest.orderedActions[index].contract, initCodeDigest: manifest.orderedActions[index].initCodeDigest, ...value, confirmations: Math.min(...observations.map(rpc => rpc[index].confirmations)) }));
-  const body = { schemaVersion: 1, recordType: "LQC_LENDING_STAGE2_DEPLOYMENT_VERIFICATION", status: "VERIFIED_LENDING_STAGE2_DEPLOYMENT", network: { name: "BSC Testnet", chainId: 97 }, manifestDigest: manifest.manifestDigest, preflightDigest: preflight.preflightDigest, deployer: ethers.getAddress(preflight.deployer), startingNonce: preflight.deployerNonce, rpcCount: providers.length, minConfirmations, deployments, transactionOccurred: true, safety: "Verification only. No wallet, key, signature, approval, deployment, configuration, transfer, market activation, or transaction." };
+  const body = { schemaVersion: 1, recordType: "LQC_LENDING_STAGE2_DEPLOYMENT_VERIFICATION", status: "VERIFIED_LENDING_STAGE2_DEPLOYMENT", network: { name: "BSC Testnet", chainId: 97 }, manifestDigest: manifest.manifestDigest, preflightDigest: preflight.preflightDigest, deployer: ethers.getAddress(preflight.deployer), startingNonce: preflight.deployerNonce, rpcCount: providers.length, minConfirmations, stateReadMode: "latest finalized RPC heads after canonical receipt verification", deployments, transactionOccurred: true, safety: "Verification only. No wallet, key, signature, approval, deployment, configuration, transfer, market activation, or transaction." };
   return { ...body, verificationDigest: canonicalDigest(body) };
 }
 
