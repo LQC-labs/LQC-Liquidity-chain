@@ -20,7 +20,7 @@ describe('Shared Oracle/Price service', () => {
     assert.equal(result.symbol, 'BTCUSDT');
     assert.equal(result.price, 100);
     assert.equal(result.sourceCount, 3);
-    assert.equal(service.getMarkPrice('BTCUSDT'), 100);
+    assert.equal(service.getMarkPrice('BTCUSDT', { now }), 100);
   });
 
   test('rejects stale sources before publishing a price', () => {
@@ -29,7 +29,7 @@ describe('Shared Oracle/Price service', () => {
       { id: 'b', price: 100, timestamp: now - 60_000 }
     ] }) });
     assert.throws(() => service.refresh('BTCUSDT', { now }), /INSUFFICIENT_FRESH_ORACLE_SOURCES/);
-    assert.equal(service.getMarkPrice('BTCUSDT'), null);
+    assert.equal(service.getMarkPrice('BTCUSDT', { now }), null);
   });
 
   test('rejects excessive source disagreement', () => {
@@ -41,13 +41,11 @@ describe('Shared Oracle/Price service', () => {
   });
 
   test('circuit breaker blocks a sudden aggregate price move and preserves last price', () => {
-    const sources = {
-      BTCUSDT: [
-        { id: 'a', price: 100, timestamp: now },
-        { id: 'b', price: 100, timestamp: now },
-        { id: 'c', price: 100, timestamp: now }
-      ]
-    };
+    const sources = { BTCUSDT: [
+      { id: 'a', price: 100, timestamp: now },
+      { id: 'b', price: 100, timestamp: now },
+      { id: 'c', price: 100, timestamp: now }
+    ] };
     const service = createOraclePriceService({ sourceProvider: providerFor(sources), maxMoveRatio: 0.1 });
     service.refresh('BTCUSDT', { now });
     sources.BTCUSDT = [
@@ -56,7 +54,7 @@ describe('Shared Oracle/Price service', () => {
       { id: 'c', price: 130, timestamp: now + 1000 }
     ];
     assert.throws(() => service.refresh('BTCUSDT', { now: now + 1000 }), /ORACLE_PRICE_CIRCUIT_BREAKER/);
-    assert.equal(service.getMarkPrice('BTCUSDT'), 100);
+    assert.equal(service.getMarkPrice('BTCUSDT', { now: now + 1000 }), 100);
   });
 
   test('production mode requires at least three fresh sources', () => {
@@ -81,5 +79,36 @@ describe('Shared Oracle/Price service', () => {
     unsubscribe();
     assert.equal(events.length, 1);
     assert.equal(events[0].price, 200);
+  });
+
+  test('blocks stale cached prices on normal reads and exposes health status', () => {
+    const service = createOraclePriceService({
+      sourceProvider: providerFor({ BTCUSDT: [
+        { id: 'a', price: 100, timestamp: now },
+        { id: 'b', price: 100, timestamp: now }
+      ] }),
+      maxReadAgeMs: 30_000
+    });
+    service.refresh('BTCUSDT', { now });
+    assert.equal(service.getMarkPrice('BTCUSDT', { now: now + 30_000 }), 100);
+    assert.equal(service.getMarkPrice('BTCUSDT', { now: now + 30_001 }), null);
+    const status = service.getStatus('BTCUSDT', { now: now + 30_001 });
+    assert.equal(status.available, true);
+    assert.equal(status.healthy, false);
+    assert.equal(status.stale, true);
+    assert.equal(status.ageMs, 30_001);
+  });
+
+  test('allows stale price only through explicit diagnostic override', () => {
+    const service = createOraclePriceService({
+      sourceProvider: providerFor({ BTCUSDT: [
+        { id: 'a', price: 100, timestamp: now },
+        { id: 'b', price: 100, timestamp: now }
+      ] }),
+      maxReadAgeMs: 1_000
+    });
+    service.refresh('BTCUSDT', { now });
+    assert.equal(service.getMarkPrice('BTCUSDT', { now: now + 1_001 }), null);
+    assert.equal(service.getMarkPrice('BTCUSDT', { now: now + 1_001, allowStale: true }), 100);
   });
 });
