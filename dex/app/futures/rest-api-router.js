@@ -2,8 +2,10 @@
 // Transport-independent boundary: Shared Market Data/Oracle stays separate from
 // both DEX Router and Futures Engine; HTTP transports consume this API adapter.
 
-export const REST_API_VERSION = 'v1';
-export const REST_API_PREFIX = `/api/${REST_API_VERSION}`;
+import { API_VERSION, API_PREFIX } from './api-contract.js';
+
+export const REST_API_VERSION = API_VERSION;
+export const REST_API_PREFIX = API_PREFIX;
 
 const STATUS_BY_CODE = Object.freeze({ UNKNOWN_MARKET: 404, MARK_PRICE_UNAVAILABLE: 503, ORACLE_STATUS_UNAVAILABLE: 503, DEPTH_UNAVAILABLE: 503, TRADES_UNAVAILABLE: 503, KLINES_UNAVAILABLE: 503, STREAM_UNAVAILABLE: 503, INVALID_LIMIT: 400, INVALID_KLINE_INTERVAL: 400, METHOD_NOT_ALLOWED: 405, ROUTE_NOT_FOUND: 404 });
 function requestId() { return `lqc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`; }
