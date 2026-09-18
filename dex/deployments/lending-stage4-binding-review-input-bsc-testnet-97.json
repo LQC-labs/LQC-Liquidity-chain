@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_LENDING_STAGE4_BINDING_REVIEW_INPUT",
+  "status": "READ_ONLY_REVIEW_PREPARATION",
+  "network": {
+    "name": "BSC Testnet",
+    "chainId": 97
+  },
+  "verifiedCore": {
+    "address": "0x3a3C7303829318d4cbA955c71812679DAF5699ca",
+    "deploymentTx": "0x129653e7b54ed8ab3b75bdecb860ec9c598518f853b12a38b8bd581eb7a1ad2c"
+  },
+  "dependencies": {
+    "marketRegistry": "0x39e38fA7D944687bc210B00529091dA6a14dF699",
+    "interestIndex": "0x09980642462A9EF2b17d0da9c482b59031a2636F",
+    "oracleManager": "0xcCf1B865d763Ed77558F4c8758B3926b5417DF6b",
+    "interestRateModel": "0xd7abc17e2EA4953C6dA495010fc1022C4d34F3f2"
+  },
+  "roles": {
+    "governanceSafe": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+    "guardianSafe": "0xdc8003a7046be67f257d294b2680c20988a6bc2b",
+    "treasurySafe": "0x0771fbc76ec3e89345bbdd803d0774bbd4943103",
+    "governanceThreshold": 4,
+    "governanceOwners": 7,
+    "guardianThreshold": 3,
+    "guardianOwners": 5
+  },
+  "market": {
+    "collateralAsset": "0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc",
+    "debtAsset": "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd",
+    "collateralDecimals": 18,
+    "debtDecimals": 18,
+    "maxLtvBps": 5000,
+    "liquidationThresholdBps": 7000,
+    "liquidationBonusBps": 500,
+    "supplyCap": "1000000000000000000000",
+    "borrowCap": "900000000000000000000",
+    "minBorrow": "10000000000000000000",
+    "enabled": true
+  },
+  "orderedActions": [
+    {
+      "order": 1,
+      "actor": "governanceSafe",
+      "action": "interest-index-set-core",
+      "to": "0x09980642462A9EF2b17d0da9c482b59031a2636F",
+      "method": "setCore(address)",
+      "args": [
+        "0x3a3C7303829318d4cbA955c71812679DAF5699ca"
+      ]
+    },
+    {
+      "order": 2,
+      "actor": "governanceSafe",
+      "action": "configure-market",
+      "to": "0x39e38fA7D944687bc210B00529091dA6a14dF699",
+      "method": "configureMarket(MarketConfig)",
+      "args": [
+        "frozen market config above"
+      ]
+    },
+    {
+      "order": 3,
+      "actor": "deployer",
+      "action": "deploy-liquidation-engine",
+      "to": null,
+      "contract": "LQCLiquidationEngine",
+      "constructorArgs": [
+        "0x3a3C7303829318d4cbA955c71812679DAF5699ca"
+      ]
+    },
+    {
+      "order": 4,
+      "actor": "governanceSafe",
+      "action": "core-set-liquidation-engine",
+      "to": "0x3a3C7303829318d4cbA955c71812679DAF5699ca",
+      "method": "setLiquidationEngine(address)",
+      "args": [
+        "predicted Stage4 LiquidationEngine address"
+      ]
+    }
+  ],
+  "transactionOccurred": false,
+  "safety": "Preparation only. No signature, Safe proposal, deployment, configuration, token movement or transaction."
+}
