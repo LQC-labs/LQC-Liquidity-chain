@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_LENDING_STAGE3_MULTI_RPC_PREFLIGHT",
+  "status": "PREFLIGHT_VERIFIED_FOR_REVIEW",
+  "network": {
+    "name": "BSC Testnet",
+    "chainId": 97
+  },
+  "manifestDigest": "sha256:678235215a6f7dbe75f355ad20d92a1fe01636cf5eaedcd4450626e0045bef33",
+  "stage2VerificationDigest": "sha256:6719957a842f502eba68f564d74297aa53cfd46d50879dc2dad522b5e245e477",
+  "deployer": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
+  "rpcCount": 2,
+  "rpcHeads": [
+    {
+      "blockNumber": 131566191,
+      "blockHash": "0xd1e8be74a613a38eaea8e8f3f5a2872b517c31ac149d94db41370cb646b53c31"
+    },
+    {
+      "blockNumber": 131566234,
+      "blockHash": "0x622e092b846dc3aa5d52ebe7ef36e27f6192bc954b81bf10e6d6ac1235e11509"
+    }
+  ],
+  "deployerNonce": "109",
+  "deployerBalance": "999276125087407796",
+  "dependencyRuntimeDigests": {
+    "marketRegistry": "sha256:e7669ef52ab1b8025bfb6000d1872a86228aa9c0ec894e84efb95d5c262a2b75",
+    "interestIndex": "sha256:3e7d1b15e00be64a45db77595d14470a9c205494896e147916bbd8da1c7c5e3f"
+  },
+  "deployment": {
+    "contract": "LQCLendingCore",
+    "predictedAddress": "0x3a3C7303829318d4cbA955c71812679DAF5699ca",
+    "initCodeDigest": "sha256:5fe9907eeaf4fa507640990c84647ae1feb0c85d14897b5e20f1d6773094c963",
+    "estimatedGas": "2978529",
+    "approvedGasLimit": "3574234"
+  },
+  "conservativeGasPrice": "100000000",
+  "requiredGasBudget": "357423400000000",
+  "transactionOccurred": false,
+  "safety": "Read-only Stage-3 preflight. No wallet, key, signature, approval, deployment, binding, market activation, token movement, or transaction.",
+  "preflightDigest": "sha256:625163f8809b691b4eb2db8939ce33d8970708e395acceb0ec64c4dfec673222"
+}
