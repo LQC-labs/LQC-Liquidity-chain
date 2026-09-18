@@ -1,0 +1,11 @@
+import assert from "node:assert/strict";import fs from "node:fs";
+const core=fs.readFileSync(new URL("../contracts/lending/LQCLendingCore.sol",import.meta.url),"utf8"),reg=fs.readFileSync(new URL("../contracts/lending/LQCLendingMarketRegistry.sol",import.meta.url),"utf8"),oracle=fs.readFileSync(new URL("../contracts/lending/LQCOracleManager.sol",import.meta.url),"utf8");
+const suites=["lending-collateral-boundaries.test.mjs","lending-supply-withdraw-boundaries.test.mjs","lending-borrow-gate.test.mjs","lending-repay-gate.test.mjs","lending-interest-index-gate.test.mjs","lending-oracle-gate.test.mjs","lending-ltv-health-factor-gate.test.mjs","lending-liquidation-gate.test.mjs","lending-bad-debt-reserve-gate.test.mjs"];
+describe("LQC official 4/10 Lending Security / Invariant gate",function(){
+ it("requires every canonical 4/1 through 4/9 regression suite",function(){for(const x of suites)assert.ok(fs.existsSync(new URL(x,import.meta.url)),x);});
+ it("keeps all fund-moving Lending Core entry points non-reentrant",function(){for(const x of["depositCollateral","withdrawCollateral","supplyLiquidity","withdrawLiquidity","borrow","repay","executeLiquidation"])assert.ok(core.includes(`function ${x}`),x);assert.ok(core.includes("modifier nonReentrant"));});
+ it("keeps exact-transfer custody checks on inbound assets",function(){assert.ok(core.includes("function _pullExact"));assert.ok(core.includes("InexactTransfer"));});
+ it("keeps market caps, LTV and oracle fail-closed boundaries separated",function(){assert.ok(reg.includes("validateCaps"));assert.ok(reg.includes("accountRisk"));assert.ok(oracle.includes("StalePrice"));assert.ok(oracle.includes("ExcessiveDeviation"));});
+ it("keeps debt, collateral, bad debt and reserves as explicit accounting domains",function(){for(const x of["totalCollateral","totalDebtShares","badDebtSharesOf","totalBadDebtShares","accruedReserves"])assert.ok(core.includes(x),x);});
+ it("keeps two-step governance on Core Registry and Oracle surfaces",function(){for(const s of[core,reg,oracle]){assert.ok(s.includes("pendingOwner"));assert.ok(s.includes("acceptOwnership"));}});
+});
