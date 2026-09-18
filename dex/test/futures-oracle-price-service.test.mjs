@@ -112,3 +112,55 @@ describe('Shared Oracle/Price service', () => {
     assert.equal(service.getMarkPrice('BTCUSDT', { now: now + 1_001, allowStale: true }), 100);
   });
 });
+
+
+describe('11/8 Index/Mark price separation', () => {
+  test('publishes index and mark as explicit independent fields', () => {
+    const service = createOraclePriceService({ sourceProvider: providerFor({ BTCUSDT: [
+      { id: 'a', price: 100, timestamp: now },
+      { id: 'b', price: 100, timestamp: now },
+      { id: 'c', price: 100, timestamp: now }
+    ] }) });
+    const result = service.refresh('BTCUSDT', { now });
+    assert.equal(result.indexPrice, 100);
+    assert.equal(result.markPrice, 100);
+    assert.equal(service.getIndexPrice('BTCUSDT', { now }), 100);
+    assert.equal(service.getMarkPrice('BTCUSDT', { now }), 100);
+  });
+
+  test('bounds mark/index divergence after an accepted index move', () => {
+    const sources = { BTCUSDT: [
+      { id: 'a', price: 100, timestamp: now },
+      { id: 'b', price: 100, timestamp: now },
+      { id: 'c', price: 100, timestamp: now }
+    ] };
+    const service = createOraclePriceService({
+      sourceProvider: providerFor(sources),
+      maxMoveRatio: 0.2,
+      maxMarkIndexDeviationRatio: 0.01
+    });
+    service.refresh('BTCUSDT', { now });
+    sources.BTCUSDT = [
+      { id: 'a', price: 105, timestamp: now + 1000 },
+      { id: 'b', price: 105, timestamp: now + 1000 },
+      { id: 'c', price: 105, timestamp: now + 1000 }
+    ];
+    const next = service.refresh('BTCUSDT', { now: now + 1000 });
+    assert.equal(next.indexPrice, 105);
+    assert.equal(next.markPrice, 103.95);
+    assert.ok(next.markIndexDeviationRatio <= 0.01 + Number.EPSILON);
+  });
+
+  test('blocks both index and mark reads when cached oracle data is stale', () => {
+    const service = createOraclePriceService({
+      sourceProvider: providerFor({ ETHUSDT: [
+        { id: 'a', price: 200, timestamp: now },
+        { id: 'b', price: 200, timestamp: now }
+      ] }),
+      maxReadAgeMs: 1000
+    });
+    service.refresh('ETHUSDT', { now });
+    assert.equal(service.getIndexPrice('ETHUSDT', { now: now + 1001 }), null);
+    assert.equal(service.getMarkPrice('ETHUSDT', { now: now + 1001 }), null);
+  });
+});
