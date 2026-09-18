@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import ganache from "ganache";
+import { ethers } from "ethers";
+const art=(n,s)=>JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${s}.sol/${n}.json`,import.meta.url)));
+describe("LQC official 3/4 Vault Access Control boundaries",function(){
+ this.timeout(30000);let p,o,pause,strategyAdmin,attacker,v,t;const dep=async(n,s,sg,...x)=>{const z=art(n,s),c=await new ethers.ContractFactory(z.abi,z.bytecode,sg).deploy(...x);await c.waitForDeployment();return c};
+ beforeEach(async()=>{p=new ethers.BrowserProvider(ganache.provider({logging:{quiet:true},wallet:{totalAccounts:5}}));o=await p.getSigner(0);pause=await p.getSigner(1);strategyAdmin=await p.getSigner(2);attacker=await p.getSigner(3);t=await dep("MockERC20","mocks/MockERC20",o,"Asset","AST");v=await dep("LQCLiquidityVault","vault/LQCLiquidityVault",o,t.target,o.address,1000000n,"Share","SH");await(await v.setPauseAdmin(pause.address)).wait();await(await v.setStrategyAdmin(strategyAdmin.address)).wait();});
+ it("keeps governance configuration owner-only",async()=>{for(const f of [()=>v.connect(attacker).setDepositCap(1n),()=>v.connect(attacker).setPauseAdmin(attacker.address),()=>v.connect(attacker).setStrategyAdmin(attacker.address),()=>v.connect(attacker).setStrategyLimits(0n,0n),()=>v.connect(attacker).setStrategy(ethers.ZeroAddress)])await assert.rejects(f());});
+ it("allows pause admin to stop deposits and allocations but never resume them",async()=>{await(await v.connect(pause).pauseDeposits()).wait();await(await v.connect(pause).pauseAllocations()).wait();assert.equal(await v.depositsPaused(),true);assert.equal(await v.allocationsPaused(),true);await assert.rejects(v.connect(pause).resumeDeposits());await assert.rejects(v.connect(pause).resumeAllocations());await(await v.resumeDeposits()).wait();await(await v.resumeAllocations()).wait();});
+ it("separates strategy admin from governance configuration",async()=>{await assert.rejects(v.connect(strategyAdmin).setStrategyLimits(1n,0n));await assert.rejects(v.connect(strategyAdmin).setStrategy(ethers.ZeroAddress));await assert.rejects(v.connect(strategyAdmin).setDepositCap(1n));});
+ it("uses two-step ownership and preserves delegated operational roles",async()=>{await(await v.beginOwnershipTransfer(attacker.address)).wait();await assert.rejects(v.connect(strategyAdmin).acceptOwnership());await(await v.connect(attacker).acceptOwnership()).wait();assert.equal(await v.owner(),attacker.address);assert.equal(await v.pauseAdmin(),pause.address);assert.equal(await v.strategyAdmin(),strategyAdmin.address);await assert.rejects(v.setDepositCap(1n));});
+ it("rejects zero operational-role addresses",async()=>{await assert.rejects(v.setPauseAdmin(ethers.ZeroAddress));await assert.rejects(v.setStrategyAdmin(ethers.ZeroAddress));await assert.rejects(v.beginOwnershipTransfer(ethers.ZeroAddress));});
+});
