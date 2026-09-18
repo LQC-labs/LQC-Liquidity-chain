@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_LENDING_STAGE4_LIVE_PREFLIGHT_OBSERVATION",
+  "status": "USER_OBSERVED_READ_ONLY_PASS",
+  "network": {
+    "name": "BSC Testnet",
+    "chainId": 97
+  },
+  "observedRpcHeads": [
+    131735585,
+    131735584
+  ],
+  "deployer": "0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB",
+  "deployerNonce": "110",
+  "deployerBalanceTbnb": "0.998980733287407796",
+  "verifiedCore": "0x3a3C7303829318d4cbA955c71812679DAF5699ca",
+  "predictedLiquidationEngine": "0xEb948704A4D4c8d8bB965BA1feF086FCE3c35345",
+  "preBindings": {
+    "interestIndexCore": "0x0000000000000000000000000000000000000000",
+    "coreLiquidationEngine": "0x0000000000000000000000000000000000000000"
+  },
+  "transactionOccurred": false,
+  "safety": "Observed through the merged Stage-4 wallet-free dual-RPC page. No signature, Safe proposal or transaction occurred."
+}
