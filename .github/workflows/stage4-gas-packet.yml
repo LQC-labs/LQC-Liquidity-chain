@@ -1,0 +1,23 @@
+name: Stage4 gas packet
+on:
+  pull_request:
+    paths: ["dex/**", ".github/workflows/stage4-gas-packet.yml"]
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: dex } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: dex/package-lock.json }
+      - run: npm ci
+      - run: npm run compile
+      - name: Build exact Stage4 browser gas packet
+        run: node scripts/render-lending-stage4-browser-gas-packet.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lending-stage4-browser-gas-packet
+          path: dex/deployments/lending-stage4-browser-gas-packet-bsc-testnet-97.json
+          if-no-files-found: error
