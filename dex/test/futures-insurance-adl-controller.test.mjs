@@ -31,8 +31,11 @@ describe('Futures insurance and ADL orchestration', () => {
     assert.equal(result.fund.balance, 0);
     assert.equal(result.adlPlan.requiredBadDebt, 50);
     assert.equal(result.adlPlan.selected[0].id, 'short-1');
-    assert.equal(result.adlPlan.selected[0].absorbAmount, 50);
-    assert.equal(result.adlPlan.residualBadDebt, 0);
+    assert.equal(result.adlPlan.selected[0].availableProfit, 20);
+    assert.equal(result.adlPlan.selected[0].absorbAmount, 20);
+    assert.equal(result.adlPlan.selected[0].reduceQuantity, 1);
+    assert.equal(result.adlPlan.selected[0].remainingQuantity, 0);
+    assert.equal(result.adlPlan.residualBadDebt, 30);
   });
 
   test('respects per-event insurance coverage cap before ADL', () => {
@@ -51,8 +54,11 @@ describe('Futures insurance and ADL orchestration', () => {
     const controller = createDemoInsuranceAdlController({ insuranceFundService });
     const result = controller.coverAndPlan({ liquidationLoss: 150, positions: [profitableShort], bankruptSide: 'LONG' });
     assert.equal(result.badDebt, 150);
-    assert.equal(result.adlPlan.selected[0].absorbAmount, 100);
-    assert.equal(result.adlPlan.residualBadDebt, 50);
+    assert.equal(result.adlPlan.selected[0].availableProfit, 20);
+    assert.equal(result.adlPlan.selected[0].absorbAmount, 20);
+    assert.equal(result.adlPlan.selected[0].reduceQuantity, 1);
+    assert.equal(result.adlPlan.selected[0].remainingQuantity, 0);
+    assert.equal(result.adlPlan.residualBadDebt, 130);
   });
 
   test('does not consume insurance fund when ADL planning fails', () => {
