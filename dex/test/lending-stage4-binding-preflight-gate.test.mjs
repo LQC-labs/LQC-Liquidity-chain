@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";import fs from "node:fs";import { ethers } from "ethers";
+const cfg=JSON.parse(fs.readFileSync(new URL("../deployments/lending-stage0-finalized-config-bsc-testnet-97.json",import.meta.url),"utf8")).config;
+const core="0x3a3C7303829318d4cbA955c71812679DAF5699ca",registry="0x39e38fA7D944687bc210B00529091dA6a14dF699",index="0x09980642462A9EF2b17d0da9c482b59031a2636F";
+const coreSrc=fs.readFileSync(new URL("../contracts/lending/LQCLendingCore.sol",import.meta.url),"utf8"),idxSrc=fs.readFileSync(new URL("../contracts/lending/LQCLendingInterestIndex.sol",import.meta.url),"utf8"),regSrc=fs.readFileSync(new URL("../contracts/lending/LQCLendingMarketRegistry.sol",import.meta.url),"utf8"),liqSrc=fs.readFileSync(new URL("../contracts/lending/LQCLiquidationEngine.sol",import.meta.url),"utf8");
+describe("LQC 4/11 Stage 4 binding preflight gate",function(){
+ it("pins the verified Stage-3 Core and Stage-2 dependencies",function(){assert.equal(core,"0x3a3C7303829318d4cbA955c71812679DAF5699ca");assert.ok(registry.startsWith("0x39e38"));assert.ok(index.startsWith("0x099806"));});
+ it("requires governance-only Index-to-Core binding",function(){assert.ok(idxSrc.includes("function setCore"));assert.ok(idxSrc.includes("external onlyOwner"));});
+ it("requires governance-only market configuration with frozen risk parameters",function(){assert.ok(regSrc.includes("configureMarket"));assert.equal(cfg.market.maxLtvBps,5000);assert.equal(cfg.market.liquidationThresholdBps,7000);assert.equal(cfg.market.liquidationBonusBps,500);});
+ it("requires LiquidationEngine to be constructed against the verified Core",function(){assert.ok(liqSrc.includes("constructor(address core_)"));assert.ok(liqSrc.includes("core=ILQCLiquidationCore(core_)"));});
+ it("requires governance-only Core-to-LiquidationEngine binding",function(){assert.ok(coreSrc.includes("function setLiquidationEngine"));assert.ok(coreSrc.includes("external onlyOwner"));});
+ it("derives the canonical market id from finalized collateral and debt",function(){const id=ethers.keccak256(ethers.AbiCoder.defaultAbiCoder().encode(["address","address"],[cfg.market.collateralAsset,cfg.market.debtAsset]));assert.match(id,/^0x[0-9a-f]{64}$/);});
+});
