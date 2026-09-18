@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import ganache from "ganache";
+import { ethers } from "ethers";
+const art=(n,s)=>JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${s}.sol/${n}.json`,import.meta.url)));
+describe("LQC official 3/1 Vault Deposit boundaries",function(){
+ this.timeout(30000);let p,o,u,v,t;const dep=async(n,s,sg,...x)=>{const z=art(n,s),c=await new ethers.ContractFactory(z.abi,z.bytecode,sg).deploy(...x);await c.waitForDeployment();return c};
+ beforeEach(async()=>{p=new ethers.BrowserProvider(ganache.provider({logging:{quiet:true}}));o=await p.getSigner(0);u=await p.getSigner(1);t=await dep("MockERC20","mocks/MockERC20",o,"Asset","AST");v=await dep("LQCLiquidityVault","vault/LQCLiquidityVault",o,t.target,o.address,1000000n,"Share","SH");await(await t.mint(u.address,100000n)).wait();await(await t.connect(u).approve(v.target,ethers.MaxUint256)).wait();});
+ it("rejects zero receiver, zero assets, and initial deposits that cannot clear locked shares",async()=>{await assert.rejects(v.connect(u).deposit(1n,ethers.ZeroAddress));await assert.rejects(v.connect(u).deposit(0n,u.address));await assert.rejects(v.connect(u).deposit(1000n,u.address));assert.equal(await v.totalSupply(),0n);assert.equal(await v.totalAssets(),0n);});
+ it("mints locked minimum shares once and credits the exact receiver shares",async()=>{await(await v.connect(u).deposit(5000n,u.address)).wait();assert.equal(await v.totalSupply(),5000n);assert.equal(await v.balanceOf(ethers.ZeroAddress),1000n);assert.equal(await v.balanceOf(u.address),4000n);assert.equal(await v.totalAssets(),5000n);});
+ it("enforces cap before transfer and leaves user/vault accounting unchanged",async()=>{await(await v.setDepositCap(4000n)).wait();const before=await t.balanceOf(u.address);await assert.rejects(v.connect(u).deposit(5000n,u.address));assert.equal(await t.balanceOf(u.address),before);assert.equal(await t.balanceOf(v.target),0n);assert.equal(await v.totalAssets(),0n);});
+ it("ignores unsolicited donation in share pricing and accounted assets",async()=>{await(await v.connect(u).deposit(5000n,u.address)).wait();await(await t.mint(o.address,5000n)).wait();await(await t.transfer(v.target,5000n)).wait();await(await t.mint(o.address,5000n)).wait();await(await t.approve(v.target,5000n)).wait();const before=await v.balanceOf(o.address);await(await v.deposit(5000n,o.address)).wait();assert.equal((await v.balanceOf(o.address))-before,5000n);assert.equal(await v.totalAssets(),10000n);assert.equal(await t.balanceOf(v.target),15000n);});
+ it("rejects deposits while paused and only owner can resume",async()=>{await(await v.setPauseAdmin(o.address)).wait();await(await v.pauseDeposits()).wait();await assert.rejects(v.connect(u).deposit(5000n,u.address));await assert.rejects(v.connect(u).resumeDeposits());await(await v.resumeDeposits()).wait();await(await v.connect(u).deposit(5000n,u.address)).wait();});
+});
