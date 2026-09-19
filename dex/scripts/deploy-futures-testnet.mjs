@@ -15,6 +15,10 @@ export function validateDeploymentAuthorization(env){
   if(wallet.address!==c.deployer) throw new Error("Runtime signer does not match FUTURES_DEPLOYER_ADDRESS.");
   return c;
 }
+export function buildOwnerConfiguration(vaultAddress,engineAddress){
+  const iface=new ethers.Interface(["function setEngine(address newEngine)"]);
+  return {to:vaultAddress,value:"0",data:iface.encodeFunctionData("setEngine",[engineAddress]),description:"Governance owner must authorize LQCFuturesVault.setEngine(engine)."};
+}
 async function checkedDeploy(wallet,provider,a,args,label){
   const f=new ethers.ContractFactory(a.abi,a.bytecode,wallet);
   const c=await f.deploy(...args); await c.waitForDeployment();
@@ -27,20 +31,17 @@ export async function deployFuturesTestnet(env,provider=new ethers.JsonRpcProvid
   if((await provider.getNetwork()).chainId!==CHAIN_ID) throw new Error("Refusing deployment: expected BSC Testnet chain 97.");
   const wallet=new ethers.Wallet(env.DEPLOYER_PRIVATE_KEY,provider);
   const before=await provider.getBalance(wallet.address);
-  const fee=await provider.getFeeData(); const gasPrice=fee.maxFeePerGas||fee.gasPrice;
-  if(!gasPrice) throw new Error("Could not resolve gas price.");
-  // Recheck a conservative ceiling immediately before sending anything.
   assertFuturesBudget(before,ethers.parseEther("0.01"),config);
   const registry=await checkedDeploy(wallet,provider,artifact("futures/LQCFuturesMarketRegistry.sol","LQCFuturesMarketRegistry"),[config.owner],"registry");
   const vault=await checkedDeploy(wallet,provider,artifact("futures/LQCFuturesVault.sol","LQCFuturesVault"),[config.owner],"vault");
   const oracle=await checkedDeploy(wallet,provider,artifact("futures/mocks/MockLQCFuturesOracle.sol","MockLQCFuturesOracle"),[],"oracle");
   const engine=await checkedDeploy(wallet,provider,artifact("futures/LQCPerpEngine.sol","LQCPerpEngine"),[await registry.getAddress(),await vault.getAddress()],"engine");
-  const tx=await vault.connect(wallet).setEngine(await engine.getAddress()); await tx.wait();
   const after=await provider.getBalance(wallet.address);
   if(after<config.reserve) throw new Error("Post-deployment balance violated protected reserve.");
-  if(await vault.engine()!==await engine.getAddress()) throw new Error("Vault engine wiring verification failed.");
   if(await registry.owner()!==config.owner || await vault.owner()!==config.owner) throw new Error("Governance owner verification failed.");
-  return {status:"DEPLOYED_AND_VERIFIED",chainId:97,deployer:wallet.address,owner:config.owner,balanceBeforeTbnb:ethers.formatEther(before),balanceAfterTbnb:ethers.formatEther(after),contracts:{registry:await registry.getAddress(),vault:await vault.getAddress(),oracle:await oracle.getAddress(),engine:await engine.getAddress()}};
+  const vaultAddress=await vault.getAddress(), engineAddress=await engine.getAddress();
+  if(await vault.engine()!==ethers.ZeroAddress) throw new Error("Unexpected Vault engine state before governance authorization.");
+  return {status:"DEPLOYED_AWAITING_GOVERNANCE_CONFIGURATION",chainId:97,deployer:wallet.address,owner:config.owner,balanceBeforeTbnb:ethers.formatEther(before),balanceAfterTbnb:ethers.formatEther(after),contracts:{registry:await registry.getAddress(),vault:vaultAddress,oracle:await oracle.getAddress(),engine:engineAddress},ownerAction:buildOwnerConfiguration(vaultAddress,engineAddress)};
 }
 async function main(){const r=await deployFuturesTestnet(process.env); console.log(JSON.stringify(r,null,2));}
 if(import.meta.url===new URL(`file://${process.argv[1]}`).href) main().catch(e=>{console.error(e.message);process.exitCode=1;});
