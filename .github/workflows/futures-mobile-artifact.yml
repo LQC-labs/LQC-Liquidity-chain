@@ -1,0 +1,46 @@
+name: Futures mobile artifact
+
+on:
+  pull_request:
+    paths:
+      - "dex/contracts/futures/**"
+      - "dex/scripts/build-futures-mobile-testnet-artifacts.mjs"
+      - ".github/workflows/futures-mobile-artifact.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "dex/contracts/futures/**"
+      - "dex/scripts/build-futures-mobile-testnet-artifacts.mjs"
+      - ".github/workflows/futures-mobile-artifact.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Build canonical Futures mobile artifact
+        run: npm run build:futures-mobile-artifacts
+      - name: Validate generated bundle
+        run: node -e 'const fs=require("fs");const p="app/futures/futures-mobile-testnet-artifacts.json";const b=JSON.parse(fs.readFileSync(p,"utf8"));if(b.schema!=="lqc-futures-mobile-testnet-artifacts-v1")throw Error("bad schema");for(const n of ["Registry","Vault","Oracle","Engine"]){if(!b.contracts?.[n]?.bytecode?.startsWith("0x")||b.contracts[n].bytecode==="0x")throw Error("bad "+n)}'
+      - name: Upload canonical Futures mobile artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-mobile-testnet-artifacts
+          path: dex/app/futures/futures-mobile-testnet-artifacts.json
+          if-no-files-found: error
+          retention-days: 30
