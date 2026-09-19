@@ -230,4 +230,111 @@ describe('11/9 Futures Testnet E2E', () => {
     assert.equal(liquidations.length, 1);
     approx(resolution.insuranceCovered + resolution.adlPlan.selected[0].absorbAmount, 10);
   });
+
+  it('pauses keeper work, restarts only after approved recovery, and remains idempotent', () => {
+    const account = createDemoMarginAccount(20);
+    const positionBook = createDemoPositionBook();
+    account.reserve(20, 'CROSS');
+    positionBook.add({
+      symbol: 'BTCUSDT',
+      side: 'LONG',
+      quantity: 1,
+      entryPrice: 100,
+      leverage: 5,
+      collateral: 20,
+      marginMode: 'CROSS'
+    });
+
+    const controller = createDemoLiquidationController({
+      account,
+      positionBook,
+      markPriceOf: () => 80
+    });
+    let state = createEmergencyMarketState({
+      state: 'HALTED',
+      reason: 'KEEPER_MAINTENANCE',
+      updatedAt: '2027-01-15T08:00:00.000Z'
+    });
+    const keeperRun = () => {
+      if (state.state === 'HALTED') return Object.freeze({ executed: false, reason: 'KEEPER_PAUSED' });
+      return Object.freeze({ executed: true, result: controller.liquidateCrossIfRequired() });
+    };
+
+    assert.deepEqual(keeperRun(), { executed: false, reason: 'KEEPER_PAUSED' });
+    assert.equal(positionBook.list().length, 1);
+    assert.throws(() => transitionEmergencyState(state, {
+      nextState: 'ACTIVE',
+      timestamp: '2027-01-15T08:00:01.000Z',
+      recoveryApproved: true
+    }), /STAGED_RECOVERY_REQUIRED/);
+
+    state = transitionEmergencyState(state, {
+      nextState: 'REDUCE_ONLY',
+      reason: 'KEEPER_RESTART_VALIDATION',
+      timestamp: '2027-01-15T08:00:02.000Z'
+    });
+    state = transitionEmergencyState(state, {
+      nextState: 'ACTIVE',
+      timestamp: '2027-01-15T08:00:03.000Z',
+      recoveryApproved: true
+    });
+
+    const first = keeperRun();
+    assert.equal(first.executed, true);
+    assert.equal(first.result.liquidated, true);
+    assert.equal(positionBook.list().length, 0);
+
+    const repeated = keeperRun();
+    assert.equal(repeated.executed, true);
+    assert.deepEqual(repeated.result, { liquidated: false, reason: 'NO_CROSS_POSITIONS' });
+    assert.equal(account.snapshot().totalReserved, 0);
+  });
+
+  it('handles an extreme price gap without leaving unresolved liquidation debt', () => {
+    const account = createDemoMarginAccount(20);
+    const positionBook = createDemoPositionBook();
+    account.reserve(20, 'CROSS');
+    positionBook.add({
+      symbol: 'BTCUSDT',
+      side: 'LONG',
+      quantity: 1,
+      entryPrice: 100,
+      leverage: 5,
+      collateral: 20,
+      marginMode: 'CROSS'
+    });
+
+    const insuranceFundService = createDemoInsuranceFundService({
+      initialFund: createInsuranceFund({ balance: 25 })
+    });
+    const insuranceAdl = createDemoInsuranceAdlController({ insuranceFundService });
+    const controller = createDemoLiquidationController({
+      account,
+      positionBook,
+      markPriceOf: () => 1,
+      insuranceAdl,
+      adlPositions: () => [{
+        id: 'extreme-gap-profitable-short',
+        side: 'SHORT',
+        quantity: 2,
+        entryPrice: 100,
+        markPrice: 1,
+        collateral: 20
+      }]
+    });
+
+    const result = controller.liquidateCrossIfRequired();
+    assert.equal(result.liquidated, true);
+    assert.equal(result.settlement.badDebt, 79);
+    assert.equal(result.badDebtResolution.insuranceCovered, 25);
+    assert.equal(result.badDebtResolution.adlPlan.requiredBadDebt, 54);
+    assert.equal(result.badDebtResolution.adlPlan.residualBadDebt, 0);
+    approx(
+      result.badDebtResolution.insuranceCovered
+        + result.badDebtResolution.adlPlan.selected.reduce((sum, item) => sum + item.absorbAmount, 0),
+      result.settlement.badDebt
+    );
+    assert.equal(positionBook.list().length, 0);
+    assert.equal(account.snapshot().crossReserved, 0);
+  });
 });
