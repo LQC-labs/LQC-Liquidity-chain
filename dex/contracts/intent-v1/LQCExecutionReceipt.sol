@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
+/// @notice Stores execution reports supplied by the configured recorder.
+/// @dev Exact-field verification proves a stored report exists, not that a swap occurred.
+/// Production integration must bind the recorder to the atomic execution path and
+/// derive amountOut from actual token balances; that integration is a separate gate.
 contract LQCExecutionReceipt {
     struct Receipt {
         bytes32 executionHash;
@@ -35,8 +39,17 @@ contract LQCExecutionReceipt {
         emit ReceiptRecorded(intentHash,executionHash,solver,routeId,amountOut,recordedAt);
     }
 
+    /// @notice Returns the canonical hash of a recorded receipt; absent receipts revert.
+    function getReceiptHash(bytes32 intentHash) external view returns(bytes32){
+        Receipt memory r=receipts[intentHash];
+        if(intentHash==bytes32(0)||r.executionHash==bytes32(0))revert InvalidReceipt();
+        return keccak256(abi.encode(block.chainid,address(this),intentHash,r.executionHash,r.solver,r.routeId,r.amountOut,r.recordedAt));
+    }
+
     function verify(bytes32 intentHash,bytes32 executionHash,address solver,bytes32 routeId,uint256 amountOut,uint256 recordedAt) external view returns(bool){
         Receipt memory r=receipts[intentHash];
+        // Unwritten mapping entries are all zero: equality alone must never imply existence.
+        if(intentHash==bytes32(0)||r.executionHash==bytes32(0))return false;
         return r.executionHash==executionHash&&r.solver==solver&&r.routeId==routeId&&r.amountOut==amountOut&&r.recordedAt==recordedAt;
     }
 }
