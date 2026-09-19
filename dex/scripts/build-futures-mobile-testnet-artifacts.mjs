@@ -5,7 +5,8 @@ const specs={
   Registry:["contracts/futures/LQCFuturesMarketRegistry.sol","LQCFuturesMarketRegistry"],
   Vault:["contracts/futures/LQCFuturesVault.sol","LQCFuturesVault"],
   Oracle:["contracts/futures/mocks/MockLQCFuturesOracle.sol","MockLQCFuturesOracle"],
-  Engine:["contracts/futures/LQCPerpEngine.sol","LQCPerpEngine"]
+  Engine:["contracts/futures/LQCPerpEngine.sol","LQCPerpEngine"],
+  TestToken:["contracts/mocks/MockERC20.sol","MockERC20"]
 };
 const bundle={schema:"lqc-futures-mobile-testnet-artifacts-v1",contracts:{}};
 for(const [alias,[source,name]] of Object.entries(specs)){
