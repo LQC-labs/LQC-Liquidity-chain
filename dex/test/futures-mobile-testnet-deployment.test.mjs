@@ -33,7 +33,7 @@ describe("Futures mobile testnet wallet gate", () => {
     assert.equal(result.spentWei,400000000000000000n);
     assert.equal(result.projectedSpendWei,500000000000000000n);
     assert.equal(result.projectedBalanceWei,800000000000000000n);
-    assert.throws(()=>assertMobileCumulativeBudget({startBalanceWei:"1300000000000000000",currentBalanceWei:"400000000000000000",estimatedCostWei:"100000000000000001"}),/cumulative.*1.0 tBNB/);
+    assert.throws(()=>assertMobileCumulativeBudget({startBalanceWei:"2000000000000000000",currentBalanceWei:"1100000000000000000",estimatedCostWei:"100000000000000001"}),/cumulative.*1.0 tBNB/);
     assert.throws(()=>assertMobileCumulativeBudget({startBalanceWei:"1300000000000000000",currentBalanceWei:"1400000000000000000",estimatedCostWei:"1"}),/Invalid cumulative/);
   });
   it("connects only through an injected wallet provider", async () => {
