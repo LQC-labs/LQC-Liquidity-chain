@@ -73,6 +73,8 @@ export function createDemoMarginAccount(initialBalance = 100000) {
   function consumeLiquidation(amount, marginMode = 'ISOLATED') {
     const value = Number(amount);
     if (!Number.isFinite(value) || value < 0) throw new Error('INVALID_MARGIN_AMOUNT');
+    const reserved = marginMode === 'CROSS' ? crossReserved : isolatedReserved;
+    if (value > reserved + 1e-9) throw new Error('LIQUIDATION_CONSUME_EXCEEDS_RESERVED');
     if (marginMode === 'CROSS') crossReserved = Math.max(0, crossReserved - value);
     else isolatedReserved = Math.max(0, isolatedReserved - value);
     return snapshot();
