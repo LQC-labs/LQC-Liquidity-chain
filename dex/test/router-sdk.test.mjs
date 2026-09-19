@@ -548,3 +548,14 @@ describe("LQC Router browser SDK", function () {
   });
 
 });
+
+
+describe("5/1 EIP-712 Execution Intent",function(){
+  it("binds domain, verifying contract and execution fields with EIP-712",async function(){
+    const wallet=ethers.Wallet.createRandom(),verifying=ethers.Wallet.createRandom().address;
+    const intent={chainId:97,proofHash:ethers.keccak256(ethers.toUtf8Bytes("proof")),sender:wallet.address.toLowerCase(),target:ethers.Wallet.createRandom().address.toLowerCase(),calldataHash:ethers.keccak256(ethers.toUtf8Bytes("call")),value:"0",nonce:7,deadline:2000000000};
+    const typed=sdk.executionIntentTypedData(intent,verifying,ethers),hash=sdk.executionIntentTypedDataHash(intent,verifying,ethers),sig=await wallet.signTypedData(typed.domain,typed.types,typed.message);
+    assert.equal(typed.domain.chainId,97);assert.equal(typed.domain.verifyingContract,verifying.toLowerCase());assert.equal(hash,ethers.TypedDataEncoder.hash(typed.domain,typed.types,typed.message));assert.equal(sdk.verifyExecutionIntentSignature(intent,verifying,sig,ethers),true);
+    assert.equal(sdk.verifyExecutionIntentSignature({...intent,nonce:8},verifying,sig,ethers),false);
+  });
+});
