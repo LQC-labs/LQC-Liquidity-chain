@@ -8,6 +8,10 @@ import {
   validateEmergencyOrder
 } from '../app/futures/emergency-controls.js';
 import { createDemoFundingController } from '../app/futures/funding-controller.js';
+import { createInsuranceFund } from '../app/futures/insurance-engine.js';
+import { createDemoInsuranceFundService } from '../app/futures/insurance-fund-service.js';
+import { createDemoInsuranceAdlController } from '../app/futures/insurance-adl-controller.js';
+import { createDemoLiquidationController } from '../app/futures/liquidation-controller.js';
 import { getFuturesMarket } from '../app/futures/markets.js';
 import { createOraclePriceService } from '../app/futures/oracle-price-service.js';
 import { buildDemoOrder } from '../app/futures/order-engine.js';
@@ -166,5 +170,64 @@ describe('11/9 Futures Testnet E2E', () => {
       recoveryApproved: true
     });
     assert.equal(state.state, 'ACTIVE');
+  });
+
+  it('liquidates a breached cross account and reconciles insurance plus ADL accounting', () => {
+    const account = createDemoMarginAccount(20);
+    const positionBook = createDemoPositionBook();
+    account.reserve(20, 'CROSS');
+    positionBook.add({
+      symbol: 'BTCUSDT',
+      side: 'LONG',
+      quantity: 1,
+      entryPrice: 100,
+      leverage: 5,
+      collateral: 20,
+      marginMode: 'CROSS'
+    });
+
+    const insuranceFundService = createDemoInsuranceFundService({
+      initialFund: createInsuranceFund({ balance: 4 })
+    });
+    const insuranceAdl = createDemoInsuranceAdlController({ insuranceFundService });
+    const adlCandidate = Object.freeze({
+      id: 'global-profitable-short',
+      side: 'SHORT',
+      quantity: 1,
+      entryPrice: 100,
+      markPrice: 70,
+      collateral: 10
+    });
+    const liquidations = [];
+    const controller = createDemoLiquidationController({
+      account,
+      positionBook,
+      markPriceOf: () => 70,
+      insuranceAdl,
+      adlPositions: () => [adlCandidate],
+      onLiquidated: (event) => liquidations.push(event)
+    });
+
+    const before = controller.evaluateCross();
+    assert.equal(before.liquidatable, true);
+    assert.equal(before.equity, -10);
+
+    const result = controller.liquidateCrossIfRequired();
+    const resolution = result.badDebtResolution;
+    assert.equal(result.liquidated, true);
+    assert.equal(result.closedPositions.length, 1);
+    assert.equal(positionBook.list().length, 0);
+    assert.equal(account.snapshot().crossReserved, 0);
+    assert.equal(account.snapshot().availableBalance, 0);
+    assert.equal(resolution.requestedLoss, 10);
+    assert.equal(resolution.insuranceCovered, 4);
+    assert.equal(resolution.badDebt, 6);
+    assert.equal(resolution.fund.balance, 0);
+    assert.equal(resolution.adlPlan.requiredBadDebt, 6);
+    assert.equal(resolution.adlPlan.selected.length, 1);
+    assert.equal(resolution.adlPlan.selected[0].absorbAmount, 6);
+    assert.equal(resolution.adlPlan.residualBadDebt, 0);
+    assert.equal(liquidations.length, 1);
+    approx(resolution.insuranceCovered + resolution.adlPlan.selected[0].absorbAmount, 10);
   });
 });
