@@ -4,6 +4,7 @@ import { createApiKeyDescriptor, API_PERMISSIONS, assertPermission, createReplay
 import { evaluateEmergencyTriggers } from '../app/futures/emergency-controls.js';
 import { validateOracleSources, priceCircuitBreaker } from '../app/futures/oracle-guard.js';
 import { createOraclePriceService } from '../app/futures/oracle-price-service.js';
+import { activateFuturesListing, validateFuturesListingCandidate } from '../app/futures/listing-activation-gate.js';
 
 function providerFor(sourceMap) {
   return { getSources(symbol) { return sourceMap[symbol] ?? []; } };
@@ -78,5 +79,23 @@ describe('11/10 Futures security gate', () => {
       const breaker = priceCircuitBreaker({ previousPrice: 100, nextPrice: next, maxMoveRatio: 0.10 });
       assert.equal(breaker.allowed, moveBps <= 1000);
     }
+  });
+  it('blocks new market activation until oracle, risk, stress, security and approval gates pass', () => {
+    const candidate = {
+      market: { symbol: 'DOGEUSDT', base: 'DOGE', quote: 'USDT', type: 'PERPETUAL', status: 'DEMO', maxLeverage: 10, tickSize: 0.00001, stepSize: 1, maintenanceMarginRate: 0.02 },
+      oracle: { minSources: 3, maxAgeMs: 30_000, maxDeviationRatio: 0.01 },
+      riskLimits: { maxOpenInterest: 1_000_000, maxPositionNotional: 100_000, maxOrderNotional: 25_000 },
+      approvals: { oracleValidated: true, riskValidated: true, liquidationStressPassed: true, insuranceAdlStressPassed: true, securityGatePassed: true, activationApproved: false }
+    };
+    const pending = validateFuturesListingCandidate(candidate);
+    assert.equal(pending.activatable, false);
+    assert.deepEqual(pending.missing, ['activationApproved']);
+    assert.throws(() => activateFuturesListing(candidate), /FUTURES_LISTING_ACTIVATION_BLOCKED/);
+
+    const approved = { ...candidate, approvals: { ...candidate.approvals, activationApproved: true } };
+    assert.deepEqual(activateFuturesListing(approved), { symbol: 'DOGEUSDT', status: 'ACTIVE' });
+
+    assert.throws(() => validateFuturesListingCandidate({ ...approved, oracle: { ...approved.oracle, minSources: 2 } }), /LISTING_ORACLE_REQUIRES_THREE_SOURCES/);
+    assert.throws(() => validateFuturesListingCandidate({ ...approved, riskLimits: { ...approved.riskLimits, maxOrderNotional: 200_000 } }), /LISTING_ORDER_LIMIT_EXCEEDS_POSITION_LIMIT/);
   });
 });
