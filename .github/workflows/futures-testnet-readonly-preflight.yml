@@ -1,0 +1,52 @@
+name: Futures BSC testnet read-only preflight
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "dex/contracts/futures/**"
+      - "dex/scripts/preflight-futures-testnet-deploy.mjs"
+      - ".github/workflows/futures-testnet-readonly-preflight.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: futures-testnet-readonly-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preflight:
+    name: Chain 97 balance and deployment budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    env:
+      BSC_TESTNET_RPC_URL: https://data-seed-prebsc-1-s1.bnbchain.org:8545
+      FUTURES_DEPLOYER_ADDRESS: "0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB"
+      FUTURES_OWNER_ADDRESS: "0x89d992f696B40ABbDB6610144faeF336911D8175"
+      FUTURES_MIN_TBNB_RESERVE: "0.3"
+      FUTURES_MAX_DEPLOYMENT_SPEND: "1.0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci
+      - run: npm run compile
+      - name: Run no-spend live preflight
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/preflight-futures-testnet-deploy.mjs | tee futures-testnet-preflight.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: futures-testnet-readonly-preflight
+          path: dex/futures-testnet-preflight.json
+          if-no-files-found: ignore
+          retention-days: 14
