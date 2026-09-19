@@ -60,7 +60,7 @@ async function fixture() {
   // Solver accepts only Binding; Binding in turn accepts only Escrow.
   nonce = BigInt(await provider.send("eth_getTransactionCount", [await owner.getAddress(), "pending"]));
   const solverAddress = ethers.getCreateAddress({ from: await owner.getAddress(), nonce });
-  const bindingAddress = ethers.getCreateAddress({ from: await owner.getAddress(), nonce: nonce + 1 });
+  const bindingAddress = ethers.getCreateAddress({ from: await owner.getAddress(), nonce: nonce + 1n });
   const solver = await deploy(A.Solver, owner, bindingAddress, await router.getAddress());
   assert.equal(await solver.getAddress(), solverAddress);
   const binding = await deploy(
