@@ -1,20 +1,31 @@
 import assert from "node:assert/strict";
 import {
   assertMobileDeploymentContext,
+  assertMobileDeploymentBudget,
   connectApprovedMobileWallet,
   requestExplicitTransaction,
   MOBILE_FUTURES_DEPLOYMENT,
 } from "../app/futures/mobile-testnet-deployment.js";
 
 describe("Futures mobile testnet wallet gate", () => {
-  it("pins BSC Testnet and the approved deployer", () => {
+  it("pins BSC Testnet, deployer, separated owner and budget limits", () => {
     assert.equal(MOBILE_FUTURES_DEPLOYMENT.chainId, 97);
+    assert.equal(MOBILE_FUTURES_DEPLOYMENT.deployer, "0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB");
+    assert.equal(MOBILE_FUTURES_DEPLOYMENT.owner, "0x89d992f696B40ABbDB6610144faeF336911D8175");
+    assert.notEqual(MOBILE_FUTURES_DEPLOYMENT.deployer.toLowerCase(), MOBILE_FUTURES_DEPLOYMENT.owner.toLowerCase());
+    assert.equal(MOBILE_FUTURES_DEPLOYMENT.minReserveWei, "300000000000000000");
+    assert.equal(MOBILE_FUTURES_DEPLOYMENT.maxDeploymentSpendWei, "1000000000000000000");
     assert.equal(MOBILE_FUTURES_DEPLOYMENT.privateKeyInputSupported, false);
     assert.doesNotThrow(() => assertMobileDeploymentContext({chainId:"0x61",account:MOBILE_FUTURES_DEPLOYMENT.deployer}));
   });
   it("rejects wrong network and wrong signer", () => {
     assert.throws(() => assertMobileDeploymentContext({chainId:"0x38",account:MOBILE_FUTURES_DEPLOYMENT.deployer}), /Wrong network/);
     assert.throws(() => assertMobileDeploymentContext({chainId:"0x61",account:"0x1111111111111111111111111111111111111111"}), /Wrong signer/);
+  });
+  it("preserves the 0.3 tBNB reserve and 1.0 tBNB spend cap", () => {
+    assert.equal(assertMobileDeploymentBudget({balanceWei:"1300000000000000000",estimatedCostWei:"10000000000000000"}),1290000000000000000n);
+    assert.throws(() => assertMobileDeploymentBudget({balanceWei:"300000000000000000",estimatedCostWei:"1"}), /0.3 tBNB reserve/);
+    assert.throws(() => assertMobileDeploymentBudget({balanceWei:"2000000000000000000",estimatedCostWei:"1000000000000000001"}), /at most 1.0 tBNB/);
   });
   it("connects only through an injected wallet provider", async () => {
     const provider={request:async({method})=>method==="eth_chainId"?"0x61":[MOBILE_FUTURES_DEPLOYMENT.deployer]};
