@@ -4,7 +4,9 @@ const NAMES=["Registry","Vault","Oracle","Engine"];
 function status(m,t="info"){$("status").textContent=m;$("status").dataset.type=t}
 async function req(method,params=[]){if(!window.ethereum)throw Error("TokenPocket DApp 브라우저에서 열어주세요.");return window.ethereum.request({method,params})}
 function saved(){try{return JSON.parse(localStorage.getItem(KEY)||"[]")}catch{return[]}}
-function store(v){localStorage.setItem(KEY,JSON.stringify(v))}\nfunction baseline(){return localStorage.getItem(BASELINE_KEY)}\nfunction ensureBaseline(balanceWei,done){let start=baseline();if(!start){if(done.length)throw Error("기존 배포 기록에 최초 잔액 기준이 없습니다. 추가 배포를 중단합니다.");start=BigInt(balanceWei).toString();localStorage.setItem(BASELINE_KEY,start)}return start}
+function store(v){localStorage.setItem(KEY,JSON.stringify(v))}
+function baseline(){return localStorage.getItem(BASELINE_KEY)}
+function ensureBaseline(balanceWei,done){let start=baseline();if(!start){if(done.length)throw Error("기존 배포 기록에 최초 잔액 기준이 없습니다. 추가 배포를 중단합니다.");start=BigInt(balanceWei).toString();localStorage.setItem(BASELINE_KEY,start)}return start}
 function render(){const d=saved();$("txs").textContent=d.map((x,i)=>`${i+1}. ${x.name}\n${x.address}\n${x.hash}`).join("\n\n")||"없음";document.querySelectorAll("button[data-index]").forEach((b,i)=>{b.disabled=busy||i!==ready;b.textContent=d[i]?`${i+2}. ${NAMES[i]} 검증 완료`:`${i+2}. ${NAMES[i]} 배포`})}
 async function loadArtifacts(){const r=await fetch("./futures/futures-mobile-testnet-artifacts.json",{cache:"no-store",credentials:"omit"});if(!r.ok)throw Error("Futures 배포 artifact를 불러오지 못했습니다.");const bundle=await r.json(),a=bundle.contracts;if(bundle.schema!=="lqc-futures-mobile-testnet-artifacts-v1"||!a)throw Error("Futures artifact bundle schema가 올바르지 않습니다.");for(const n of NAMES)if(!a[n]?.abi||!a[n]?.bytecode?.startsWith("0x"))throw Error(`${n} artifact가 올바르지 않습니다.`);return a}
 async function codeAt(a){return req("eth_getCode",[a,"latest"])}
