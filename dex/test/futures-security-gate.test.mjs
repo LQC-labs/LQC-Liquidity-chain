@@ -98,4 +98,38 @@ describe('11/10 Futures security gate', () => {
     assert.throws(() => validateFuturesListingCandidate({ ...approved, oracle: { ...approved.oracle, minSources: 2 } }), /LISTING_ORACLE_REQUIRES_THREE_SOURCES/);
     assert.throws(() => validateFuturesListingCandidate({ ...approved, riskLimits: { ...approved.riskLimits, maxOrderNotional: 200_000 } }), /LISTING_ORDER_LIMIT_EXCEEDS_POSITION_LIMIT/);
   });
+  it('keeps 100 independently configured listing candidates isolated under mixed failures', () => {
+    const candidates = Array.from({ length: 100 }, (_, index) => {
+      const base = `T${String(index).padStart(3, '0')}`;
+      return {
+        market: { symbol: `${base}USDT`, base, quote: 'USDT', type: 'PERPETUAL', status: 'DEMO', maxLeverage: 10, tickSize: 0.0001, stepSize: 1, maintenanceMarginRate: 0.02 },
+        oracle: { minSources: 3, maxAgeMs: 30_000, maxDeviationRatio: 0.01 },
+        riskLimits: { maxOpenInterest: 1_000_000, maxPositionNotional: 100_000, maxOrderNotional: 25_000 },
+        approvals: { oracleValidated: true, riskValidated: true, liquidationStressPassed: true, insuranceAdlStressPassed: true, securityGatePassed: true, activationApproved: true }
+      };
+    });
+
+    candidates[20].oracle.minSources = 2;
+    candidates[50].riskLimits.maxOrderNotional = 200_000;
+    candidates[80].approvals.securityGatePassed = false;
+
+    const results = candidates.map((candidate, index) => {
+      try {
+        return { index, result: validateFuturesListingCandidate(candidate) };
+      } catch (error) {
+        return { index, error: error.message };
+      }
+    });
+
+    assert.equal(results.filter(({ result }) => result?.activatable).length, 97);
+    assert.match(results[20].error, /LISTING_ORACLE_REQUIRES_THREE_SOURCES/);
+    assert.match(results[50].error, /LISTING_ORDER_LIMIT_EXCEEDS_POSITION_LIMIT/);
+    assert.equal(results[80].result.activatable, false);
+    assert.deepEqual(results[80].result.missing, ['securityGatePassed']);
+    for (const { index, result } of results) {
+      if ([20, 50, 80].includes(index)) continue;
+      assert.equal(result.symbol, candidates[index].market.symbol);
+      assert.equal(result.activatable, true);
+    }
+  });
 });
