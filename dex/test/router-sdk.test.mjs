@@ -559,3 +559,32 @@ describe("5/1 EIP-712 Execution Intent",function(){
     assert.equal(sdk.verifyExecutionIntentSignature({...intent,nonce:8},verifying,sig,ethers),false);
   });
 });
+
+
+describe("5/1 EIP-712 security boundaries",function(){
+  it("rejects domain and every execution-field mutation",async function(){
+    const wallet=ethers.Wallet.createRandom(),verifying=ethers.Wallet.createRandom().address,otherVerifier=ethers.Wallet.createRandom().address;
+    const intent={chainId:97,proofHash:ethers.keccak256(ethers.toUtf8Bytes("proof-5-1")),sender:wallet.address.toLowerCase(),target:ethers.Wallet.createRandom().address.toLowerCase(),calldataHash:ethers.keccak256(ethers.toUtf8Bytes("calldata-5-1")),value:"123",nonce:9,deadline:2000000000};
+    const typed=sdk.executionIntentTypedData(intent,verifying,ethers),sig=await wallet.signTypedData(typed.domain,typed.types,typed.message);
+    assert.equal(sdk.verifyExecutionIntentSignature(intent,verifying,sig,ethers),true);
+    assert.equal(sdk.verifyExecutionIntentSignature(intent,otherVerifier,sig,ethers),false);
+    const mutations=[
+      {...intent,chainId:56},
+      {...intent,proofHash:ethers.keccak256(ethers.toUtf8Bytes("other-proof"))},
+      {...intent,sender:ethers.Wallet.createRandom().address.toLowerCase()},
+      {...intent,target:ethers.Wallet.createRandom().address.toLowerCase()},
+      {...intent,calldataHash:ethers.keccak256(ethers.toUtf8Bytes("other-call"))},
+      {...intent,value:"124"},
+      {...intent,nonce:10},
+      {...intent,deadline:intent.deadline-1}
+    ];
+    for(const changed of mutations)assert.equal(sdk.verifyExecutionIntentSignature(changed,verifying,sig,ethers),false);
+  });
+  it("rejects malformed typed-data inputs and signatures",function(){
+    const verifying=ethers.Wallet.createRandom().address,intent={chainId:97,proofHash:ethers.ZeroHash,sender:ethers.Wallet.createRandom().address.toLowerCase(),target:ethers.Wallet.createRandom().address.toLowerCase(),calldataHash:ethers.ZeroHash,value:"0",nonce:0,deadline:1};
+    assert.throws(()=>sdk.executionIntentTypedData({...intent,value:"-1"},verifying,ethers));
+    assert.throws(()=>sdk.executionIntentTypedData({...intent,nonce:-1},verifying,ethers));
+    assert.throws(()=>sdk.executionIntentTypedData(intent,ethers.ZeroAddress,ethers));
+    assert.equal(sdk.verifyExecutionIntentSignature(intent,verifying,"0x1234",ethers),false);
+  });
+});
