@@ -6,6 +6,9 @@ import { validateOracleSources, priceCircuitBreaker } from '../app/futures/oracl
 import { createOraclePriceService } from '../app/futures/oracle-price-service.js';
 import { activateFuturesListing, validateFuturesListingCandidate } from '../app/futures/listing-activation-gate.js';
 import { createDemoMarginAccount } from '../app/futures/account-engine.js';
+import { createInsuranceFund } from '../app/futures/insurance-engine.js';
+import { createDemoInsuranceFundService } from '../app/futures/insurance-fund-service.js';
+import { createDemoInsuranceAdlController } from '../app/futures/insurance-adl-controller.js';
 
 function providerFor(sourceMap) {
   return { getSources(symbol) { return sourceMap[symbol] ?? []; } };
@@ -152,5 +155,22 @@ describe('11/10 Futures security gate', () => {
     account.consumeLiquidation(25, 'CROSS');
     assert.equal(account.snapshot().crossReserved, 0);
     assert.equal(account.snapshot().availableBalance, 75);
+  });
+  it('conserves liquidation loss across Insurance Fund and explicit ADL debt', () => {
+    const service = createDemoInsuranceFundService({ initialFund: createInsuranceFund({ balance: 40 }) });
+    const controller = createDemoInsuranceAdlController({ insuranceFundService: service });
+    const preview = controller.previewCoverAndPlan({
+      liquidationLoss: 100,
+      bankruptSide: 'LONG',
+      positions: [{ id: 'winner', side: 'SHORT', unrealizedPnl: 100, leverage: 5, quantity: 1, markPrice: 100 }]
+    });
+    assert.equal(preview.insuranceCovered + preview.badDebt, preview.requestedLoss);
+    assert.equal(preview.insuranceCovered, 40);
+    assert.equal(preview.badDebt, 60);
+    const committed = controller.commitResolution(preview);
+    assert.equal(committed.fund.balance, 0);
+    assert.equal(committed.fund.totalCovered, 40);
+    assert.equal(committed.fund.totalBadDebt, 60);
+    assert.equal(committed.adlPlan.residualBadDebt, 0);
   });
 });
