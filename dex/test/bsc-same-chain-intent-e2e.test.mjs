@@ -136,10 +136,10 @@ describe("6/5 BSC same-chain Intent E2E runtime gate", function () {
 
   it("rejects direct calls that bypass Hub and Escrow authorization", async function () {
     const x = await f.lockAndRoute({ suffix: "auth" });
-    await expectFailure(() => f.binding.connect(f.outsider).forward.staticCall(
+    await expectFailure(async () => f.binding.connect(f.outsider).forward.staticCall(
       x.intentHash, await f.user.getAddress(), x.intentNonce, x.route
     ));
-    await expectFailure(() => f.solver.connect(f.outsider).execute.staticCall(x.route));
+    await expectFailure(async () => f.solver.connect(f.outsider).execute.staticCall(x.route));
     assert.equal((await f.escrow.intentRecord(x.intentHash)).status, 1n);
     assert.equal((await f.escrow.escrows(x.intentHash)).amount, x.input);
   });
@@ -147,7 +147,7 @@ describe("6/5 BSC same-chain Intent E2E runtime gate", function () {
   it("rolls back custody, lifecycle and receipt when Router minimum output fails", async function () {
     const x = await f.lockAndRoute({ suffix: "slippage", output: 90n, minimum: 100n });
     const escrowBefore = await f.tokenIn.balanceOf(await f.escrow.getAddress());
-    await expectFailure(() => f.hub.connect(f.operator).executeRoutedIntent.staticCall(
+    await expectFailure(async () => f.hub.connect(f.operator).executeRoutedIntent.staticCall(
       await f.user.getAddress(), x.intentNonce, x.route
     ));
     await expectFailure(async () => {
@@ -166,7 +166,7 @@ describe("6/5 BSC same-chain Intent E2E runtime gate", function () {
   it("rejects route fields that do not exactly match escrowed token and amount", async function () {
     const x = await f.lockAndRoute({ suffix: "mismatch" });
     const wrong = { ...x.route, amountIn: x.input - 1n };
-    await expectFailure(() => f.hub.connect(f.operator).executeRoutedIntent.staticCall(
+    await expectFailure(async () => f.hub.connect(f.operator).executeRoutedIntent.staticCall(
       await f.user.getAddress(), x.intentNonce, wrong
     ));
     assert.equal((await f.escrow.intentRecord(x.intentHash)).status, 1n);
@@ -182,7 +182,7 @@ describe("6/5 BSC same-chain Intent E2E runtime gate", function () {
     )).wait();
     await (await f.receipt.connect(f.owner).setRecorder(await f.binding.getAddress())).wait();
 
-    await expectFailure(() => f.hub.connect(f.operator).executeRoutedIntent.staticCall(
+    await expectFailure(async () => f.hub.connect(f.operator).executeRoutedIntent.staticCall(
       await f.user.getAddress(), x.intentNonce, x.route
     ));
     assert.equal((await f.escrow.intentRecord(x.intentHash)).status, 1n);
@@ -194,14 +194,14 @@ describe("6/5 BSC same-chain Intent E2E runtime gate", function () {
   it("enforces pause, expiry and one-time lifecycle execution", async function () {
     const x = await f.lockAndRoute({ suffix: "lifecycle" });
     await (await f.hub.connect(f.owner).setPaused(true)).wait();
-    await expectFailure(() => f.hub.connect(f.operator).executeRoutedIntent.staticCall(
+    await expectFailure(async () => f.hub.connect(f.operator).executeRoutedIntent.staticCall(
       await f.user.getAddress(), x.intentNonce, x.route
     ));
     await (await f.hub.connect(f.owner).setPaused(false)).wait();
     await (await f.hub.connect(f.operator).executeRoutedIntent(
       await f.user.getAddress(), x.intentNonce, x.route
     )).wait();
-    await expectFailure(() => f.hub.connect(f.operator).executeRoutedIntent.staticCall(
+    await expectFailure(async () => f.hub.connect(f.operator).executeRoutedIntent.staticCall(
       await f.user.getAddress(), x.intentNonce, x.route
     ));
   });
