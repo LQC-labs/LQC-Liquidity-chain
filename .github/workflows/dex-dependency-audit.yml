@@ -26,7 +26,10 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: dex/package-lock.json
-      - run: npm ci
+      - name: Regenerate candidate lockfile
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Verify clean install
+        run: npm ci
       - name: Capture full npm audit report
         shell: bash
         run: |
@@ -35,7 +38,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: dex-npm-audit
-          path: dex/npm-audit.json
+          name: dex-npm-audit-and-lockfile
+          path: |
+            dex/npm-audit.json
+            dex/package-lock.json
           if-no-files-found: error
           retention-days: 14
