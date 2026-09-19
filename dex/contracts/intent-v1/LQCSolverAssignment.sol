@@ -8,7 +8,7 @@ contract LQCSolverAssignment {
     address public assigner;
     address public intentHub;
 
-    error Unauthorized(); error InvalidAddress(); error InvalidAssignment(); error AlreadyAssigned(); error AssignmentExpired(); error AssignmentConsumed(); error WrongSolver();
+    error Unauthorized(); error InvalidAddress(); error InvalidAssignment(); error AlreadyAssigned(); error AssignmentExpired(); error AssignmentAlreadyConsumed(); error WrongSolver();
     event AssignerUpdated(address indexed assigner); event IntentHubUpdated(address indexed intentHub);
     event SolverAssigned(bytes32 indexed intentHash,address indexed solver,bytes32 indexed quoteHash,uint256 score,uint256 expiresAt);
     event AssignmentConsumed(bytes32 indexed intentHash,address indexed solver);
@@ -31,7 +31,7 @@ contract LQCSolverAssignment {
     function consume(bytes32 intentHash,address solver,bytes32 quoteHash) external onlyIntentHub {
         Assignment storage a=assignments[intentHash];
         if(a.solver==address(0))revert InvalidAssignment();
-        if(a.consumed)revert AssignmentConsumed();
+        if(a.consumed)revert AssignmentAlreadyConsumed();
         if(block.timestamp>a.expiresAt)revert AssignmentExpired();
         if(a.solver!=solver)revert WrongSolver();
         if(a.quoteHash!=quoteHash)revert InvalidAssignment();
