@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   assertMobileDeploymentContext,
   assertMobileDeploymentBudget,
+  assertMobileCumulativeBudget,
   connectApprovedMobileWallet,
   requestExplicitTransaction,
   MOBILE_FUTURES_DEPLOYMENT,
@@ -26,6 +27,14 @@ describe("Futures mobile testnet wallet gate", () => {
     assert.equal(assertMobileDeploymentBudget({balanceWei:"1300000000000000000",estimatedCostWei:"10000000000000000"}),1290000000000000000n);
     assert.throws(() => assertMobileDeploymentBudget({balanceWei:"300000000000000000",estimatedCostWei:"1"}), /0.3 tBNB reserve/);
     assert.throws(() => assertMobileDeploymentBudget({balanceWei:"2000000000000000000",estimatedCostWei:"1000000000000000001"}), /at most 1.0 tBNB/);
+  });
+  it("enforces the 1.0 tBNB cap across cumulative deployment spend", () => {
+    const result=assertMobileCumulativeBudget({startBalanceWei:"1300000000000000000",currentBalanceWei:"900000000000000000",estimatedCostWei:"100000000000000000"});
+    assert.equal(result.spentWei,400000000000000000n);
+    assert.equal(result.projectedSpendWei,500000000000000000n);
+    assert.equal(result.projectedBalanceWei,800000000000000000n);
+    assert.throws(()=>assertMobileCumulativeBudget({startBalanceWei:"1300000000000000000",currentBalanceWei:"400000000000000000",estimatedCostWei:"100000000000000001"}),/cumulative.*1.0 tBNB/);
+    assert.throws(()=>assertMobileCumulativeBudget({startBalanceWei:"1300000000000000000",currentBalanceWei:"1400000000000000000",estimatedCostWei:"1"}),/Invalid cumulative/);
   });
   it("connects only through an injected wallet provider", async () => {
     const provider={request:async({method})=>method==="eth_chainId"?"0x61":[MOBILE_FUTURES_DEPLOYMENT.deployer]};
