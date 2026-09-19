@@ -136,7 +136,8 @@
     "report:router2-route-readiness": "node scripts/build-router2-route-readiness.mjs",
     "prepare:router2-quote-stack": "node scripts/prepare-router2-quote-stack.mjs",
     "prepare:router2-lqc-flow-route": "node scripts/prepare-router2-lqc-flow-route.mjs",
-    "prepare:router2-lqc-flow-safe-caps": "node scripts/prepare-router2-lqc-flow-safe-caps.mjs"
+    "prepare:router2-lqc-flow-safe-caps": "node scripts/prepare-router2-lqc-flow-safe-caps.mjs",
+    "preflight:futures:testnet": "npm run compile && node scripts/preflight-futures-testnet-deploy.mjs"
   },
   "devDependencies": {
     "ethers": "^6.15.0",
