@@ -24,6 +24,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci --ignore-scripts
+      - name: Build canonical Futures mobile artifact
+        working-directory: dex
+        run: npm run build:futures-mobile-artifacts
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
