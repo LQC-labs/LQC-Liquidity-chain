@@ -162,7 +162,7 @@ describe('11/10 Futures security gate', () => {
     const preview = controller.previewCoverAndPlan({
       liquidationLoss: 100,
       bankruptSide: 'LONG',
-      positions: [{ id: 'winner', side: 'SHORT', unrealizedPnl: 100, leverage: 5, quantity: 1, markPrice: 100 }]
+      positions: [{ id: 'winner', side: 'SHORT', collateral: 20, quantity: 1, entryPrice: 160, markPrice: 100 }]
     });
     assert.equal(preview.insuranceCovered + preview.badDebt, preview.requestedLoss);
     assert.equal(preview.insuranceCovered, 40);
