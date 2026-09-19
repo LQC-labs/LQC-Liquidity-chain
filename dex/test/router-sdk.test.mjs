@@ -588,3 +588,13 @@ describe("5/1 EIP-712 security boundaries",function(){
     assert.equal(sdk.verifyExecutionIntentSignature(intent,verifying,"0x1234",ethers),false);
   });
 });
+
+
+describe("5/1 canonical EIP-712 intent identity",function(){
+  it("uses the EIP-712 digest as the single canonical intent identity",function(){
+    const verifying=ethers.Wallet.createRandom().address,intent={version:1,type:"LQC_EXECUTION_INTENT",chainId:97,proofHash:ethers.id("proof-canonical"),sender:ethers.Wallet.createRandom().address.toLowerCase(),target:ethers.Wallet.createRandom().address.toLowerCase(),calldataHash:ethers.id("call-canonical"),value:"0",nonce:11,deadline:2000000000};
+    const canonical=sdk.canonicalExecutionIntent(intent,verifying,ethers),digest=sdk.executionIntentTypedDataHash(intent,verifying,ethers);
+    assert.equal(canonical.intentHash,digest);assert.equal(canonical.typedDataHash,digest);assert.equal(canonical.hashScheme,"EIP712_V1");assert.equal(canonical.verifyingContract,verifying.toLowerCase());assert.equal(sdk.verifyCanonicalExecutionIntent(canonical,verifying,ethers),true);
+    assert.equal(sdk.verifyCanonicalExecutionIntent({...canonical,nonce:12},verifying,ethers),false);assert.equal(sdk.verifyCanonicalExecutionIntent(canonical,ethers.Wallet.createRandom().address,ethers),false);
+  });
+});
