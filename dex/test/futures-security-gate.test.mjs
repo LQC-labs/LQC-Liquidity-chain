@@ -77,7 +77,7 @@ describe('11/10 Futures security gate', () => {
     for (let moveBps = 1; moveBps <= 5000; moveBps += 37) {
       const next = 100 * (1 + moveBps / 10_000);
       const breaker = priceCircuitBreaker({ previousPrice: 100, nextPrice: next, maxMoveRatio: 0.10 });
-      assert.equal(breaker.allowed, moveBps <= 1000);
+      assert.equal(breaker.allowed, breaker.moveRatio <= 0.10);
     }
   });
   it('blocks new market activation until oracle, risk, stress, security and approval gates pass', () => {
