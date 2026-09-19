@@ -28,6 +28,9 @@ export function createDemoMarginAccount(initialBalance = 100000) {
     const realized = Number(pnl);
     if (!Number.isFinite(value) || value < 0) throw new Error('INVALID_MARGIN_AMOUNT');
     if (!Number.isFinite(realized)) throw new Error('INVALID_REALIZED_PNL');
+    const reserved = marginMode === 'CROSS' ? crossReserved : isolatedReserved;
+    if (value > reserved + 1e-9) throw new Error('MARGIN_RELEASE_EXCEEDS_RESERVED');
+    if (cash + value + realized < -1e-9) throw new Error('REALIZED_LOSS_EXCEEDS_ACCOUNT_EQUITY');
     if (marginMode === 'CROSS') crossReserved = Math.max(0, crossReserved - value);
     else isolatedReserved = Math.max(0, isolatedReserved - value);
     cash = Math.max(0, cash + value + realized);
@@ -70,6 +73,8 @@ export function createDemoMarginAccount(initialBalance = 100000) {
   function consumeLiquidation(amount, marginMode = 'ISOLATED') {
     const value = Number(amount);
     if (!Number.isFinite(value) || value < 0) throw new Error('INVALID_MARGIN_AMOUNT');
+    const reserved = marginMode === 'CROSS' ? crossReserved : isolatedReserved;
+    if (value > reserved + 1e-9) throw new Error('LIQUIDATION_CONSUME_EXCEEDS_RESERVED');
     if (marginMode === 'CROSS') crossReserved = Math.max(0, crossReserved - value);
     else isolatedReserved = Math.max(0, isolatedReserved - value);
     return snapshot();
