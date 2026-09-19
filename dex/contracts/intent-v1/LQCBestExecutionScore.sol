@@ -43,7 +43,7 @@ contract LQCBestExecutionScore {
         for(uint256 i=0;i<quotes.length;i++){
             Quote memory q=quotes[i];if(!reputation.eligible(q.solver)||q.amountOut==0||q.gasCostOut>=q.amountOut||q.priceImpactBps>BPS)continue;
             (uint256 bond,uint256 exposure,bool active)=registry.solvers(q.solver);if(!active||bond==0||exposure>bond)continue;
-            uint256 candidate=score(q),net=q.amountOut-q.gasCostOut;
+            uint256 candidate=score(q);uint256 net=q.amountOut-q.gasCostOut;
             if(candidate>bestScore||(candidate==bestScore&&net>netAmountOut)||(candidate==bestScore&&net==netAmountOut&&uint160(q.solver)<uint160(solver))){
                 solver=q.solver;bestScore=candidate;netAmountOut=net;
             }
