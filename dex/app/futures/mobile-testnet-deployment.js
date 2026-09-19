@@ -37,6 +37,26 @@ export function assertMobileDeploymentBudget({ balanceWei, estimatedCostWei }) {
   return balance - estimatedCost;
 }
 
+export function assertMobileCumulativeBudget({ startBalanceWei, currentBalanceWei, estimatedCostWei }) {
+  const startBalance = BigInt(startBalanceWei);
+  const currentBalance = BigInt(currentBalanceWei);
+  const estimatedCost = BigInt(estimatedCostWei);
+  assertMobileDeploymentBudget({ balanceWei: currentBalance, estimatedCostWei: estimatedCost });
+  if (startBalance <= 0n || currentBalance > startBalance) {
+    throw new Error("Invalid cumulative deployment balance baseline.");
+  }
+  const spent = startBalance - currentBalance;
+  const projectedSpend = spent + estimatedCost;
+  if (projectedSpend > MAX_DEPLOYMENT_SPEND_WEI) {
+    throw new Error("Projected cumulative Futures deployment spend exceeds 1.0 tBNB.");
+  }
+  return {
+    spentWei: spent,
+    projectedSpendWei: projectedSpend,
+    projectedBalanceWei: currentBalance - estimatedCost,
+  };
+}
+
 export async function connectApprovedMobileWallet(provider = globalThis.ethereum) {
   if (!provider?.request) throw new Error("No injected mobile wallet provider found. Open this page inside TokenPocket DApp browser.");
   const chainId = await provider.request({ method: "eth_chainId" });
