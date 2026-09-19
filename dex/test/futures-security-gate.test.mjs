@@ -143,4 +143,14 @@ describe('11/10 Futures security gate', () => {
     assert.equal(account.snapshot().availableBalance, 100);
     assert.equal(account.snapshot().totalReserved, 0);
   });
+  it('blocks liquidation reserve over-consumption without mutating balances', () => {
+    const account = createDemoMarginAccount(100);
+    account.reserve(25, 'CROSS');
+    const before = account.snapshot();
+    assert.throws(() => account.consumeLiquidation(30, 'CROSS'), /LIQUIDATION_CONSUME_EXCEEDS_RESERVED/);
+    assert.deepEqual(account.snapshot(), before);
+    account.consumeLiquidation(25, 'CROSS');
+    assert.equal(account.snapshot().crossReserved, 0);
+    assert.equal(account.snapshot().availableBalance, 75);
+  });
 });
