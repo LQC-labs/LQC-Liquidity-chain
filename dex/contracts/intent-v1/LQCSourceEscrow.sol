@@ -38,10 +38,12 @@ contract LQCSourceEscrow is LQCCoreIntentState {
     function executeThrough(bytes32 intentHash,address executionTarget,bytes calldata executionCall) external onlyHub nonReentrant returns(bytes memory result) {
         if(executionTarget==address(0)||executionCall.length<4)revert InvalidExecutionTarget();
         _requirePending(intentHash);Escrow memory e=escrows[intentHash];
-        delete escrows[intentHash];
         if(!IERC20Escrow(e.token).transfer(executionTarget,e.amount))revert TransferFailed();
         (bool ok,bytes memory data)=executionTarget.call(executionCall);
         if(!ok){assembly{revert(add(data,32),mload(data))}}
+        // Keep the record readable during the authenticated execution so Binding can
+        // verify token and amount. The reentrancy lock prevents concurrent consumption.
+        delete escrows[intentHash];
         _markExecuted(intentHash);
         return data;
     }
