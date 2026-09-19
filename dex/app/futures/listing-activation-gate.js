@@ -16,12 +16,17 @@ function requireObject(value, code) {
 
 export function validateFuturesListingCandidate({ market, oracle, riskLimits, approvals } = {}) {
   if (!validateFuturesMarket(market)) throw new Error('INVALID_FUTURES_LISTING_MARKET');
+  if (market.status !== 'DEMO') throw new Error('FUTURES_LISTING_CANDIDATE_MUST_BE_DEMO');
   const oracleConfig = requireObject(oracle, 'LISTING_ORACLE_CONFIG_REQUIRED');
   if (!Number.isInteger(oracleConfig.minSources) || oracleConfig.minSources < 3) throw new Error('LISTING_ORACLE_REQUIRES_THREE_SOURCES');
   if (!Number.isFinite(oracleConfig.maxAgeMs) || oracleConfig.maxAgeMs <= 0) throw new Error('INVALID_LISTING_ORACLE_MAX_AGE');
   if (!Number.isFinite(oracleConfig.maxDeviationRatio) || oracleConfig.maxDeviationRatio <= 0 || oracleConfig.maxDeviationRatio >= 1) throw new Error('INVALID_LISTING_ORACLE_DEVIATION');
 
   const limits = requireObject(riskLimits, 'LISTING_RISK_LIMITS_REQUIRED');
+  const requiredLimits = ['maxOpenInterest', 'maxPositionNotional', 'maxOrderNotional'];
+  for (const key of requiredLimits) {
+    if (!Object.hasOwn(limits, key)) throw new Error(`MISSING_LISTING_RISK_LIMIT_${key.toUpperCase()}`);
+  }
   for (const [key, value] of Object.entries(limits)) {
     if (!Number.isFinite(value) || value <= 0) throw new Error(`INVALID_LISTING_RISK_LIMIT_${key.toUpperCase()}`);
   }
