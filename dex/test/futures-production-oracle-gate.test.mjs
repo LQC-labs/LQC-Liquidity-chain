@@ -11,7 +11,7 @@ describe("Futures production oracle gate",()=>{
   assert.match(mock,/Test-only oracle/);
   assert.match(gate,/MockLQCFuturesOracle/);
   assert.match(gate,/MockERC20/);
-  assert.match(gate,/contracts\\/mocks\\/MockERC20\\.sol/);
+  assert.ok(gate.includes("contracts/mocks/MockERC20.sol"));
   assert.match(gate,/no production Futures deployment\/config manifest exists/);
   assert.match(pkg.scripts["deploy:futures:production"],/^npm run gate:futures:production-oracle &&/);
  });
