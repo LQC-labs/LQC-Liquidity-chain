@@ -32,13 +32,12 @@ async function expectFailure(action) {
 }
 
 async function fixture() {
-  const server = ganache.server({
+  const chain = ganache.provider({
     chain: { chainId: 97, hardfork: "shanghai" },
     logging: { quiet: true },
     wallet: { deterministic: true, totalAccounts: 8 }
   });
-  await server.listen(0);
-  const provider = new ethers.JsonRpcProvider(`http://127.0.0.1:${server.address().port}`);
+  const provider = new ethers.BrowserProvider(chain);
   const [owner, guardian, operator, user, recipient, outsider] =
     await Promise.all([0,1,2,3,4,5].map(i => provider.getSigner(i)));
 
@@ -50,16 +49,16 @@ async function fixture() {
   const receipt = await deploy(A.Receipt, owner, await owner.getAddress());
 
   // Escrow and Hub reference one another, so deploy against the deterministic CREATE addresses.
-  let nonce = await provider.getTransactionCount(await owner.getAddress());
+  let nonce = BigInt(await provider.send("eth_getTransactionCount", [await owner.getAddress(), "pending"]));
   const escrowAddress = ethers.getCreateAddress({ from: await owner.getAddress(), nonce });
-  const hubAddress = ethers.getCreateAddress({ from: await owner.getAddress(), nonce: nonce + 1 });
+  const hubAddress = ethers.getCreateAddress({ from: await owner.getAddress(), nonce: nonce + 1n });
   const escrow = await deploy(A.Escrow, owner, hubAddress);
   assert.equal(await escrow.getAddress(), escrowAddress);
   const hub = await deploy(A.Hub, owner, escrowAddress, await owner.getAddress(), await guardian.getAddress());
   assert.equal(await hub.getAddress(), hubAddress);
 
   // Solver accepts only Binding; Binding in turn accepts only Escrow.
-  nonce = await provider.getTransactionCount(await owner.getAddress());
+  nonce = BigInt(await provider.send("eth_getTransactionCount", [await owner.getAddress(), "pending"]));
   const solverAddress = ethers.getCreateAddress({ from: await owner.getAddress(), nonce });
   const bindingAddress = ethers.getCreateAddress({ from: await owner.getAddress(), nonce: nonce + 1 });
   const solver = await deploy(A.Solver, owner, bindingAddress, await router.getAddress());
@@ -95,21 +94,21 @@ async function fixture() {
   }
 
   return {
-    server, provider, owner, operator, user, recipient, outsider,
+    chain, provider, owner, operator, user, recipient, outsider,
     tokenIn, tokenOut, escrow, hub, solver, binding, receipt, adapter, dexId,
     lockAndRoute
   };
 }
 async function close(f) {
   await f.provider.destroy();
-  await f.server.close();
+  await f.chain.disconnect();
 }
 
 describe("6/5 BSC same-chain Intent E2E runtime gate", function () {
   this.timeout(30000);
   let f;
   beforeEach(async () => { f = await fixture(); });
-  afterEach(async () => { await close(f); });
+  afterEach(async () => { if (f) await close(f); });
 
   it("executes Escrow -> Binding -> Solver -> Router and records the measured output atomically", async function () {
     const x = await f.lockAndRoute();
