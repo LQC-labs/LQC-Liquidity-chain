@@ -13,7 +13,7 @@ contract LQCSourceEscrow is LQCCoreIntentState {
     address public immutable intentHub;
     uint256 private _locked=1;
 
-    error UnauthorizedHub(); error InvalidToken(); error InvalidAmount(); error TransferFailed(); error Reentrancy();
+    error UnauthorizedHub(); error InvalidToken(); error InvalidAmount(); error TransferFailed(); error Reentrancy(); error InvalidExecutionTarget();
 
     modifier nonReentrant(){if(_locked!=1)revert Reentrancy();_locked=2;_;_locked=1;}
     modifier onlyHub(){if(msg.sender!=intentHub)revert UnauthorizedHub();_;}
@@ -31,6 +31,19 @@ contract LQCSourceEscrow is LQCCoreIntentState {
         if(recipient==address(0))revert InvalidSender();
         _markExecuted(intentHash);Escrow memory e=escrows[intentHash];delete escrows[intentHash];
         if(!IERC20Escrow(e.token).transfer(recipient,e.amount))revert TransferFailed();
+    }
+
+    /// @notice Atomically hands escrowed input to an approved execution target and invokes it.
+    /// @dev Any target failure reverts the token transfer, lifecycle transition and escrow deletion.
+    function executeThrough(bytes32 intentHash,address executionTarget,bytes calldata executionCall) external onlyHub nonReentrant returns(bytes memory result) {
+        if(executionTarget==address(0)||executionCall.length<4)revert InvalidExecutionTarget();
+        _requirePending(intentHash);Escrow memory e=escrows[intentHash];
+        delete escrows[intentHash];
+        if(!IERC20Escrow(e.token).transfer(executionTarget,e.amount))revert TransferFailed();
+        (bool ok,bytes memory data)=executionTarget.call(executionCall);
+        if(!ok){assembly{revert(add(data,32),mload(data))}}
+        _markExecuted(intentHash);
+        return data;
     }
 
     function cancelAndRefund(bytes32 intentHash) external nonReentrant {
