@@ -5,6 +5,7 @@ import { evaluateEmergencyTriggers } from '../app/futures/emergency-controls.js'
 import { validateOracleSources, priceCircuitBreaker } from '../app/futures/oracle-guard.js';
 import { createOraclePriceService } from '../app/futures/oracle-price-service.js';
 import { activateFuturesListing, validateFuturesListingCandidate } from '../app/futures/listing-activation-gate.js';
+import { createDemoMarginAccount } from '../app/futures/account-engine.js';
 
 function providerFor(sourceMap) {
   return { getSources(symbol) { return sourceMap[symbol] ?? []; } };
@@ -131,5 +132,15 @@ describe('11/10 Futures security gate', () => {
       assert.equal(result.symbol, candidates[index].market.symbol);
       assert.equal(result.activatable, true);
     }
+  });
+  it('blocks margin over-release from minting account balance', () => {
+    const account = createDemoMarginAccount(100);
+    account.reserve(10);
+    const before = account.snapshot();
+    assert.throws(() => account.release(100), /MARGIN_RELEASE_EXCEEDS_RESERVED/);
+    assert.deepEqual(account.snapshot(), before);
+    account.release(10);
+    assert.equal(account.snapshot().availableBalance, 100);
+    assert.equal(account.snapshot().totalReserved, 0);
   });
 });
