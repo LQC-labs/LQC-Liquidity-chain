@@ -5,6 +5,7 @@
 <body><h1>LQC Futures BSC Testnet 검증</h1>
 <p>읽기 전용입니다. 트랜잭션을 생성하거나 서명을 요청하지 않습니다.</p>
 <button id="check">온체인 상태 검증</button><div id="out"></div>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
 <script>
 const RPC="https://data-seed-prebsc-1-s1.bnbchain.org:8545/";
 const OWNER="0x89d992f696B40ABbDB6610144faeF336911D8175".toLowerCase();
@@ -16,7 +17,7 @@ document.getElementById("check").onclick=async()=>{out.innerHTML="검증 중…"
  const chain=await rpc("eth_chainId");let h=card("Chain ID: "+parseInt(chain,16)+(chain==="0x61"?" ✓":" ✗"),chain==="0x61");
  let all=chain==="0x61";
  for(const [n,a] of Object.entries(A)){const c=await rpc("eth_getCode",[a,"latest"]);const ok=c&&c!=="0x";all&&=ok;h+=card(n+" runtime code: "+(ok?"존재 ✓":"없음 ✗")+"<br><code>"+a+"</code>",ok)}
- const ownerData="0x8da5cb5b"; const engData="0xc4d66de8";
+ const iface=new ethers.Interface(["function owner() view returns(address)","function engine() view returns(address)"]); const ownerData=iface.encodeFunctionData("owner"); const engData=iface.encodeFunctionData("engine");
  const vo=await rpc("eth_call",[{to:A.Vault,data:ownerData},"latest"]);const owner=("0x"+vo.slice(-40)).toLowerCase();const ook=owner===OWNER;all&&=ook;h+=card("Vault owner: <code>"+owner+"</code>"+(ook?" ✓":" ✗"),ook);
  const ve=await rpc("eth_call",[{to:A.Vault,data:engData},"latest"]);const engine=("0x"+ve.slice(-40)).toLowerCase();const eok=engine===A.Engine.toLowerCase();all&&=eok;h+=card("Vault.engine: <code>"+engine+"</code>"+(eok?" ✓":" ✗"),eok);
  h+=card(all?"최종 결과: PASS — 읽기 전용 온체인 검증 완료":"최종 결과: FAIL — 위 항목 확인 필요",all);out.innerHTML=h;
