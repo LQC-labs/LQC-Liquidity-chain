@@ -10,6 +10,8 @@ describe("Futures production oracle gate",()=>{
   const pkg=JSON.parse(fs.readFileSync(path.join(root,"package.json"),"utf8"));
   assert.match(mock,/Test-only oracle/);
   assert.match(gate,/MockLQCFuturesOracle/);
+  assert.match(gate,/MockERC20/);
+  assert.match(gate,/contracts\\/mocks\\/MockERC20\\.sol/);
   assert.match(gate,/no production Futures deployment\/config manifest exists/);
   assert.match(pkg.scripts["deploy:futures:production"],/^npm run gate:futures:production-oracle &&/);
  });
