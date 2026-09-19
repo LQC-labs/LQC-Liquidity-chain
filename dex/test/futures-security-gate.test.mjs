@@ -100,7 +100,9 @@ describe('11/10 Futures security gate', () => {
     assert.deepEqual(activateFuturesListing(approved), { symbol: 'DOGEUSDT', status: 'ACTIVE' });
 
     assert.throws(() => validateFuturesListingCandidate({ ...approved, oracle: { ...approved.oracle, minSources: 2 } }), /LISTING_ORACLE_REQUIRES_THREE_SOURCES/);
+    assert.throws(() => validateFuturesListingCandidate({ ...approved, riskLimits: {} }), /MISSING_LISTING_RISK_LIMIT_MAXOPENINTEREST/);
     assert.throws(() => validateFuturesListingCandidate({ ...approved, riskLimits: { ...approved.riskLimits, maxOrderNotional: 200_000 } }), /LISTING_ORDER_LIMIT_EXCEEDS_POSITION_LIMIT/);
+    assert.throws(() => validateFuturesListingCandidate({ ...approved, market: { ...approved.market, status: 'ACTIVE' } }), /FUTURES_LISTING_CANDIDATE_MUST_BE_DEMO/);
   });
   it('keeps 100 independently configured listing candidates isolated under mixed failures', () => {
     const candidates = Array.from({ length: 100 }, (_, index) => {
