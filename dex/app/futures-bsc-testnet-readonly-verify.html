@@ -13,13 +13,13 @@ const A={Registry:"0xfbd1c5c8dbbdadf3eb834f351366daf55f2d73b0",Vault:"0xb532c652
 const out=document.getElementById("out");
 async function rpc(method,params=[]){const r=await fetch(RPC,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})});const j=await r.json();if(j.error)throw Error(j.error.message);return j.result}
 const card=(s,ok)=>'<div class="card '+(ok?'ok':'bad')+'">'+s+'</div>';
-document.getElementById("check").onclick=async()=>{out.innerHTML="검증 중…";try{
- const chain=await rpc("eth_chainId");let h=card("Chain ID: "+parseInt(chain,16)+(chain==="0x61"?" ✓":" ✗"),chain==="0x61");
- let all=chain==="0x61";
- for(const [n,a] of Object.entries(A)){const c=await rpc("eth_getCode",[a,"latest"]);const ok=c&&c!=="0x";all&&=ok;h+=card(n+" runtime code: "+(ok?"존재 ✓":"없음 ✗")+"<br><code>"+a+"</code>",ok)}
- const iface=new ethers.Interface(["function owner() view returns(address)","function engine() view returns(address)"]); const ownerData=iface.encodeFunctionData("owner"); const engData=iface.encodeFunctionData("engine");
- const vo=await rpc("eth_call",[{to:A.Vault,data:ownerData},"latest"]);const owner=("0x"+vo.slice(-40)).toLowerCase();const ook=owner===OWNER;all&&=ook;h+=card("Vault owner: <code>"+owner+"</code>"+(ook?" ✓":" ✗"),ook);
- const ve=await rpc("eth_call",[{to:A.Vault,data:engData},"latest"]);const engine=("0x"+ve.slice(-40)).toLowerCase();const eok=engine===A.Engine.toLowerCase();all&&=eok;h+=card("Vault.engine: <code>"+engine+"</code>"+(eok?" ✓":" ✗"),eok);
- h+=card(all?"최종 결과: PASS — 읽기 전용 온체인 검증 완료":"최종 결과: FAIL — 위 항목 확인 필요",all);out.innerHTML=h;
-}catch(e){out.innerHTML=card("검증 오류: "+String(e.message||e),false)}};
+document.getElementById("check").onclick=async()=>{out.innerHTML="검증 중…";let h="",all=true;
+ async function step(label,fn){try{const v=await fn();h+=card(label+" ✓"+(v?"<br>"+v:""),true);out.innerHTML=h;return v}catch(e){all=false;h+=card(label+" ✗<br>"+String(e.message||e),false);out.innerHTML=h;return null}}
+ const chain=await step("1. Chain ID",async()=>{const x=await rpc("eth_chainId");if(x!=="0x61")throw Error("예상 97, 실제 "+parseInt(x,16));return "97"});
+ for(const [n,a] of Object.entries(A))await step("Runtime code — "+n,async()=>{const x=await rpc("eth_getCode",[a,"latest"]);if(!x||x==="0x")throw Error("runtime code 없음");return "<code>"+a+"</code>"});
+ const iface=new ethers.Interface(["function owner() view returns(address)","function engine() view returns(address)"]);
+ await step("Vault.owner()",async()=>{const x=await rpc("eth_call",[{to:A.Vault,data:iface.encodeFunctionData("owner")},"latest"]);const v=("0x"+x.slice(-40)).toLowerCase();if(v!==OWNER)throw Error("Owner 불일치: "+v);return "<code>"+v+"</code>"});
+ await step("Vault.engine()",async()=>{const x=await rpc("eth_call",[{to:A.Vault,data:iface.encodeFunctionData("engine")},"latest"]);const v=("0x"+x.slice(-40)).toLowerCase();if(v!==A.Engine.toLowerCase())throw Error("Engine 불일치: "+v);return "<code>"+v+"</code>"});
+ h+=card(all?"최종 결과: PASS — 읽기 전용 온체인 검증 완료":"최종 결과: FAIL — 실패 단계가 위에 표시됨",all);out.innerHTML=h;
+};
 </script></body></html>
