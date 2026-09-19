@@ -2,7 +2,12 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root=path.resolve(import.meta.dirname,"..");
-const forbidden=["MockLQCFuturesOracle","contracts/futures/mocks/"];
+const forbidden=[
+  "MockLQCFuturesOracle",
+  "contracts/futures/mocks/",
+  "MockERC20",
+  "contracts/mocks/MockERC20.sol",
+];
 const candidates=[
   path.join(root,"scripts","deploy-futures-production.mjs"),
   path.join(root,"config","futures-production.json"),
@@ -16,8 +21,8 @@ if(candidates.length===0){
 for(const file of candidates){
   const text=fs.readFileSync(file,"utf8");
   for(const marker of forbidden) if(text.includes(marker)){
-    console.error(`FUTURES_PRODUCTION_ORACLE_GATE_FAIL: test-only oracle marker "${marker}" found in ${path.relative(root,file)}`);
+    console.error(`FUTURES_PRODUCTION_SAFETY_GATE_FAIL: test-only marker "${marker}" found in ${path.relative(root,file)}`);
     process.exit(1);
   }
 }
-console.log("FUTURES_PRODUCTION_ORACLE_GATE_PASS: no test-only oracle markers found in production Futures deployment/config files.");
+console.log("FUTURES_PRODUCTION_SAFETY_GATE_PASS: no test-only oracle or token markers found in production Futures deployment/config files.");
