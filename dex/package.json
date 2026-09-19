@@ -140,7 +140,9 @@
     "preflight:futures:testnet": "npm run compile && node scripts/preflight-futures-testnet-deploy.mjs",
     "deploy:futures:testnet": "npm run compile && node scripts/deploy-futures-testnet.mjs",
     "build:futures-mobile-artifacts": "npm run compile && node scripts/build-futures-mobile-testnet-artifacts.mjs",
-    "check:futures-mobile-deploy": "node --check app/futures/mobile-testnet-deployer-page.js && npm run build:futures-mobile-artifacts"
+    "check:futures-mobile-deploy": "node --check app/futures/mobile-testnet-deployer-page.js && npm run build:futures-mobile-artifacts",
+    "gate:futures:production-oracle": "node scripts/gate-futures-production-oracle.mjs",
+    "deploy:futures:production": "npm run gate:futures:production-oracle && npm run compile && node scripts/deploy-futures-production.mjs"
   },
   "devDependencies": {
     "ethers": "^6.15.0",
