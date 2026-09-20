@@ -29,18 +29,18 @@ describe("7/4 Solver Exposure / Capacity EVM runtime gate", function () {
   afterEach(async()=>{provider.destroy();await chain.disconnect();});
 
   it("requires bonded active solver and exposure-manager authority", async()=>{
-    await fails(()=>registry.connect(manager).increaseExposure.staticCall(await solver.getAddress(),1n));
+    await fails(async()=>registry.connect(manager).increaseExposure.staticCall(await solver.getAddress(),1n));
     await (await registry.connect(solver).bond(300n)).wait();
-    await fails(()=>registry.connect(outsider).increaseExposure.staticCall(await solver.getAddress(),1n));
+    await fails(async()=>registry.connect(outsider).increaseExposure.staticCall(await solver.getAddress(),1n));
     await (await registry.connect(manager).increaseExposure(await solver.getAddress(),200n)).wait();
     const s=await registry.solvers(await solver.getAddress()); assert.equal(s.exposure,200n); assert.equal(s.active,true);
   });
 
   it("caps exposure by both solver bond and protocol limit", async()=>{
     await (await registry.connect(solver).bond(300n)).wait();
-    await fails(()=>registry.connect(manager).increaseExposure.staticCall(await solver.getAddress(),301n));
+    await fails(async()=>registry.connect(manager).increaseExposure.staticCall(await solver.getAddress(),301n));
     await (await registry.connect(solver).bond(300n)).wait();
-    await fails(()=>registry.connect(manager).increaseExposure.staticCall(await solver.getAddress(),501n));
+    await fails(async()=>registry.connect(manager).increaseExposure.staticCall(await solver.getAddress(),501n));
     await (await registry.connect(manager).increaseExposure(await solver.getAddress(),500n)).wait();
     assert.equal((await registry.solvers(await solver.getAddress())).exposure,500n);
   });
@@ -58,7 +58,7 @@ describe("7/4 Solver Exposure / Capacity EVM runtime gate", function () {
     await (await registry.connect(solver).bond(300n)).wait();
     await (await registry.connect(manager).increaseExposure(await solver.getAddress(),200n)).wait();
     await (await registry.connect(guardian).setPaused(true)).wait();
-    await fails(()=>registry.connect(manager).increaseExposure.staticCall(await solver.getAddress(),1n));
+    await fails(async()=>registry.connect(manager).increaseExposure.staticCall(await solver.getAddress(),1n));
     await (await registry.connect(manager).decreaseExposure(await solver.getAddress(),50n)).wait();
     assert.equal((await registry.solvers(await solver.getAddress())).exposure,150n);
   });
@@ -66,8 +66,8 @@ describe("7/4 Solver Exposure / Capacity EVM runtime gate", function () {
   it("fails closed on exposure underflow and unauthorized configuration", async()=>{
     await (await registry.connect(solver).bond(300n)).wait();
     await (await registry.connect(manager).increaseExposure(await solver.getAddress(),100n)).wait();
-    await fails(()=>registry.connect(manager).decreaseExposure.staticCall(await solver.getAddress(),101n));
-    await fails(()=>registry.connect(outsider).setExposureManager.staticCall(await outsider.getAddress()));
+    await fails(async()=>registry.connect(manager).decreaseExposure.staticCall(await solver.getAddress(),101n));
+    await fails(async()=>registry.connect(outsider).setExposureManager.staticCall(await outsider.getAddress()));
     await fails(()=>registry.connect(outsider).setLimits.staticCall(1n,1n));
     assert.equal((await registry.solvers(await solver.getAddress())).exposure,100n);
   });
@@ -75,7 +75,7 @@ describe("7/4 Solver Exposure / Capacity EVM runtime gate", function () {
   it("matches the futures safety invariant: saturation never blocks de-risking", async()=>{
     await (await registry.connect(solver).bond(500n)).wait();
     await (await registry.connect(manager).increaseExposure(await solver.getAddress(),500n)).wait();
-    await fails(()=>registry.connect(manager).increaseExposure.staticCall(await solver.getAddress(),1n));
+    await fails(async()=>registry.connect(manager).increaseExposure.staticCall(await solver.getAddress(),1n));
     await (await registry.connect(manager).decreaseExposure(await solver.getAddress(),100n)).wait();
     assert.equal((await registry.solvers(await solver.getAddress())).exposure,400n);
   });
