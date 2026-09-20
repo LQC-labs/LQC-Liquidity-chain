@@ -1,0 +1,43 @@
+name: Master 2 LQC Flow Gate
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/LQCFlowFactory.sol'
+      - 'dex/contracts/LQCFlowPair.sol'
+      - 'dex/contracts/LQCFlowRouter.sol'
+      - 'dex/contracts/router-v2/adapters/LQCFlowAdapter.sol'
+      - 'dex/test/amm*.test.mjs'
+      - 'dex/test/native-router.test.mjs'
+      - 'dex/test/router2-lqc-flow-*.test.mjs'
+      - '.github/workflows/master2-flow-gate.yml'
+  workflow_dispatch:
+jobs:
+  flow:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci
+      - run: npm run compile
+      - name: LQC Flow regression and security gate
+        run: >
+          npx mocha --timeout 30000
+          test/amm.test.mjs
+          test/amm-core-security-boundaries.test.mjs
+          test/amm-factory-pair-boundaries.test.mjs
+          test/amm-liquidity-boundaries.test.mjs
+          test/amm-minout-deadline-boundaries.test.mjs
+          test/amm-multihop-boundaries.test.mjs
+          test/amm-native-bnb-boundaries.test.mjs
+          test/amm-swap-boundaries.test.mjs
+          test/native-router.test.mjs
+          test/router2-lqc-flow-route-preparation.test.mjs
+          test/router2-lqc-flow-finalization.test.mjs
+          test/router2-lqc-flow-execution-record.test.mjs
