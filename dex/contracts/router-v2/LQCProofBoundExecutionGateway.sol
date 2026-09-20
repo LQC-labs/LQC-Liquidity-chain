@@ -46,8 +46,18 @@ contract LQCProofBoundExecutionGateway {
     function executeBestCandidate(LQCQuoteTypes.QuoteRequest calldata request,LQCQuoteTypes.QuoteResult[] calldata candidates,bytes[] calldata routeData,uint256 selectedIndex) external nonReentrant returns(bytes32 proofHash,uint256 amountOut){
         if(request.recipient!=msg.sender)revert RecipientMustBeSender();
         if(!proofVerifier.verifyBestCandidate(request,candidates,routeData,selectedIndex))revert InvalidProof();
-        proofHash=proofVerifier.bestCandidateProofHash(request,candidates,selectedIndex);
-        if(proofHash==bytes32(0))revert InvalidProof();
+        bytes32 routeProofHash=proofVerifier.bestCandidateProofHash(request,candidates,selectedIndex);
+        if(routeProofHash==bytes32(0))revert InvalidProof();
+        // Bind replay protection and emitted execution identity to this gateway deployment.
+        // The verifier's route proof remains portable; the consumed execution proof is domain-specific.
+        proofHash=keccak256(abi.encode(
+            keccak256("LQCProofBoundExecutionGatewayV1"),
+            block.chainid,
+            address(this),
+            address(proofVerifier),
+            address(executionRouter),
+            routeProofHash
+        ));
         if(consumedProof[proofHash])revert ProofAlreadyConsumed();
         LQCQuoteTypes.QuoteResult calldata selected=candidates[selectedIndex];
         (address currentAdapter,bool enabled,)=ILQCDexRegistryGateway(executionRouter.registry()).getDex(selected.dexId);
