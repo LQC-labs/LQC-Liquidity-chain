@@ -5,6 +5,9 @@ on:
     paths:
       - 'scripts/master3-router-proof-revalidation.js'
       - 'test/master3-router-proof-revalidation.test.js'
+      - 'scripts/master3-router-portability-audit.js'
+      - 'test/master3-router-portability-audit.test.js'
+      - 'dex/contracts/router-v2/**'
       - 'docs/master3/**'
       - '.github/workflows/master3-router-proof-revalidation.yml'
   workflow_dispatch:
@@ -23,6 +26,10 @@ jobs:
           node-version: '20'
       - name: Run fail-closed proof revalidation tests
         run: node test/master3-router-proof-revalidation.test.js
+      - name: Run portability audit structure tests
+        run: node test/master3-router-portability-audit.test.js
+      - name: Audit Router Core portability
+        run: node scripts/master3-router-portability-audit.js
       - name: Enforce no activation authorization
         run: |
           grep -R -Fq 'activationAuthorized: false' docs/master3
