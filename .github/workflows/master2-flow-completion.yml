@@ -1,0 +1,50 @@
+name: Master 2 Flow Completion Gate
+
+on:
+  pull_request:
+    paths:
+      - 'docs/master2/2-12-flow-completion-manifest.md'
+      - '.github/workflows/master2-flow-completion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify ordered Master 2 checkpoints in main lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          history="$(git log --format='%s%n%b' origin/main)"
+          checks=(
+            "2/1 LQC Flow"
+            "2/2 LQC Flow"
+            "2/3 LQC Flow"
+            "2/4 LQC Flow"
+            "2/5 LQC Flow"
+            "Master 2/6"
+            "Master 2/7"
+            "2/8 LQC Flow"
+            "Master 2/9"
+            "2/10 LQC Flow"
+            "2/11 LQC Flow"
+          )
+          for check in "${checks[@]}"; do
+            grep -Fq "$check" <<<"$history" || { echo "Missing checkpoint: $check"; exit 1; }
+          done
+      - name: Verify closure safety boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          file=docs/master2/2-12-flow-completion-manifest.md
+          grep -Fq '`activationAuthorized: false`' "$file"
+          grep -Fq 'DEX/Flow execution state remains isolated from Futures, Lending and Intent state' "$file"
+          grep -Fq 'no wallet signature, transaction broadcast, liquidity mutation, deployment or upgrade' "$file"
