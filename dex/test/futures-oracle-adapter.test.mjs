@@ -149,7 +149,7 @@ describe("LQC Futures Aggregator Oracle Adapter", function () {
     await (await adapter.connect(outsider).acceptOwnership()).wait();
     assert.equal(await adapter.owner(), await outsider.getAddress());
     assert.equal(await adapter.pendingOwner(), ethers.ZeroAddress);
-    await assert.rejects(adapter.setFeed(await token.getAddress(), await feed.getAddress(), HEARTBEAT));
+    await assert.rejects(async () => (await adapter.setFeed(await token.getAddress(), await feed.getAddress(), HEARTBEAT)).wait());
     await (await adapter.connect(outsider).setFeed(await token.getAddress(), await feed.getAddress(), HEARTBEAT)).wait();
   });
 });
