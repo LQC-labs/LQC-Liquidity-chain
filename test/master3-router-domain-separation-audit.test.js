@@ -11,10 +11,12 @@ assert.match(proof,/result\.adapter/);
 assert.match(proof,/candidateSetHash\(candidates\)/);
 assert.match(proof,/request\.validUntil/);
 assert.match(gateway,/mapping\(bytes32\s*=>\s*bool\) public consumedProof/);
+assert.match(gateway,/LQCProofBoundExecutionGatewayV1/);
+assert.match(gateway,/block\.chainid/);
+assert.match(gateway,/address\(this\)/);
+assert.match(gateway,/address\(proofVerifier\)/);
+assert.match(gateway,/address\(executionRouter\)/);
+assert.match(gateway,/routeProofHash/);
 assert.match(gateway,/if\(consumedProof\[proofHash\]\)revert ProofAlreadyConsumed/);
 
-// Finding: proof hash binds chain/economics/route, but does not bind verifier/gateway address.
-const bestHashBody=proof.slice(proof.indexOf('function bestCandidateProofHash'),proof.indexOf('function computeRouteHash'));
-assert.ok(!/address\(this\)/.test(bestHashBody),'unexpected deployment-domain binding already exists');
-
-console.log('Master 3/3 current domain-separation audit: PASS with deployment-domain GAP');
+console.log('Master 3/3 proof and gateway domain separation audit: PASS');
