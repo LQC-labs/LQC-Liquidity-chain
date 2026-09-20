@@ -11,15 +11,20 @@ const factoryAddr=await rpc(()=>router.connect(p).factory());
 const factory=new ethers.Contract(factoryAddr,["function getPair(address,address) view returns(address)"],p);
 const pairAddr=await rpc(()=>factory.connect(p).getPair(TLQC,WBNB)); if(pairAddr===ethers.ZeroAddress)throw Error("pair missing");
 const latest=await rpc(x=>x.getBlockNumber());
-const creationSearchFloor=120000000;
-async function findCreation(address){
-  let lo=creationSearchFloor,hi=latest;
-  if((await rpc(x=>x.getCode(address,lo)))!=="0x") return {lowerBound:lo,note:"code already existed at search floor"};
-  while(lo+1<hi){const mid=Math.floor((lo+hi)/2); if((await rpc(x=>x.getCode(address,mid)))==="0x")lo=mid;else hi=mid}
-  return {firstCodeBlock:hi};
+const historicalSearch={mode:"bounded-log-recovery",note:"Public reviewed RPCs are not assumed to provide archive-state eth_getCode at arbitrary old blocks."};
+const WINDOW=2000;
+async function recoverLogs(topic){
+  const out=[];
+  for(let to=latest;to>=120000000;to-=WINDOW){
+    const from=Math.max(120000000,to-WINDOW+1);
+    try{
+      const xs=await rpc(x=>x.getLogs({address:pairAddr,topics:[topic],fromBlock:from,toBlock:to}));
+      out.push(...xs);
+      if(out.length && from < Math.min(...out.map(x=>x.blockNumber))-10000) break;
+    }catch{}
+  }
+  return out;
 }
-const pairCreation=await findCreation(pairAddr);
-const fromBlock=pairCreation.firstCodeBlock??creationSearchFloor;
 const topic0s={
  Mint:ethers.id("Mint(address,uint256,uint256)"),
  Burn:ethers.id("Burn(address,uint256,uint256,address)"),
@@ -27,10 +32,10 @@ const topic0s={
 };
 const logs={};
 for(const [name,topic] of Object.entries(topic0s)){
-  const xs=await rpc(x=>x.getLogs({address:pairAddr,topics:[topic],fromBlock,toBlock:"latest"}));
-  logs[name]=xs.map(x=>({transactionHash:x.transactionHash,blockNumber:x.blockNumber,logIndex:x.index}));
+  const xs=await recoverLogs(topic);
+  logs[name]=xs.map(x=>({transactionHash:x.transactionHash,blockNumber:x.blockNumber,logIndex:x.index})).sort((a,b)=>a.blockNumber-b.blockNumber);
 }
 const known=JSON.parse(fs.readFileSync(new URL("../deployments/router2-lqc-flow-execution-bsc-testnet-97.json",import.meta.url),"utf8"));
 const knownReceipt=await rpc(x=>x.getTransactionReceipt(known.transactionHash));
-const result={status:"READ_ONLY",chainId:97,addresses:{router:ROUTER,factory:factoryAddr,pair:pairAddr,tLQC:TLQC,wbnb:WBNB},latestBlock:latest,pairCreation,events:logs,knownRouter2Flow:{transactionHash:known.transactionHash,receiptStatus:knownReceipt?.status??null,blockNumber:knownReceipt?.blockNumber??null},classification:{liquidityRoundTripCandidate:logs.Mint.length>0&&logs.Burn.length>0,nativeDirectionEvidence:"event logs alone cannot prove native unwrap/wrap direction; transaction calldata/value recovery required"},safety:"eth_call/getCode/getLogs/getTransactionReceipt only; no wallet, signature, approval, transfer or transaction"};
+const result={status:"READ_ONLY",chainId:97,addresses:{router:ROUTER,factory:factoryAddr,pair:pairAddr,tLQC:TLQC,wbnb:WBNB},latestBlock:latest,historicalSearch,events:logs,knownRouter2Flow:{transactionHash:known.transactionHash,receiptStatus:knownReceipt?.status??null,blockNumber:knownReceipt?.blockNumber??null},classification:{liquidityRoundTripCandidate:logs.Mint.length>0&&logs.Burn.length>0,nativeDirectionEvidence:"event logs alone cannot prove native unwrap/wrap direction; transaction calldata/value recovery required"},safety:"eth_call/getCode/getLogs/getTransactionReceipt only; no wallet, signature, approval, transfer or transaction"};
 console.log(JSON.stringify(result,null,2));
