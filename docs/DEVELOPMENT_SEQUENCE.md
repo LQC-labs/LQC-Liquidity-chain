@@ -1,3 +1,7 @@
+> **SUPERSEDED EXECUTION PLAN — HISTORICAL EVIDENCE ONLY**
+>
+> This 12-stage sequence is preserved for audit/history and must not control current development. The current canonical execution order is [MASTER_DEVELOPMENT_PLAN.md](MASTER_DEVELOPMENT_PLAN.md). Capability evidence produced under this historical plan remains valid evidence when independently reconciled, but stage numbers, Bridge-era assumptions, and sequencing in this file do not override the current 15-stage Master Plan or canonical whitepaper source.
+
 # LQC Development Sequence
 
 Status: **approved and fixed execution order**
