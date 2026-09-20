@@ -37,3 +37,15 @@ Volatile assets and stable assets must not be assumed to have identical risk. Ev
 ## Documentation consistency gate
 
 Before Release Candidate or CEX due diligence, the whitepaper, README, contract configuration, testnet manifests, website, token documentation, and exchange evidence package must describe the same approved risk model and must clearly distinguish protocol hard ceilings from active market parameters.
+
+
+## Lending / Earn module boundary
+
+The Lending product roadmap includes two adjacent but separately accounted components:
+
+1. **Supply Earn** — variable supplier yield derived from actual Lending borrower interest after the configured reserve factor and losses.
+2. **LQC Staking Vault** — a separate LQC staking/accounting module with explicit reward source, lock/cooldown/unstake/claim logic, emergency controls, and governance.
+
+LQC staking balances are not Lending Core deposits and must not be treated as borrower liquidity or automatic collateral unless a future separately reviewed market explicitly permits it. No staking APY is guaranteed. Reward emissions must reconcile to the fixed token supply and approved tokenomics.
+
+A future Safety / Insurance Staking layer is post-pilot scope and requires separate economic simulation, slashing/loss rules, audit, governance approval, user disclosure, and legal review.
