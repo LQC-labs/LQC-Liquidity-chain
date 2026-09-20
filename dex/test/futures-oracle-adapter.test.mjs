@@ -66,6 +66,13 @@ describe("LQC Futures Aggregator Oracle Adapter", function () {
       [6, now + 1n, 6],
     ]) {
       await (await feed.setRoundData(roundId, 100n * 10n ** 8n, updatedAt, answeredInRound)).wait();
+      // Each state-changing tx mines a block and may advance timestamp. For the
+      // future-timestamp case, pin it relative to the post-tx block so the test
+      // cannot become timing-dependent on the local EVM implementation.
+      if (roundId === 6) {
+        const afterTx = BigInt((await provider.getBlock("latest")).timestamp);
+        await (await feed.setRoundData(roundId, 100n * 10n ** 8n, afterTx + 60n, answeredInRound)).wait();
+      }
       await assert.rejects(adapter.getPrice(await token.getAddress()));
     }
   });
