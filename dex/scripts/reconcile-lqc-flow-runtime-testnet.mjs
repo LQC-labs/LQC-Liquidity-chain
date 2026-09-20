@@ -1,0 +1,27 @@
+import fs from "node:fs";import { ethers } from "ethers";
+const RPCS=["https://bsc-testnet.drpc.org","https://data-seed-prebsc-1-s1.bnbchain.org:8545"];
+const ROUTER="0xA3E1fbe94055e7A8971b3994C7025B3c16273a24";
+const ADAPTER="0x14db750acf95b469aba3e74032e6db61087ef4cd";
+const TLQC="0x84a30A66cFCbb15453C83204B7e6eC436a0718Fc";
+const WBNB="0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+const read=p=>JSON.parse(fs.readFileSync(new URL("../"+p,import.meta.url),"utf8"));
+const artifact=p=>read(p);
+async function provider(){for(const u of RPCS){try{const p=new ethers.JsonRpcProvider(u,97,{staticNetwork:true});if(Number((await p.getNetwork()).chainId)===97)return p}catch{}}throw Error("No reviewed BSC Testnet RPC available")}
+const p=await provider();
+const routerCode=await p.getCode(ROUTER),adapterCode=await p.getCode(ADAPTER);
+if(routerCode==="0x"||adapterCode==="0x")throw Error("Pinned Router/Adapter has no code");
+const router=new ethers.Contract(ROUTER,["function factory() view returns(address)","function WBNB() view returns(address)"],p);
+const adapter=new ethers.Contract(ADAPTER,["function flowRouter() view returns(address)"],p);
+const factoryAddr=await router.factory(),wbnb=await router.WBNB(),flowRouter=await adapter.flowRouter();
+if(wbnb.toLowerCase()!==WBNB.toLowerCase())throw Error("Router WBNB binding mismatch");
+if(flowRouter.toLowerCase()!==ROUTER.toLowerCase())throw Error("Adapter Flow Router binding mismatch");
+const factoryCode=await p.getCode(factoryAddr);if(factoryCode==="0x")throw Error("Factory has no code");
+const factory=new ethers.Contract(factoryAddr,["function getPair(address,address) view returns(address)"],p);
+const pairAddr=await factory.getPair(TLQC,WBNB);if(pairAddr===ethers.ZeroAddress)throw Error("tLQC/WBNB pair missing");
+const pairCode=await p.getCode(pairAddr);if(pairCode==="0x")throw Error("Pair has no code");
+const arts={router:artifact("artifacts/contracts/LQCFlowRouter.sol/LQCFlowRouter.json"),adapter:artifact("artifacts/contracts/router-v2/adapters/LQCFlowAdapter.sol/LQCFlowAdapter.json"),factory:artifact("artifacts/contracts/LQCFlowFactory.sol/LQCFlowFactory.json"),pair:artifact("artifacts/contracts/LQCFlowPair.sol/LQCFlowPair.json")};
+const runtimeHash=x=>ethers.keccak256(x);
+const current={router:runtimeHash(arts.router.deployedBytecode),adapter:runtimeHash(arts.adapter.deployedBytecode),factory:runtimeHash(arts.factory.deployedBytecode),pair:runtimeHash(arts.pair.deployedBytecode)};
+const deployed={router:runtimeHash(routerCode),adapter:runtimeHash(adapterCode),factory:runtimeHash(factoryCode),pair:runtimeHash(pairCode)};
+const match=Object.fromEntries(Object.keys(current).map(k=>[k,current[k]===deployed[k]]));
+console.log(JSON.stringify({status:"READ_ONLY",chainId:97,addresses:{router:ROUTER,adapter:ADAPTER,factory:factoryAddr,pair:pairAddr,tLQC:TLQC,wbnb:WBNB},bindings:{routerWBNB:wbnb,adapterFlowRouter:flowRouter},runtimeHashes:{current,deployed,match},allRuntimeHashesMatch:Object.values(match).every(Boolean),safety:"eth_call/getCode only; no wallet, signature, approval, transfer or transaction"},null,2));
