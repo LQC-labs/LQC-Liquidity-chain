@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_FUTURES_TESTNET_ADDRESS_SET_FOR_LENDING_NONCE_CLASSIFICATION",
+  "network": {
+    "name": "BSC Testnet",
+    "chainId": 97
+  },
+  "addresses": [
+    "0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB",
+    "0x89d992f696B40ABbDB6610144faeF336911D8175",
+    "0xe7289E38AaF777D7cB41E33369AC9321F8e35693",
+    "0xcDCde786bDf3eC866289376DDdd513A78c51Cfb3",
+    "0x2Cbc553CDf6bF0156d6bB75018ABf5c742eac4B9",
+    "0x1446671132a65F53a6D68200E778714476FD00D7",
+    "0xC940e3bC693825113359e7E9A51Ab64dBdb2A75D",
+    "0x305f4D01f11c8A6fd035225314F26A6eea228424",
+    "0xDfA2374006884D34fcC934D94bf1A36d53f42F89",
+    "0xD2aaA70E5865976fc423B06eE5a9fC3fb0FAf6dc"
+  ],
+  "knownFundingReceiver": "0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB",
+  "purpose": "Classify Lending deployer nonce 110-114 transactions only. Membership does not imply a transaction occurred.",
+  "transactionOccurred": false
+}
