@@ -1,0 +1,28 @@
+name: Master 3 Router Proof Revalidation
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/master3-router-proof-revalidation.js'
+      - 'test/master3-router-proof-revalidation.test.js'
+      - 'docs/master3/**'
+      - '.github/workflows/master3-router-proof-revalidation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proof-revalidation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run fail-closed proof revalidation tests
+        run: node test/master3-router-proof-revalidation.test.js
+      - name: Enforce no activation authorization
+        run: |
+          grep -R -Fq 'activationAuthorized: false' docs/master3
