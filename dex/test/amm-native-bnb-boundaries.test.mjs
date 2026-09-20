@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import ganache from "ganache";
+import ganache from "./support/anvil-compat.mjs";
 import { ethers } from "ethers";
 const art=(n,s=n)=>JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${s}.sol/${n}.json`,import.meta.url)));
 describe("LQC official 1/5 Native BNB boundaries",function(){this.timeout(30000);let p,o,t,f,r,w,x;const dep=async(n,s,sg,...a)=>{const z=art(n,s),c=await new ethers.ContractFactory(z.abi,z.bytecode,sg).deploy(...a);await c.waitForDeployment();return c};const dl=async()=>BigInt((await p.getBlock("latest")).timestamp+3600);beforeEach(async()=>{p=new ethers.BrowserProvider(ganache.provider({logging:{quiet:true},wallet:{totalAccounts:3}}));o=await p.getSigner(0);t=await p.getSigner(1);f=await dep("LQCFlowFactory","LQCFlowFactory",o,o.address);w=await dep("MockWBNB","mocks/MockWBNB",o);r=await dep("LQCFlowRouter","LQCFlowRouter",o,f.target,w.target);x=await dep("MockERC20","mocks/MockERC20",o,"Token","TOK");await(await x.mint(o.address,ethers.parseEther("100000"))).wait();await(await x.approve(r.target,ethers.MaxUint256)).wait();await(await r.addLiquidityBNB(x.target,ethers.parseEther("10000"),0,0,o.address,await dl(),{value:ethers.parseEther("100")})).wait();});

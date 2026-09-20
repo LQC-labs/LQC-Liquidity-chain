@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import ganache from "ganache";
+import ganache from "./support/anvil-compat.mjs";
 import { ethers } from "ethers";
 
 const artifact=(name,source=name)=>JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${source}.sol/${name}.json`,import.meta.url)));

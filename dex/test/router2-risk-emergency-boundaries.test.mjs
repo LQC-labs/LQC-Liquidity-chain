@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import ganache from "ganache";
+import ganache from "./support/anvil-compat.mjs";
 import { ethers } from "ethers";
 const art=(n,s)=>JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${s}.sol/${n}.json`,import.meta.url)));
 describe("LQC official 2/9 Risk / Emergency Control boundaries",function(){

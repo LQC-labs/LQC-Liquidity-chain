@@ -33,8 +33,12 @@ jobs:
       - name: Capture full npm audit report
         shell: bash
         run: |
-          npm audit --json > npm-audit.json || true
+          set +e
+          npm audit --json > npm-audit.json
+          audit_status=$?
+          set -e
           node -e 'const r=require("./npm-audit.json"); console.log(JSON.stringify({metadata:r.metadata,vulnerabilities:r.vulnerabilities},null,2))'
+          exit "$audit_status"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

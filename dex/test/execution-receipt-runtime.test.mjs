@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import ganache from "ganache";
+import ganache from "./support/anvil-compat.mjs";
 import { ethers } from "ethers";
 
 // Behavioral tests against compiled bytecode, not source-text assertions.
@@ -171,6 +171,8 @@ describe("6/4 Execution Receipt runtime security", function () {
     const other = await fixture(56);
     try {
       assert.equal(await f.receipt.getAddress(), await other.receipt.getAddress());
+      await f.rpc.request({ method: "anvil_setNextBlockTimestamp", params: [1893457000] });
+      await other.rpc.request({ method: "anvil_setNextBlockTimestamp", params: [1893457000] });
       const left = await store(f, args);
       const right = await store(other, args);
       assert.equal(left.row.recordedAt, right.row.recordedAt);
