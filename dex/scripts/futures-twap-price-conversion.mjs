@@ -14,9 +14,9 @@ function checkedPow10(decimals) {
 
 function mulDiv(a, b, denominator) {
   if (denominator <= 0n) throw new Error("Invalid price denominator.");
-  const product = a * b;
-  if (product > MAX_UINT256) throw new Error("Price conversion overflow.");
-  return product / denominator;
+  const result = (a * b) / denominator;
+  if (result > MAX_UINT256) throw new Error("Price conversion overflow.");
+  return result;
 }
 
 // Mirrors Uniswap V3 TickMath.getSqrtRatioAtTick using integer-only arithmetic.
