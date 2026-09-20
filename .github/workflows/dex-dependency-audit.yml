@@ -1,0 +1,50 @@
+name: DEX dependency security audit
+
+on:
+  pull_request:
+    paths:
+      - "dex/package.json"
+      - "dex/package-lock.json"
+      - ".github/workflows/dex-dependency-audit.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: npm audit dependency paths
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Regenerate candidate lockfile
+        run: npm install --package-lock-only --ignore-scripts
+      - name: Verify clean install
+        run: npm ci
+      - name: Capture full npm audit report
+        shell: bash
+        run: |
+          set +e
+          npm audit --json > npm-audit.json
+          audit_status=$?
+          set -e
+          node -e 'const r=require("./npm-audit.json"); console.log(JSON.stringify({metadata:r.metadata,vulnerabilities:r.vulnerabilities},null,2))'
+          exit "$audit_status"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dex-npm-audit-and-lockfile
+          path: |
+            dex/npm-audit.json
+            dex/package-lock.json
+          if-no-files-found: error
+          retention-days: 14

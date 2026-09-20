@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import ganache from "ganache";
+import ganache from "./support/anvil-compat.mjs";
 import { ethers } from "ethers";
 const art=(n,s)=>JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${s}.sol/${n}.json`,import.meta.url)));
 const pack=(tokens,fees)=>{let x=tokens[0].slice(2);for(let i=0;i<fees.length;i++)x+=fees[i].toString(16).padStart(6,"0")+tokens[i+1].slice(2);return "0x"+x};

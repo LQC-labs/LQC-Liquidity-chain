@@ -1,0 +1,32 @@
+name: Futures BSC testnet on-chain wiring
+
+on:
+  pull_request:
+    paths:
+      - "dex/scripts/verify-futures-bsc-testnet.js"
+      - ".github/workflows/futures-bsc-testnet-onchain-wiring.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Read-only chain 97 wiring verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    env:
+      BSC_TESTNET_RPC: https://data-seed-prebsc-1-s1.bnbchain.org:8545
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci
+      - name: Verify deployed Futures wiring (read-only)
+        run: node scripts/verify-futures-bsc-testnet.js

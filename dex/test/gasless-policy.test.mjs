@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import ganache from "ganache";
+import ganache from "./support/anvil-compat.mjs";
 import { ethers } from "ethers";
 
 const artifact = JSON.parse(fs.readFileSync(new URL("../artifacts/contracts/gasless/LQCGaslessPolicy.sol/LQCGaslessPolicy.json", import.meta.url)));

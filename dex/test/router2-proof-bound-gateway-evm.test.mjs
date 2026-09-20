@@ -1,4 +1,4 @@
-import assert from "node:assert/strict";import fs from "node:fs";import ganache from "ganache";import {ethers} from "ethers";
+import assert from "node:assert/strict";import fs from "node:fs";import ganache from "./support/anvil-compat.mjs";import {ethers} from "ethers";
 const artifact=(name,source)=>JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${source}.sol/${name}.json`,import.meta.url)));
 describe("LQC proof-bound gateway EVM",function(){this.timeout(30000);let provider,owner,tokenA,tokenB,registry,router,adapter,proof,gateway,request,candidates,routes;
 beforeEach(async()=>{provider=new ethers.BrowserProvider(ganache.provider({logging:{quiet:true}}));owner=await provider.getSigner();const F=(n,s,...a)=>new ethers.ContractFactory(artifact(n,s).abi,artifact(n,s).bytecode,owner).deploy(...a);

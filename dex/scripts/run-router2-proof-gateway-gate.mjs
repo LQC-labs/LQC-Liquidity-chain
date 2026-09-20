@@ -5,7 +5,7 @@ import { execFileSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 import { ethers } from "ethers";
 
-export const REVIEWED_PACKAGE_LOCK_BLOB="871ba530cf90a09cf0da383799960f443961ae18";
+export const REVIEWED_PACKAGE_LOCK_BLOB="2a2cdafdca61430ea5a7dc04cba186e363da9aaf";
 export const PAGE_SCRIPTS=Object.freeze([
   "router2-proof-verifier-deploy-testnet.js","router2-proof-gateway-deploy-testnet.js",
   "router2-proof-gateway-final-state-testnet.js","router2-proof-gateway-readiness-testnet.js",
