@@ -5,6 +5,9 @@ on:
     paths:
       - "dex/**"
       - "scripts/master3-router-interface-isolation-audit.js"
+      - "scripts/master3-adapter-registry-boundary-audit.js"
+      - "test/master3-adapter-registry-boundary-audit.test.js"
+      - "docs/master3/3-5-adapter-registry-boundary.md"
       - "test/master3-router-interface-isolation-audit.test.js"
       - "docs/master3/3-4-router-interface-isolation.md"
       - ".github/workflows/dex-tests.yml"
@@ -52,6 +55,14 @@ jobs:
       - name: Audit Router Core module-state isolation
         working-directory: .
         run: node scripts/master3-router-interface-isolation-audit.js
+
+      - name: Verify Master 3/5 adapter registry audit structure
+        working-directory: .
+        run: node test/master3-adapter-registry-boundary-audit.test.js
+
+      - name: Audit Router Adapter / Registry boundary
+        working-directory: .
+        run: node scripts/master3-adapter-registry-boundary-audit.js
 
       - name: Compile contracts
         run: npm run compile
