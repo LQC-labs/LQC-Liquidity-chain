@@ -1,0 +1,27 @@
+{
+  "stage": "3/1",
+  "base": "5dfb740974f1c9cd7ea3ce4abf6789353a46fc25",
+  "activationAuthorized": false,
+  "classification": [
+    {"capability":"Pancake V2 execution adapter","decision":"REUSE","evidence":"PR #80 boundary verification"},
+    {"capability":"Pancake V3 execution adapter","decision":"REUSE","evidence":"PR #81 boundary verification + historical BSC Testnet evidence"},
+    {"capability":"Quote Router","decision":"REUSE","evidence":"PR #82 boundary verification"},
+    {"capability":"gas-aware Best Execution selection","decision":"REUSE","evidence":"PR #83 net-output verification"},
+    {"capability":"Split Optimizer","decision":"REUSE","evidence":"PR #84 split-boundary verification"},
+    {"capability":"Execution Router","decision":"REUSE","evidence":"PR #85 execution-boundary verification"},
+    {"capability":"Risk / emergency boundaries","decision":"REUSE","evidence":"PR #87 focused regression"},
+    {"capability":"Router full regression","decision":"REUSE","evidence":"PR #88 completion gate"},
+    {"capability":"BestExecutionProof + ProofBoundExecutionGateway","decision":"REVALIDATE","evidence":"Architecture Freeze PR #227 requires fresh artifact/dependency review"},
+    {"capability":"Router2 to LQC Flow execution evidence","decision":"REVALIDATE","evidence":"Master 2 evidence/runtime lineage gates"},
+    {"capability":"Intent/Internal Solver to Router handoff","decision":"REUSE","evidence":"PR #163 and atomic E2E PR #171"},
+    {"capability":"shared Router interfaces for Futures/Lending","decision":"DEFER","evidence":"consume only reviewed interfaces; no module-state coupling"},
+    {"capability":"future LQC Mainnet chain portability","decision":"GAP","evidence":"requires explicit chain-dependency/configuration audit before Stage 3 exit"}
+  ],
+  "rules": {
+    "duplicateRouterContracts": false,
+    "parallelBestExecutionTruthSource": false,
+    "futuresStateAsRouterTruth": false,
+    "lendingStateAsRouterTruth": false,
+    "bscDexSpecificsBehindAdapters": true
+  }
+}
