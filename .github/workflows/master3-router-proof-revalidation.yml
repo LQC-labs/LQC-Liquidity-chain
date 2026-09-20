@@ -7,6 +7,7 @@ on:
       - 'test/master3-router-proof-revalidation.test.js'
       - 'scripts/master3-router-portability-audit.js'
       - 'test/master3-router-portability-audit.test.js'
+      - 'test/master3-router-domain-separation-audit.test.js'
       - 'dex/contracts/router-v2/**'
       - 'docs/master3/**'
       - '.github/workflows/master3-router-proof-revalidation.yml'
@@ -18,7 +19,7 @@ permissions:
 jobs:
   proof-revalidation:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,6 +31,16 @@ jobs:
         run: node test/master3-router-portability-audit.test.js
       - name: Audit Router Core portability
         run: node scripts/master3-router-portability-audit.js
+      - name: Audit proof deployment-domain separation
+        run: node test/master3-router-domain-separation-audit.test.js
+      - name: Install DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile Router contracts
+        working-directory: dex
+        run: npm run compile
+      - name: Run Best Execution proof EVM regression
+        working-directory: dex
+        run: npx mocha test/router2-best-execution-proof-boundaries.test.mjs
       - name: Enforce no activation authorization
-        run: |
-          grep -R -Fq 'activationAuthorized: false' docs/master3
+        run: grep -R -Fq 'activationAuthorized: false' docs/master3
