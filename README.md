@@ -181,7 +181,7 @@ The following additional utility concepts remain under review:
 - Approved lending collateral
 - Protocol fee benefits
 - Gas-fee support
-- Staking
+- LQC staking through the separately accounted Staking Vault described above
 - Governance
 - Ecosystem access
 
@@ -217,6 +217,16 @@ The current approved design uses a fixed total supply of **1,000,000,000 LQC** a
 The planned TGE circulation consists of Community Initial 80M, Liquidity & Market Making 50M, Protocol Treasury 10M, and Grants & Strategic Ecosystem 10M.
 
 This is the current approved project design. Contract addresses, on-chain supply controls, final vesting contracts, and verification materials will be published when implementation and review are complete. Earlier drafts using a different total supply are superseded.
+
+### Staking reward and fixed-supply consistency
+
+- LQC Staking does **not** authorize token issuance above the fixed **1,000,000,000 LQC** supply.
+- Any token-denominated staking reward must be funded from a disclosed allocation already included in the approved tokenomics, such as a governance-approved portion of Future Ecosystem Rewards, or from another explicitly reconciled existing allocation.
+- Protocol-revenue-funded rewards must be accounted separately from token-emission rewards and may not be described as guaranteed yield.
+- Reward schedules, source wallets/contracts, vesting or streaming rules, claim logic, circulating-supply treatment, and governance approvals must be disclosed before activation.
+- Staking rewards may not silently consume Team, Treasury, Liquidity/Market-Making, Community, or Grants allocations outside their approved purposes.
+- Every activated reward program must reconcile: fixed total supply, allocation budget, distributed rewards, remaining budget, circulating supply, and on-chain balances.
+
 
 ## Roadmap
 
