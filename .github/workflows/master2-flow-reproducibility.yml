@@ -1,0 +1,27 @@
+name: Master 2 LQC Flow Reproducibility Gate
+on:
+  pull_request:
+    paths:
+      - "dex/contracts/LQCFlow*.sol"
+      - "dex/contracts/router-v2/adapters/LQCFlowAdapter.sol"
+      - "dex/scripts/build-lqc-flow-reproducibility-seal.mjs"
+      - ".github/workflows/master2-flow-reproducibility.yml"
+      - "docs/MASTER2_LQC_FLOW_REPRODUCIBILITY_GATE.md"
+  workflow_dispatch:
+jobs:
+  seal:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci
+      - run: npm run compile
+      - name: Build reproducibility seal
+        run: node scripts/build-lqc-flow-reproducibility-seal.mjs
