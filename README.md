@@ -91,17 +91,20 @@ Live liquidity deployment will proceed only after smart-contract security review
 
 The lending module is planned and is not presented as a completed production service.
 
-Proposed risk parameters:
+Approved risk-engine design:
 
-- Maximum LTV: **45%**
-- Liquidation threshold: **60%**
-- Base liquidation penalty: **5%**
-- Liquidation becomes permitted when an account reaches the liquidation threshold
-- Partial liquidation is preferred where technically and economically appropriate
-- Borrow assets may include approved stable assets such as USDT or USDC
-- Additional or automatic borrowing is **OFF by default**
-- Any automatic or additional borrowing requires explicit user opt-in
-- Future review may consider an LTV of up to 50% only after sufficient liquidity, volatility, and liquidation-performance data are available
+- Liquidation is based on account solvency and **Health Factor**, not on a fixed percentage decline in token price.
+- Protocol hard ceiling for Maximum LTV: **50%**.
+- Initial BSC pilot market candidate: **50% Maximum LTV / 70% liquidation threshold / 5% maximum liquidation bonus**.
+- The 50/70/5 values are market parameters for controlled validation, not universal values for every future collateral asset.
+- Each approved collateral market may use stricter asset-specific LTV, liquidation-threshold, debt-cap, supply-cap, oracle, and liquidation parameters after volatility, liquidity, and liquidation-performance review.
+- Borrowing is permitted only while debt value remains within the configured Maximum LTV.
+- Liquidation becomes permitted when debt value exceeds collateral value multiplied by the configured liquidation threshold, equivalently when the account Health Factor falls below 1.
+- Partial liquidation is the default design. The current implementation caps a liquidation at up to 50% of outstanding debt; future reviewed logic may liquidate only the amount required to restore a target Health Factor.
+- Residual debt after collateral exhaustion is treated as bad debt and handled through explicit reserve / recapitalization / bounded-loss controls.
+- Oracle freshness, independent price-source deviation checks, market caps, emergency pause, and governance controls are part of the Lending Risk Engine.
+- Borrow assets may include approved stable assets such as USDT or USDC.
+- Additional or automatic borrowing is **OFF by default** and requires explicit user opt-in if introduced.
 
 Borrowing and liquidation remain subject to oracle, liquidity, health-factor, debt-cap, and security controls. Final deployment requires economic simulation, oracle validation, liquidity testing, legal review, independent security audits, and controlled risk limits.
 
