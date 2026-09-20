@@ -108,6 +108,34 @@ Approved risk-engine design:
 
 Borrowing and liquidation remain subject to oracle, liquidity, health-factor, debt-cap, and security controls. Final deployment requires economic simulation, oracle validation, liquidity testing, legal review, independent security audits, and controlled risk limits.
 
+## Lending Earn and LQC Staking Architecture
+
+The approved architecture extends Lending with a separate **Earn / Staking Layer** while preserving strict accounting and security boundaries between lending assets and LQC staking.
+
+### Lending Supply Earn
+
+- Approved assets supplied to the Lending Pool may earn variable yield funded by actual borrower interest.
+- Supply yield is not a guaranteed fixed return. It depends on utilization, borrow rates, reserves, losses, and applicable protocol parameters.
+- Supply accounting, borrower debt, reserves, bad debt, and withdrawals remain inside the audited Lending accounting domain.
+
+### LQC Staking Vault
+
+- LQC staking is implemented as a separate vault/module rather than embedding staking balances inside Lending Core.
+- Staked LQC must not be silently rehypothecated as Lending collateral or used to conceal Lending losses.
+- Staking may support ecosystem utility, governance participation, Solver/ecosystem incentives, or other formally approved protocol functions.
+- Rewards must come from a disclosed and bounded source such as an approved token-emission budget or realized protocol revenue. Staking does not create an unlimited minting right or guaranteed yield.
+- Lock, cooldown, unstake, reward-accounting, claim, emergency-pause, and governance controls require explicit implementation and testing.
+
+### Future Safety / Insurance Staking
+
+A separate safety-staking or insurance-backstop design may be considered only after Lending and ordinary LQC staking are stable, economically simulated, independently audited, and legally reviewed. Any slashing or loss-bearing mechanism requires separate user disclosure and governance approval.
+
+The intended product flow is therefore:
+
+**Lending Supply / Borrow → Supply Earn → separate LQC Staking Vault → future reviewed Safety Staking**
+
+This modular design allows Lending and Staking to appear as a coherent user-facing **Lending / Earn** product while keeping their accounting, deployment, risk, and audit boundaries independently verifiable.
+
 ## Oracle and Liquidation Principles
 
 Risk must be determined by collateral value, outstanding debt, and account health—not by price decline alone.
