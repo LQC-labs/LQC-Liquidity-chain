@@ -76,3 +76,24 @@ Before CEX due diligence, the whitepaper, README, contracts/configuration, testn
 MASTER: 1/15 Architecture Freeze  
 CURRENT: 1/4 parameter and architecture reconciliation  
 BLOCKED: new on-chain deployment and unplanned feature expansion until Architecture Freeze determines the valid reuse/gap path.
+
+
+## Mainnet portability and module-isolation rule
+
+LQC is developed on BSC first, but the Core architecture must remain portable to a future independent LQC Mainnet.
+
+- Futures, Lending/Earn, Router, Vault, Intent/Solver, Settlement, Oracle, Risk, Treasury, and Governance are one ecosystem but remain independently testable failure domains.
+- Futures must not embed or mutate Lending Core accounting, and Lending must not depend on Futures state. Shared functionality is consumed through reviewed interfaces.
+- Shared Oracle, Router, Vault, Risk, Treasury, and Governance capabilities use explicit interfaces and versioned integration gates.
+- A module-specific emergency pause must not automatically halt unrelated healthy modules. A validated system-wide dependency failure may trigger coordinated controls through Risk/Governance.
+- Chain IDs, RPC URLs, gas assets, DEX endpoints, oracle addresses, bridge providers, and deployment addresses must be configuration/registry inputs rather than universal Core assumptions.
+- BSC-specific integrations such as PancakeSwap remain behind protocol adapters.
+- Core accounting and execution logic must remain chain-neutral where technically practical so it can be reused on an LQC Mainnet.
+- Cross-chain expansion follows Intent + Solver + Settlement + reviewed Bridge Adapter Registry rather than embedding one proprietary bridge into LQC Core.
+- Mainnet migration is phased: BSC validation -> capped pilot -> LQC Mainnet testnet -> audited parallel BSC/LQC operation -> governance-approved migration.
+- BSC may remain an active liquidity domain after LQC Mainnet launch; Mainnet expansion does not require abandoning BSC.
+- Every new Core change must include a portability review: chain-specific dependency, interface boundary, configuration source, migration impact, and regression scope.
+
+Target architecture:
+
+LQC Flow -> Router 2.0 / Best Execution -> Vault / Liquidity -> Lending/Earn + Futures -> Intent/Internal Solver -> Solver Network -> Settlement/Verification -> Oracle/Risk/Treasury/Governance, with chain-specific dependencies isolated behind adapters/configuration.
