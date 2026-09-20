@@ -80,3 +80,41 @@ The following code is retained exactly as merged. Its historical PR title is not
 ### Sequencing correction
 
 Stage 7 primitives already implemented are retained as valid early work, but they do not grant Stage 6 completion. Development resumes from the earliest unresolved Stage 6 slot. Stage 7 completion credit is assigned only after each official 7/1-7/8 gate is satisfied.
+
+
+## Current 15-stage Master Plan remapping
+
+The Stage 6/7 labels above describe the historical numbering system and remain preserved solely to explain merged PR history. Under the current canonical 15-stage Master Plan, capability ownership is:
+
+### Master 8 — Intent / Internal Solver
+- 8/1 IntentHub
+- 8/2 EIP-712
+- 8/3 Replay / Expiry
+- 8/4 Source Escrow
+- 8/5 Solver Binding
+- 8/6 Internal Solver
+- 8/7 Router Execution
+- 8/8 Execution Receipt
+- 8/9 Intent E2E
+
+### Master 9 — Solver Network
+- 9/1 SolverRegistry
+- 9/2 SolverBond
+- 9/3 LQC / Stable Bond Policy
+- 9/4 Exposure
+- 9/5 Capacity
+- 9/6 QuoteManager
+- 9/7 Solver Competition
+- 9/8 Risk-adjusted Best Execution
+- 9/9 Reputation
+- 9/10 Solver E2E
+
+Historical evidence mapping:
+- PR #155 Registry / Bond / Exposure -> Master 9/1, partial 9/2, 9/4
+- PR #156 Reputation / eligibility -> Master 9/9
+- PR #157 Best Execution Score -> Master 9/8 and support for 9/7
+- PR #158 Solver Assignment / Intent binding -> support for Master 8/5 and 9/7
+- PR #159 Execution Verification -> support evidence for Master 10 Settlement / Execution Verification and Master 9 risk-adjusted execution
+- PR #160 Verified-result reputation feedback -> Master 9/9 evidence if/when its merged state is independently confirmed
+
+The historical labels do not grant completion credit. Current completion requires the exact Master slot's code, tests, integration evidence, and applicable Testnet/security evidence.
