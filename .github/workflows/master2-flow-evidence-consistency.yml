@@ -1,0 +1,39 @@
+name: Master 2 Flow Evidence Consistency
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/master2-flow-evidence-consistency.js'
+      - 'test/master2-flow-evidence-consistency.test.js'
+      - 'docs/master2/2-11-flow-evidence-consistency-gate.md'
+      - '.github/workflows/master2-flow-evidence-consistency.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  consistency:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run fail-closed consistency tests
+        run: node test/master2-flow-evidence-consistency.test.js
+      - name: Verify production activation remains forbidden
+        run: |
+          node - <<'NODE'
+          const { evaluate } = require('./scripts/master2-flow-evidence-consistency');
+          const lineage='ci-canonical';
+          const r=evaluate({
+            implementation:{status:'PASS',lineage},
+            runtimeBuild:{status:'PASS',lineage},
+            historicalEvidence:{status:'PASS',lineage},
+            router2FlowReceipt:{status:'PASS',lineage},
+            evidenceCredit:{status:'PASS',lineage,overcredited:false}
+          });
+          if (!r.pass || r.activationAuthorized !== false) process.exit(1);
+          NODE
