@@ -4,8 +4,8 @@ import ganache from "./support/anvil-compat.mjs";
 import { ethers } from "ethers";
 
 const artifact = (path, name) => JSON.parse(fs.readFileSync(new URL(`../artifacts/contracts/${path}/${name}.json`, import.meta.url)));
-const Token = artifact("test/IntentE2EMocks.sol", "IntentE2EToken");
-const Registry = artifact("intent-v1/LQCSolverRegistry.sol", "LQCSolverRegistry");
+const Token = artifact("contracts/test/IntentE2EMocks.sol", "IntentE2EToken");
+const Registry = artifact("contracts/intent-v1/LQCSolverRegistry.sol", "LQCSolverRegistry");
 const deploy = async (a, signer, ...args) => {
   const c = await new ethers.ContractFactory(a.abi, a.bytecode, signer).deploy(...args);
   await c.waitForDeployment(); return c;
