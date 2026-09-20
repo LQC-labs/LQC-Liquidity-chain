@@ -1,0 +1,24 @@
+name: Master 2 Flow Historical Evidence Recovery
+on:
+  pull_request:
+    paths:
+      - "dex/scripts/recover-lqc-flow-historical-evidence.mjs"
+      - ".github/workflows/master2-flow-historical-recovery.yml"
+      - "docs/MASTER2_LQC_FLOW_HISTORICAL_RECOVERY.md"
+  workflow_dispatch:
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci
+      - name: Recover historical Flow evidence read-only
+        run: node scripts/recover-lqc-flow-historical-evidence.mjs
