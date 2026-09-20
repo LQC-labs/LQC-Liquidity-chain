@@ -17,7 +17,8 @@ describe("7/4 Solver Exposure / Capacity EVM runtime gate", function () {
   let chain, provider, owner, guardian, manager, solver, outsider, token, registry;
   beforeEach(async () => {
     chain=ganache.provider({chain:{chainId:97,hardfork:"shanghai"},logging:{quiet:true},wallet:{deterministic:true,totalAccounts:6}});
-    provider=new ethers.BrowserProvider(chain, undefined, { cacheTimeout: -1 });\n    provider.pollingInterval=10;
+    provider=new ethers.BrowserProvider(chain, undefined, { cacheTimeout: -1 });
+    provider.pollingInterval=10;
     [owner,guardian,manager,solver,outsider]=await Promise.all([0,1,2,3,4].map(i=>provider.getSigner(i)));
     token=await deploy(Token,owner);
     registry=await deploy(Registry,owner,await token.getAddress(),await owner.getAddress(),await guardian.getAddress(),100n,500n);
