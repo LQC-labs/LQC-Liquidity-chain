@@ -2,17 +2,6 @@ name: Master 3 Router Proof Revalidation
 
 on:
   pull_request:
-    paths:
-      - 'scripts/master3-router-proof-revalidation.js'
-      - 'test/master3-router-proof-revalidation.test.js'
-      - 'scripts/master3-router-portability-audit.js'
-      - 'test/master3-router-portability-audit.test.js'
-      - 'test/master3-router-domain-separation-audit.test.js'
-      - 'scripts/master3-router-interface-isolation-audit.js'
-      - 'test/master3-router-interface-isolation-audit.test.js'
-      - 'dex/contracts/router-v2/**'
-      - 'docs/master3/**'
-      - '.github/workflows/master3-router-proof-revalidation.yml'
   workflow_dispatch:
 
 permissions:
