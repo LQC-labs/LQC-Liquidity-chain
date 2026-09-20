@@ -68,12 +68,12 @@ describe("Futures production-oracle BSC testnet activation", function () {
     await (await primary.setRoundData(11, 50_000n * 10n ** 8n, now - 301n, 11)).wait();
     await assert.rejects(preflightFuturesOracleTestnet(env, provider), /stale/);
 
-    await assert.rejects(prepareOracleActivation({ ...env, FUTURES_ORACLE_ADAPTER: await token.getAddress() }, {
-      ...provider,
-      getNetwork: provider.getNetwork.bind(provider),
-      getBlock: provider.getBlock.bind(provider),
-      getCode: async (address) => address === await token.getAddress() ? "0x" : provider.getCode(address),
-    }), /no runtime bytecode/);
+    await (await primary.setRoundData(12, 50_000n * 10n ** 8n, now, 12)).wait();
+    const undeployed = await (await provider.getSigner(1)).getAddress();
+    await assert.rejects(
+      prepareOracleActivation({ ...env, FUTURES_ORACLE_ADAPTER: undeployed }, provider),
+      /no runtime bytecode/
+    );
 
     assert.throws(() => validateOracleActivationConfig({ ...env, FUTURES_ORACLE_HEARTBEAT: "0" }), /Heartbeat/);
     assert.throws(() => validateOracleActivationConfig({ ...env, FUTURES_ORACLE_MAX_DEVIATION_BPS: "5001" }), /deviation/);
