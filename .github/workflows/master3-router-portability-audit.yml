@@ -1,5 +1,5 @@
 name: Master 3 Router Portability Audit
-on:
+'on':
   pull_request:
     paths:
       - 'dex/contracts/router-v2/**'
@@ -7,8 +7,10 @@ on:
       - 'docs/master3/3-2-router-portability-boundary.md'
       - '.github/workflows/master3-router-portability-audit.yml'
   workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   portability:
     runs-on: ubuntu-latest
