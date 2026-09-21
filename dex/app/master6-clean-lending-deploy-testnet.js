@@ -25,8 +25,8 @@ async function rpc(url,method,params=[]){
     return b.result;
   }finally{clearTimeout(timer)}
 }
-async function sha256Hex(hexData){
-  const bytes=new Uint8Array((hexData.slice(2).match(/.{1,2}/g)||[]).map(x=>parseInt(x,16)));
+async function sha256Text(value){
+  const bytes=new TextEncoder().encode(String(value));
   const h=await crypto.subtle.digest("SHA-256",bytes);
   return"sha256:"+[...new Uint8Array(h)].map(x=>x.toString(16).padStart(2,"0")).join("");
 }
@@ -43,7 +43,7 @@ async function loadPacket(){
   for(let i=0;i<10;i++){
     const d=p.packet.deployments[i],g=p.preflight.deployments[i];
     if(Number(d.order)!==i+1||d.deployerNonce!==String(17+i)||norm(d.predictedAddress)!==norm(g.predictedAddress)||d.contract!==g.contract)throw Error("Deployment order/gas binding 불일치 #"+(i+1));
-    if(await sha256Hex(d.data)!==d.initCodeDigest)throw Error("Init code digest 불일치 #"+(i+1));
+    if(await sha256Text(d.data)!==d.initCodeDigest)throw Error("Init code digest 불일치 #"+(i+1));
     if(BigInt(g.approvedGasLimit)<=0n)throw Error("Approved gas limit 불일치 #"+(i+1));
   }
   packet=p;
