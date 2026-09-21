@@ -50,8 +50,14 @@ async function main(){
   if(!phrase) throw Error("Set MASTER6_GOVERNANCE_EXECUTION_APPROVAL only after separate explicit human approval");
   await verifyMaster6GovernanceProposalFreeze();
   const out=buildMaster6GovernanceExecutionApproval({proposal,approvalPhrase:phrase,revalidatedAt:new Date().toISOString()});
-  console.log("MASTER6_GOVERNANCE_EXECUTION_APPROVAL_BEGIN");
-  console.log(JSON.stringify(out,null,2));
-  console.log("MASTER6_GOVERNANCE_EXECUTION_APPROVAL_END");
+  const json=JSON.stringify(out,null,2);
+  if(process.env.MASTER6_GOVERNANCE_APPROVAL_OUTPUT_FILE){
+    fs.writeFileSync(process.env.MASTER6_GOVERNANCE_APPROVAL_OUTPUT_FILE,json+"\n");
+    console.log("WROTE_MASTER6_GOVERNANCE_EXECUTION_APPROVAL "+process.env.MASTER6_GOVERNANCE_APPROVAL_OUTPUT_FILE);
+  }else{
+    console.log("MASTER6_GOVERNANCE_EXECUTION_APPROVAL_BEGIN");
+    console.log(json);
+    console.log("MASTER6_GOVERNANCE_EXECUTION_APPROVAL_END");
+  }
 }
 if(import.meta.url===new URL("file://"+process.argv[1]).href) await main();

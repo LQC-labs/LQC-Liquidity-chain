@@ -1,0 +1,43 @@
+name: Master 6 Governance Signature Approval Materialize
+on:
+  pull_request:
+    paths:
+      - 'dex/scripts/build-master6-governance-execution-approval.mjs'
+      - 'dex/scripts/verify-master6-governance-configuration-proposal.mjs'
+      - 'dex/deployments/master6-governance-configuration-proposal-bsc-testnet-97.json'
+      - 'test/master6-governance-signature-approval-materialize.test.js'
+      - '.github/workflows/master6-governance-signature-approval-materialize.yml'
+permissions:
+  contents: read
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MASTER6_GOVERNANCE_EXECUTION_APPROVAL: 'APPROVE_6_12_GOVERNANCE_CONFIGURATION'
+      MASTER6_GOVERNANCE_APPROVAL_OUTPUT_FILE: 'master6-governance-execution-approval.json'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile current Lending sources
+        working-directory: dex
+        run: npm run compile
+      - name: Run approval materialization regression
+        run: node --test test/master6-governance-signature-approval-materialize.test.js
+      - name: Materialize signature-collection approval
+        working-directory: dex
+        run: node scripts/build-master6-governance-execution-approval.mjs
+      - name: Upload approval artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: master6-governance-execution-approval
+          path: dex/master6-governance-execution-approval.json
+          if-no-files-found: error
+          retention-days: 7
