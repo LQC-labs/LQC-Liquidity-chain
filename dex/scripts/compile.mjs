@@ -24,7 +24,7 @@ const input = {
     optimizer: { enabled: true, runs: 200 },
     viaIR: true,
     evmVersion: "shanghai",
-    outputSelection: { "*": { "*": ["abi", "evm.bytecode.object", "evm.deployedBytecode.object"] } }
+    outputSelection: { "*": { "*": ["abi", "evm.bytecode.object", "evm.deployedBytecode.object", "evm.deployedBytecode.immutableReferences"] } }
   }
 };
 
@@ -43,7 +43,8 @@ for (const [sourceName, contracts] of Object.entries(output.contracts)) {
       sourceName,
       abi: artifact.abi,
       bytecode: `0x${artifact.evm.bytecode.object}`,
-      deployedBytecode: `0x${artifact.evm.deployedBytecode.object}`
+      deployedBytecode: `0x${artifact.evm.deployedBytecode.object}`,
+      immutableReferences: artifact.evm.deployedBytecode.immutableReferences ?? {}
     }, null, 2));
   }
 }
