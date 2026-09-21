@@ -1,0 +1,14 @@
+'use strict';
+const assert=require('assert'),crypto=require('crypto');
+const {evaluate}=require('../scripts/master3-replay-state-commitment');
+const k1='sha256:'+crypto.createHash('sha256').update('1').digest('hex');
+const k2='sha256:'+crypto.createHash('sha256').update('2').digest('hex');
+const base={stage:'3/10',pass:true,activationAuthorized:false,nextConsumedReplayKeys:[k2,k1]};
+const a=evaluate(base),b=evaluate({...base,nextConsumedReplayKeys:[k1,k2]});
+assert.strictEqual(a.pass,true); assert.strictEqual(a.activationAuthorized,false);
+assert.strictEqual(a.stateRoot,b.stateRoot); assert.strictEqual(a.count,2);
+assert.strictEqual(evaluate({...base,nextConsumedReplayKeys:[k1,k1]}).pass,false);
+assert.strictEqual(evaluate({...base,nextConsumedReplayKeys:['sha256:bad']}).pass,false);
+assert.strictEqual(evaluate({...base,priorStateRoot:'sha256:bad'}).pass,false);
+assert.strictEqual(evaluate({...base,intentStateUsed:true}).pass,false);
+console.log('Master 3/11 replay state commitment: PASS');
