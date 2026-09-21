@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_MASTER6_CLEAN_POST_DEPLOYMENT_VERIFICATION",
+  "status": "VERIFIED_10_OF_10_CLEAN_DEPLOYMENT",
+  "network": {
+    "name": "BSC Testnet",
+    "chainId": 97
+  },
+  "sourceCommit": "0x87745b4bfb3ad49e73c14a8f62282986e72148bc",
+  "executionPacketDigest": "sha256:dc538396aff204b65e19430033d5d11520c17b10239f49876d1364559fc3d84f",
+  "deployer": "0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB",
+  "startingNonce": "17",
+  "finalPendingNonce": "27",
+  "rpcCount": 2,
+  "minConfirmations": 3,
+  "deployments": [
+    {
+      "order": 1,
+      "label": "CollateralPrimaryFeed",
+      "nonce": "17",
+      "transactionHash": "0xc4f8d50ff95f1529c14345bc6a22bb55bea3aca5c9f23e128893bcab6b59b1c2",
+      "blockNumber": 132311930,
+      "blockHash": "0x0cefdbc3324a64a29677b104947006a7341317beefdac0651d9b02f50df183b7",
+      "contractAddress": "0x00875A32E6E5F2d63C865a4555801bE9307095b6",
+      "runtimeCodeDigest": "sha256:f88eaa724a492af4898c035db69a143e62736d146df7e04f97bdd6cb90849659",
+      "confirmations": 4139
+    },
+    {
+      "order": 2,
+      "label": "CollateralSecondaryFeed",
+      "nonce": "18",
+      "transactionHash": "0x5ee24edff44886febc946fbd2d070f89ef5c120a83f69c962fd3d3410587e27a",
+      "blockNumber": 132312281,
+      "blockHash": "0x261e5ec10bf24d5588fb5140d1caef855d994ad455af494b51cf58d38a0d01ad",
+      "contractAddress": "0x7b2A2675E197A5798E08546DdcE5F49Bc0A2Fe47",
+      "runtimeCodeDigest": "sha256:f88eaa724a492af4898c035db69a143e62736d146df7e04f97bdd6cb90849659",
+      "confirmations": 3788
+    },
+    {
+      "order": 3,
+      "label": "DebtPrimaryFeed",
+      "nonce": "19",
+      "transactionHash": "0x5b56535edee5f6b7f9612c6d58b8dcb9527a1083f39a53161496338d256e8ebf",
+      "blockNumber": 132312485,
+      "blockHash": "0x4f89f58707f861f8cc39af5056f8d938ffa331cab201ac28ce90684f31de0abf",
+      "contractAddress": "0xDe45ad8497AcC6e478248BB8f700f8D7580EACB7",
+      "runtimeCodeDigest": "sha256:f88eaa724a492af4898c035db69a143e62736d146df7e04f97bdd6cb90849659",
+      "confirmations": 3584
+    },
+    {
+      "order": 4,
+      "label": "DebtSecondaryFeed",
+      "nonce": "20",
+      "transactionHash": "0xec5d0bfbb7a8d8820a18f0c9201993f5387fad367ba541e48e9486d09f616093",
+      "blockNumber": 132312675,
+      "blockHash": "0x46dd2111c00014eb4329d79ddda11407e168ca5cad4116cc796865b791fd5f92",
+      "contractAddress": "0x6f2cB3889141328C848aA19376aC880A34f9C4D5",
+      "runtimeCodeDigest": "sha256:f88eaa724a492af4898c035db69a143e62736d146df7e04f97bdd6cb90849659",
+      "confirmations": 3394
+    },
+    {
+      "order": 5,
+      "label": "LQCOracleManager",
+      "nonce": "21",
+      "transactionHash": "0xfd01aa73fdb22444d7355fbe2f1d232985a881a8197f5d31b362be452bdb6ca9",
+      "blockNumber": 132312865,
+      "blockHash": "0xba5295db87864e37ef2f9920b1e8bfb305561d2a96e82b5717c2ee663ed9117d",
+      "contractAddress": "0x7867d6E8A50d40389DA64CaDC2d053D04ffaaB52",
+      "runtimeCodeDigest": "sha256:b9016ec3eedb9f3d27343b7d2b26582a3dd5131907eb88a1fbe9e3a8fcb3352d",
+      "confirmations": 3204
+    },
+    {
+      "order": 6,
+      "label": "LQCInterestRateModel",
+      "nonce": "22",
+      "transactionHash": "0x3fa221f5e2dd12ac0303ed5565f5e44c0c9f98c94a9489b3dce43a4fd6095ec9",
+      "blockNumber": 132313032,
+      "blockHash": "0x98dfa1a986be0448c4e8f5176afd2858104a65689a5b6ea428be49ad0a951bda",
+      "contractAddress": "0x852B7a46bb3346B3e28f91cF30E020C8fCDDeA34",
+      "runtimeCodeDigest": "sha256:570c0844cae00c4e5bc87af81fc9d889367781e43191c56e8e7aa49a3a389741",
+      "confirmations": 3037
+    },
+    {
+      "order": 7,
+      "label": "LQCLendingMarketRegistry",
+      "nonce": "23",
+      "transactionHash": "0xca91b0b4f430c1924256e358a68b48fab7857ab7773064a3844ded88ac5234d7",
+      "blockNumber": 132313464,
+      "blockHash": "0xa9592e372e6deb9f21d6167932d37a87f92750dd6ea6e7164e5026e94d4ba599",
+      "contractAddress": "0x58cC5aACEb775F38be899A3b9A9aFf7D5f50A01E",
+      "runtimeCodeDigest": "sha256:9a201fd6a1ce8e7bbbfb0f4ffd90b184b4e19d7a9af66a8d1667d6f9be80f024",
+      "confirmations": 2605
+    },
+    {
+      "order": 8,
+      "label": "LQCLendingInterestIndex",
+      "nonce": "24",
+      "transactionHash": "0x9992b12092e25c53d689a24343dc387ac4134e31c6d38011017a06e32f9627e3",
+      "blockNumber": 132313663,
+      "blockHash": "0xf80e6b5f47b5332023f1f0ea129bdd0db622d096bb76862afee8438e3d0ef457",
+      "contractAddress": "0xC7C43101CE099a3Fd45F04bB15E10F5C3A04e612",
+      "runtimeCodeDigest": "sha256:0679147befb405737a400b41cde52d60eee99d451a21ecfd3c8e545c763347b1",
+      "confirmations": 2406
+    },
+    {
+      "order": 9,
+      "label": "LQCLendingCore",
+      "nonce": "25",
+      "transactionHash": "0xf37e4d016a01bb4f1a89c1fa3fb8b97f1dba524be37992aefcf4477ceb68d889",
+      "blockNumber": 132313851,
+      "blockHash": "0x0ca875c9a9819b825f8923f8d71d739b7afea2a9434c86594b02b45475b07f5c",
+      "contractAddress": "0xFc6c31cB14332592562396fef995c03c9F1E173C",
+      "runtimeCodeDigest": "sha256:cd7052e9a2b985407600ac42394e6de2e24a6615f323332d93197cfa22181bd5",
+      "confirmations": 2218
+    },
+    {
+      "order": 10,
+      "label": "LQCLiquidationEngine",
+      "nonce": "26",
+      "transactionHash": "0x760061de0f5d7ca75d736ab057b88e043f2a8957723f8c1e094af99fe15c91fd",
+      "blockNumber": 132314047,
+      "blockHash": "0x9df02afdca7160659f133773e1d6abddc2fb30fbf8b8177fa87ed1a0c65d3888",
+      "contractAddress": "0xC14330BBa0a2576c71b8FDd5E6c811B0C3320EC1",
+      "runtimeCodeDigest": "sha256:c8faf8c67a727b979ae9efa4c7cb30c65e9bfc8eefde81369b61acc7c3ca655e",
+      "confirmations": 2022
+    }
+  ],
+  "bindings": {
+    "marketId": "0x17554699f00c3d62162f687a4dcbc488c87ec5ba2702ed3b0d6516f4ba2b073f",
+    "feeds": {
+      "CollateralPrimaryFeed": {
+        "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+        "decimals": 8,
+        "answer": "100000000"
+      },
+      "CollateralSecondaryFeed": {
+        "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+        "decimals": 8,
+        "answer": "99000000"
+      },
+      "DebtPrimaryFeed": {
+        "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+        "decimals": 8,
+        "answer": "60000000000"
+      },
+      "DebtSecondaryFeed": {
+        "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+        "decimals": 8,
+        "answer": "59400000000"
+      }
+    },
+    "oracleManager": {
+      "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+      "guardian": "0xDc8003a7046be67F257D294b2680C20988A6bC2B"
+    },
+    "rateModel": {
+      "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+      "guardian": "0xDc8003a7046be67F257D294b2680C20988A6bC2B"
+    },
+    "marketRegistry": {
+      "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+      "guardian": "0xDc8003a7046be67F257D294b2680C20988A6bC2B",
+      "oracle": "0x7867d6E8A50d40389DA64CaDC2d053D04ffaaB52",
+      "marketConfigured": false
+    },
+    "interestIndex": {
+      "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+      "rateModel": "0x852B7a46bb3346B3e28f91cF30E020C8fCDDeA34",
+      "core": "0x0000000000000000000000000000000000000000",
+      "initialized": false
+    },
+    "lendingCore": {
+      "owner": "0x5235e26EE4D511aE8ba1FB1cff2619Fc1D90C02A",
+      "registry": "0x58cC5aACEb775F38be899A3b9A9aFf7D5f50A01E",
+      "interestIndex": "0xC7C43101CE099a3Fd45F04bB15E10F5C3A04e612",
+      "liquidationEngine": "0x0000000000000000000000000000000000000000"
+    },
+    "liquidationEngine": {
+      "core": "0xFc6c31cB14332592562396fef995c03c9F1E173C"
+    },
+    "activationAuthorized": false
+  },
+  "governanceConfigurationAuthorized": false,
+  "activationAuthorized": false,
+  "transactionOccurred": true,
+  "safety": "Read-only verification of already-broadcast deployment transactions. No Safe proposal, configuration, activation, transfer, signature or new transaction.",
+  "verificationDigest": "sha256:ef6275939580d65af43bb9178e020f9353605b2ff38f7053469527e5b83a0478"
+}
