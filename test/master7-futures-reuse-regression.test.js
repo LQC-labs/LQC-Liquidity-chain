@@ -53,8 +53,9 @@ test("Master 7/1 preserves exact BSC Testnet deployment evidence without inferri
 });
 
 test("Master 7/1 keeps production activation outside current evidence credit",()=>{
-  const gate=fs.readFileSync("dex/test/futures-production-oracle-gate.test.mjs","utf8");
+  const gate=fs.readFileSync("dex/scripts/gate-futures-production-oracle.mjs","utf8");
   const evidence=fs.readFileSync("docs/futures/BSC_TESTNET_TX_EVIDENCE.md","utf8");
   assert.ok(gate.includes("no production Futures deployment/config manifest exists"));
+  assert.ok(gate.includes("Production deployment is blocked"));
   assert.ok(evidence.includes("does not by itself assert transaction success"));
 });
