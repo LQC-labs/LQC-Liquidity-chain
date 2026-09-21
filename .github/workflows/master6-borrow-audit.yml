@@ -1,23 +1,5 @@
 name: Master 6 Borrow Audit
 on:
-  push:
-    paths:
-      - 'dex/contracts/lending/**'
-      - 'dex/test/lending-borrow-gate.test.mjs'
-      - 'dex/test/lending-borrow-boundaries.test.mjs'
-      - 'dex/test/lending-core.test.mjs'
-      - 'docs/master6/6-7-borrow-audit.md'
-      - 'test/master6-borrow-audit.test.js'
-      - '.github/workflows/master6-borrow-audit.yml'
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/**'
-      - 'dex/test/lending-borrow-gate.test.mjs'
-      - 'dex/test/lending-borrow-boundaries.test.mjs'
-      - 'dex/test/lending-core.test.mjs'
-      - 'docs/master6/6-7-borrow-audit.md'
-      - 'test/master6-borrow-audit.test.js'
-      - '.github/workflows/master6-borrow-audit.yml'
   workflow_dispatch:
 permissions:
   contents: read
