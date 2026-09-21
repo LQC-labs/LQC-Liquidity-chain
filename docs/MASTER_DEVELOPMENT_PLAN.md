@@ -56,7 +56,10 @@ Existing Lending contracts and tests are reused. Staking is modular and does not
 - Initial controlled BSC pilot candidate is 50% Maximum LTV / 70% liquidation threshold / 5% maximum liquidation bonus, subject to asset-specific tightening, simulation, audit, and governance.
 - Supply Earn derives variable yield from actual borrower interest; no fixed APY is guaranteed.
 - LQC Staking is a separate vault/accounting domain and is not silently rehypothecated into Lending.
+- The canonical LQC Staking Vault is developed once in Master 6 and is designed for later reuse by approved ecosystem modules rather than creating duplicate staking custody domains.
+- Future Launchpad integration consumes a reviewed read-only/versioned staking interface for bounded eligibility data such as staked balance, lock duration, staking weight, or snapshot state; Launchpad must not custody staking principal or mutate staking reward accounting.
 - Staking rewards must reconcile to approved fixed-supply tokenomics and a disclosed bounded reward source.
+- Development timing: 6/15-6/19 completes the canonical Staking Vault and its E2E first; Launchpad-specific staking integration is deferred until the Launchpad workstream is active and the staking interface is stable/reviewed.
 - Safety/Insurance Staking is post-pilot scope and requires separate simulation, audit, legal review, disclosure, and governance.
 
 ## Evidence state model
