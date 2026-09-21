@@ -1,0 +1,49 @@
+name: Master 6 Lending Core E2E Readiness
+
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/**'
+      - 'dex/test/lending-*.test.mjs'
+      - 'dex/deployments/master6-clean-post-deployment-verification-bsc-testnet-97.json'
+      - 'test/master6-lending-core-e2e-readiness.test.js'
+      - 'docs/master6/6-13-lending-core-e2e-readiness.md'
+      - '.github/workflows/master6-lending-core-e2e-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lending-core-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile current Lending sources
+        working-directory: dex
+        run: npm run compile
+      - name: Verify 6/13 reuse and 6/12 evidence boundary
+        run: node --test test/master6-lending-core-e2e-readiness.test.js
+      - name: Run focused Lending Core E2E regression
+        working-directory: dex
+        run: >
+          npx mocha --timeout 30000
+          test/lending-core.test.mjs
+          test/lending-collateral-boundaries.test.mjs
+          test/lending-supply-withdraw-boundaries.test.mjs
+          test/lending-borrow-boundaries.test.mjs
+          test/lending-repay-boundaries.test.mjs
+          test/lending-interest.test.mjs
+          test/lending-health-factor-boundaries.test.mjs
+          test/lending-liquidation-boundaries.test.mjs
+          test/lending-bad-debt-reserve-gate.test.mjs
+          test/lending-security-invariant-gate.test.mjs
