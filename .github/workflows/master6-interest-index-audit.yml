@@ -1,0 +1,23 @@
+name: Master 6 Lending Interest Index Audit
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/LQCLendingInterestIndex.sol'
+      - 'dex/test/lending-interest.test.mjs'
+      - 'dex/test/lending-core.test.mjs'
+      - 'docs/master6/6-3-interest-index-audit.md'
+      - 'test/master6-interest-index-audit.test.js'
+      - '.github/workflows/master6-interest-index-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  interest-index-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master6-interest-index-audit.test.js
