@@ -134,12 +134,15 @@ describe("Master 6/16 LQC Staking Reward Accounting",function(){
     assert.equal(await feeToken.balanceOf(feeRewards.target),0n);
   });
 
-  it("contains no mint authority, fixed APY or Lending accounting dependency",async function(){
+  it("contains no mint authority, fixed-rate API or Lending accounting dependency",async function(){
     const source=fs.readFileSync(new URL("../contracts/staking/LQCStakingRewards.sol",import.meta.url),"utf8");
-    const lower=source.toLowerCase();
+    const abi=artifact("LQCStakingRewards","staking/LQCStakingRewards").abi;
+    const names=new Set(abi.filter(x=>x.type==="function").map(x=>x.name.toLowerCase()));
     assert.ok(!source.includes("mint("));
-    assert.ok(!lower.includes("fixed apy"));
     assert.ok(!source.includes("LQCLendingCore"));
+    for(const forbidden of["setapy","setapr","setfixedapy","setfixedapr","mint"]){
+      assert.equal(names.has(forbidden),false,forbidden);
+    }
     assert.ok(source.includes("fundRewards"));
     assert.ok(source.includes("rewardReserve"));
   });
