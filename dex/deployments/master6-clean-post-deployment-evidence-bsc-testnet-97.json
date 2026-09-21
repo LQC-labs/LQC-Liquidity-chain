@@ -73,5 +73,10 @@
     }
   ],
   "activationAuthorized": false,
-  "safety": "Read-only evidence input. No configuration, Safe proposal, market activation, transfer, signature or transaction is authorized."
+  "safety": "Read-only evidence input. No configuration, Safe proposal, market activation, transfer, signature or transaction is authorized.",
+  "deployerProvenance": {
+    "type": "REUSED_FUTURES_TESTNET_DEPLOYER",
+    "evidence": "dex/deployments/bsc-testnet/futures-2026-09-19.md",
+    "note": "Only the Futures testnet deployer wallet is reused. The ten predicted addresses are new Lending contract addresses, not wallet accounts."
+  }
 }
