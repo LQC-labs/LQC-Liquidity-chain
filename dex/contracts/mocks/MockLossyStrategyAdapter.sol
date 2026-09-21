@@ -41,6 +41,10 @@ contract MockLossyStrategyAdapter is ILQCStrategyAdapter {
         asset.safeTransfer(address(0), assets);
     }
 
+    function adapterId() external pure returns (bytes32) { return ADAPTER_ID; }
+
+    function adapterVersion() external pure returns (uint32) { return ADAPTER_VERSION; }
+
     function deploy(uint256 assets) external onlyVault returns (uint256) {
         if (IERC20(asset).balanceOf(address(this)) < totalManagedAssets + assets) revert InsufficientAssets();
         totalManagedAssets += assets;
