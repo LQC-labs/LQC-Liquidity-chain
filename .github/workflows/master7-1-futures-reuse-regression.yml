@@ -1,19 +1,7 @@
 name: Master 7 1 Futures Reuse Regression
 
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/futures/**'
-      - 'dex/app/futures/**'
-      - 'dex/test/futures*.test.mjs'
-      - 'dex/test/lqc-flow-futures.test.mjs'
-      - 'dex/deployments/bsc-testnet/futures-2026-09-19.md'
-      - 'docs/futures/BSC_TESTNET_TX_EVIDENCE.md'
-      - 'test/master7-futures-reuse-regression.test.js'
-      - 'docs/master7/7-1-futures-reuse-regression.md'
-      - '.github/workflows/master7-1-futures-reuse-regression.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 
