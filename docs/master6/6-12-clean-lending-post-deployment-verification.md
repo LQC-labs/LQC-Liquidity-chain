@@ -4,6 +4,8 @@ Status: **read-only verification gate**
 
 The guarded TokenPocket deployment session completed all 10 approved CREATE transactions from deployer nonce 17 through 26.
 
+The deployer wallet is the previously verified Futures BSC Testnet deployer. Only that deployer wallet is reused; the ten deterministic addresses created here are new Lending contract addresses and are not ten wallet accounts.
+
 This gate verifies the already-broadcast deployment only. It does not configure contracts, create Safe proposals, activate a market, move tokens, sign, or broadcast a transaction.
 
 ## Required PASS conditions
