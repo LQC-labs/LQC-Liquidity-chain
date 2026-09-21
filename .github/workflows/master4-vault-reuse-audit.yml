@@ -1,0 +1,23 @@
+name: Master 4 Vault Reuse Audit
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/vault/**'
+      - 'scripts/master4-vault-reuse-audit.js'
+      - 'test/master4-vault-reuse-audit.test.js'
+      - 'docs/master4/4-1-vault-reuse-audit.md'
+      - '.github/workflows/master4-vault-reuse-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reuse-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master4-vault-reuse-audit.test.js
+      - run: node scripts/master4-vault-reuse-audit.js dex/contracts/vault/LQCLiquidityVault.sol
