@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "recordType": "LQC_MASTER6_CLEAN_POST_DEPLOYMENT_EVIDENCE",
-  "status": "AWAITING_MULTI_RPC_VERIFICATION",
+  "status": "CHAIN_VERIFIED_10_OF_10",
   "network": {
     "name": "BSC Testnet",
     "chainId": 97
@@ -14,8 +14,7 @@
       "order": 1,
       "label": "CollateralPrimaryFeed",
       "nonce": "17",
-      "hash": null,
-      "hashResolution": "DISCOVER_FROM_CHAIN_BY_DEPLOYER_NONCE_17_NEAR_TX2"
+      "hash": "0xc4f8d50ff95f1529c14345bc6a22bb55bea3aca5c9f23e128893bcab6b59b1c2"
     },
     {
       "order": 2,
@@ -78,5 +77,6 @@
     "type": "REUSED_FUTURES_TESTNET_DEPLOYER",
     "evidence": "dex/deployments/bsc-testnet/futures-2026-09-19.md",
     "note": "Only the Futures testnet deployer wallet is reused. The ten predicted addresses are new Lending contract addresses, not wallet accounts."
-  }
+  },
+  "verificationDigest": "sha256:ef6275939580d65af43bb9178e020f9353605b2ff38f7053469527e5b83a0478"
 }
