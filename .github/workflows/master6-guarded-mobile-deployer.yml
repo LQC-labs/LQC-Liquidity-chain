@@ -1,0 +1,20 @@
+name: Master 6 Guarded Mobile Deployer
+on:
+  pull_request:
+    paths:
+      - 'dex/app/master6-clean-lending-deploy-testnet.js'
+      - 'dex/app/master6-clean-lending-deploy-testnet.html'
+      - 'test/master6-guarded-mobile-deployer.test.js'
+      - '.github/workflows/master6-guarded-mobile-deployer.yml'
+permissions:
+  contents: read
+jobs:
+  guarded-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test test/master6-guarded-mobile-deployer.test.js
