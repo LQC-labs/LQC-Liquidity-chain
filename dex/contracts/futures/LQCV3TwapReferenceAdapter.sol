@@ -103,12 +103,13 @@ contract LQCV3TwapReferenceAdapter is IAggregatorV3 {
 
     function _priceAtTick(int24 tick) private view returns (uint256) {
         uint160 sqrt = _sqrtRatioAtTick(tick);
-        uint256 ratioX192 = uint256(sqrt) * uint256(sqrt);
+        uint256 ratioX128 = (uint256(sqrt) * uint256(sqrt >> 32)) >> 64;
         address token0_ = IV3TwapPool(pool).token0();
         uint256 scale0 = 10 ** uint256(token0Decimals);
         uint256 scale1 = 10 ** uint256(token1Decimals);
-        if (indexToken == token0_) return _mulDiv(ratioX192, scale0 * PRICE_SCALE, Q192 * scale1);
-        return _mulDiv(Q192, scale1 * PRICE_SCALE, ratioX192 * scale0);
+        uint256 q128 = 1 << 128;
+        if (indexToken == token0_) return _mulDiv(ratioX128, scale0 * PRICE_SCALE, q128 * scale1);
+        return _mulDiv(q128, scale1 * PRICE_SCALE, ratioX128 * scale0);
     }
 
     function _mulDiv(uint256 a, uint256 b, uint256 denominator) private pure returns (uint256) {
