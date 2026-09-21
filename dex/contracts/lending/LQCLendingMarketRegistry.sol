@@ -111,6 +111,17 @@ contract LQCLendingMarketRegistry {
         _enabledMarket(id);
     }
 
+    function validateSupplyCap(bytes32 id, uint256 totalSupplyAfter) external view {
+        MarketConfig memory config = _enabledMarket(id);
+        if (totalSupplyAfter > config.supplyCap) revert CapExceeded();
+    }
+
+    function validateBorrowCap(bytes32 id, uint256 totalBorrowAfter) external view {
+        MarketConfig memory config = _enabledMarket(id);
+        if (totalBorrowAfter > config.borrowCap) revert CapExceeded();
+    }
+
+    /// @notice Compatibility helper for integrations that preflight both caps together.
     function validateCaps(bytes32 id, uint256 totalSupplyAfter, uint256 totalBorrowAfter) external view {
         MarketConfig memory config = _enabledMarket(id);
         if (totalSupplyAfter > config.supplyCap || totalBorrowAfter > config.borrowCap) revert CapExceeded();
