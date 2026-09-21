@@ -1,0 +1,42 @@
+name: Master 6 Borrow Audit
+on:
+  push:
+    paths:
+      - 'dex/contracts/lending/**'
+      - 'dex/test/lending-borrow-gate.test.mjs'
+      - 'dex/test/lending-borrow-boundaries.test.mjs'
+      - 'dex/test/lending-core.test.mjs'
+      - 'docs/master6/6-7-borrow-audit.md'
+      - 'test/master6-borrow-audit.test.js'
+      - '.github/workflows/master6-borrow-audit.yml'
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/**'
+      - 'dex/test/lending-borrow-gate.test.mjs'
+      - 'dex/test/lending-borrow-boundaries.test.mjs'
+      - 'dex/test/lending-core.test.mjs'
+      - 'docs/master6/6-7-borrow-audit.md'
+      - 'test/master6-borrow-audit.test.js'
+      - '.github/workflows/master6-borrow-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  borrow-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Master 6/7 static gate
+        run: node test/master6-borrow-audit.test.js
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile and run complete DEX test suite
+        working-directory: dex
+        run: npm test
