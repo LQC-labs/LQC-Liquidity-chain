@@ -27,6 +27,7 @@ Audit the existing Lending collateral path before adding or changing custody log
 - `dex/test/lending-collateral-boundaries.test.mjs`: exact deposit accounting, cap overflow rejection without drift, exact receiver withdrawal, and invalid / over-withdraw rejection.
 - `dex/test/lending-core.test.mjs`: 50% max-LTV withdrawal protection and paused-market safe exits after repayment.
 - `dex/test/lending-security-invariant-gate.test.mjs`: exact-transfer custody, non-reentrancy, and separated collateral / debt accounting domains.
+- CI gate: `.github/workflows/master6-collateral-audit.yml` runs `node test/master6-collateral-audit.test.js`.
 
 ## Reuse decision
 
