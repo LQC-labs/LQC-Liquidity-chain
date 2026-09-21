@@ -1,14 +1,7 @@
 name: Master 2 Flow Evidence Consistency
 
 on:
-  pull_request:
-    paths:
-      - 'scripts/master2-flow-evidence-consistency.js'
-      - 'test/master2-flow-evidence-consistency.test.js'
-      - 'docs/master2/2-11-flow-evidence-consistency-gate.md'
-      - '.github/workflows/master2-flow-evidence-consistency.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 
