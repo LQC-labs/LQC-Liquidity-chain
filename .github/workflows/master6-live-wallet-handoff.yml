@@ -12,10 +12,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      MASTER6_DEPLOYER: 0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB
-      MASTER6_SOURCE_COMMIT: 0x87745b4bfb3ad49e73c14a8f62282986e72148bc
-      MASTER6_EXECUTION_APPROVAL: APPROVE_6_12_TESTNET_DEPLOYMENT
-      MASTER6_OUTPUT_FILE: master6-live-execution-packet.json
+      MASTER6_DEPLOYER: '0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB'
+      MASTER6_SOURCE_COMMIT: '0x87745b4bfb3ad49e73c14a8f62282986e72148bc'
+      MASTER6_EXECUTION_APPROVAL: 'APPROVE_6_12_TESTNET_DEPLOYMENT'
+      MASTER6_OUTPUT_FILE: 'master6-live-execution-packet.json'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
