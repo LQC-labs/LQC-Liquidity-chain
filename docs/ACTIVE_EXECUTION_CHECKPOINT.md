@@ -47,7 +47,8 @@ Before starting the next new Staking implementation, complete this short reposit
 11. **DONE in this gate** — Master 7/2 Independent Runtime Reference Oracle selectively rebuilt from PR #296 design and validated on current main;
 12. **DONE in this gate** — Master 7/3 read-only BSC Testnet deployment lineage PASS; all recorded runtimes match current artifacts, while the deployed Oracle remains explicitly test-only;
 13. **DONE in this gate** — Master 7/4 Perp Accounting Gap Review PASS; application-layer logic is reusable, while canonical on-chain settlement gaps are identified;
-14. **NEXT EXECUTABLE** — Master 7/5 Selective On-chain Futures Gap Implementation + Regression.
+14. **DONE in this gate** — Master 7/5-1 Canonical Partial Position Reduction implemented and regression-tested;
+15. **NEXT EXECUTABLE** — Master 7/5-2 Funding checkpoint/accounting.
 
 ## Preserved Staking direction and timing
 
@@ -99,7 +100,9 @@ The next development lane is Master 7 Futures. Reuse the existing Futures founda
 - 7/2 Independent Reference Oracle — **PASS in this gate**
 - 7/3 Current Artifact / BSC Testnet Deployment Lineage Reconciliation — **PASS in this gate**
 - 7/4 Perp Accounting Gap Review — Funding / Fees / Partial Close / Insurance / ADL — **PASS in this gate**
-- 7/5 Selective On-chain Futures Gap Implementation + Regression — **NEXT**
+- 7/5 Selective On-chain Futures Gap Implementation + Regression — **IN PROGRESS**
+  - 7/5-1 Canonical Partial Position Reduction — **PASS in this gate**
+  - 7/5-2 Funding checkpoint/accounting — **NEXT**
 - 7/6 Futures Risk / Governance / Emergency Integration
 - 7/7 Current-release BSC Testnet Futures E2E
 - 7/8 Futures Stage Exit / Intent Handoff

@@ -4,18 +4,18 @@ import fs from "node:fs";
 
 const read=(p)=>fs.readFileSync(p,"utf8");
 
-test("7/4 identifies the exact on-chain Perp surface without over-crediting app-layer accounting",()=>{
+test("7/4 gap classification remains explicit as 7/5 substeps are implemented",()=>{
   const engine=read("dex/contracts/futures/LQCPerpEngine.sol");
-  for(const fn of["openPosition","closePosition","liquidate","getPositionPnl"]){
+  for(const fn of["openPosition","closePosition","liquidate","getPositionPnl","reducePosition"]){
     assert.ok(engine.includes(`function ${fn}`),fn);
   }
   for(const missing of[
-    "settleFunding","fundingRate","tradingFee","partialClose","reducePosition",
+    "settleFunding","fundingRate","tradingFee","partialClose",
     "insuranceFund","badDebt","adl","autoDeleverage"
   ]){
     assert.equal(engine.includes(missing),false,missing);
   }
-  assert.ok(engine.includes("Funding, fees, partial close and insurance are intentionally separate follow-up modules."));
+  assert.ok(engine.includes("Funding, fees, Insurance/bad-debt, partial liquidation and ADL remain later 7/5 substeps."));
 });
 
 test("7/4 confirms Funding exists as tested application-layer accounting",()=>{
@@ -37,14 +37,14 @@ test("7/4 confirms Fees exist as tested application-layer accounting",()=>{
   assert.ok(controller.includes("settleTradingFee"));
 });
 
-test("7/4 confirms partial position reduction exists off-chain but not in the on-chain Perp engine",()=>{
+test("7/4 reduction specification is now reused by the canonical 7/5-1 on-chain reducer",()=>{
   const position=read("dex/app/futures/position-engine.js");
   const book=read("dex/app/futures/position-book.js");
   const engine=read("dex/contracts/futures/LQCPerpEngine.sol");
   assert.ok(position.includes("reduceDemoPosition"));
   assert.ok(book.includes("function reduce("));
-  assert.ok(!engine.includes("reducePosition"));
-  assert.ok(!engine.includes("partialClose"));
+  assert.ok(engine.includes("function reducePosition"));
+  assert.ok(!engine.includes("function partialClose"));
 });
 
 test("7/4 confirms Insurance and ADL are application-layer models, not current on-chain custody/accounting",()=>{

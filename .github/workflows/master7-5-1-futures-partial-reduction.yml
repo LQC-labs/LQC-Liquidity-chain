@@ -1,0 +1,42 @@
+name: Master 7 5 1 Futures Partial Reduction
+
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/futures/LQCPerpEngine.sol'
+      - 'dex/contracts/futures/LQCFuturesVault.sol'
+      - 'dex/test/futures.test.mjs'
+      - 'dex/test/futures-partial-reduction.test.mjs'
+      - 'test/master7-4-perp-gap-review.test.js'
+      - 'docs/master7/7-5-1-futures-partial-reduction.md'
+      - '.github/workflows/master7-5-1-futures-partial-reduction.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  partial-reduction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci --ignore-scripts
+      - name: Compile current protocol sources
+        working-directory: dex
+        run: npm run compile
+      - name: Run canonical partial-reduction tests
+        working-directory: dex
+        run: npx mocha --timeout 30000 test/futures-partial-reduction.test.mjs test/futures.test.mjs
+      - name: Preserve 7/4 gap classification as 7/5 progresses
+        run: node --test test/master7-4-perp-gap-review.test.js
+      - name: Re-run Futures security gate
+        working-directory: dex
+        run: npx mocha --timeout 30000 test/futures-security-gate.test.mjs
