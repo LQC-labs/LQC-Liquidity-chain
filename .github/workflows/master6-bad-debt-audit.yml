@@ -1,21 +1,5 @@
 name: Master 6 Bad Debt Audit
 on:
-  push:
-    paths:
-      - 'dex/contracts/lending/LQCLendingCore.sol'
-      - 'dex/test/lending-core.test.mjs'
-      - 'dex/test/lending-bad-debt-reserve-gate.test.mjs'
-      - 'docs/master6/6-11-bad-debt-audit.md'
-      - 'test/master6-bad-debt-audit.test.js'
-      - '.github/workflows/master6-bad-debt-audit.yml'
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/LQCLendingCore.sol'
-      - 'dex/test/lending-core.test.mjs'
-      - 'dex/test/lending-bad-debt-reserve-gate.test.mjs'
-      - 'docs/master6/6-11-bad-debt-audit.md'
-      - 'test/master6-bad-debt-audit.test.js'
-      - '.github/workflows/master6-bad-debt-audit.yml'
   workflow_dispatch:
 permissions:
   contents: read
