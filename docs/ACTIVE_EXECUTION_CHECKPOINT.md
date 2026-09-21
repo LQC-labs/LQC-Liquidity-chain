@@ -46,7 +46,8 @@ Before starting the next new Staking implementation, complete this short reposit
 10. **DONE in this gate** — Master 7/1 Futures latest-main regression + selective reuse/gap reconciliation PASS;
 11. **DONE in this gate** — Master 7/2 Independent Runtime Reference Oracle selectively rebuilt from PR #296 design and validated on current main;
 12. **DONE in this gate** — Master 7/3 read-only BSC Testnet deployment lineage PASS; all recorded runtimes match current artifacts, while the deployed Oracle remains explicitly test-only;
-13. **NEXT EXECUTABLE** — Master 7/4 Perp Accounting Gap Review — Funding / Fees / Partial Close / Insurance / ADL.
+13. **DONE in this gate** — Master 7/4 Perp Accounting Gap Review PASS; application-layer logic is reusable, while canonical on-chain settlement gaps are identified;
+14. **NEXT EXECUTABLE** — Master 7/5 Selective On-chain Futures Gap Implementation + Regression.
 
 ## Preserved Staking direction and timing
 
@@ -97,10 +98,23 @@ The next development lane is Master 7 Futures. Reuse the existing Futures founda
 - 7/1 Latest-main Regression / Reuse Reconciliation — **PASS in this gate**
 - 7/2 Independent Reference Oracle — **PASS in this gate**
 - 7/3 Current Artifact / BSC Testnet Deployment Lineage Reconciliation — **PASS in this gate**
-- 7/4 Perp Accounting Gap Review — Funding / Fees / Partial Close / Insurance / ADL — **NEXT**
-- 7/5 Selective On-chain Futures Gap Implementation + Regression
+- 7/4 Perp Accounting Gap Review — Funding / Fees / Partial Close / Insurance / ADL — **PASS in this gate**
+- 7/5 Selective On-chain Futures Gap Implementation + Regression — **NEXT**
 - 7/6 Futures Risk / Governance / Emergency Integration
 - 7/7 Current-release BSC Testnet Futures E2E
 - 7/8 Futures Stage Exit / Intent Handoff
 
 Historical Futures branches remain evidence/reuse pools. Current `main` and fresh regression decide what is reused.
+
+
+## Master 7/5 confirmed implementation order
+
+1. canonical partial position reduction;
+2. funding checkpoint/accounting;
+3. trading fee accounting and explicit reserve routing;
+4. Futures-only Insurance Fund / residual bad debt accounting;
+5. partial liquidation reusing the same reduction primitive;
+6. bounded ADL primitive for explicit residual bad debt;
+7. integrated accounting/regression invariants.
+
+Do not rebuild the existing application-layer Funding/Fee/Insurance/ADL logic. Reuse it as specification and regression evidence while adding only the missing on-chain accounting/custody path.
