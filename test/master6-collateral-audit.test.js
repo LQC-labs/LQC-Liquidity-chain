@@ -33,5 +33,6 @@ test("Master 6/5 reuses the existing collateral custody and withdrawal safety pa
   assert.match(runtime,/blocks new risk when paused but permits repayment and safe exits/);
   assert.match(invariants,/keeps exact-transfer custody checks on inbound assets/);
   assert.match(registry,/function accountRisk/);
+  assert.match(doc,/CI gate:/);
   assert.match(doc,/activationAuthorized: false/);
 });
