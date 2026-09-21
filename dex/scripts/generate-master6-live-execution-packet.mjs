@@ -8,6 +8,8 @@ const RPCS=[
   "https://bsc-testnet-rpc.publicnode.com",
   "https://data-seed-prebsc-1-s1.bnbchain.org:8545"
 ];
+const APPROVED_DEPLOYER="0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB";
+const DEPLOYER_EVIDENCE="dex/deployments/bsc-testnet/futures-2026-09-19.md";
 
 function requiredAddress(value,label){
   if(!value||!ethers.isAddress(value)||ethers.getAddress(value)===ethers.ZeroAddress) throw new Error(label+" must be a non-zero EVM address");
@@ -20,6 +22,9 @@ function requiredCommit(value){
 function requireApproval(value){
   if(value!=="APPROVE_6_12_TESTNET_DEPLOYMENT") throw new Error("Explicit 6/12 execution approval phrase missing");
 }
+function requireApprovedDeployer(value){
+  if(value.toLowerCase()!==APPROVED_DEPLOYER.toLowerCase()) throw new Error("MASTER6_DEPLOYER does not match the verified Futures BSC Testnet deployer");
+}
 
 export async function generateMaster6LiveExecutionPacket({
   deployer,
@@ -28,6 +33,7 @@ export async function generateMaster6LiveExecutionPacket({
   providers=RPCS.map(url=>new ethers.JsonRpcProvider(url))
 }){
   const DEPLOYER=requiredAddress(deployer,"MASTER6_DEPLOYER");
+  requireApprovedDeployer(DEPLOYER);
   const SOURCE_COMMIT=requiredCommit(sourceCommit);
   requireApproval(approvalPhrase);
   if(!Array.isArray(providers)||providers.length<2) throw new Error("Use 2+ BSC Testnet RPC providers");
@@ -54,6 +60,7 @@ export async function generateMaster6LiveExecutionPacket({
     network:{name:"BSC Testnet",chainId:97},
     sourceCommit:SOURCE_COMMIT,
     deployer:DEPLOYER,
+    deployerEvidence:DEPLOYER_EVIDENCE,
     packet,
     preflight,
     executionAuthorized:true,
