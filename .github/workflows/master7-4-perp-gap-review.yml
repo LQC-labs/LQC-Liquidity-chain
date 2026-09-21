@@ -1,16 +1,7 @@
 name: Master 7 4 Perp Accounting Gap Review
 
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/futures/**'
-      - 'dex/app/futures/**'
-      - 'dex/test/futures*.test.mjs'
-      - 'test/master7-4-perp-gap-review.test.js'
-      - 'docs/master7/7-4-perp-accounting-gap-review.md'
-      - '.github/workflows/master7-4-perp-gap-review.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 
