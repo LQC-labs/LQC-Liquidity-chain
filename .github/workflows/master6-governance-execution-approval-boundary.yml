@@ -1,13 +1,6 @@
 name: Master 6 Governance Execution Approval Boundary
 on:
-  pull_request:
-    paths:
-      - 'dex/scripts/build-master6-governance-execution-approval.mjs'
-      - 'dex/scripts/verify-master6-governance-configuration-proposal.mjs'
-      - 'dex/deployments/master6-governance-configuration-proposal-bsc-testnet-97.json'
-      - 'test/master6-governance-execution-approval-boundary.test.js'
-      - 'docs/master6/6-12-governance-execution-approval-boundary.md'
-      - '.github/workflows/master6-governance-execution-approval-boundary.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
