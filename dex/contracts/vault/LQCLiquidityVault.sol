@@ -4,10 +4,11 @@ pragma solidity ^0.8.24;
 import {IERC20} from "../interfaces/IERC20.sol";
 import {SafeTransferLib} from "../libraries/SafeTransferLib.sol";
 import {ILQCStrategyAdapter} from "./interfaces/ILQCStrategyAdapter.sol";
+import {ILQCVaultRead} from "./interfaces/ILQCVaultRead.sol";
 
 /// @notice Single-asset vault with a capped, separately approved strategy boundary.
 /// @dev Strategy accounting is explicit so unsolicited token donations cannot inflate share value.
-contract LQCLiquidityVault {
+contract LQCLiquidityVault is ILQCVaultRead {
     using SafeTransferLib for address;
 
     string public name;
@@ -100,6 +101,13 @@ contract LQCLiquidityVault {
 
     function accountedIdleAssets() public view returns (uint256) {
         return accountedAssets - strategyDebt;
+    }
+
+    /// @notice Immediately available accounted liquidity, excluding unsolicited token donations.
+    function availableLiquidity() external view returns (uint256) {
+        uint256 accountedIdle = accountedIdleAssets();
+        uint256 actualIdle = idleAssets();
+        return actualIdle < accountedIdle ? actualIdle : accountedIdle;
     }
 
     function isInsolvent() public view returns (bool) {
