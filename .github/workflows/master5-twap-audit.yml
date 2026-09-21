@@ -1,0 +1,24 @@
+name: Master 5 TWAP Audit
+on:
+  pull_request:
+    paths:
+      - 'dex/scripts/preflight-futures-twap-reference.mjs'
+      - 'dex/scripts/futures-twap-price-conversion.mjs'
+      - 'dex/test/futures-twap-*.test.mjs'
+      - 'docs/master5/5-4-twap-audit.md'
+      - 'test/master5-twap-audit.test.js'
+      - '.github/workflows/master5-twap-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  twap-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master5-twap-audit.test.js
+      - run: node test/master5-reference-feed.test.js
