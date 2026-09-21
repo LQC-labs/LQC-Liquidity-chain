@@ -1,0 +1,24 @@
+name: Master 4 Vault Capacity Pause Boundary
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/vault/**'
+      - 'scripts/master4-vault-cap-pause-boundary.js'
+      - 'test/master4-vault-cap-pause-boundary.test.js'
+      - 'docs/master4/4-8-vault-cap-pause-boundary.md'
+      - '.github/workflows/master4-vault-cap-pause-boundary.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cap-pause:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master4-vault-cap-pause-boundary.test.js
+      - run: node test/master4-vault-accounting-invariant.test.js
+      - run: node test/master4-vault-loss-boundary.test.js
