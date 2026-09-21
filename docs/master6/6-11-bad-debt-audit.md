@@ -57,8 +57,8 @@ The Lending EVM regression now proves:
 - ordinary third-party repayment reduces recorded bad debt;
 - governance recapitalization pulls real debt tokens;
 - supplier loss is rejected while the market is active;
-- supplier loss is rejected after pause until reserves are exhausted;
-- supplier loss remains capped by the existing cumulative 20% limit.
+- paused-market supplier loss automatically applies protocol reserves first in the same transaction;
+- only the residual bad debt can reach supplier-loss accounting, still capped by the existing cumulative 20% limit.
 
 ## Reuse decision
 
