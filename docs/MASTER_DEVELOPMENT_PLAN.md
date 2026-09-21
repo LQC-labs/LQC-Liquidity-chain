@@ -63,6 +63,28 @@ Existing Lending contracts and tests are reused. Staking is modular and does not
 - Safety/Insurance Staking is post-pilot scope and requires separate simulation, audit, legal review, disclosure, and governance.
 - Future USDT/USDC Locked Earn may be added after the canonical 6/15–6/19 LQC Staking path as separate asset-specific Earn modules behind a unified Earn UI/registry; stablecoin Earn custody/accounting must not be mixed into the LQC Staking Vault.
 
+## Stage 7 — Futures
+
+Master 7 reuses the existing Futures implementation and BSC Testnet evidence. Historical Futures branches are never merged wholesale; only current gaps are selectively revalidated and integrated.
+
+- 7/1 Latest-main Regression / Reuse Reconciliation
+- 7/2 Independent Reference Oracle
+- 7/3 Current Artifact / BSC Testnet Deployment Lineage Reconciliation
+- 7/4 Perp Accounting Gap Review — Funding / Fees / Partial Close / Insurance / ADL
+- 7/5 Selective On-chain Futures Gap Implementation + Regression
+- 7/6 Futures Risk / Governance / Emergency Integration
+- 7/7 Current-release BSC Testnet Futures E2E
+- 7/8 Futures Stage Exit / Intent Handoff
+
+### Stage 7 architecture rules
+
+- Futures margin, position, PnL, insurance and ADL accounting remain separate from Lending debt/collateral accounting.
+- Current BSC Testnet Registry/Vault/Oracle/Engine evidence is reused but does not automatically prove latest-main bytecode identity.
+- The existing Aggregator Oracle circuit breaker is reused; an independent runtime reference source remains a bounded gap.
+- Application-layer Funding/Fee/Insurance/ADL implementations and tests are useful foundations but are not misrepresented as already integrated on-chain Perp accounting.
+- Any historical Futures PR must be revalidated against current `main` before selective reuse.
+- Production activation remains blocked until Oracle, economic-risk, current-release Testnet E2E, audit and Governance gates pass.
+
 ## Evidence state model
 
 Every capability is tracked independently through:
@@ -77,9 +99,9 @@ Before CEX due diligence, the whitepaper, README, contracts/configuration, testn
 
 ## Current position
 
-MASTER: **7/15 — Futures**  
-COMPLETED IN CURRENT RESTART PATH: **6/13 Lending Core repository E2E PASS; 6/14 Supply Earn reuse gate PASS; 6/15 LQC Staking Vault PASS; 6/16 Reward Accounting / Claim PASS; 6/17 Lock / Cooldown / Unstake PASS; 6/18 Staking Governance / Emergency Controls PASS; 6/19 Lending + Earn + Staking repository E2E PASS**  
-NEXT EXECUTABLE: **Master 7 Futures — latest-main regression + selective reuse/gap reconciliation**  
+MASTER: **7/2 — Futures**  
+COMPLETED IN CURRENT RESTART PATH: **Stage 6 repository E2E PASS; 7/1 Futures latest-main regression / reuse reconciliation PASS**  
+NEXT EXECUTABLE: **7/2 Independent Reference Oracle — selectively rebase/review the runtime V3 TWAP candidate from PR #296**  
 ON-CHAIN BOUNDARY: the verified 10/10 clean BSC Testnet Lending deployment is preserved, but Governance configuration, market enablement, new Testnet transactions, and production activation each remain separately gated and are not implied by repository PASS.  
 WORKING RULE: verified earlier Master stages are reused; only evidence gaps or real implementation gaps are developed.
 

@@ -43,7 +43,8 @@ Before starting the next new Staking implementation, complete this short reposit
 7. **DONE** — Master 6/17 Lock / Cooldown / Unstake merged after CI PASS;
 8. **DONE** — Master 6/18 Staking Governance / Emergency Controls merged after CI PASS;
 9. **DONE in this gate** — Master 6/19 Lending + Earn + Staking repository E2E;
-10. **NEXT EXECUTABLE** — Master 7 Futures latest-main regression + selective reuse/gap reconciliation.
+10. **DONE in this gate** — Master 7/1 Futures latest-main regression + selective reuse/gap reconciliation PASS;
+11. **NEXT EXECUTABLE** — Master 7/2 Independent Reference Oracle, using PR #296 only as a selective reuse candidate.
 
 ## Preserved Staking direction and timing
 
@@ -87,3 +88,17 @@ When resuming development, read this checkpoint together with current GitHub mai
 Stage 6 repository development is complete only at the repository/integration evidence level. This does not imply Staking Testnet deployment, approved reward budget, Lending market activation, independent audit, or production release.
 
 The next development lane is Master 7 Futures. Reuse the existing Futures foundation and testnet evidence; do not rebuild it from zero.
+
+
+## Master 7 Futures execution order
+
+- 7/1 Latest-main Regression / Reuse Reconciliation — **PASS in this gate**
+- 7/2 Independent Reference Oracle — **NEXT**
+- 7/3 Current Artifact / BSC Testnet Deployment Lineage Reconciliation
+- 7/4 Perp Accounting Gap Review — Funding / Fees / Partial Close / Insurance / ADL
+- 7/5 Selective On-chain Futures Gap Implementation + Regression
+- 7/6 Futures Risk / Governance / Emergency Integration
+- 7/7 Current-release BSC Testnet Futures E2E
+- 7/8 Futures Stage Exit / Intent Handoff
+
+Historical Futures branches remain evidence/reuse pools. Current `main` and fresh regression decide what is reused.
