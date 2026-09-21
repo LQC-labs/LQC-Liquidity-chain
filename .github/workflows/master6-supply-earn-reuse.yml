@@ -1,0 +1,39 @@
+name: Master 6 Supply Earn Reuse Gate
+
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/LQCInterestRateModel.sol'
+      - 'dex/contracts/lending/LQCLendingInterestIndex.sol'
+      - 'dex/contracts/lending/LQCLendingCore.sol'
+      - 'dex/test/lending-core.test.mjs'
+      - 'test/master6-supply-earn-reuse.test.js'
+      - 'docs/master6/6-14-supply-earn-reuse.md'
+      - '.github/workflows/master6-supply-earn-reuse.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  supply-earn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile current Lending sources
+        working-directory: dex
+        run: npm run compile
+      - name: Verify Supply Earn reuse boundary
+        run: node --test test/master6-supply-earn-reuse.test.js
+      - name: Run existing Lending interest E2E regression
+        working-directory: dex
+        run: npx mocha --timeout 30000 test/lending-core.test.mjs test/lending-interest.test.mjs
