@@ -1,0 +1,43 @@
+name: Master 5 Oracle E2E Completion
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/LQCOracleManager.sol'
+      - 'dex/contracts/futures/LQCAggregatorOracleAdapter.sol'
+      - 'dex/contracts/futures/LQCFuturesMarketRegistry.sol'
+      - 'dex/scripts/preflight-futures-twap-reference.mjs'
+      - 'dex/scripts/futures-twap-price-conversion.mjs'
+      - 'dex/test/*oracle*.test.mjs'
+      - 'dex/test/futures-twap-*.test.mjs'
+      - 'docs/master5/**'
+      - 'test/master5-*.test.js'
+      - '.github/workflows/master5-oracle-e2e.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  oracle-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master5-oracle-e2e.test.js
+      - run: node test/master5-feed-registry-audit.test.js
+      - run: node test/master5-primary-feed.test.js
+      - run: node test/master5-reference-feed.test.js
+      - run: node test/master5-twap-audit.test.js
+      - run: node test/master5-freshness.test.js
+      - run: node test/master5-deviation.test.js
+      - run: node test/master5-circuit-breaker.test.js
+      - name: Install DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile contracts
+        working-directory: dex
+        run: npm run compile
+      - name: Run Oracle runtime regression
+        working-directory: dex
+        run: npx mocha --timeout 30000 test/lending-oracle-manager.test.mjs test/futures-oracle-adapter.test.mjs test/futures-twap-reference-qualification.test.mjs test/futures-twap-price-conversion.test.mjs test/futures-oracle-guard.test.mjs
