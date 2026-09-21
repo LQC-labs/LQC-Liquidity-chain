@@ -1,0 +1,44 @@
+name: Master 6 Health Factor Audit
+on:
+  push:
+    paths:
+      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
+      - 'dex/contracts/lending/LQCOracleManager.sol'
+      - 'dex/test/lending-ltv-health-factor-gate.test.mjs'
+      - 'dex/test/lending-health-factor-boundaries.test.mjs'
+      - 'docs/LENDING_RISK_ENGINE_POLICY.md'
+      - 'docs/master6/6-9-health-factor-audit.md'
+      - 'test/master6-health-factor-audit.test.js'
+      - '.github/workflows/master6-health-factor-audit.yml'
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
+      - 'dex/contracts/lending/LQCOracleManager.sol'
+      - 'dex/test/lending-ltv-health-factor-gate.test.mjs'
+      - 'dex/test/lending-health-factor-boundaries.test.mjs'
+      - 'docs/LENDING_RISK_ENGINE_POLICY.md'
+      - 'docs/master6/6-9-health-factor-audit.md'
+      - 'test/master6-health-factor-audit.test.js'
+      - '.github/workflows/master6-health-factor-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  health-factor-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Master 6/9 static gate
+        run: node test/master6-health-factor-audit.test.js
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile and run complete DEX test suite
+        working-directory: dex
+        run: npm test
