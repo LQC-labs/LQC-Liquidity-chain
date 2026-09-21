@@ -30,3 +30,7 @@ test("Master 6/12 mobile deploy page hashes init code with packet UTF-8 semantic
   assert.match(js,/sha256Text\(d\.data\)/);
   assert.doesNotMatch(js,/hexData\.slice\(2\)/);
 });
+
+test("Master 6/12 mobile deploy page pins refreshed script cache version",()=>{
+  assert.match(html,/master6-clean-lending-deploy-testnet\.js\?v=2/);
+});
