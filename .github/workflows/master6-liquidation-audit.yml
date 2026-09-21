@@ -1,27 +1,5 @@
 name: Master 6 Liquidation Audit
 on:
-  push:
-    paths:
-      - 'dex/contracts/lending/LQCLiquidationEngine.sol'
-      - 'dex/contracts/lending/LQCLendingCore.sol'
-      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
-      - 'dex/test/lending-liquidation-gate.test.mjs'
-      - 'dex/test/lending-liquidation-boundaries.test.mjs'
-      - 'dex/test/lending-health-factor-boundaries.test.mjs'
-      - 'docs/master6/6-10-liquidation-audit.md'
-      - 'test/master6-liquidation-audit.test.js'
-      - '.github/workflows/master6-liquidation-audit.yml'
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/LQCLiquidationEngine.sol'
-      - 'dex/contracts/lending/LQCLendingCore.sol'
-      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
-      - 'dex/test/lending-liquidation-gate.test.mjs'
-      - 'dex/test/lending-liquidation-boundaries.test.mjs'
-      - 'dex/test/lending-health-factor-boundaries.test.mjs'
-      - 'docs/master6/6-10-liquidation-audit.md'
-      - 'test/master6-liquidation-audit.test.js'
-      - '.github/workflows/master6-liquidation-audit.yml'
   workflow_dispatch:
 permissions:
   contents: read
