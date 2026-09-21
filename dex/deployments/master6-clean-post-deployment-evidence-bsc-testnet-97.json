@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_MASTER6_CLEAN_POST_DEPLOYMENT_EVIDENCE",
+  "status": "AWAITING_MULTI_RPC_VERIFICATION",
+  "network": { "name": "BSC Testnet", "chainId": 97 },
+  "deployer": "0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB",
+  "startingNonce": "17",
+  "finalPendingNonce": "27",
+  "transactions": [
+    { "order": 1, "label": "CollateralPrimaryFeed", "nonce": "17", "hash": "0xc4f8d50ff95f1529c14345bc6a22bb55bea3aca5c9f23e128893bca6b59b1c2" },
+    { "order": 2, "label": "CollateralSecondaryFeed", "nonce": "18", "hash": "0x5ee24edff44886febc946fbd2d070f89ef5c120a83f69c962fd3d3410587e27a" },
+    { "order": 3, "label": "DebtPrimaryFeed", "nonce": "19", "hash": "0x5b56535edee5f6b7f9612c6d58b8dcb9527a1083f39a53161496338d256e8ebf" },
+    { "order": 4, "label": "DebtSecondaryFeed", "nonce": "20", "hash": "0xec5d0bfbb7a8d8820a18f0c9201993f5387fad367ba541e48e9486d09f616093" },
+    { "order": 5, "label": "LQCOracleManager", "nonce": "21", "hash": "0xfd01aa73fdb22444d7355fbe2f1d232985a881a8197f5d31b362be452bdb6ca9" },
+    { "order": 6, "label": "LQCInterestRateModel", "nonce": "22", "hash": "0x3fa221f5e2dd12ac0303ed5565f5e44c0c9f98c94a9489b3dce43a4fd6095ec9" },
+    { "order": 7, "label": "LQCLendingMarketRegistry", "nonce": "23", "hash": "0xca91b0b4f430c1924256e358a68b48fab7857ab7773064a3844ded88ac5234d7" },
+    { "order": 8, "label": "LQCLendingInterestIndex", "nonce": "24", "hash": "0x9992b12092e25c53d689a24343dc387ac4134e31c6d38011017a06e32f9627e3" },
+    { "order": 9, "label": "LQCLendingCore", "nonce": "25", "hash": "0xf37e4d016a01bb4f1a89c1fa3fb8b97f1dba524be37992aefcf4477ceb68d889" },
+    { "order": 10, "label": "LQCLiquidationEngine", "nonce": "26", "hash": "0x760061de0f5d7ca75d736ab057b88e043f2a8957723f8c1e094af99fe15c91fd" }
+  ],
+  "activationAuthorized": false,
+  "safety": "Read-only evidence input. No configuration, Safe proposal, market activation, transfer, signature or transaction is authorized."
+}
