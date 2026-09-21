@@ -127,8 +127,10 @@ contract LQCLendingMarketRegistry {
         if (totalSupplyAfter > config.supplyCap || totalBorrowAfter > config.borrowCap) revert CapExceeded();
     }
 
+    /// @notice Enforces the minimum nonzero debt amount without blocking risk-reducing repayment on a paused market.
+    /// @dev New borrowing still requires validateBorrowCap(), which independently requires an enabled market.
     function validateBorrowAmount(bytes32 id, uint256 accountDebtAfter) external view {
-        MarketConfig memory config = _enabledMarket(id);
+        MarketConfig memory config = _market(id);
         if (accountDebtAfter != 0 && accountDebtAfter < config.minBorrow) revert InvalidMarket();
     }
 
