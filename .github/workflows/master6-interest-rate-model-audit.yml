@@ -1,0 +1,22 @@
+name: Master 6 Lending Interest Rate Model Audit
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/LQCInterestRateModel.sol'
+      - 'dex/test/lending-interest.test.mjs'
+      - 'docs/master6/6-2-interest-rate-model-audit.md'
+      - 'test/master6-interest-rate-model-audit.test.js'
+      - '.github/workflows/master6-interest-rate-model-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  interest-rate-model-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master6-interest-rate-model-audit.test.js
