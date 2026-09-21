@@ -1,0 +1,33 @@
+name: Master 6 Clean Lending Execution Review
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/**'
+      - 'dex/scripts/prepare-master6-clean-lending-deployment.mjs'
+      - 'dex/scripts/preflight-master6-clean-lending.mjs'
+      - 'dex/scripts/build-master6-clean-execution-review.mjs'
+      - 'docs/master6/6-12-clean-lending-execution-review.md'
+      - 'test/master6-clean-lending-execution-review.test.js'
+      - '.github/workflows/master6-clean-lending-execution-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  execution-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile current Lending sources
+        working-directory: dex
+        run: npm run compile
+      - name: Verify execution review binding
+        run: node --test test/master6-clean-lending-execution-review.test.js
