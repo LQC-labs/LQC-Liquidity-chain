@@ -1,11 +1,5 @@
 name: Master 3 Replay State Commitment
 on:
-  pull_request:
-    paths:
-      - 'scripts/master3-replay-state-commitment.js'
-      - 'test/master3-replay-state-commitment.test.js'
-      - 'docs/master3/3-11-replay-state-commitment.md'
-      - '.github/workflows/master3-replay-state-commitment.yml'
   workflow_dispatch:
 permissions:
   contents: read
