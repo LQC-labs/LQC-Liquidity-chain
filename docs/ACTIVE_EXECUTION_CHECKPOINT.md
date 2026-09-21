@@ -34,11 +34,11 @@ Do not restart validated modules from zero. Historical stage labels remain evide
 
 Before starting the next new Staking implementation, complete this short repository-stabilization sequence:
 
-1. restore and PASS Master 6/14 Supply Earn reuse gate on current main;
-2. classify open PRs as ACTIVE / REUSE / FUTURE / SUPERSEDED-STALE;
-3. build/update the actual main-state matrix using code, tests, CI, Testnet, on-chain and security evidence;
-4. synchronize `docs/MASTER_DEVELOPMENT_PLAN.md` current position and `docs/IMPLEMENTATION_MATRIX.md` to that verified state;
-5. then start the genuine new implementation gap at Master 6/15.
+1. **DONE** — Master 6/14 Supply Earn reuse gate restored on current main and PASS;
+2. **DONE in this synchronization set** — open PRs classified as ACTIVE / REUSE / FUTURE / SUPERSEDED-STALE in `docs/OPEN_PR_CLASSIFICATION.md`;
+3. **DONE in this synchronization set** — actual main-state matrix updated from repository/test/CI/Testnet/on-chain evidence;
+4. **DONE in this synchronization set** — `docs/MASTER_DEVELOPMENT_PLAN.md` current position and `docs/IMPLEMENTATION_MATRIX.md` synchronized;
+5. **NEXT EXECUTABLE** — start the genuine new implementation gap at Master 6/15 LQC Staking Vault.
 
 ## Preserved Staking direction and timing
 
