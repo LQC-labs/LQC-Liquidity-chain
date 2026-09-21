@@ -22,7 +22,7 @@ test("Master 6/11 enforces reserve-first bad debt recovery and bounded last-reso
     "prevents reserve withdrawal while bad debt is outstanding",
     "blocks new borrowing while bad debt remains",
     "allows ordinary repayment to reduce recorded bad debt",
-    "requires pause and exhausted reserves before bounded supplier loss"
+    "applies reserves first and only then realizes bounded supplier loss on a paused market"
   ]){
     assert.match(runtime,new RegExp(phrase));
   }
