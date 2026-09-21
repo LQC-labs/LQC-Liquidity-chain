@@ -8,15 +8,35 @@ const RPCS=[
   "https://bsc-testnet-rpc.publicnode.com",
   "https://data-seed-prebsc-1-s1.bnbchain.org:8545"
 ];
-const DEPLOYER="0x7cf23bB16Ed0E1eaF58CD31c9F5a643be438C6aB";
-const SOURCE_COMMIT="0xc48e0bfa12df5c93a1320f520b7b356ca8471cfa";
 
-async function main(){
-  const providers=RPCS.map(url=>new ethers.JsonRpcProvider(url));
+function requiredAddress(value,label){
+  if(!value||!ethers.isAddress(value)||ethers.getAddress(value)===ethers.ZeroAddress) throw new Error(label+" must be a non-zero EVM address");
+  return ethers.getAddress(value);
+}
+function requiredCommit(value){
+  if(!value||!/^0x[0-9a-fA-F]{40}$/.test(value)) throw new Error("MASTER6_SOURCE_COMMIT must be a 20-byte hex commit pin");
+  return value.toLowerCase();
+}
+function requireApproval(value){
+  if(value!=="APPROVE_6_12_TESTNET_DEPLOYMENT") throw new Error("Explicit 6/12 execution approval phrase missing");
+}
+
+export async function generateMaster6LiveExecutionPacket({
+  deployer,
+  sourceCommit,
+  approvalPhrase,
+  providers=RPCS.map(url=>new ethers.JsonRpcProvider(url))
+}){
+  const DEPLOYER=requiredAddress(deployer,"MASTER6_DEPLOYER");
+  const SOURCE_COMMIT=requiredCommit(sourceCommit);
+  requireApproval(approvalPhrase);
+  if(!Array.isArray(providers)||providers.length<2) throw new Error("Use 2+ BSC Testnet RPC providers");
+
   const networks=await Promise.all(providers.map(p=>p.getNetwork()));
   if(networks.some(n=>Number(n.chainId)!==97)) throw new Error("BSC Testnet chain mismatch");
   const nonces=await Promise.all(providers.map(p=>p.getTransactionCount(DEPLOYER,"pending")));
   if(new Set(nonces).size!==1) throw new Error("RPC pending nonce disagreement");
+
   const cfg=JSON.parse(fs.readFileSync(new URL("../deployments/lending-stage0-finalized-config-bsc-testnet-97.json",import.meta.url),"utf8")).config;
   const stage0=JSON.parse(fs.readFileSync(new URL("../deployments/lending-stage0-completion-bsc-testnet-97.json",import.meta.url),"utf8"));
   const packet=await buildMaster6CleanDeploymentPacket({
@@ -43,9 +63,18 @@ async function main(){
     executionBoundary:"Wallet must independently confirm each exact reviewed CREATE. Governance configuration remains separate and market stays disabled.",
     generatedAt:new Date().toISOString()
   };
-  const out={...body,executionPacketDigest:canonicalDigest(body)};
+  return {...body,executionPacketDigest:canonicalDigest(body)};
+}
+
+async function main(){
+  const out=await generateMaster6LiveExecutionPacket({
+    deployer:process.env.MASTER6_DEPLOYER,
+    sourceCommit:process.env.MASTER6_SOURCE_COMMIT,
+    approvalPhrase:process.env.MASTER6_EXECUTION_APPROVAL
+  });
   console.log("MASTER6_LIVE_EXECUTION_PACKET_BEGIN");
   console.log(JSON.stringify(out,null,2));
   console.log("MASTER6_LIVE_EXECUTION_PACKET_END");
 }
-await main();
+
+if(import.meta.url===new URL("file://"+process.argv[1]).href) await main();
