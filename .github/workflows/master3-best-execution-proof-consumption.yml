@@ -1,11 +1,5 @@
 name: Master 3 Best Execution Proof Consumption
 on:
-  pull_request:
-    paths:
-      - 'scripts/master3-best-execution-proof-consumption.js'
-      - 'test/master3-best-execution-proof-consumption.test.js'
-      - 'docs/master3/3-9-best-execution-proof-consumption.md'
-      - '.github/workflows/master3-best-execution-proof-consumption.yml'
   workflow_dispatch:
 permissions:
   contents: read

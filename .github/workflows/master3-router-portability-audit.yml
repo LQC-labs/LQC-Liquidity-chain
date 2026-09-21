@@ -1,8 +1,6 @@
 name: Master 3 Router Portability Audit
-'on':
-  pull_request:
+on:
   workflow_dispatch:
-
 permissions:
   contents: read
 

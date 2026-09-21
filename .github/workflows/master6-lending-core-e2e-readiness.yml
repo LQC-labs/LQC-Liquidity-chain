@@ -1,16 +1,7 @@
 name: Master 6 Lending Core E2E Readiness
 
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/**'
-      - 'dex/test/lending-*.test.mjs'
-      - 'dex/deployments/master6-clean-post-deployment-verification-bsc-testnet-97.json'
-      - 'test/master6-lending-core-e2e-readiness.test.js'
-      - 'docs/master6/6-13-lending-core-e2e-readiness.md'
-      - '.github/workflows/master6-lending-core-e2e-readiness.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

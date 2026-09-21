@@ -121,3 +121,25 @@ Historical Futures branches remain evidence/reuse pools. Current `main` and fres
 7. integrated accounting/regression invariants.
 
 Do not rebuild the existing application-layer Funding/Fee/Insurance/ADL logic. Reuse it as specification and regression evidence while adding only the missing on-chain accounting/custody path.
+
+
+## Repository execution-speed cleanup
+
+Repository Cleanup 1 is approved and applied as an operational optimization only. It does not change protocol logic, contract state, tokenomics, Testnet state, or the Master development order.
+
+- 68 completed historical Master/Stage workflows are preserved but changed to **manual-only `workflow_dispatch`** so they no longer run automatically on unrelated PRs.
+- 6 completed one-off website/profile maintenance workflows are removed.
+- Core historical documents, Testnet evidence, deployment records, contract sources, and regression tests are preserved.
+- Automatic CI remains focused on the small set of current platform workflows:
+  - deploy-pages
+  - dex-ci
+  - dex-dependency-audit
+  - dex-tests
+  - futures-bsc-testnet-onchain-wiring
+  - futures-mobile-artifact
+  - futures-testnet-readonly-preflight
+  - futures-tests
+- New Master 7/5 substeps should use a focused workflow while under development. After a substep is completed and merged, its workflow should become manual-only instead of remaining an automatic trigger forever.
+- Full broad regression is reserved for milestone/integration gates such as 7/5-7, 7/7, Master 12, and Security/Audit gates unless a change materially touches shared Core behavior.
+
+This cleanup is intended to reduce GitHub Runner queue time and repeated full-suite execution while retaining reproducible historical evidence.

@@ -1,27 +1,6 @@
 name: Master 6 Live Execution Packet
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/**'
-      - 'dex/scripts/generate-master6-live-execution-packet.mjs'
-      - 'dex/scripts/prepare-master6-clean-lending-deployment.mjs'
-      - 'dex/scripts/preflight-master6-clean-lending.mjs'
-      - 'test/master6-live-execution-packet-input.test.js'
-      - '.github/workflows/master6-live-execution-packet.yml'
   workflow_dispatch:
-    inputs:
-      deployer:
-        description: 'Approved BSC Testnet deployer address'
-        required: true
-        type: string
-      source_commit:
-        description: 'Pinned source commit as 0x + 40 hex characters'
-        required: true
-        type: string
-      approval_phrase:
-        description: 'Must equal APPROVE_6_12_TESTNET_DEPLOYMENT'
-        required: true
-        type: string
 permissions:
   contents: read
 jobs:

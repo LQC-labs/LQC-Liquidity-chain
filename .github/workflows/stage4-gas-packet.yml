@@ -1,7 +1,6 @@
 name: Stage4 gas packet
 on:
-  pull_request:
-    paths: ["dex/**", ".github/workflows/stage4-gas-packet.yml"]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

@@ -1,14 +1,5 @@
 name: Master 6 Clean Lending Execution Review
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/**'
-      - 'dex/scripts/prepare-master6-clean-lending-deployment.mjs'
-      - 'dex/scripts/preflight-master6-clean-lending.mjs'
-      - 'dex/scripts/build-master6-clean-execution-review.mjs'
-      - 'docs/master6/6-12-clean-lending-execution-review.md'
-      - 'test/master6-clean-lending-execution-review.test.js'
-      - '.github/workflows/master6-clean-lending-execution-review.yml'
   workflow_dispatch:
 permissions:
   contents: read

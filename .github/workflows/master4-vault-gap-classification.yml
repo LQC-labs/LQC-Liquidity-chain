@@ -1,10 +1,5 @@
 name: Master 4 Vault Gap Classification
 on:
-  pull_request:
-    paths:
-      - 'docs/master4/4-2-vault-gap-*'
-      - 'test/master4-vault-gap-classification.test.js'
-      - '.github/workflows/master4-vault-gap-classification.yml'
   workflow_dispatch:
 permissions:
   contents: read

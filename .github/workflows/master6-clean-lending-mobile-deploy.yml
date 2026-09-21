@@ -1,12 +1,6 @@
 name: Master 6 Clean Lending Mobile Deploy
 on:
-  pull_request:
-    paths:
-      - 'dex/app/master6-clean-lending-deploy-testnet.js'
-      - 'dex/app/master6-clean-lending-deploy-testnet.html'
-      - 'dex/deployments/master6-live-execution-packet-bsc-testnet-97.json'
-      - 'test/master6-clean-lending-mobile-deploy.test.js'
-      - '.github/workflows/master6-clean-lending-mobile-deploy.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

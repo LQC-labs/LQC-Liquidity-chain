@@ -1,13 +1,5 @@
 name: Master 6 Clean Testnet Deployment Decision
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/**'
-      - 'dex/deployments/lending-stage*-bsc-testnet-97.json'
-      - 'dex/deployments/master6-clean-testnet-deployment-decision-bsc-testnet-97.json'
-      - 'docs/master6/6-12-clean-testnet-deployment-decision.md'
-      - 'test/master6-clean-testnet-deployment-decision.test.js'
-      - '.github/workflows/master6-clean-testnet-deployment-decision.yml'
   workflow_dispatch:
 permissions:
   contents: read

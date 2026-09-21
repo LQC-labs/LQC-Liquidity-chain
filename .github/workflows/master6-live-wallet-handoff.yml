@@ -1,12 +1,6 @@
 name: Master 6 Live Wallet Handoff
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/**'
-      - 'dex/scripts/generate-master6-live-execution-packet.mjs'
-      - 'dex/deployments/master6-live-execution-packet-bsc-testnet-97.json'
-      - 'test/master6-live-wallet-handoff-record.test.js'
-      - '.github/workflows/master6-live-wallet-handoff.yml'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

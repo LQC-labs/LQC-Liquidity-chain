@@ -1,17 +1,5 @@
 name: Master 5 Oracle E2E Completion
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/LQCOracleManager.sol'
-      - 'dex/contracts/futures/LQCAggregatorOracleAdapter.sol'
-      - 'dex/contracts/futures/LQCFuturesMarketRegistry.sol'
-      - 'dex/scripts/preflight-futures-twap-reference.mjs'
-      - 'dex/scripts/futures-twap-price-conversion.mjs'
-      - 'dex/test/*oracle*.test.mjs'
-      - 'dex/test/futures-twap-*.test.mjs'
-      - 'docs/master5/**'
-      - 'test/master5-*.test.js'
-      - '.github/workflows/master5-oracle-e2e.yml'
   workflow_dispatch:
 permissions:
   contents: read

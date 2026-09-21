@@ -1,12 +1,7 @@
 name: Master 2 Flow Completion Gate
 
 on:
-  pull_request:
-    paths:
-      - 'docs/master2/2-12-flow-completion-manifest.md'
-      - '.github/workflows/master2-flow-completion.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

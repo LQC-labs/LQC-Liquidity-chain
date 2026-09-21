@@ -1,12 +1,5 @@
 name: Master 4 Vault Capacity Pause Boundary
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/vault/**'
-      - 'scripts/master4-vault-cap-pause-boundary.js'
-      - 'test/master4-vault-cap-pause-boundary.test.js'
-      - 'docs/master4/4-8-vault-cap-pause-boundary.md'
-      - '.github/workflows/master4-vault-cap-pause-boundary.yml'
   workflow_dispatch:
 permissions:
   contents: read

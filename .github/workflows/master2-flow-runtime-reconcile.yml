@@ -1,13 +1,5 @@
 name: Master 2 LQC Flow Runtime Reconciliation
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/LQCFlowFactory.sol'
-      - 'dex/contracts/LQCFlowPair.sol'
-      - 'dex/contracts/LQCFlowRouter.sol'
-      - 'dex/contracts/router-v2/adapters/LQCFlowAdapter.sol'
-      - 'dex/scripts/reconcile-lqc-flow-runtime-testnet.mjs'
-      - '.github/workflows/master2-flow-runtime-reconcile.yml'
   workflow_dispatch:
 jobs:
   reconcile:

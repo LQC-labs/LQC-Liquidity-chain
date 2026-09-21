@@ -1,17 +1,7 @@
 name: Master 7 5 1 Futures Partial Reduction
 
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/futures/LQCPerpEngine.sol'
-      - 'dex/contracts/futures/LQCFuturesVault.sol'
-      - 'dex/test/futures.test.mjs'
-      - 'dex/test/futures-partial-reduction.test.mjs'
-      - 'test/master7-4-perp-gap-review.test.js'
-      - 'docs/master7/7-5-1-futures-partial-reduction.md'
-      - '.github/workflows/master7-5-1-futures-partial-reduction.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

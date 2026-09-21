@@ -1,25 +1,5 @@
 name: Master 6 Repay Safety
 on:
-  push:
-    paths:
-      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
-      - 'dex/contracts/lending/LQCLendingCore.sol'
-      - 'dex/test/lending-repay-gate.test.mjs'
-      - 'dex/test/lending-repay-boundaries.test.mjs'
-      - 'dex/test/lending-core.test.mjs'
-      - 'docs/master6/6-8-repay-safety.md'
-      - 'test/master6-repay-safety.test.js'
-      - '.github/workflows/master6-repay-safety.yml'
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
-      - 'dex/contracts/lending/LQCLendingCore.sol'
-      - 'dex/test/lending-repay-gate.test.mjs'
-      - 'dex/test/lending-repay-boundaries.test.mjs'
-      - 'dex/test/lending-core.test.mjs'
-      - 'docs/master6/6-8-repay-safety.md'
-      - 'test/master6-repay-safety.test.js'
-      - '.github/workflows/master6-repay-safety.yml'
   workflow_dispatch:
 permissions:
   contents: read

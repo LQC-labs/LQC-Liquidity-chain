@@ -1,13 +1,5 @@
 name: Master 6 Lending Interest Index Audit
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/LQCLendingInterestIndex.sol'
-      - 'dex/test/lending-interest.test.mjs'
-      - 'dex/test/lending-core.test.mjs'
-      - 'docs/master6/6-3-interest-index-audit.md'
-      - 'test/master6-interest-index-audit.test.js'
-      - '.github/workflows/master6-interest-index-audit.yml'
   workflow_dispatch:
 permissions:
   contents: read

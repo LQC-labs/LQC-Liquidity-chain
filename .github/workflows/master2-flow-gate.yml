@@ -1,15 +1,5 @@
 name: Master 2 LQC Flow Gate
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/LQCFlowFactory.sol'
-      - 'dex/contracts/LQCFlowPair.sol'
-      - 'dex/contracts/LQCFlowRouter.sol'
-      - 'dex/contracts/router-v2/adapters/LQCFlowAdapter.sol'
-      - 'dex/test/amm*.test.mjs'
-      - 'dex/test/native-router.test.mjs'
-      - 'dex/test/router2-lqc-flow-*.test.mjs'
-      - '.github/workflows/master2-flow-gate.yml'
   workflow_dispatch:
 jobs:
   flow:

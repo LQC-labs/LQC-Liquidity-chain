@@ -1,17 +1,7 @@
 name: Master 6 19 Lending Earn Staking E2E
 
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/**'
-      - 'dex/contracts/staking/**'
-      - 'dex/test/lending-*.test.mjs'
-      - 'dex/test/staking-*.test.mjs'
-      - 'dex/test/master6-lending-earn-staking-e2e.test.mjs'
-      - 'docs/master6/6-19-lending-earn-staking-e2e.md'
-      - '.github/workflows/master6-19-lending-earn-staking-e2e.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 

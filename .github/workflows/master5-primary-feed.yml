@@ -1,12 +1,5 @@
 name: Master 5 Primary Feed
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/LQCOracleManager.sol'
-      - 'dex/contracts/router-v2/interfaces/ILQCPriceFeed.sol'
-      - 'docs/master5/5-2-primary-feed.md'
-      - 'test/master5-primary-feed.test.js'
-      - '.github/workflows/master5-primary-feed.yml'
   workflow_dispatch:
 permissions:
   contents: read

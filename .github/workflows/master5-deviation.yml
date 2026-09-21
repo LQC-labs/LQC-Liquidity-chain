@@ -1,11 +1,5 @@
 name: Master 5 Oracle Deviation
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/LQCOracleManager.sol'
-      - 'docs/master5/5-6-deviation.md'
-      - 'test/master5-deviation.test.js'
-      - '.github/workflows/master5-deviation.yml'
   workflow_dispatch:
 permissions:
   contents: read

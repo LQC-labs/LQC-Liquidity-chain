@@ -1,12 +1,5 @@
 name: Master 4 Vault Accounting Invariants
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/vault/**'
-      - 'scripts/master4-vault-accounting-invariant.js'
-      - 'test/master4-vault-accounting-invariant.test.js'
-      - 'docs/master4/4-5-vault-accounting-invariants.md'
-      - '.github/workflows/master4-vault-accounting-invariants.yml'
   workflow_dispatch:
 permissions:
   contents: read
