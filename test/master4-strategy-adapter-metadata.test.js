@@ -1,0 +1,11 @@
+'use strict';
+const assert=require('assert'),fs=require('fs');
+const i=fs.readFileSync('dex/contracts/vault/interfaces/ILQCStrategyAdapter.sol','utf8');
+const a=fs.readFileSync('dex/contracts/vault/adapters/LQCIdleStrategyAdapter.sol','utf8');
+assert.ok(i.includes('function adapterId() external pure returns (bytes32)'));
+assert.ok(i.includes('function adapterVersion() external pure returns (uint32)'));
+assert.ok(a.includes('ADAPTER_ID = keccak256("LQC_IDLE_STRATEGY")'));
+assert.ok(a.includes('ADAPTER_VERSION = 1'));
+assert.ok(a.includes('function adapterId() external pure'));
+assert.ok(a.includes('function adapterVersion() external pure'));
+console.log('Master 4/4 strategy adapter metadata: PASS');
