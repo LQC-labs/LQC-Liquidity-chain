@@ -45,7 +45,8 @@ Before starting the next new Staking implementation, complete this short reposit
 9. **DONE in this gate** — Master 6/19 Lending + Earn + Staking repository E2E;
 10. **DONE in this gate** — Master 7/1 Futures latest-main regression + selective reuse/gap reconciliation PASS;
 11. **DONE in this gate** — Master 7/2 Independent Runtime Reference Oracle selectively rebuilt from PR #296 design and validated on current main;
-12. **NEXT EXECUTABLE** — Master 7/3 Current Artifact / BSC Testnet Deployment Lineage Reconciliation.
+12. **DONE in this gate** — Master 7/3 read-only BSC Testnet deployment lineage PASS; all recorded runtimes match current artifacts, while the deployed Oracle remains explicitly test-only;
+13. **NEXT EXECUTABLE** — Master 7/4 Perp Accounting Gap Review — Funding / Fees / Partial Close / Insurance / ADL.
 
 ## Preserved Staking direction and timing
 
@@ -95,8 +96,8 @@ The next development lane is Master 7 Futures. Reuse the existing Futures founda
 
 - 7/1 Latest-main Regression / Reuse Reconciliation — **PASS in this gate**
 - 7/2 Independent Reference Oracle — **PASS in this gate**
-- 7/3 Current Artifact / BSC Testnet Deployment Lineage Reconciliation — **NEXT**
-- 7/4 Perp Accounting Gap Review — Funding / Fees / Partial Close / Insurance / ADL
+- 7/3 Current Artifact / BSC Testnet Deployment Lineage Reconciliation — **PASS in this gate**
+- 7/4 Perp Accounting Gap Review — Funding / Fees / Partial Close / Insurance / ADL — **NEXT**
 - 7/5 Selective On-chain Futures Gap Implementation + Regression
 - 7/6 Futures Risk / Governance / Emergency Integration
 - 7/7 Current-release BSC Testnet Futures E2E

@@ -1,0 +1,46 @@
+name: Master 7 3 Futures Deployment Lineage
+
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/futures/**'
+      - 'dex/scripts/compile.mjs'
+      - 'dex/scripts/verify-futures-deployment-lineage.mjs'
+      - 'docs/futures/BSC_TESTNET_TX_EVIDENCE.md'
+      - 'dex/deployments/bsc-testnet/futures-2026-09-19.md'
+      - 'docs/master7/7-3-futures-deployment-lineage.md'
+      - '.github/workflows/master7-3-futures-deployment-lineage.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lineage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BSC_TESTNET_RPC_URL: https://data-seed-prebsc-1-s1.bnbchain.org:8545
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci --ignore-scripts
+      - name: Compile current protocol sources with immutable references
+        working-directory: dex
+        run: npm run compile
+      - name: Reconcile current artifacts with recorded BSC Testnet deployment
+        working-directory: dex
+        run: node scripts/verify-futures-deployment-lineage.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: master7-futures-lineage-report
+          path: dex/futures-lineage-report.json
+          if-no-files-found: error
+          retention-days: 30
