@@ -1,0 +1,11 @@
+'use strict';
+const assert=require('assert');
+const {evaluate}=require('../scripts/master4-vault-accounting-invariant');
+let r=evaluate({accountedAssets:'1000',strategyDebt:'400',actualIdle:'700'});
+assert.strictEqual(r.pass,true); assert.strictEqual(r.accountedIdleAssets,'600'); assert.strictEqual(r.availableLiquidity,'600');
+r=evaluate({accountedAssets:'1000',strategyDebt:'400',actualIdle:'500'});
+assert.strictEqual(r.availableLiquidity,'500');
+assert.strictEqual(evaluate({accountedAssets:'100',strategyDebt:'101',actualIdle:'0'}).pass,false);
+assert.strictEqual(evaluate({accountedAssets:'100',strategyDebt:'0',actualIdle:'100',lendingStateUsed:true}).pass,false);
+assert.strictEqual(evaluate({accountedAssets:'01',strategyDebt:'0',actualIdle:'1'}).pass,false);
+console.log('Master 4/5 Vault accounting invariants: PASS');
