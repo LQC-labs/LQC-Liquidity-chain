@@ -8,6 +8,8 @@ on:
       - "scripts/master3-adapter-registry-boundary-audit.js"
       - "test/master3-adapter-registry-boundary-audit.test.js"
       - "docs/master3/3-5-adapter-registry-boundary.md"
+      - "docs/master3/3-6-best-execution-economic-integrity.md"
+      - "test/master3-best-execution-economic-integrity.test.js"
       - "test/master3-router-interface-isolation-audit.test.js"
       - "docs/master3/3-4-router-interface-isolation.md"
       - ".github/workflows/dex-tests.yml"
@@ -64,8 +66,15 @@ jobs:
         working-directory: .
         run: node scripts/master3-adapter-registry-boundary-audit.js
 
+      - name: Verify Master 3/6 economic integrity structure
+        working-directory: .
+        run: node test/master3-best-execution-economic-integrity.test.js
+
       - name: Compile contracts
         run: npm run compile
+
+      - name: Run focused Best Execution economic regressions
+        run: npx mocha test/router2-gas-aware-boundaries.test.mjs test/router2-split-optimizer-boundaries.test.mjs test/router2-best-execution-proof-boundaries.test.mjs
 
       - name: Report Router 2.0 release readiness
         run: node scripts/report-router2-release-readiness.mjs
