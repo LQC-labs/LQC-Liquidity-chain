@@ -1,0 +1,26 @@
+name: Master 4 Vault E2E Completion
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/vault/**'
+      - 'dex/test/vault-*.test.mjs'
+      - 'dex/test/liquidity-vault.test.mjs'
+      - 'test/master4-*.test.js'
+      - 'docs/master4/**'
+      - '.github/workflows/master4-vault-e2e-completion.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  vault-e2e-completion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master4-vault-e2e-completion.test.js
+      - run: node test/master4-vault-accounting-invariant.test.js
+      - run: node test/master4-vault-loss-boundary.test.js
+      - run: node test/master4-vault-cap-pause-boundary.test.js
