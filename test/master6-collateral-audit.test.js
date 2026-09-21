@@ -19,13 +19,13 @@ test("Master 6/5 reuses the existing collateral custody and withdrawal safety pa
 
   assert.match(src,/function depositCollateral\(bytes32 id,uint256 amount\) external nonReentrant/);
   assert.match(src,/function withdrawCollateral\(bytes32 id,uint256 amount,address receiver\) external nonReentrant/);
-  assert.match(src,/registry\.validateCaps\(id,totalAfter,/);
+  assert.match(src,/registry\.validateMarketEnabled\(id\)/);
   assert.match(src,/_pullExact\(config\.collateralAsset,msg\.sender,amount\)/);
   assert.match(src,/registry\.accountRisk\(id,collateralAfter,debt\)\.borrowAllowed/);
   assert.match(src,/if\(receiver==address\(0\)\)revert ZeroAddress\(\)/);
 
   assert.match(collateral,/deposits exact collateral into user and market accounting/);
-  assert.match(collateral,/rejects zero collateral and cap overflow without accounting drift/);
+  assert.match(collateral,/rejects zero collateral and blocks new collateral when the market is paused/);
   assert.match(collateral,/withdraws exact collateral to a chosen receiver when debt-free/);
   assert.match(collateral,/rejects zero amount, zero receiver, and over-withdraw atomically/);
 
