@@ -1,0 +1,20 @@
+{
+  "stage":"4/2","activationAuthorized":false,
+  "reuse":[
+    "single-asset share accounting","accounted-assets donation isolation","deposit cap/pause",
+    "strategy debt/cap/loss controls","allocation/recall/emergency recall","insolvency/full-backing checks",
+    "two-step ownership","pause/strategy admin separation","non-reentrancy"
+  ],
+  "existingTests":[
+    "vault-accounting-boundaries","vault-deposit-boundaries","vault-withdraw-boundaries",
+    "vault-cap-risk-boundaries","vault-access-control-boundaries","vault-invariant-security",
+    "vault-router-risk-integration"
+  ],
+  "gaps":[
+    {"id":"G1","name":"standardized read-only vault interface","priority":"P0","action":"IMPLEMENT_INTERFACE"},
+    {"id":"G2","name":"explicit liquidity availability view for Router consumers","priority":"P0","action":"IMPLEMENT_VIEW"},
+    {"id":"G3","name":"strategy adapter identity/version metadata","priority":"P1","action":"IMPLEMENT_METADATA"},
+    {"id":"G4","name":"multi-strategy allocation","priority":"DEFER","action":"DO_NOT_IMPLEMENT_YET"},
+    {"id":"G5","name":"automatic rebalancing","priority":"DEFER","action":"DO_NOT_IMPLEMENT_YET"}
+  ]
+}
