@@ -4,22 +4,17 @@ on:
     paths:
       - 'dex/contracts/lending/**'
       - 'dex/scripts/generate-master6-live-execution-packet.mjs'
+      - 'dex/deployments/master6-live-execution-packet-bsc-testnet-97.json'
+      - 'test/master6-live-wallet-handoff-record.test.js'
       - '.github/workflows/master6-live-wallet-handoff.yml'
 permissions:
-  contents: write
+  contents: read
 jobs:
-  materialize:
+  validate-record:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      MASTER6_DEPLOYER: '0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB'
-      MASTER6_SOURCE_COMMIT: '0x87745b4bfb3ad49e73c14a8f62282986e72148bc'
-      MASTER6_EXECUTION_APPROVAL: 'APPROVE_6_12_TESTNET_DEPLOYMENT'
-      MASTER6_OUTPUT_FILE: 'master6-live-execution-packet.json'
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -31,25 +26,5 @@ jobs:
       - name: Compile current Lending sources
         working-directory: dex
         run: npm run compile
-      - name: Materialize current live execution packet
-        working-directory: dex
-        run: node scripts/generate-master6-live-execution-packet.mjs
-      - name: Upload live execution packet
-        uses: actions/upload-artifact@v4
-        with:
-          name: master6-live-execution-packet
-          path: dex/master6-live-execution-packet.json
-          if-no-files-found: error
-          retention-days: 7
-      - name: Record exact wallet handoff packet on branch
-        run: |
-          cp dex/master6-live-execution-packet.json dex/deployments/master6-live-execution-packet-bsc-testnet-97.json
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dex/deployments/master6-live-execution-packet-bsc-testnet-97.json
-          if git diff --cached --quiet; then
-            echo "Packet already recorded"
-          else
-            git commit -m "6/12 Lending: record live execution packet"
-            git push origin HEAD:${{ github.head_ref }}
-          fi
+      - name: Verify recorded live wallet handoff packet
+        run: node --test test/master6-live-wallet-handoff-record.test.js
