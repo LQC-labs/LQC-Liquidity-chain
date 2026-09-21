@@ -112,6 +112,7 @@ contract LQCStakingVault is ILQCStakingRead {
     /// @dev Lock can only move forward. Product presets such as 90/180 days live in UI/config,
     ///      not as hard-coded economic promises in the Core vault.
     function extendLock(uint64 newLockUntil) external {
+        if (stakedBalance[msg.sender] == 0) revert InsufficientStake();
         uint64 previous = lockUntil[msg.sender];
         if (newLockUntil <= block.timestamp || newLockUntil <= previous) revert InvalidLock();
         lockUntil[msg.sender] = newLockUntil;
