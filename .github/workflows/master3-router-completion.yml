@@ -1,0 +1,34 @@
+name: Master 3 Router Completion Gate
+on:
+  pull_request:
+    paths:
+      - 'docs/master3/3-12-router-completion-gate.md'
+      - '.github/workflows/master3-router-completion.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify Master 3 checkpoints in main lineage
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main --quiet
+          history="$(git log --format='%s%n%b' origin/main)"
+          for check in "3/1 Router" "3/2 Router" "3/3 Router" "3/4 Router" "3/5 Router" "3/6 Router" "3/7 Router" "3/8 Router" "3/9 Router" "3/10 Router" "3/11 Router"; do
+            grep -Fq "$check" <<<"$history" || { echo "Missing checkpoint: $check"; exit 1; }
+          done
+      - name: Verify safety boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          f=docs/master3/3-12-router-completion-gate.md
+          grep -Fq '`activationAuthorized: false`' "$f"
+          grep -Fq 'DEX/Flow state remains isolated from Futures, Lending and Intent execution state' "$f"
+          grep -Fq 'proof/replay verification remains fail-closed' "$f"
