@@ -1,0 +1,22 @@
+name: Master 4 Strategy Adapter Metadata
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/vault/interfaces/ILQCStrategyAdapter.sol'
+      - 'dex/contracts/vault/adapters/**'
+      - 'test/master4-strategy-adapter-metadata.test.js'
+      - 'docs/master4/4-4-strategy-adapter-metadata.md'
+      - '.github/workflows/master4-strategy-adapter-metadata.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  metadata:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master4-strategy-adapter-metadata.test.js

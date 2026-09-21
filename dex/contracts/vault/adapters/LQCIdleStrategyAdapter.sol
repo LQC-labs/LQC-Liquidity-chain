@@ -14,6 +14,9 @@ contract LQCIdleStrategyAdapter is ILQCStrategyAdapter {
     address public immutable vault;
     uint256 public totalManagedAssets;
 
+    bytes32 public constant ADAPTER_ID = keccak256("LQC_IDLE_STRATEGY");
+    uint32 public constant ADAPTER_VERSION = 1;
+
     event AssetsDeployed(uint256 assets);
     event AssetsWithdrawn(address indexed receiver, uint256 assets);
 
@@ -33,6 +36,10 @@ contract LQCIdleStrategyAdapter is ILQCStrategyAdapter {
         asset = asset_;
         vault = vault_;
     }
+
+    function adapterId() external pure returns (bytes32) { return ADAPTER_ID; }
+
+    function adapterVersion() external pure returns (uint32) { return ADAPTER_VERSION; }
 
     function deploy(uint256 assets) external onlyVault returns (uint256 deployedAssets) {
         if (assets == 0) revert ZeroAmount();
