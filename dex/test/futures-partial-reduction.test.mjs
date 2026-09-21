@@ -106,7 +106,7 @@ describe("Master 7/5-1 Futures canonical partial position reduction",function(){
     await assert.rejects(engine.connect(trader).reducePosition(1,usd("5001")));
 
     const after=await engine.positions(traderAddress,1);
-    assert.deepEqual(after,before);
+    assert.deepEqual(Array.from(after),Array.from(before));
   });
 
   it("rejects a deficit-producing voluntary partial reduction until Insurance/bad-debt is integrated",async function(){
@@ -119,7 +119,7 @@ describe("Master 7/5-1 Futures canonical partial position reduction",function(){
 
     await assert.rejects(engine.connect(trader).reducePosition(1,usd("2000")));
 
-    assert.deepEqual(await engine.positions(traderAddress,1),before);
+    assert.deepEqual(Array.from(await engine.positions(traderAddress,1)),Array.from(before));
     assert.equal(await vault.lockedBalance(traderAddress,await collateral.getAddress()),lockedBefore);
     assert.equal(await vault.totalAccounted(await collateral.getAddress()),accountedBefore);
   });
