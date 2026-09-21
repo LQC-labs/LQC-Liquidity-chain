@@ -38,7 +38,8 @@ Before starting the next new Staking implementation, complete this short reposit
 2. **DONE in this synchronization set** — open PRs classified as ACTIVE / REUSE / FUTURE / SUPERSEDED-STALE in `docs/OPEN_PR_CLASSIFICATION.md`;
 3. **DONE in this synchronization set** — actual main-state matrix updated from repository/test/CI/Testnet/on-chain evidence;
 4. **DONE in this synchronization set** — `docs/MASTER_DEVELOPMENT_PLAN.md` current position and `docs/IMPLEMENTATION_MATRIX.md` synchronized;
-5. **NEXT EXECUTABLE** — start the genuine new implementation gap at Master 6/15 LQC Staking Vault.
+5. **DONE** — Master 6/15 LQC Staking Vault implemented and merged after CI PASS;
+6. **CURRENT EXECUTABLE** — Master 6/16 Reward Accounting / Claim.
 
 ## Preserved Staking direction and timing
 
@@ -51,8 +52,8 @@ The canonical Staking economic boundary remains preserved in:
 Development timing:
 
 - 6/14 Supply Earn verification must PASS first;
-- 6/15 LQC Staking Vault;
-- 6/16 Reward Accounting / Claim;
+- 6/15 LQC Staking Vault — **PASS**;
+- 6/16 Reward Accounting / Claim — **CURRENT**;
 - 6/17 Lock / Cooldown / Unstake;
 - 6/18 Staking Governance / Emergency Controls;
 - 6/19 Lending + Earn + Staking E2E.
