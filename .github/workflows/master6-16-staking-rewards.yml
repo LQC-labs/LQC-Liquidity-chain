@@ -10,6 +10,7 @@ on:
       - 'dex/contracts/mocks/MockFeeOnTransferToken.sol'
       - 'dex/test/staking-vault.test.mjs'
       - 'dex/test/staking-rewards.test.mjs'
+      - 'dex/test/staking-reward-binding.test.mjs'
       - 'docs/master6/6-16-staking-rewards.md'
       - '.github/workflows/master6-16-staking-rewards.yml'
   workflow_dispatch:
@@ -31,12 +32,15 @@ jobs:
       - name: Install locked DEX dependencies
         working-directory: dex
         run: npm ci
+      - name: Check new regression syntax
+        working-directory: dex
+        run: node --check test/staking-reward-binding.test.mjs
       - name: Compile current protocol sources
         working-directory: dex
         run: npm run compile
       - name: Run 6/15 and 6/16 Staking regressions
         working-directory: dex
-        run: npx mocha --timeout 30000 test/staking-vault.test.mjs test/staking-rewards.test.mjs
+        run: npx --no-install mocha --timeout 30000 test/staking-vault.test.mjs test/staking-rewards.test.mjs test/staking-reward-binding.test.mjs
       - name: Re-run Lending isolation regression
         working-directory: dex
-        run: npx mocha --timeout 30000 test/lending-core.test.mjs test/lending-security-invariant-gate.test.mjs
+        run: npx --no-install mocha --timeout 30000 test/lending-core.test.mjs test/lending-security-invariant-gate.test.mjs

@@ -28,18 +28,18 @@ Execution method:
 
 **inspect current main -> reuse verified work -> revalidate where needed -> develop only real gaps -> regression/CI -> Testnet/on-chain evidence only when separately authorized**
 
-Do not restart validated modules from zero. Historical stage labels remain evidence only and do not override the current Master sequence.
+Do not restart validated modules from zero. Historical stage labels remain evidence only. The working sequence may change only with documented dependency/impact reasoning, not an invented competing roadmap.
 
-## Current stabilization sequence
+## Current position
 
-Before starting the next new Staking implementation, complete this short repository-stabilization sequence:
-
-1. **DONE** — Master 6/14 Supply Earn reuse gate restored on current main and PASS;
-2. **DONE in this synchronization set** — open PRs classified as ACTIVE / REUSE / FUTURE / SUPERSEDED-STALE in `docs/OPEN_PR_CLASSIFICATION.md`;
-3. **DONE in this synchronization set** — actual main-state matrix updated from repository/test/CI/Testnet/on-chain evidence;
-4. **DONE in this synchronization set** — `docs/MASTER_DEVELOPMENT_PLAN.md` current position and `docs/IMPLEMENTATION_MATRIX.md` synchronized;
-5. **DONE** — Master 6/15 LQC Staking Vault implemented and merged after CI PASS;
-6. **CURRENT EXECUTABLE** — Master 6/16 Reward Accounting / Claim.
+- Stabilization/PR classification: completed in PR #313; do not repeat from zero.
+- 6/14 Supply Earn accounting reuse: PR #310 merged.
+- 6/15 principal-only Staking Vault: PR #314 merged, `49e3886fe7bde642306a1173153d0396c30c0f7e`.
+- 6/16 reward accounting foundation: PR #315 merged, `9e84866321356a77cddb6d6e8add5c38fb592f46`.
+- CURRENT: 6/16 reward-binding hardening on `codex/master6-16-reward-binding-hardening`; verify exact-head CI and review before completion credit.
+- PR #316: closed, unmerged overlapping candidate; preserve as review material only. Do not start a second principal/reward system from it.
+- NEXT AFTER CURRENT REVIEW: 6/17 Lock / Cooldown / Unstake. Remaining reward economic/release gaps stay tracked in `docs/master6/6-16-staking-rewards.md`.
+- BLOCKED: Staking deployment, user principal deposits, real reward funding, new wallet signatures or broadcasts, and market activation. The exit and later release gates are not complete.
 
 ## Preserved Staking direction and timing
 
@@ -49,21 +49,14 @@ The canonical Staking economic boundary remains preserved in:
 - `docs/LQC_WHITEPAPER_CANONICAL.md`
 - `docs/MASTER_DEVELOPMENT_PLAN.md`
 
-Development timing:
+Order: **6/15 Vault -> 6/16 Reward Accounting / Claim -> 6/17 Lock / Cooldown / Unstake -> 6/18 Governance / Emergency Controls -> 6/19 Lending + Earn + Staking E2E**.
 
-- 6/14 Supply Earn verification must PASS first;
-- 6/15 LQC Staking Vault — **PASS**;
-- 6/16 Reward Accounting / Claim — **CURRENT**;
-- 6/17 Lock / Cooldown / Unstake;
-- 6/18 Staking Governance / Emergency Controls;
-- 6/19 Lending + Earn + Staking E2E.
+One canonical LQC Staking Vault remains independent from Lending. Staking principal is not silently rehypothecated. Future Launchpad uses a reviewed read-only/versioned eligibility interface and cannot custody principal or alter reward accounting. Launchpad implementation is not part of the current step.
 
-The LQC Staking Vault is one canonical, independently accounted vault. It is not embedded in Lending Core and staking principal is not silently rehypothecated into Lending.
+Exact reward budgets, source wallets, emission and separate revenue policy require economic/governance review; no new token supply or guaranteed APY is implied. Test amounts are fixtures only.
 
-A future Launchpad reuses the stable Staking state through a reviewed read-only/versioned interface for eligibility data such as balance, lock duration, staking weight or snapshot state. Launchpad does not create a second staking custody domain, does not take staking principal, and does not mutate staking reward accounting.
+## Resume and concurrency rule
 
-Exact staking reward budget/emission parameters remain a later economic/governance decision; no new token supply or guaranteed APY is implied.
+Read this checkpoint, current main, the active PR diff and exact-head checks before selecting the next task. If main or an overlapping PR changes during work, re-read before writing. Preserve and isolate duplicate work instead of force-pushing or merging both. Use non-forced, commit-pinned changes and report any unresolved conflicts.
 
-## Resume rule
-
-When resuming development, read this checkpoint together with current GitHub main and CI state before choosing the next task. If repository evidence conflicts with this checkpoint, update the checkpoint after evidence reconciliation rather than guessing from historical numbering.
+`성공` means continue repository development, not authorize on-chain execution. A runtime test PASS is not a release. Keep code, CI, Testnet and audit evidence separate.
