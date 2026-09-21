@@ -30,7 +30,9 @@ test("Master 6/4 reuses the isolated, Core-gated Lending accounting implementati
 
   assert.match(src,/modifier nonReentrant/);
   assert.match(src,/function _pullExact/);
-  assert.match(src,/registry\.validateCaps/);
+  assert.match(src,/registry\.validateMarketEnabled/);
+  assert.match(src,/registry\.validateSupplyCap/);
+  assert.match(src,/registry\.validateBorrowCap/);
   assert.match(src,/registry\.validateBorrowAmount/);
   assert.match(src,/registry\.accountRisk/);
   assert.match(src,/msg\.sender!=liquidationEngine/);
