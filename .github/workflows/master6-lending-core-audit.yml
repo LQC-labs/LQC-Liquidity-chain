@@ -1,0 +1,23 @@
+name: Master 6 Lending Core Audit
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/LQCLendingCore.sol'
+      - 'dex/test/lending-core.test.mjs'
+      - 'dex/test/lending-security-invariant-gate.test.mjs'
+      - 'docs/master6/6-4-lending-core-audit.md'
+      - 'test/master6-lending-core-audit.test.js'
+      - '.github/workflows/master6-lending-core-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lending-core-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master6-lending-core-audit.test.js
