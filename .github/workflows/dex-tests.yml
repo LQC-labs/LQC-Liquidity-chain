@@ -10,6 +10,7 @@ on:
       - "docs/master3/3-5-adapter-registry-boundary.md"
       - "docs/master3/3-6-best-execution-economic-integrity.md"
       - "test/master3-best-execution-economic-integrity.test.js"
+      - "docs/master3/3-7-router-failure-atomicity.md"
       - "test/master3-router-interface-isolation-audit.test.js"
       - "docs/master3/3-4-router-interface-isolation.md"
       - ".github/workflows/dex-tests.yml"
@@ -75,6 +76,9 @@ jobs:
 
       - name: Run focused Best Execution economic regressions
         run: npx mocha test/router2-gas-aware-boundaries.test.mjs test/router2-split-optimizer-boundaries.test.mjs test/router2-best-execution-proof-boundaries.test.mjs
+
+      - name: Run Router failure atomicity regressions
+        run: npx mocha test/router2-execution-boundaries.test.mjs test/router2-attack-paths.test.mjs test/router2-proof-gateway.test.mjs
 
       - name: Report Router 2.0 release readiness
         run: node scripts/report-router2-release-readiness.mjs
