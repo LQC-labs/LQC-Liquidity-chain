@@ -32,12 +32,13 @@ test("Master 7/1 preserves Futures and Lending as separate accounting domains",(
   }
 });
 
-test("Master 7/1 does not over-credit the MVP Perp engine",()=>{
+test("Master 7/1 reuse boundary remains explicit as later Futures stages extend the Perp engine",()=>{
   const engine=fs.readFileSync("dex/contracts/futures/LQCPerpEngine.sol","utf8");
-  assert.ok(engine.includes("Funding, fees, partial close and insurance are intentionally separate follow-up modules."));
   for(const fn of["openPosition","closePosition","liquidate","getPositionPnl"]){
     assert.ok(engine.includes(`function ${fn}`),fn);
   }
+  assert.ok(!engine.includes("LQCLendingCore"));
+  assert.ok(engine.includes("Funding, fees, Insurance/bad-debt, partial liquidation and ADL remain later 7/5 substeps."));
 });
 
 test("Master 7/1 preserves exact BSC Testnet deployment evidence without inferring missing hashes",()=>{
