@@ -6,6 +6,8 @@ import { canonicalDigest } from "../dex/scripts/build-intent-reproducibility-sea
 const PATH="dex/deployments/master6-live-execution-packet-bsc-testnet-97.json";
 const DEPLOYER="0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB";
 const SOURCE_COMMIT="0x87745b4bfb3ad49e73c14a8f62282986e72148bc";
+const RECORDED_DIGEST="sha256:dc538396aff204b65e19430033d5d11520c17b10239f49876d1364559fc3d84f";
+const RECORDED_AT="2026-09-21T08:47:10.679Z";
 
 test("Master 6/12 recorded live wallet handoff packet remains exact and non-activating",()=>{
   const packet=JSON.parse(fs.readFileSync(PATH,"utf8"));
@@ -16,6 +18,8 @@ test("Master 6/12 recorded live wallet handoff packet remains exact and non-acti
   assert.equal(packet.network?.chainId,97);
   assert.equal(packet.deployer.toLowerCase(),DEPLOYER.toLowerCase());
   assert.equal(packet.sourceCommit,SOURCE_COMMIT);
+  assert.equal(packet.generatedAt,RECORDED_AT);
+  assert.equal(packet.executionPacketDigest,RECORDED_DIGEST);
   assert.equal(packet.packet?.startingNonce,"17");
   assert.equal(packet.packet?.deployments?.length,10);
   assert.deepEqual(packet.packet.deployments.map(x=>x.deployerNonce),["17","18","19","20","21","22","23","24","25","26"]);
