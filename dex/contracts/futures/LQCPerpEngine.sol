@@ -6,11 +6,13 @@ import {LQCFuturesVault} from "./LQCFuturesVault.sol";
 import {ILQCFuturesOracle} from "./ILQCFuturesOracle.sol";
 
 /// @notice Isolated-margin perpetual engine for LQC Flow Futures.
-/// @dev Master 7/5 substep 1 adds one canonical position-reduction primitive.
-///      Funding, fees, Insurance/bad-debt, partial liquidation and ADL remain later 7/5 substeps.
+/// @dev Master 7/5 substeps 1-2 add canonical reduction plus conserved funding checkpoint/accounting.
+///      Fees, Insurance/bad-debt, partial liquidation and ADL remain later 7/5 substeps.
 contract LQCPerpEngine {
     uint256 public constant BPS = 10_000;
     uint256 public constant PRICE_SCALE = 1e18;
+    uint256 public constant FUNDING_RAY = 1e27;
+    uint256 public constant MAX_FUNDING_DELTA_RAY = FUNDING_RAY;
     uint256 public constant MAX_ORACLE_DELAY = 5 minutes;
 
     struct Position {
@@ -21,9 +23,18 @@ contract LQCPerpEngine {
         bool open;
     }
 
+    struct FundingState {
+        int256 cumulativeFundingPerUsdRay;
+        uint256 maxAbsDeltaPerUpdateRay;
+        bool configured;
+    }
+
     LQCFuturesMarketRegistry public immutable registry;
     LQCFuturesVault public immutable vault;
+
     mapping(address => mapping(uint256 => Position)) public positions;
+    mapping(uint256 => FundingState) public fundingStates;
+    mapping(address => mapping(uint256 => int256)) public positionFundingEntryRay;
 
     event PositionOpened(
         address indexed account,
@@ -51,7 +62,21 @@ contract LQCPerpEngine {
         uint256 price,
         int256 pnl
     );
+    event FundingConfigured(uint256 indexed marketId, uint256 maxAbsDeltaPerUpdateRay);
+    event FundingIndexUpdated(
+        uint256 indexed marketId,
+        int256 previousIndexRay,
+        int256 newIndexRay,
+        int256 deltaRay
+    );
+    event FundingSettled(
+        address indexed account,
+        uint256 indexed marketId,
+        int256 payment,
+        int256 checkpointIndexRay
+    );
 
+    error Forbidden();
     error InvalidAmount();
     error InvalidReduction();
     error MarketInactive();
@@ -62,11 +87,56 @@ contract LQCPerpEngine {
     error StaleOraclePrice();
     error NotLiquidatable();
     error PartialReductionWouldCreateBadDebt();
+    error FundingMarketNotFound();
+    error FundingNotConfigured();
+    error InvalidFundingBound();
+    error InvalidFundingDelta();
+    error FundingDeltaTooLarge();
+    error FundingOverflow();
+
+    modifier onlyRegistryOwner() {
+        if (msg.sender != registry.owner()) revert Forbidden();
+        _;
+    }
 
     constructor(address registry_, address vault_) {
         if (registry_ == address(0) || vault_ == address(0)) revert InvalidAmount();
         registry = LQCFuturesMarketRegistry(registry_);
         vault = LQCFuturesVault(vault_);
+    }
+
+    /// @notice Sets the per-market maximum absolute funding-index change accepted per update.
+    /// @dev No product funding rate is hard-coded here. Governance supplies a market-specific bound.
+    ///      FUNDING_RAY is only a protocol safety ceiling of 100% per update, not an approved economic rate.
+    function configureFunding(uint256 marketId, uint256 maxAbsDeltaPerUpdateRay) external onlyRegistryOwner {
+        if (marketId == 0 || marketId > registry.marketCount()) revert FundingMarketNotFound();
+        if (maxAbsDeltaPerUpdateRay == 0 || maxAbsDeltaPerUpdateRay > MAX_FUNDING_DELTA_RAY) {
+            revert InvalidFundingBound();
+        }
+
+        FundingState storage state = fundingStates[marketId];
+        state.maxAbsDeltaPerUpdateRay = maxAbsDeltaPerUpdateRay;
+        state.configured = true;
+        emit FundingConfigured(marketId, maxAbsDeltaPerUpdateRay);
+    }
+
+    /// @notice Advances the cumulative funding index after a fresh market-oracle check.
+    /// @dev Positive delta means longs pay shorts; negative delta means shorts pay longs.
+    function updateFundingIndex(uint256 marketId, int256 deltaRay) external onlyRegistryOwner {
+        FundingState storage state = fundingStates[marketId];
+        if (!state.configured) revert FundingNotConfigured();
+        if (deltaRay == 0 || deltaRay == type(int256).min) revert InvalidFundingDelta();
+
+        uint256 absDelta = uint256(deltaRay < 0 ? -deltaRay : deltaRay);
+        if (absDelta > state.maxAbsDeltaPerUpdateRay) revert FundingDeltaTooLarge();
+
+        (, address indexToken,, address oracle,,,) = registry.markets(marketId);
+        _price(indexToken, oracle);
+
+        int256 previous = state.cumulativeFundingPerUsdRay;
+        int256 next = previous + deltaRay;
+        state.cumulativeFundingPerUsdRay = next;
+        emit FundingIndexUpdated(marketId, previous, next, deltaRay);
     }
 
     function openPosition(uint256 marketId, uint256 margin, uint256 sizeUsd, bool isLong) external {
@@ -92,14 +162,43 @@ contract LQCPerpEngine {
 
         positions[msg.sender][marketId] =
             Position({margin: margin, sizeUsd: sizeUsd, entryPrice: price, isLong: isLong, open: true});
+        positionFundingEntryRay[msg.sender][marketId] = fundingStates[marketId].cumulativeFundingPerUsdRay;
 
         emit PositionOpened(msg.sender, marketId, isLong, margin, sizeUsd, price);
     }
 
+    /// @notice Settles the caller's funding cash against the dedicated Futures funding pool.
+    /// @dev Negative payment debits available balance; positive payment consumes previously collected pool funds.
+    function settleFunding(uint256 marketId) external returns (int256 payment) {
+        Position memory position = positions[msg.sender][marketId];
+        if (!position.open) revert PositionNotFound();
+        (,, address collateralToken,,,,) = registry.markets(marketId);
+        payment = _settleFundingCheckpoint(msg.sender, marketId, collateralToken, position);
+    }
+
+    function previewFundingPayment(address account, uint256 marketId) public view returns (int256 payment) {
+        Position memory position = positions[account][marketId];
+        if (!position.open) revert PositionNotFound();
+
+        FundingState memory state = fundingStates[marketId];
+        if (!state.configured) return 0;
+
+        int256 deltaRay = state.cumulativeFundingPerUsdRay - positionFundingEntryRay[account][marketId];
+        if (deltaRay == 0) return 0;
+        if (deltaRay == type(int256).min) revert FundingOverflow();
+
+        uint256 absDelta = uint256(deltaRay < 0 ? -deltaRay : deltaRay);
+        if (position.sizeUsd != 0 && absDelta > type(uint256).max / position.sizeUsd) revert FundingOverflow();
+
+        uint256 magnitude = position.sizeUsd * absDelta / FUNDING_RAY;
+        if (magnitude > uint256(type(int256).max)) revert FundingOverflow();
+
+        bool receives = (deltaRay > 0 && !position.isLong) || (deltaRay < 0 && position.isLong);
+        payment = receives ? int256(magnitude) : -int256(magnitude);
+    }
+
     /// @notice Reduces part or all of the caller's position at the current Oracle price.
-    /// @dev Partial reduction realizes PnL only on the reduced notional and releases proportional margin.
-    ///      A partial reduction that would already create deficit/bad debt is rejected until the
-    ///      Insurance/bad-debt substep is implemented later in Master 7/5.
+    /// @dev Outstanding voluntary funding is settled before size changes, preventing funding evasion.
     function reducePosition(uint256 marketId, uint256 reduceSizeUsd)
         external
         returns (uint256 releasedMargin, int256 realizedPnl, uint256 exitPrice)
@@ -137,7 +236,10 @@ contract LQCPerpEngine {
         uint256 maintenance = (position.sizeUsd * uint256(maintenanceMarginBps)) / BPS;
         if (equity > int256(maintenance)) revert NotLiquidatable();
 
+        // Funding-aware liquidation is intentionally deferred to 7/5-5 where funding debt,
+        // partial liquidation and Insurance/bad-debt are integrated as one risk-reducing path.
         delete positions[account][marketId];
+        delete positionFundingEntryRay[account][marketId];
         _settle(account, collateralToken, position.margin, pnl);
         emit PositionLiquidated(account, marketId, msg.sender, price, pnl);
     }
@@ -166,6 +268,8 @@ contract LQCPerpEngine {
         if (reduceSizeUsd == 0 || reduceSizeUsd > beforePosition.sizeUsd) revert InvalidReduction();
 
         (, address indexToken, address collateralToken, address oracle,,,) = registry.markets(marketId);
+
+        _settleFundingCheckpoint(account, marketId, collateralToken, beforePosition);
         exitPrice = _price(indexToken, oracle);
 
         releasedMargin = beforePosition.margin * reduceSizeUsd / beforePosition.sizeUsd;
@@ -182,8 +286,6 @@ contract LQCPerpEngine {
 
         bool fullReduction = reduceSizeUsd == beforePosition.sizeUsd;
         if (!fullReduction) {
-            // Until the later Insurance/bad-debt substep exists on-chain, a voluntary partial
-            // reduction cannot externalize a deficit from the reduced slice.
             if (int256(releasedMargin) + realizedPnl <= 0) revert PartialReductionWouldCreateBadDebt();
 
             remainingSizeUsd = beforePosition.sizeUsd - reduceSizeUsd;
@@ -209,6 +311,7 @@ contract LQCPerpEngine {
         }
 
         delete positions[account][marketId];
+        delete positionFundingEntryRay[account][marketId];
         _settle(account, collateralToken, releasedMargin, realizedPnl);
 
         emit PositionReduced(
@@ -222,6 +325,25 @@ contract LQCPerpEngine {
             realizedPnl
         );
         return (releasedMargin, realizedPnl, exitPrice, 0);
+    }
+
+    function _settleFundingCheckpoint(
+        address account,
+        uint256 marketId,
+        address collateralToken,
+        Position memory position
+    ) private returns (int256 payment) {
+        FundingState memory state = fundingStates[marketId];
+        if (!state.configured) {
+            positionFundingEntryRay[account][marketId] = state.cumulativeFundingPerUsdRay;
+            return 0;
+        }
+
+        payment = previewFundingPayment(account, marketId);
+        if (payment != 0) vault.settleFunding(account, collateralToken, payment);
+
+        positionFundingEntryRay[account][marketId] = state.cumulativeFundingPerUsdRay;
+        emit FundingSettled(account, marketId, payment, state.cumulativeFundingPerUsdRay);
     }
 
     function _settle(address account, address collateralToken, uint256 margin, int256 pnl) private {
