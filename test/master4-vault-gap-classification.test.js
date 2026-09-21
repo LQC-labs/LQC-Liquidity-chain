@@ -1,0 +1,10 @@
+'use strict';
+const assert=require('assert'),fs=require('fs');
+const m=JSON.parse(fs.readFileSync('docs/master4/4-2-vault-gap-matrix.json','utf8'));
+assert.strictEqual(m.stage,'4/2'); assert.strictEqual(m.activationAuthorized,false);
+assert.ok(m.reuse.length>=9); assert.ok(m.existingTests.length>=7);
+const ids=new Set(m.gaps.map(x=>x.id)); assert.strictEqual(ids.size,m.gaps.length);
+assert.ok(m.gaps.some(x=>x.id==='G1'&&x.priority==='P0'));
+assert.ok(m.gaps.some(x=>x.id==='G2'&&x.priority==='P0'));
+assert.ok(m.gaps.filter(x=>x.priority==='DEFER').every(x=>x.action==='DO_NOT_IMPLEMENT_YET'));
+console.log('Master 4/2 Vault gap classification: PASS');
