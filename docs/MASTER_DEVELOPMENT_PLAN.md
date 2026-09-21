@@ -76,9 +76,11 @@ Before CEX due diligence, the whitepaper, README, contracts/configuration, testn
 
 ## Current position
 
-MASTER: 1/15 Architecture Freeze  
-CURRENT: 1/4 parameter and architecture reconciliation  
-BLOCKED: new on-chain deployment and unplanned feature expansion until Architecture Freeze determines the valid reuse/gap path.
+MASTER: **6/15 — Lending / Earn / LQC Staking**  
+COMPLETED IN CURRENT RESTART PATH: **6/13 Lending Core repository E2E PASS; 6/14 Supply Earn reuse gate PASS**  
+NEXT EXECUTABLE: **6/15 LQC Staking Vault**  
+ON-CHAIN BOUNDARY: the verified 10/10 clean BSC Testnet Lending deployment is preserved, but Governance configuration, market enablement, new Testnet transactions, and production activation each remain separately gated and are not implied by repository PASS.  
+WORKING RULE: verified earlier Master stages are reused; only evidence gaps or real implementation gaps are developed.
 
 
 ## Mainnet portability and module-isolation rule
