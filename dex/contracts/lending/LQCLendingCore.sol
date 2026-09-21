@@ -58,7 +58,7 @@ contract LQCLendingCore {
     event OwnershipTransferred(address indexed previousOwner,address indexed newOwner);
 
     error Unauthorized(); error ZeroAddress(); error InvalidAmount(); error UnsafePosition();
-    error InsufficientLiquidity(); error InexactTransfer(); error Reentrancy(); error InsufficientReserves(); error NotLiquidatable(); error LossLimitExceeded(); error OutstandingBadDebt(); error ReservesNotExhausted();
+    error InsufficientLiquidity(); error InexactTransfer(); error Reentrancy(); error InsufficientReserves(); error NotLiquidatable(); error LossLimitExceeded(); error OutstandingBadDebt();
     modifier onlyOwner(){if(msg.sender!=owner)revert Unauthorized();_;}
     modifier nonReentrant(){if(unlocked!=1)revert Reentrancy();unlocked=2;_;unlocked=1;}
 
@@ -142,7 +142,8 @@ contract LQCLendingCore {
     }
 
     function realizeBadDebtLoss(bytes32 id,address account,uint256 maxAmount) external onlyOwner nonReentrant returns(uint256 writtenOff){
-        if(maxAmount==0)revert InvalidAmount();_accrue(id);ILQCLendingMarkets.MarketConfig memory config=registry.getMarket(id);if(config.enabled)revert Unauthorized();if(accruedReserves[id]!=0)revert ReservesNotExhausted();
+        if(maxAmount==0)revert InvalidAmount();_accrue(id);ILQCLendingMarkets.MarketConfig memory config=registry.getMarket(id);if(config.enabled)revert Unauthorized();if(badDebtSharesOf[id][account]==0)revert InvalidAmount();
+        uint256 reserveAvailable=accruedReserves[id];if(reserveAvailable!=0){uint256 reserveCovered;uint256 reserveShares;(reserveCovered,reserveShares)=_burnBadDebt(id,account,reserveAvailable);accruedReserves[id]-=reserveCovered;emit BadDebtCovered(id,account,1,reserveCovered,reserveShares);if(badDebtSharesOf[id][account]==0)return 0;}
         MarketState memory state=marketStates[id];uint256 supplyIndex=_supplyIndex(id);uint256 supplyBefore=_totalSupply(state,supplyIndex);uint256 bad=badDebtSharesOf[id][account]*_borrowIndex(id)/RAY;
         uint256 requested=maxAmount<bad?maxAmount:bad;uint256 historicalBase=supplyBefore+realizedSupplierLosses[id];uint256 remainingLimit=historicalBase*2_000/10_000-realizedSupplierLosses[id];
         if(requested==0||requested>remainingLimit||requested>=supplyBefore)revert LossLimitExceeded();uint256 newIndex=interestIndex.applySupplyLoss(id,requested,supplyBefore);
