@@ -1,0 +1,28 @@
+name: Master 6 Governance Execution Approval Boundary
+on:
+  pull_request:
+    paths:
+      - 'dex/scripts/build-master6-governance-execution-approval.mjs'
+      - 'dex/scripts/verify-master6-governance-configuration-proposal.mjs'
+      - 'dex/deployments/master6-governance-configuration-proposal-bsc-testnet-97.json'
+      - 'test/master6-governance-execution-approval-boundary.test.js'
+      - 'docs/master6/6-12-governance-execution-approval-boundary.md'
+      - '.github/workflows/master6-governance-execution-approval-boundary.yml'
+permissions:
+  contents: read
+jobs:
+  approval-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Run Governance execution approval boundary regressions
+        run: node --test test/master6-governance-execution-approval-boundary.test.js
