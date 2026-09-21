@@ -35,3 +35,10 @@ test("Master 6 post-deployment verifier is read-only and fail-closed",()=>{
   assert.match(script,/activationAuthorized:false/);
   assert.doesNotMatch(script,/sendTransaction|eth_sendTransaction|wallet|privateKey|signer/);
 });
+
+test("Master 6 verifier validates zero-padded TokenPocket first hash against chain evidence",()=>{
+  assert.match(script,/const paddedCandidate="0x0"\+displayedFirst/);
+  assert.match(script,/candidateTx\.nonce===17/);
+  assert.match(script,/candidateReceipt\.contractAddress/);
+  assert.match(script,/sha256\(candidateTx\.data\)===live\.packet\.deployments\[0\]\.initCodeDigest/);
+});
