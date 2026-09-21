@@ -58,7 +58,7 @@ describe("Master 6/15 LQC Staking Vault",function(){
 
   it("rejects fee-on-transfer staking assets so accounting cannot drift",async function(){
     const feeToken=await deploy("MockFeeOnTransferToken","mocks/MockFeeOnTransferToken",owner,"Fee LQC","fLQC");
-    const feeVault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,feeToken.target,owner.address);
+    const feeVault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,feeToken.target,owner.address,7*24*60*60);
     const amount=ethers.parseEther("100");
 
     await(await feeToken.mint(user.address,amount)).wait();
