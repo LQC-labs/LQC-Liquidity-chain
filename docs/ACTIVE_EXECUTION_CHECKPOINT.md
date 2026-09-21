@@ -2,11 +2,9 @@
 
 Status: **operational checkpoint — not a replacement roadmap**
 
-This file preserves the current working method so development can resume consistently without relying on chat memory. Canonical architecture remains in `docs/MASTER_DEVELOPMENT_PLAN.md` and the canonical whitepaper source.
+This file preserves the current working method so development can resume consistently without relying on chat memory. Architecture remains in `docs/MASTER_DEVELOPMENT_PLAN.md` and the canonical whitepaper source. The agreed 15-stage plan is a working dependency order, not an immutable schedule.
 
 ## Agreed development baseline
-
-Use the 15-stage plan with a reuse-first method:
 
 1. Architecture Freeze
 2. LQC Flow
@@ -28,41 +26,34 @@ Execution method:
 
 **inspect current main -> reuse verified work -> revalidate where needed -> develop only real gaps -> regression/CI -> Testnet/on-chain evidence only when separately authorized**
 
-Do not restart validated modules from zero. Historical stage labels remain evidence only and do not override the current Master sequence.
+Do not restart validated modules from zero. Historical stage labels do not override the current Master work. Changes to the working order require documented dependencies and impact, not a new competing roadmap.
 
-## Current stabilization sequence
+## Current execution position
 
-Before starting the next new Staking implementation, complete this short repository-stabilization sequence:
+- MASTER: 6 — Lending / Earn / LQC Staking.
+- COMPLETED: stabilization and PR classification (PR #313); 6/14 Supply Earn accounting reuse (PR #310); 6/15 principal-only Staking Vault (PR #314).
+- VERIFIED BASE: `49e3886fe7bde642306a1173153d0396c30c0f7e`, the merge of PR #314. Its five pull-request workflows completed successfully; this is repository test evidence, not a Staking release.
+- CURRENT: 6/16 Reward Accounting / Claim implementation and CI review on `codex/master6-16-staking-reward-accounting`.
+- CURRENT EVIDENCE: new reward code is an implementation candidate; no 6/16 PASS is claimed until the exact PR revision passes required checks and review.
+- NEXT: finish the 6/16 review/CI and update this checkpoint before starting 6/17 Lock / Cooldown / Unstake.
+- BLOCKED: Staking deployment, real deposits, real reward funding, market activation and any new on-chain action. The withdrawal path and later safety/release gates remain incomplete.
 
-1. **DONE** — Master 6/14 Supply Earn reuse gate restored on current main and PASS;
-2. **DONE in this synchronization set** — open PRs classified as ACTIVE / REUSE / FUTURE / SUPERSEDED-STALE in `docs/OPEN_PR_CLASSIFICATION.md`;
-3. **DONE in this synchronization set** — actual main-state matrix updated from repository/test/CI/Testnet/on-chain evidence;
-4. **DONE in this synchronization set** — `docs/MASTER_DEVELOPMENT_PLAN.md` current position and `docs/IMPLEMENTATION_MATRIX.md` synchronized;
-5. **NEXT EXECUTABLE** — start the genuine new implementation gap at Master 6/15 LQC Staking Vault.
+Stabilization is not restarted just because another development session begins. Preserve the existing `docs/OPEN_PR_CLASSIFICATION.md` classifications and recheck actual PR status before selective reuse.
 
 ## Preserved Staking direction and timing
 
-The canonical Staking economic boundary remains preserved in:
+Economic and architecture sources:
 
 - `docs/STAKING_REWARD_ECONOMIC_BOUNDARY.md`
 - `docs/LQC_WHITEPAPER_CANONICAL.md`
 - `docs/MASTER_DEVELOPMENT_PLAN.md`
 
-Development timing:
+Order: **6/15 Vault -> 6/16 Reward Accounting / Claim -> 6/17 Lock / Cooldown / Unstake -> 6/18 Governance / Emergency -> 6/19 Lending + Earn + Staking E2E**.
 
-- 6/14 Supply Earn verification must PASS first;
-- 6/15 LQC Staking Vault;
-- 6/16 Reward Accounting / Claim;
-- 6/17 Lock / Cooldown / Unstake;
-- 6/18 Staking Governance / Emergency Controls;
-- 6/19 Lending + Earn + Staking E2E.
+One canonical principal vault remains independent from Lending accounting. A separate reward custodian does not create a second principal-staking system. Ecosystem and realized-revenue rewards remain separately budgeted, funded and accounted; no new supply or fixed APY is authorized. Runtime test values are fixtures, not a production reward-budget approval.
 
-The LQC Staking Vault is one canonical, independently accounted vault. It is not embedded in Lending Core and staking principal is not silently rehypothecated into Lending.
-
-A future Launchpad reuses the stable Staking state through a reviewed read-only/versioned interface for eligibility data such as balance, lock duration, staking weight or snapshot state. Launchpad does not create a second staking custody domain, does not take staking principal, and does not mutate staking reward accounting.
-
-Exact staking reward budget/emission parameters remain a later economic/governance decision; no new token supply or guaranteed APY is implied.
+Future Launchpad consumes reviewed read-only/versioned staking eligibility data after the staking interface is stable. It cannot custody staking principal or change reward accounting. Launchpad integration is not started by this checkpoint.
 
 ## Resume rule
 
-When resuming development, read this checkpoint together with current GitHub main and CI state before choosing the next task. If repository evidence conflicts with this checkpoint, update the checkpoint after evidence reconciliation rather than guessing from historical numbering.
+Read this checkpoint, the actual current main, the active PR diff, and checks for the exact head revision before selecting work. If evidence conflicts with the checkpoint, reconcile it rather than guessing or restarting. `성공` means continue repository development, not sign, submit or broadcast a transaction.

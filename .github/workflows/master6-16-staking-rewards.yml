@@ -1,0 +1,46 @@
+name: Master 6 16 Staking Reward Accounting
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/staking/**'
+      - 'dex/contracts/interfaces/IERC20.sol'
+      - 'dex/contracts/libraries/SafeTransferLib.sol'
+      - 'dex/contracts/mocks/**'
+      - 'dex/test/staking-*.test.mjs'
+      - 'dex/test/support/**'
+      - 'dex/scripts/compile.mjs'
+      - 'dex/package.json'
+      - 'dex/package-lock.json'
+      - 'docs/master6/6-16-staking-reward-accounting.md'
+      - '.github/workflows/master6-16-staking-rewards.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reward-accounting:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Check reward test syntax
+        working-directory: dex
+        run: node --check test/staking-rewards.test.mjs
+      - name: Compile protocol contracts
+        working-directory: dex
+        run: npm run compile
+      - name: Reuse 6/15 tests and run 6/16 behavioral regressions
+        working-directory: dex
+        run: npx --no-install mocha --timeout 30000 test/staking-vault.test.mjs test/staking-rewards.test.mjs
+      - name: Revalidate Lending isolation
+        working-directory: dex
+        run: npx --no-install mocha --timeout 30000 test/lending-core.test.mjs test/lending-security-invariant-gate.test.mjs

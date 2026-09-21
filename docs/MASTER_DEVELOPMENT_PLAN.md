@@ -1,7 +1,7 @@
 # LQC Master Development Plan
 
-Status: Architecture Freeze working baseline  
-Master rule: this document defines the current dependency order. Historical stage labels and PR titles remain audit evidence but do not override this plan.
+Status: reuse-first working baseline  
+Master rule: this document defines the current dependency order. Historical stage labels and PR titles remain audit evidence but do not override this plan. The working order may be adjusted with documented dependency and impact review.
 
 ## Project objective
 
@@ -76,12 +76,14 @@ Before CEX due diligence, the whitepaper, README, contracts/configuration, testn
 
 ## Current position
 
-MASTER: **6/15 — Lending / Earn / LQC Staking**  
-COMPLETED IN CURRENT RESTART PATH: **6/13 Lending Core repository E2E PASS; 6/14 Supply Earn reuse gate PASS**  
-NEXT EXECUTABLE: **6/15 LQC Staking Vault**  
-ON-CHAIN BOUNDARY: the verified 10/10 clean BSC Testnet Lending deployment is preserved, but Governance configuration, market enablement, new Testnet transactions, and production activation each remain separately gated and are not implied by repository PASS.  
-WORKING RULE: verified earlier Master stages are reused; only evidence gaps or real implementation gaps are developed.
-
+MASTER: **6 — Lending / Earn / LQC Staking (of the 15-stage working plan)**  
+CURRENT: **6/16 Reward Accounting / Claim — implementation candidate, pending CI/review**  
+COMPLETED IN CURRENT RESTART PATH: **6/13 Lending Core repository E2E; 6/14 Supply Earn accounting reuse; 6/15 principal-only Staking Vault via PR #314**  
+VERIFIED STAKING BASE: `49e3886fe7bde642306a1173153d0396c30c0f7e`  
+NEXT AFTER CURRENT REVIEW: **6/17 Lock / Cooldown / Unstake**  
+ON-CHAIN BOUNDARY: no Staking deployment or user funding is authorized. The incomplete exit path, emergency controls, integration and release gates remain mandatory. Lending Governance configuration, market enablement and current Testnet E2E remain separately gated.  
+RESUME DETAILS: `docs/ACTIVE_EXECUTION_CHECKPOINT.md` and the live active PR/checks.  
+WORKING RULE: reuse earlier evidence only within its demonstrated scope; close real implementation and evidence gaps without restarting modules.
 
 ## Mainnet portability and module-isolation rule
 
