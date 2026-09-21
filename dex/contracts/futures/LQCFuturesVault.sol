@@ -18,12 +18,14 @@ contract LQCFuturesVault {
     mapping(address => mapping(address => uint256)) public availableBalance;
     mapping(address => mapping(address => uint256)) public lockedBalance;
     mapping(address => uint256) public totalAccounted;
+    mapping(address => uint256) public fundingPoolBalance;
 
     event Deposit(address indexed account, address indexed token, uint256 amount);
     event Withdrawal(address indexed account, address indexed token, uint256 amount);
     event CollateralLocked(address indexed account, address indexed token, uint256 amount);
     event CollateralUnlocked(address indexed account, address indexed token, uint256 amount);
     event PnLSettled(address indexed account, address indexed token, int256 pnl);
+    event FundingSettled(address indexed account, address indexed token, int256 payment, uint256 fundingPoolBalance);
     event CollateralSupportChanged(address indexed token, bool supported);
     event EngineChanged(address indexed previousEngine, address indexed newEngine);
     event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
@@ -36,6 +38,7 @@ contract LQCFuturesVault {
     error InsufficientAvailableBalance();
     error InsufficientLockedBalance();
     error InsufficientVaultLiquidity();
+    error InsufficientFundingPool();
     error Locked();
 
     modifier onlyOwner() {
@@ -109,6 +112,33 @@ contract LQCFuturesVault {
         lockedBalance[account][token] = lockedAmount - amount;
         availableBalance[account][token] += amount;
         emit CollateralUnlocked(account, token, amount);
+    }
+
+    /// @notice Move funding cash between a trader's available Futures balance and the market-neutral funding pool.
+    /// @dev payment > 0 credits the trader and consumes the pool. payment < 0 debits the trader and funds the pool.
+    ///      Locked margin is intentionally not touched by ordinary funding settlement.
+    function settleFunding(address account, address token, int256 payment) external onlyEngine {
+        if (payment > 0) {
+            uint256 credit = uint256(payment);
+            uint256 pool = fundingPoolBalance[token];
+            if (pool < credit) revert InsufficientFundingPool();
+            fundingPoolBalance[token] = pool - credit;
+            availableBalance[account][token] += credit;
+            totalAccounted[token] += credit;
+        } else if (payment < 0) {
+            uint256 debit = uint256(-payment);
+            uint256 available = availableBalance[account][token];
+            if (available < debit) revert InsufficientAvailableBalance();
+            availableBalance[account][token] = available - debit;
+            totalAccounted[token] -= debit;
+            fundingPoolBalance[token] += debit;
+        }
+        emit FundingSettled(account, token, payment, fundingPoolBalance[token]);
+    }
+
+    /// @notice True when all user-accounted collateral plus the dedicated funding pool is backed by tokens in the Vault.
+    function isFullyBacked(address token) external view returns (bool) {
+        return IERC20(token).balanceOf(address(this)) >= totalAccounted[token] + fundingPoolBalance[token];
     }
 
     /// @notice Apply realized PnL after a position is reduced/closed.
