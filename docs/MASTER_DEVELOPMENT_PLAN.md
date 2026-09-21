@@ -99,9 +99,9 @@ Before CEX due diligence, the whitepaper, README, contracts/configuration, testn
 
 ## Current position
 
-MASTER: **7/2 — Futures**  
-COMPLETED IN CURRENT RESTART PATH: **Stage 6 repository E2E PASS; 7/1 Futures latest-main regression / reuse reconciliation PASS**  
-NEXT EXECUTABLE: **7/2 Independent Reference Oracle — selectively rebase/review the runtime V3 TWAP candidate from PR #296**  
+MASTER: **7/3 — Futures**  
+COMPLETED IN CURRENT RESTART PATH: **Stage 6 repository E2E PASS; 7/1 Futures latest-main regression / reuse reconciliation PASS; 7/2 Independent Runtime Reference Oracle PASS**  
+NEXT EXECUTABLE: **7/3 Current Artifact / BSC Testnet Deployment Lineage Reconciliation — read-only evidence first**  
 ON-CHAIN BOUNDARY: the verified 10/10 clean BSC Testnet Lending deployment is preserved, but Governance configuration, market enablement, new Testnet transactions, and production activation each remain separately gated and are not implied by repository PASS.  
 WORKING RULE: verified earlier Master stages are reused; only evidence gaps or real implementation gaps are developed.
 
