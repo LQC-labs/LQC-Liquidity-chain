@@ -1,0 +1,21 @@
+name: Master 3 Best Execution Proof Replay Guard
+on:
+  pull_request:
+    paths:
+      - 'scripts/master3-best-execution-proof-replay-guard.js'
+      - 'test/master3-best-execution-proof-replay-guard.test.js'
+      - 'docs/master3/3-10-best-execution-proof-replay-guard.md'
+      - '.github/workflows/master3-best-execution-proof-replay-guard.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  replay-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master3-best-execution-proof-replay-guard.test.js
