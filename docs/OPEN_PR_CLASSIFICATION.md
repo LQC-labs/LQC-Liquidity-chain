@@ -6,17 +6,16 @@ This classification does **not** delete branch history. It determines whether an
 
 ## ACTIVE
 
-No historical feature PR is ACTIVE after Master 6/14 PASS. The next executable feature gap is **Master 6/15 LQC Staking Vault**.
+| PR | Subject | Current use |
+|---:|---|---|
+| #296 | Futures runtime V3 TWAP reference adapter | **Master 7/2 selective reuse candidate**. Rebase/review only the adapter + tests against current main; do not merge the historical PR wholesale. |
 
 ## REUSE — selective candidate, never merge wholesale without current-main review
 
 | PR | Subject | Reuse timing / rule |
 |---:|---|---|
-| #296 | Futures runtime V3 TWAP reference adapter | Master 7 candidate; rebase/retest against current Oracle/Futures interfaces |
-| #250 | Futures parallel reuse/gap inventory | Master 7 evidence/reference input |
 | #253 | Router failure atomicity / zero residue | Security-hardening evidence candidate; Router Master 3 completion already exists, so do not reopen numbering |
 | #211 | Canonical QuoteManager | Master 9 candidate; selective code/test reuse |
-| #210 | Futures cross-source oracle deviation gate | Master 7 candidate; compare with current Oracle boundary before use |
 | #170 | Solver exposure/capacity gate | Master 9 candidate |
 | #160 | Solver reputation feedback | Master 9 candidate |
 | #63 | Intent + Solver architecture v1.1 broad branch | Master 8–10 source pool only; too broad/stale for wholesale merge |
@@ -36,6 +35,8 @@ No historical feature PR is ACTIVE after Master 6/14 PASS. The next executable f
 
 | PR | Subject | Reason |
 |---:|---|---|
+| #250 | Futures parallel reuse/gap inventory | Superseded as a status document by Master 7/1 current-main reconciliation; preserve only as history |
+| #210 | Futures cross-source oracle deviation gate | Current on-chain Aggregator Oracle already has independent-reference deviation enforcement; old helper may remain review tooling but is not a Core merge candidate |
 | #70 | Lending Stage 3 isolated supply vault | Superseded by canonical Lending Core supply/share accounting and 6/14 decision: no duplicate Earn vault |
 | #64 | Alternate same-chain intent contract set | Superseded by current `intent-v1` / Master 8 architecture path; keep only as historical evidence |
 | #54 | Stage 1→2 deployment handoff | Historical numbering/workflow superseded by current Master sequence and completion gates |
