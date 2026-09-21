@@ -79,9 +79,15 @@ async function main(){
     sourceCommit:process.env.MASTER6_SOURCE_COMMIT,
     approvalPhrase:process.env.MASTER6_EXECUTION_APPROVAL
   });
-  console.log("MASTER6_LIVE_EXECUTION_PACKET_BEGIN");
-  console.log(JSON.stringify(out,null,2));
-  console.log("MASTER6_LIVE_EXECUTION_PACKET_END");
+  const json=JSON.stringify(out,null,2);
+  if(process.env.MASTER6_OUTPUT_FILE){
+    fs.writeFileSync(process.env.MASTER6_OUTPUT_FILE,json+"\n");
+    console.log("WROTE_MASTER6_LIVE_EXECUTION_PACKET "+process.env.MASTER6_OUTPUT_FILE);
+  }else{
+    console.log("MASTER6_LIVE_EXECUTION_PACKET_BEGIN");
+    console.log(json);
+    console.log("MASTER6_LIVE_EXECUTION_PACKET_END");
+  }
 }
 
 if(import.meta.url===new URL("file://"+process.argv[1]).href) await main();
