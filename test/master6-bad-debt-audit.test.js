@@ -14,7 +14,9 @@ test("Master 6/11 enforces reserve-first bad debt recovery and bounded last-reso
 
   assert.match(core,/badDebtSharesOf\[id\]\[msg\.sender\]!=0/);
   assert.match(core,/totalBadDebtShares\[id\]!=0\)revert OutstandingBadDebt/);
-  assert.match(core,/accruedReserves\[id\]!=0\)revert ReservesNotExhausted/);
+  assert.match(core,/uint256 reserveAvailable=accruedReserves\[id\]/);
+  assert.match(core,/if\(reserveAvailable!=0\).*_burnBadDebt\(id,account,reserveAvailable\).*accruedReserves\[id\]-=reserveCovered/s);
+  assert.match(core,/emit BadDebtCovered\(id,account,1,reserveCovered,reserveShares\)/);
   assert.match(core,/if\(config\.enabled\)revert Unauthorized/);
   assert.match(core,/historicalBase\*2_000\/10_000/);
 
