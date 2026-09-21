@@ -1,5 +1,15 @@
 name: Master 6 Collateral Audit
 on:
+  push:
+    paths:
+      - 'dex/contracts/lending/LQCLendingCore.sol'
+      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
+      - 'dex/test/lending-collateral-boundaries.test.mjs'
+      - 'dex/test/lending-core.test.mjs'
+      - 'dex/test/lending-security-invariant-gate.test.mjs'
+      - 'docs/master6/6-5-collateral-audit.md'
+      - 'test/master6-collateral-audit.test.js'
+      - '.github/workflows/master6-collateral-audit.yml'
   pull_request:
     paths:
       - 'dex/contracts/lending/LQCLendingCore.sol'
