@@ -1,0 +1,33 @@
+name: Master 6 Governance Configuration Freeze
+on:
+  pull_request:
+    paths:
+      - 'dex/deployments/master6-governance-configuration-proposal-bsc-testnet-97.json'
+      - 'dex/scripts/verify-master6-governance-configuration-proposal.mjs'
+      - 'dex/scripts/prepare-master6-governance-configuration.mjs'
+      - 'dex/scripts/verify-master6-clean-post-deployment.mjs'
+      - 'test/master6-governance-configuration-freeze.test.js'
+      - 'docs/master6/6-12-governance-configuration-freeze.md'
+      - '.github/workflows/master6-governance-configuration-freeze.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  freeze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Run frozen packet regressions
+        run: node --test test/master6-governance-configuration-freeze.test.js
+      - name: Revalidate frozen packet against current BSC Testnet state
+        working-directory: dex
+        run: node scripts/verify-master6-governance-configuration-proposal.mjs
