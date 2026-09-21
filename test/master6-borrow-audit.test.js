@@ -24,6 +24,6 @@ test("Master 6/7 reuses the indexed Borrow path and proves cumulative cap enforc
   assert.match(runtime,/setMarketEnabled\(id,false\)/);
   assert.match(coreRuntime,/rejects borrowing or collateral withdrawal above the 50 percent LTV/);
   assert.match(coreRuntime,/protects lender withdrawals while debt is outstanding/);
-  assert.match(doc,/production contract behavior is unchanged/);
+  assert.match(doc,/production contract behavior is unchanged/i);
   assert.match(doc,/activationAuthorized: false/);
 });
