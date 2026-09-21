@@ -8,6 +8,8 @@ interface ILQCStrategyAdapter {
     function asset() external view returns (address);
     function vault() external view returns (address);
     function totalManagedAssets() external view returns (uint256);
+    function adapterId() external pure returns (bytes32);
+    function adapterVersion() external pure returns (uint32);
 
     function deploy(uint256 assets) external returns (uint256 deployedAssets);
     /// @dev Must reduce `totalManagedAssets` by exactly `assets`. `returnedAssets` may be lower
