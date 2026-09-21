@@ -1,0 +1,37 @@
+name: Master 6 Supply Withdraw
+on:
+  push:
+    paths:
+      - 'dex/contracts/lending/LQCLendingCore.sol'
+      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
+      - 'dex/test/lending-supply-withdraw-boundaries.test.mjs'
+      - 'dex/test/lending-collateral-boundaries.test.mjs'
+      - 'docs/master6/6-5-collateral-audit.md'
+      - 'test/master6-collateral-audit.test.js'
+      - 'docs/master6/6-6-supply-withdraw.md'
+      - 'test/master6-supply-withdraw.test.js'
+      - '.github/workflows/master6-supply-withdraw.yml'
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/LQCLendingCore.sol'
+      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
+      - 'dex/test/lending-supply-withdraw-boundaries.test.mjs'
+      - 'dex/test/lending-collateral-boundaries.test.mjs'
+      - 'docs/master6/6-5-collateral-audit.md'
+      - 'test/master6-collateral-audit.test.js'
+      - 'docs/master6/6-6-supply-withdraw.md'
+      - 'test/master6-supply-withdraw.test.js'
+      - '.github/workflows/master6-supply-withdraw.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  supply-withdraw:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master6-supply-withdraw.test.js
