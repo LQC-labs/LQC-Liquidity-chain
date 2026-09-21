@@ -1,21 +1,5 @@
 name: Master 6 Supply Withdraw
 on:
-  push:
-    paths:
-      - 'dex/**'
-      - 'docs/master6/6-5-collateral-audit.md'
-      - 'test/master6-collateral-audit.test.js'
-      - 'docs/master6/6-6-supply-withdraw.md'
-      - 'test/master6-supply-withdraw.test.js'
-      - '.github/workflows/master6-supply-withdraw.yml'
-  pull_request:
-    paths:
-      - 'dex/**'
-      - 'docs/master6/6-5-collateral-audit.md'
-      - 'test/master6-collateral-audit.test.js'
-      - 'docs/master6/6-6-supply-withdraw.md'
-      - 'test/master6-supply-withdraw.test.js'
-      - '.github/workflows/master6-supply-withdraw.yml'
   workflow_dispatch:
 permissions:
   contents: read
