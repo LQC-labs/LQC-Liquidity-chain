@@ -1,0 +1,27 @@
+name: Master 5 Oracle Circuit Breaker
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/LQCOracleManager.sol'
+      - 'dex/contracts/futures/LQCAggregatorOracleAdapter.sol'
+      - 'dex/contracts/futures/LQCFuturesMarketRegistry.sol'
+      - 'dex/app/futures/oracle-guard.js'
+      - 'docs/ORACLE_INTERFACE_BOUNDARY.md'
+      - 'docs/master5/5-7-circuit-breaker.md'
+      - 'test/master5-circuit-breaker.test.js'
+      - '.github/workflows/master5-circuit-breaker.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  circuit-breaker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master5-circuit-breaker.test.js
+      - run: node test/master5-deviation.test.js
+      - run: node test/master5-freshness.test.js
