@@ -1,0 +1,33 @@
+name: Master 6 Clean Lending Deployment Packet
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/**'
+      - 'dex/scripts/prepare-master6-clean-lending-deployment.mjs'
+      - 'dex/deployments/lending-stage0-finalized-config-bsc-testnet-97.json'
+      - 'dex/deployments/lending-stage0-completion-bsc-testnet-97.json'
+      - 'docs/master6/6-12-clean-lending-deployment-packet.md'
+      - 'test/master6-clean-lending-deployment-packet.test.js'
+      - '.github/workflows/master6-clean-lending-deployment-packet.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  packet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile current Lending sources
+        working-directory: dex
+        run: npm run compile
+      - name: Verify deterministic clean-stack packet
+        run: node --test test/master6-clean-lending-deployment-packet.test.js
