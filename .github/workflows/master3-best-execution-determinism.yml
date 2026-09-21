@@ -1,0 +1,25 @@
+name: Master 3 Best Execution Determinism
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/master3-best-execution-determinism.js'
+      - 'test/master3-best-execution-determinism.test.js'
+      - 'docs/master3/3-7-best-execution-determinism.md'
+      - '.github/workflows/master3-best-execution-determinism.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  determinism:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Run deterministic Best Execution gate
+        run: node test/master3-best-execution-determinism.test.js
