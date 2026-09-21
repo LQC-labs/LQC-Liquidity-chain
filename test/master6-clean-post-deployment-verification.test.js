@@ -13,11 +13,18 @@ test("Master 6 post-deployment evidence freezes exactly ten sequential CREATE tr
   evidence.transactions.forEach((tx,i)=>{
     assert.equal(tx.order,i+1);
     assert.equal(tx.nonce,String(17+i));
-    assert.match(tx.hash,/^0x[0-9a-f]{64}$/);
+    if(i===0){
+      assert.equal(tx.hash,null);
+      assert.equal(tx.hashResolution,"DISCOVER_FROM_CHAIN_BY_DEPLOYER_NONCE_17_NEAR_TX2");
+    }else{
+      assert.match(tx.hash,/^0x[0-9a-f]{64}$/);
+    }
   });
 });
 
 test("Master 6 post-deployment verifier is read-only and fail-closed",()=>{
+  assert.match(script,/resolveTransactionHashes/);
+  assert.match(script,/eth_getBlockByNumber/);
   assert.match(script,/getTransactionReceipt/);
   assert.match(script,/getTransactionCount/);
   assert.match(script,/getCode/);
