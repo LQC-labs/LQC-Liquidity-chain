@@ -1,0 +1,23 @@
+name: Master 5 Oracle Deviation
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/LQCOracleManager.sol'
+      - 'docs/master5/5-6-deviation.md'
+      - 'test/master5-deviation.test.js'
+      - '.github/workflows/master5-deviation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deviation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master5-deviation.test.js
+      - run: node test/master5-freshness.test.js
+      - run: node test/master5-reference-feed.test.js
