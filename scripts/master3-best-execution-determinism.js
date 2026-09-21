@@ -7,8 +7,8 @@ function fail(reason, details = {}) {
 
 function asBigInt(v) {
   if (typeof v === 'bigint') return v;
-  if (typeof v === 'number' && Number.isSafeInteger(v)) return BigInt(v);
-  if (typeof v === 'string' && /^\\d+$/.test(v)) return BigInt(v);
+  if (typeof v === 'number' && Number.isSafeInteger(v) && v >= 0) return BigInt(v);
+  if (typeof v === 'string' && /^\d+$/.test(v)) return BigInt(v);
   throw new Error('INVALID_INTEGER');
 }
 
@@ -37,7 +37,7 @@ function compare(a,b) {
   if (a.netOut !== b.netOut) return a.netOut > b.netOut ? -1 : 1;
   if (a.explicitCost !== b.explicitCost) return a.explicitCost < b.explicitCost ? -1 : 1;
   if (a.riskScore !== b.riskScore) return a.riskScore < b.riskScore ? -1 : 1;
-  return a.routeId.localeCompare(b.routeId);
+  return a.routeId < b.routeId ? -1 : a.routeId > b.routeId ? 1 : 0;
 }
 
 function evaluate(input) {
