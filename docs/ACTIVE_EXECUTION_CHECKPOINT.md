@@ -40,7 +40,8 @@ Before starting the next new Staking implementation, complete this short reposit
 4. **DONE in this synchronization set** — `docs/MASTER_DEVELOPMENT_PLAN.md` current position and `docs/IMPLEMENTATION_MATRIX.md` synchronized;
 5. **DONE** — Master 6/15 LQC Staking Vault implemented and merged after CI PASS;
 6. **DONE** — Master 6/16 Reward Accounting / Claim merged after CI PASS;
-7. **CURRENT EXECUTABLE** — Master 6/17 Lock / Cooldown / Unstake.
+7. **DONE** — Master 6/17 Lock / Cooldown / Unstake merged after CI PASS;
+8. **CURRENT EXECUTABLE** — Master 6/18 Staking Governance / Emergency Controls.
 
 ## Preserved Staking direction and timing
 
@@ -55,8 +56,8 @@ Development timing:
 - 6/14 Supply Earn verification must PASS first;
 - 6/15 LQC Staking Vault — **PASS**;
 - 6/16 Reward Accounting / Claim — **PASS**;
-- 6/17 Lock / Cooldown / Unstake — **CURRENT**;
-- 6/18 Staking Governance / Emergency Controls;
+- 6/17 Lock / Cooldown / Unstake — **PASS**;
+- 6/18 Staking Governance / Emergency Controls — **CURRENT**;
 - 6/19 Lending + Earn + Staking E2E.
 
 The LQC Staking Vault is one canonical, independently accounted vault. It is not embedded in Lending Core and staking principal is not silently rehypothecated into Lending.

@@ -26,8 +26,8 @@ describe("Master 6/17 LQC Staking Lock Cooldown Unstake",function(){
     other=await provider.getSigner(2);
 
     token=await deploy("MockERC20","mocks/MockERC20",owner,"LQC Test","tLQC");
-    vault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,token.target,owner.address,cooldown);
-    rewards=await deploy("LQCStakingRewards","staking/LQCStakingRewards",owner,vault.target,owner.address);
+    vault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,token.target,owner.address,other.address,cooldown,30*24*60*60);
+    rewards=await deploy("LQCStakingRewards","staking/LQCStakingRewards",owner,vault.target,owner.address,other.address,ethers.parseEther("10000"),ethers.parseEther("100"),365*24*60*60);
     await(await vault.initializeRewardAccounting(rewards.target)).wait();
 
     await(await token.mint(user.address,ethers.parseEther("1000"))).wait();

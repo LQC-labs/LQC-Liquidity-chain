@@ -1,0 +1,44 @@
+name: Master 6 18 Staking Governance
+
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/staking/**'
+      - 'dex/contracts/interfaces/IERC20.sol'
+      - 'dex/contracts/libraries/SafeTransferLib.sol'
+      - 'dex/contracts/mocks/MockERC20.sol'
+      - 'dex/contracts/mocks/MockFeeOnTransferToken.sol'
+      - 'dex/test/staking-vault.test.mjs'
+      - 'dex/test/staking-rewards.test.mjs'
+      - 'dex/test/staking-exit.test.mjs'
+      - 'dex/test/staking-governance.test.mjs'
+      - 'docs/master6/6-18-staking-governance.md'
+      - '.github/workflows/master6-18-staking-governance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  staking-governance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile current protocol sources
+        working-directory: dex
+        run: npm run compile
+      - name: Run Staking 6/15 through 6/18 regressions
+        working-directory: dex
+        run: npx mocha --timeout 30000 test/staking-vault.test.mjs test/staking-rewards.test.mjs test/staking-exit.test.mjs test/staking-governance.test.mjs
+      - name: Re-run Lending isolation regression
+        working-directory: dex
+        run: npx mocha --timeout 30000 test/lending-core.test.mjs test/lending-security-invariant-gate.test.mjs

@@ -10,9 +10,8 @@ interface ILQCStakingRewardCheckpoint {
 }
 
 /// @notice Canonical custody/accounting vault for LQC staking principal.
-/// @dev Rewards are accounted in a separate Master 6/16 module.
-///      Master 6/17 adds user-controlled lock extension plus a two-step cooldown exit.
-///      Governance/emergency mutation controls remain Master 6/18.
+/// @dev Master 6/18 adds bounded governance and emergency controls without granting
+///      Governance any right to seize user staking principal.
 contract LQCStakingVault is ILQCStakingRead {
     using SafeTransferLib for address;
 
@@ -22,11 +21,17 @@ contract LQCStakingVault is ILQCStakingRead {
     }
 
     address public immutable override asset;
+    uint64 public immutable maxCooldownDuration;
+
     address public owner;
     address public pendingOwner;
+    address public guardian;
     address public rewardAccounting;
 
     uint64 public cooldownDuration;
+    bool public stakingPaused;
+    bool public emergencyExitEnabled;
+
     uint256 public override totalStaked;
     uint256 public override totalPendingUnstake;
     mapping(address => uint256) public override stakedBalance;
@@ -41,6 +46,10 @@ contract LQCStakingVault is ILQCStakingRead {
     event UnstakeCancelled(address indexed account, uint256 amount);
     event Unstaked(address indexed account, address indexed receiver, uint256 amount);
     event RewardAccountingInitialized(address indexed module);
+    event GuardianUpdated(address indexed previousGuardian, address indexed newGuardian);
+    event StakingPauseChanged(bool paused, address indexed caller);
+    event EmergencyExitChanged(bool enabled, address indexed caller);
+    event CooldownDurationChanged(uint64 previousDuration, uint64 newDuration);
     event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
@@ -59,9 +68,15 @@ contract LQCStakingVault is ILQCStakingRead {
     error CooldownActive();
     error InsufficientStake();
     error AmountOverflow();
+    error StakingPaused();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
+        _;
+    }
+
+    modifier onlyOwnerOrGuardian() {
+        if (msg.sender != owner && msg.sender != guardian) revert Forbidden();
         _;
     }
 
@@ -72,17 +87,31 @@ contract LQCStakingVault is ILQCStakingRead {
         unlocked = 1;
     }
 
-    constructor(address asset_, address owner_, uint64 cooldownDuration_) {
-        if (asset_ == address(0) || owner_ == address(0)) revert ZeroAddress();
-        if (cooldownDuration_ == 0) revert InvalidCooldown();
+    constructor(
+        address asset_,
+        address owner_,
+        address guardian_,
+        uint64 cooldownDuration_,
+        uint64 maxCooldownDuration_
+    ) {
+        if (asset_ == address(0) || owner_ == address(0) || guardian_ == address(0)) revert ZeroAddress();
+        if (
+            cooldownDuration_ == 0 || maxCooldownDuration_ == 0
+                || cooldownDuration_ > maxCooldownDuration_
+        ) revert InvalidCooldown();
+
         asset = asset_;
         owner = owner_;
+        guardian = guardian_;
         cooldownDuration = cooldownDuration_;
+        maxCooldownDuration = maxCooldownDuration_;
+
         emit OwnershipTransferred(address(0), owner_);
+        emit GuardianUpdated(address(0), guardian_);
     }
 
     /// @notice One-time binding to the canonical reward-accounting module.
-    /// @dev Replacement/migration policy belongs to Master 6/18 governance controls.
+    /// @dev Later migration requires an explicit reviewed replacement mechanism rather than an arbitrary hot-swap.
     function initializeRewardAccounting(address module) external onlyOwner {
         if (module == address(0) || module.code.length == 0) revert InvalidModule();
         if (rewardAccounting != address(0)) revert AlreadyConfigured();
@@ -92,6 +121,7 @@ contract LQCStakingVault is ILQCStakingRead {
 
     /// @notice Stakes LQC principal for an account using exact-transfer accounting.
     function stake(uint256 amount, address account) external nonReentrant {
+        if (stakingPaused) revert StakingPaused();
         if (amount == 0) revert ZeroAmount();
         if (account == address(0)) revert ZeroAddress();
 
@@ -109,9 +139,9 @@ contract LQCStakingVault is ILQCStakingRead {
     }
 
     /// @notice Voluntarily extends the caller's staking lock.
-    /// @dev Lock can only move forward. Product presets such as 90/180 days live in UI/config,
-    ///      not as hard-coded economic promises in the Core vault.
+    /// @dev New lock extensions stop during a staking pause; existing users retain their exit rights.
     function extendLock(uint64 newLockUntil) external {
+        if (stakingPaused) revert StakingPaused();
         if (stakedBalance[msg.sender] == 0) revert InsufficientStake();
         uint64 previous = lockUntil[msg.sender];
         if (newLockUntil <= block.timestamp || newLockUntil <= previous) revert InvalidLock();
@@ -120,9 +150,10 @@ contract LQCStakingVault is ILQCStakingRead {
     }
 
     /// @notice Removes principal from active staking/reward weight and starts the cooldown.
+    /// @dev Emergency mode may waive lock and cooldown, but never transfers principal to Governance.
     function requestUnstake(uint256 amount) external nonReentrant {
         if (amount == 0) revert ZeroAmount();
-        if (block.timestamp < lockUntil[msg.sender]) revert LockedStake();
+        if (!emergencyExitEnabled && block.timestamp < lockUntil[msg.sender]) revert LockedStake();
         if (pendingUnstakes[msg.sender].amount != 0) revert PendingExitExists();
 
         uint256 active = stakedBalance[msg.sender];
@@ -134,7 +165,9 @@ contract LQCStakingVault is ILQCStakingRead {
         stakedBalance[msg.sender] = active - amount;
         totalStaked -= amount;
 
-        uint64 availableAt = uint64(block.timestamp + cooldownDuration);
+        uint64 availableAt =
+            emergencyExitEnabled ? uint64(block.timestamp) : uint64(block.timestamp + cooldownDuration);
+
         pendingUnstakes[msg.sender] = PendingUnstake(uint128(amount), availableAt);
         totalPendingUnstake += amount;
 
@@ -142,7 +175,6 @@ contract LQCStakingVault is ILQCStakingRead {
     }
 
     /// @notice Cancels a pending exit and returns principal to active reward weight.
-    /// @dev A checkpoint occurs before restoring active stake so cooldown time earns no retroactive rewards.
     function cancelUnstake() external nonReentrant {
         PendingUnstake memory pending = pendingUnstakes[msg.sender];
         if (pending.amount == 0) revert NoPendingExit();
@@ -185,10 +217,61 @@ contract LQCStakingVault is ILQCStakingRead {
         return (pending.amount, pending.availableAt);
     }
 
-    /// @notice Confirms that actual token custody covers active and cooldown principal.
-    /// @dev Unsolicited token donations may create surplus but never increase staking credit.
     function isFullyBacked() external view override returns (bool) {
         return IERC20(asset).balanceOf(address(this)) >= totalStaked + totalPendingUnstake;
+    }
+
+    /// @notice Owner/guardian may stop new staking and lock extensions; user exits remain live.
+    function pauseNewStaking() external onlyOwnerOrGuardian {
+        if (!stakingPaused) {
+            stakingPaused = true;
+            emit StakingPauseChanged(true, msg.sender);
+        }
+    }
+
+    /// @notice Only Governance/owner may resume new staking after review.
+    function resumeNewStaking() external onlyOwner {
+        if (stakingPaused) {
+            stakingPaused = false;
+            emit StakingPauseChanged(false, msg.sender);
+        }
+    }
+
+    /// @notice Owner/guardian may enable immediate user-controlled emergency exits.
+    /// @dev Enabling emergency exits also pauses new staking.
+    function enableEmergencyExit() external onlyOwnerOrGuardian {
+        if (!stakingPaused) {
+            stakingPaused = true;
+            emit StakingPauseChanged(true, msg.sender);
+        }
+        if (!emergencyExitEnabled) {
+            emergencyExitEnabled = true;
+            emit EmergencyExitChanged(true, msg.sender);
+        }
+    }
+
+    /// @notice Only Governance/owner may disable emergency mode after incident review.
+    function disableEmergencyExit() external onlyOwner {
+        if (emergencyExitEnabled) {
+            emergencyExitEnabled = false;
+            emit EmergencyExitChanged(false, msg.sender);
+        }
+    }
+
+    /// @notice Governance may update the cooldown only inside the deployment-time safety ceiling.
+    /// @dev Existing pending exits keep their previously snapshotted availableAt timestamp.
+    function setCooldownDuration(uint64 newDuration) external onlyOwner {
+        if (newDuration == 0 || newDuration > maxCooldownDuration) revert InvalidCooldown();
+        uint64 previous = cooldownDuration;
+        cooldownDuration = newDuration;
+        emit CooldownDurationChanged(previous, newDuration);
+    }
+
+    function setGuardian(address newGuardian) external onlyOwner {
+        if (newGuardian == address(0)) revert ZeroAddress();
+        address previous = guardian;
+        guardian = newGuardian;
+        emit GuardianUpdated(previous, newGuardian);
     }
 
     function transferOwnership(address newOwner) external onlyOwner {

@@ -25,8 +25,8 @@ describe("Master 6/16 LQC Staking Reward Accounting",function(){
     other=await provider.getSigner(2);
 
     token=await deploy("MockERC20","mocks/MockERC20",owner,"LQC Test","tLQC");
-    vault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,token.target,owner.address,7*24*60*60);
-    rewards=await deploy("LQCStakingRewards","staking/LQCStakingRewards",owner,vault.target,owner.address);
+    vault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,token.target,owner.address,other.address,7*24*60*60,30*24*60*60);
+    rewards=await deploy("LQCStakingRewards","staking/LQCStakingRewards",owner,vault.target,owner.address,other.address,ethers.parseEther("10000"),ethers.parseEther("100"),365*24*60*60);
     await(await vault.initializeRewardAccounting(rewards.target)).wait();
 
     await(await token.mint(user.address,ethers.parseEther("1000"))).wait();
@@ -114,14 +114,14 @@ describe("Master 6/16 LQC Staking Reward Accounting",function(){
   });
 
   it("binds the reward accounting module only once",async function(){
-    const second=await deploy("LQCStakingRewards","staking/LQCStakingRewards",owner,vault.target,owner.address);
+    const second=await deploy("LQCStakingRewards","staking/LQCStakingRewards",owner,vault.target,owner.address,other.address,ethers.parseEther("10000"),ethers.parseEther("100"),365*24*60*60);
     await assert.rejects(vault.initializeRewardAccounting(second.target));
   });
 
   it("rejects fee-on-transfer reward funding so reserve accounting cannot drift",async function(){
     const feeToken=await deploy("MockFeeOnTransferToken","mocks/MockFeeOnTransferToken",owner,"Fee LQC","fLQC");
-    const feeVault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,feeToken.target,owner.address,7*24*60*60);
-    const feeRewards=await deploy("LQCStakingRewards","staking/LQCStakingRewards",owner,feeVault.target,owner.address);
+    const feeVault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,feeToken.target,owner.address,other.address,7*24*60*60,30*24*60*60);
+    const feeRewards=await deploy("LQCStakingRewards","staking/LQCStakingRewards",owner,feeVault.target,owner.address,other.address,ethers.parseEther("10000"),ethers.parseEther("100"),365*24*60*60);
     await(await feeVault.initializeRewardAccounting(feeRewards.target)).wait();
 
     const amount=ethers.parseEther("100");
