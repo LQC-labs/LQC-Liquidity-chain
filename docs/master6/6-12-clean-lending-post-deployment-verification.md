@@ -1,6 +1,6 @@
 # Master 6/12 — Clean Lending Post-Deployment Verification
 
-Status: **read-only verification gate**
+Status: **VERIFIED_10_OF_10_CLEAN_DEPLOYMENT**
 
 The guarded TokenPocket deployment session completed all 10 approved CREATE transactions from deployer nonce 17 through 26.
 
@@ -29,3 +29,16 @@ Market activation belongs to Master 6/13 Lending E2E and remains separately gate
 `governanceConfigurationAuthorized: false`
 
 `activationAuthorized: false`
+
+
+## Recorded verification
+
+The successful two-RPC verification result is frozen at:
+
+`dex/deployments/master6-clean-post-deployment-verification-bsc-testnet-97.json`
+
+Verification digest: `sha256:ef6275939580d65af43bb9178e020f9353605b2ff38f7053469527e5b83a0478`
+
+Final deployer pending nonce: **27**
+
+Governance configuration remains unexecuted and market activation remains unauthorized.
