@@ -1,0 +1,43 @@
+name: Master 6 19 Lending Earn Staking E2E
+
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/**'
+      - 'dex/contracts/staking/**'
+      - 'dex/test/lending-*.test.mjs'
+      - 'dex/test/staking-*.test.mjs'
+      - 'dex/test/master6-lending-earn-staking-e2e.test.mjs'
+      - 'docs/master6/6-19-lending-earn-staking-e2e.md'
+      - '.github/workflows/master6-19-lending-earn-staking-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  master6-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile current protocol sources
+        working-directory: dex
+        run: npm run compile
+      - name: Run Master 6 integrated E2E
+        working-directory: dex
+        run: npx mocha --timeout 30000 test/master6-lending-earn-staking-e2e.test.mjs
+      - name: Re-run complete Staking regression
+        working-directory: dex
+        run: npx mocha --timeout 30000 test/staking-vault.test.mjs test/staking-rewards.test.mjs test/staking-exit.test.mjs test/staking-governance.test.mjs
+      - name: Re-run Lending Core and security regression
+        working-directory: dex
+        run: npx mocha --timeout 30000 test/lending-core.test.mjs test/lending-security-invariant-gate.test.mjs
