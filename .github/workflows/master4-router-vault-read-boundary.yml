@@ -1,0 +1,25 @@
+name: Master 4 Router Vault Read Boundary
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/vault/**'
+      - 'dex/contracts/router-v2/**'
+      - 'dex/test/vault-router-risk-integration.test.mjs'
+      - 'scripts/master4-router-vault-read-boundary.js'
+      - 'test/master4-router-vault-read-boundary.test.js'
+      - 'docs/master4/4-6-router-vault-read-boundary.md'
+      - '.github/workflows/master4-router-vault-read-boundary.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master4-router-vault-read-boundary.test.js
+      - run: node test/master4-vault-accounting-invariant.test.js
