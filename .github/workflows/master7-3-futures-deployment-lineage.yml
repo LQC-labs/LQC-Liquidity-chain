@@ -1,17 +1,7 @@
 name: Master 7 3 Futures Deployment Lineage
 
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/futures/**'
-      - 'dex/scripts/compile.mjs'
-      - 'dex/scripts/verify-futures-deployment-lineage.mjs'
-      - 'docs/futures/BSC_TESTNET_TX_EVIDENCE.md'
-      - 'dex/deployments/bsc-testnet/futures-2026-09-19.md'
-      - 'docs/master7/7-3-futures-deployment-lineage.md'
-      - '.github/workflows/master7-3-futures-deployment-lineage.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 
