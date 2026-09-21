@@ -24,3 +24,13 @@ test("Master 6/12 mobile deploy page is one-at-a-time and fail closed",()=>{
   assert.doesNotMatch(js,/configurationActions.*eth_sendTransaction/s);
   assert.match(html,/Governance 설정과 Lending 시장 활성화는 수행하지 않습니다/);
 });
+
+test("Master 6/12 mobile deploy page hashes init code with packet UTF-8 semantics",()=>{
+  assert.match(js,/new TextEncoder\(\)\.encode\(String\(value\)\)/);
+  assert.match(js,/sha256Text\(d\.data\)/);
+  assert.doesNotMatch(js,/hexData\.slice\(2\)/);
+});
+
+test("Master 6/12 mobile deploy page pins refreshed script cache version",()=>{
+  assert.match(html,/master6-clean-lending-deploy-testnet\.js\?v=2/);
+});
