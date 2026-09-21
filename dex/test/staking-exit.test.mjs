@@ -54,7 +54,7 @@ describe("Master 6/17 LQC Staking Lock Cooldown Unstake",function(){
     await provider.send("evm_increaseTime",[601]);
     await provider.send("evm_mine",[]);
 
-    await(await vault.connect(user).requestUnstake(amount)).wait();
+    await(await vault.connect(user).requestUnstake(amount,{gasLimit:500_000})).wait();
     const [pending,availableAt]=await vault.pendingUnstakeOf(user.address);
     assert.equal(pending,amount);
     assert.ok(availableAt>0n);
@@ -96,7 +96,7 @@ describe("Master 6/17 LQC Staking Lock Cooldown Unstake",function(){
     await provider.send("evm_mine",[]);
 
     const before=await token.balanceOf(user.address);
-    await(await vault.connect(user).completeUnstake(user.address)).wait();
+    await(await vault.connect(user).completeUnstake(user.address,{gasLimit:500_000})).wait();
     assert.equal((await token.balanceOf(user.address))-before,amount);
     assert.equal(await vault.totalPendingUnstake(),0n);
     const [pending,availableAt]=await vault.pendingUnstakeOf(user.address);
