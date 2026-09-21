@@ -51,19 +51,45 @@ function validatePacket(live,evidence){
 async function resolveTransactionHashes(provider,live,evidence){
   const hashes=evidence.transactions.map(x=>x.hash);
   if(hashes[0]!==null) return hashes;
+
+  // TokenPocket displayed the first tx hash with 63 hex digits.
+  // EVM hashes are always 32 bytes, so first validate the only zero-left-padded
+  // canonical candidate against chain state before accepting it.
+  const displayedFirst="c4f8d50ff95f1529c14345bc6a22bb55bea3aca5c9f23e128893bca6b59b1c2";
+  const paddedCandidate="0x0"+displayedFirst;
+  const candidateTx=await provider.getTransaction(paddedCandidate);
+  const candidateReceipt=await provider.getTransactionReceipt(paddedCandidate);
+  if(
+    candidateTx&&candidateReceipt&&candidateReceipt.status===1
+    &&candidateTx.from?.toLowerCase()===live.deployer.toLowerCase()
+    &&candidateTx.to===null
+    &&candidateTx.nonce===17
+    &&candidateReceipt.contractAddress
+    &&candidateReceipt.contractAddress.toLowerCase()===live.packet.deployments[0].predictedAddress.toLowerCase()
+    &&sha256(candidateTx.data)===live.packet.deployments[0].initCodeDigest
+  ){
+    hashes[0]=paddedCandidate;
+    return hashes;
+  }
+
   const anchor=await provider.getTransactionReceipt(hashes[1]);
   if(!anchor?.blockNumber) throw Error("Cannot resolve first deployment hash: tx2 receipt missing");
   const deployer=live.deployer.toLowerCase();
-  for(let blockNumber=anchor.blockNumber;blockNumber>=Math.max(0,anchor.blockNumber-250);blockNumber--){
+  for(let blockNumber=anchor.blockNumber;blockNumber>=Math.max(0,anchor.blockNumber-1200);blockNumber--){
     const block=await provider.send("eth_getBlockByNumber",[ethers.toQuantity(blockNumber),true]);
     for(const tx of block?.transactions||[]){
-      if(tx?.from?.toLowerCase()===deployer&&Number(BigInt(tx.nonce))===17&&tx.to===null){
+      if(
+        tx?.from?.toLowerCase()===deployer
+        &&Number(BigInt(tx.nonce))===17
+        &&tx.to===null
+        &&sha256(tx.input||tx.data||"0x")===live.packet.deployments[0].initCodeDigest
+      ){
         hashes[0]=tx.hash;
         return hashes;
       }
     }
   }
-  throw Error("Cannot resolve first deployment hash from nearby canonical blocks");
+  throw Error("Cannot resolve first deployment hash from canonical chain evidence");
 }
 
 async function currentBindings(provider,live){
