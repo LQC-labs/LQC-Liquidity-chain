@@ -1,0 +1,13 @@
+'use strict';
+const assert=require('assert'),crypto=require('crypto');
+const {evaluate}=require('../scripts/master3-best-execution-proof-consumption');
+const payload=JSON.stringify({version:1,stage:'3/7',chainId:'97',routerAddress:'0xabc',registryVersion:'1',quoteExpiry:'200',selectedRouteId:'a',candidates:[{routeId:'a',adapterId:'v3',domain:'DEX_FLOW',grossOut:'1000',explicitCost:'10',netOut:'990',riskScore:'2'}]});
+const proof={stage:'3/8',pass:true,activationAuthorized:false,selectedRouteId:'a',canonicalPayload:payload,proofDigest:'sha256:'+crypto.createHash('sha256').update(payload).digest('hex')};
+const request={selectedRouteId:'a',chainId:'97',routerAddress:'0xABC',registryVersion:'1',quoteExpiry:'200',now:'100'};
+assert.strictEqual(evaluate({proof,request}).pass,true);
+assert.strictEqual(evaluate({proof:{...proof,proofDigest:'sha256:bad'},request}).pass,false);
+assert.strictEqual(evaluate({proof,request:{...request,selectedRouteId:'b'}}).pass,false);
+assert.strictEqual(evaluate({proof,request:{...request,now:'200'}}).pass,false);
+assert.strictEqual(evaluate({proof,request:{...request,candidates:[]}}).pass,false);
+assert.strictEqual(evaluate({proof,request:{...request,lendingStateUsed:true}}).pass,false);
+console.log('Master 3/9 proof consumption: PASS');
