@@ -10,15 +10,12 @@ test("Master 6 post-deployment evidence freezes exactly ten sequential CREATE tr
   assert.equal(evidence.startingNonce,"17");
   assert.equal(evidence.finalPendingNonce,"27");
   assert.equal(evidence.activationAuthorized,false);
+  assert.equal(evidence.status,"CHAIN_VERIFIED_10_OF_10");
+  assert.match(evidence.verificationDigest,/^sha256:[0-9a-f]{64}$/);
   evidence.transactions.forEach((tx,i)=>{
     assert.equal(tx.order,i+1);
     assert.equal(tx.nonce,String(17+i));
-    if(i===0){
-      assert.equal(tx.hash,null);
-      assert.equal(tx.hashResolution,"DISCOVER_FROM_CHAIN_BY_DEPLOYER_NONCE_17_NEAR_TX2");
-    }else{
-      assert.match(tx.hash,/^0x[0-9a-f]{64}$/);
-    }
+    assert.match(tx.hash,/^0x[0-9a-f]{64}$/);
   });
 });
 
