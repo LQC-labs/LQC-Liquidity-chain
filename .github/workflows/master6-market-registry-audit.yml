@@ -1,14 +1,5 @@
 name: Master 6 Lending Market Registry Audit
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
-      - 'dex/contracts/lending/LQCLendingCore.sol'
-      - 'dex/test/lending-core.test.mjs'
-      - 'dex/test/lending-ltv-health-factor-gate.test.mjs'
-      - 'docs/master6/6-1-market-registry-audit.md'
-      - 'test/master6-market-registry-audit.test.js'
-      - '.github/workflows/master6-market-registry-audit.yml'
   workflow_dispatch:
 permissions:
   contents: read
