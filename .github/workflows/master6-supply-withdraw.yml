@@ -2,10 +2,7 @@ name: Master 6 Supply Withdraw
 on:
   push:
     paths:
-      - 'dex/contracts/lending/LQCLendingCore.sol'
-      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
-      - 'dex/test/lending-supply-withdraw-boundaries.test.mjs'
-      - 'dex/test/lending-collateral-boundaries.test.mjs'
+      - 'dex/**'
       - 'docs/master6/6-5-collateral-audit.md'
       - 'test/master6-collateral-audit.test.js'
       - 'docs/master6/6-6-supply-withdraw.md'
@@ -13,10 +10,7 @@ on:
       - '.github/workflows/master6-supply-withdraw.yml'
   pull_request:
     paths:
-      - 'dex/contracts/lending/LQCLendingCore.sol'
-      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
-      - 'dex/test/lending-supply-withdraw-boundaries.test.mjs'
-      - 'dex/test/lending-collateral-boundaries.test.mjs'
+      - 'dex/**'
       - 'docs/master6/6-5-collateral-audit.md'
       - 'test/master6-collateral-audit.test.js'
       - 'docs/master6/6-6-supply-withdraw.md'
@@ -28,10 +22,19 @@ permissions:
 jobs:
   supply-withdraw:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: node test/master6-supply-withdraw.test.js
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Master 6/6 static gate
+        run: node test/master6-supply-withdraw.test.js
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile and run complete DEX test suite
+        working-directory: dex
+        run: npm test
