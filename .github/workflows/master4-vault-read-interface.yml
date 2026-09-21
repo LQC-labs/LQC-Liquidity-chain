@@ -1,0 +1,22 @@
+name: Master 4 Vault Read Interface
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/vault/LQCLiquidityVault.sol'
+      - 'dex/contracts/vault/interfaces/ILQCVaultRead.sol'
+      - 'test/master4-vault-read-interface.test.js'
+      - 'docs/master4/4-3-vault-read-interface.md'
+      - '.github/workflows/master4-vault-read-interface.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  read-interface:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master4-vault-read-interface.test.js

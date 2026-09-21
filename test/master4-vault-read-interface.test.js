@@ -1,0 +1,10 @@
+'use strict';
+const assert=require('assert'),fs=require('fs');
+const v=fs.readFileSync('dex/contracts/vault/LQCLiquidityVault.sol','utf8');
+const i=fs.readFileSync('dex/contracts/vault/interfaces/ILQCVaultRead.sol','utf8');
+assert.ok(v.includes('contract LQCLiquidityVault is ILQCVaultRead'));
+assert.ok(v.includes('function availableLiquidity() external view returns (uint256)'));
+assert.ok(v.includes('return actualIdle < accountedIdle ? actualIdle : accountedIdle;'));
+for(const fn of ['asset()','totalAssets()','accountedAssets()','strategyDebt()','depositCap()','depositsPaused()','allocationsPaused()','availableLiquidity()','isInsolvent()','convertToShares(uint256 assets)','convertToAssets(uint256 shares)']) assert.ok(i.includes(fn));
+for(const mutation of ['deposit(','withdraw(','redeem(','allocateToStrategy(','setStrategy(','pauseDeposits(']) assert.ok(!i.includes('function '+mutation));
+console.log('Master 4/3 Vault read interface: PASS');
