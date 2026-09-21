@@ -41,7 +41,9 @@ Before starting the next new Staking implementation, complete this short reposit
 5. **DONE** — Master 6/15 LQC Staking Vault implemented and merged after CI PASS;
 6. **DONE** — Master 6/16 Reward Accounting / Claim merged after CI PASS;
 7. **DONE** — Master 6/17 Lock / Cooldown / Unstake merged after CI PASS;
-8. **CURRENT EXECUTABLE** — Master 6/18 Staking Governance / Emergency Controls.
+8. **DONE** — Master 6/18 Staking Governance / Emergency Controls merged after CI PASS;
+9. **DONE in this gate** — Master 6/19 Lending + Earn + Staking repository E2E;
+10. **NEXT EXECUTABLE** — Master 7 Futures latest-main regression + selective reuse/gap reconciliation.
 
 ## Preserved Staking direction and timing
 
@@ -57,8 +59,8 @@ Development timing:
 - 6/15 LQC Staking Vault — **PASS**;
 - 6/16 Reward Accounting / Claim — **PASS**;
 - 6/17 Lock / Cooldown / Unstake — **PASS**;
-- 6/18 Staking Governance / Emergency Controls — **CURRENT**;
-- 6/19 Lending + Earn + Staking E2E.
+- 6/18 Staking Governance / Emergency Controls — **PASS**;
+- 6/19 Lending + Earn + Staking E2E — **PASS in this gate**.
 
 The LQC Staking Vault is one canonical, independently accounted vault. It is not embedded in Lending Core and staking principal is not silently rehypothecated into Lending.
 
@@ -78,3 +80,10 @@ After 6/19 completes the canonical LQC Staking path, future major-asset Earn pro
 ## Resume rule
 
 When resuming development, read this checkpoint together with current GitHub main and CI state before choosing the next task. If repository evidence conflicts with this checkpoint, update the checkpoint after evidence reconciliation rather than guessing from historical numbering.
+
+
+## Stage 6 exit boundary
+
+Stage 6 repository development is complete only at the repository/integration evidence level. This does not imply Staking Testnet deployment, approved reward budget, Lending market activation, independent audit, or production release.
+
+The next development lane is Master 7 Futures. Reuse the existing Futures foundation and testnet evidence; do not rebuild it from zero.
