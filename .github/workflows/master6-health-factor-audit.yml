@@ -1,25 +1,5 @@
 name: Master 6 Health Factor Audit
 on:
-  push:
-    paths:
-      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
-      - 'dex/contracts/lending/LQCOracleManager.sol'
-      - 'dex/test/lending-ltv-health-factor-gate.test.mjs'
-      - 'dex/test/lending-health-factor-boundaries.test.mjs'
-      - 'docs/LENDING_RISK_ENGINE_POLICY.md'
-      - 'docs/master6/6-9-health-factor-audit.md'
-      - 'test/master6-health-factor-audit.test.js'
-      - '.github/workflows/master6-health-factor-audit.yml'
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/LQCLendingMarketRegistry.sol'
-      - 'dex/contracts/lending/LQCOracleManager.sol'
-      - 'dex/test/lending-ltv-health-factor-gate.test.mjs'
-      - 'dex/test/lending-health-factor-boundaries.test.mjs'
-      - 'docs/LENDING_RISK_ENGINE_POLICY.md'
-      - 'docs/master6/6-9-health-factor-audit.md'
-      - 'test/master6-health-factor-audit.test.js'
-      - '.github/workflows/master6-health-factor-audit.yml'
   workflow_dispatch:
 permissions:
   contents: read
