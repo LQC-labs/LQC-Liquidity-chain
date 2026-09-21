@@ -6,6 +6,7 @@ on:
       - 'dex/scripts/generate-master6-live-execution-packet.mjs'
       - 'dex/scripts/prepare-master6-clean-lending-deployment.mjs'
       - 'dex/scripts/preflight-master6-clean-lending.mjs'
+      - 'test/master6-live-execution-packet-input.test.js'
       - '.github/workflows/master6-live-execution-packet.yml'
   workflow_dispatch:
     inputs:
@@ -44,6 +45,8 @@ jobs:
       - name: Validate live packet generator syntax
         working-directory: dex
         run: node --check scripts/generate-master6-live-execution-packet.mjs
+      - name: Verify deployer and approval input guards
+        run: node --test test/master6-live-execution-packet-input.test.js
   live-packet:
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
