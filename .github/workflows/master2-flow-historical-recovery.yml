@@ -1,10 +1,5 @@
 name: Master 2 Flow Historical Evidence Recovery
 on:
-  pull_request:
-    paths:
-      - "dex/scripts/recover-lqc-flow-historical-evidence.mjs"
-      - ".github/workflows/master2-flow-historical-recovery.yml"
-      - "docs/MASTER2_LQC_FLOW_HISTORICAL_RECOVERY.md"
   workflow_dispatch:
 jobs:
   recover:
