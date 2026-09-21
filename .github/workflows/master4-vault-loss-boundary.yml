@@ -1,0 +1,25 @@
+name: Master 4 Vault Strategy Loss Boundary
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/vault/**'
+      - 'dex/contracts/mocks/MockLossyStrategyAdapter.sol'
+      - 'scripts/master4-vault-loss-boundary.js'
+      - 'test/master4-vault-loss-boundary.test.js'
+      - 'docs/master4/4-7-vault-loss-boundary.md'
+      - '.github/workflows/master4-vault-loss-boundary.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  loss-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master4-vault-loss-boundary.test.js
+      - run: node test/master4-vault-accounting-invariant.test.js
+      - run: node test/master4-router-vault-read-boundary.test.js
