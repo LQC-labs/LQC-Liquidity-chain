@@ -1,0 +1,22 @@
+name: Master 6 Clean Lending Mobile Deploy
+on:
+  pull_request:
+    paths:
+      - 'dex/app/master6-clean-lending-deploy-testnet.js'
+      - 'dex/app/master6-clean-lending-deploy-testnet.html'
+      - 'dex/deployments/master6-live-execution-packet-bsc-testnet-97.json'
+      - 'test/master6-clean-lending-mobile-deploy.test.js'
+      - '.github/workflows/master6-clean-lending-mobile-deploy.yml'
+permissions:
+  contents: read
+jobs:
+  mobile-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify guarded mobile deployment page
+        run: node --test test/master6-clean-lending-mobile-deploy.test.js
