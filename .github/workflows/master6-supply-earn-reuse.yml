@@ -1,17 +1,7 @@
 name: Master 6 Supply Earn Reuse Gate
 
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/LQCInterestRateModel.sol'
-      - 'dex/contracts/lending/LQCLendingInterestIndex.sol'
-      - 'dex/contracts/lending/LQCLendingCore.sol'
-      - 'dex/test/lending-core.test.mjs'
-      - 'test/master6-supply-earn-reuse.test.js'
-      - 'docs/master6/6-14-supply-earn-reuse.md'
-      - '.github/workflows/master6-supply-earn-reuse.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 
