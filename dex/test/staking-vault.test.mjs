@@ -25,7 +25,7 @@ describe("Master 6/15 LQC Staking Vault",function(){
     other=await provider.getSigner(2);
 
     token=await deploy("MockERC20","mocks/MockERC20",owner,"LQC Test","tLQC");
-    vault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,token.target,owner.address);
+    vault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,token.target,owner.address,7*24*60*60);
 
     await(await token.mint(user.address,ethers.parseEther("1000"))).wait();
     await(await token.connect(user).approve(vault.target,ethers.MaxUint256)).wait();
@@ -58,7 +58,7 @@ describe("Master 6/15 LQC Staking Vault",function(){
 
   it("rejects fee-on-transfer staking assets so accounting cannot drift",async function(){
     const feeToken=await deploy("MockFeeOnTransferToken","mocks/MockFeeOnTransferToken",owner,"Fee LQC","fLQC");
-    const feeVault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,feeToken.target,owner.address);
+    const feeVault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,feeToken.target,owner.address,7*24*60*60);
     const amount=ethers.parseEther("100");
 
     await(await feeToken.mint(user.address,amount)).wait();
@@ -95,10 +95,10 @@ describe("Master 6/15 LQC Staking Vault",function(){
     assert.equal(await vault.pendingOwner(),ethers.ZeroAddress);
   });
 
-  it("keeps Master 6/15 isolated from rewards, Lending and premature exit logic",async function(){
+  it("preserves the 6/15 principal-isolation invariants as later Staking stages evolve",async function(){
     const abi=artifact("LQCStakingVault","staking/LQCStakingVault").abi;
     const names=new Set(abi.filter(x=>x.type==="function").map(x=>x.name));
-    for(const forbidden of["claim","rewardRate","notifyReward","borrow","repay","supplyLiquidity","unstake","requestUnstake"]){
+    for(const forbidden of["claim","rewardRate","notifyReward","borrow","repay","supplyLiquidity","mint"]){
       assert.equal(names.has(forbidden),false,forbidden);
     }
 

@@ -61,6 +61,7 @@ Existing Lending contracts and tests are reused. Staking is modular and does not
 - Staking rewards must reconcile to approved fixed-supply tokenomics and a disclosed bounded reward source.
 - Development timing: 6/15-6/19 completes the canonical Staking Vault and its E2E first; Launchpad-specific staking integration is deferred until the Launchpad workstream is active and the staking interface is stable/reviewed.
 - Safety/Insurance Staking is post-pilot scope and requires separate simulation, audit, legal review, disclosure, and governance.
+- Future USDT/USDC Locked Earn may be added after the canonical 6/15–6/19 LQC Staking path as separate asset-specific Earn modules behind a unified Earn UI/registry; stablecoin Earn custody/accounting must not be mixed into the LQC Staking Vault.
 
 ## Evidence state model
 
@@ -76,9 +77,9 @@ Before CEX due diligence, the whitepaper, README, contracts/configuration, testn
 
 ## Current position
 
-MASTER: **6/16 — Lending / Earn / LQC Staking**  
-COMPLETED IN CURRENT RESTART PATH: **6/13 Lending Core repository E2E PASS; 6/14 Supply Earn reuse gate PASS; 6/15 LQC Staking Vault PASS**  
-CURRENT EXECUTABLE: **6/16 Reward Accounting / Claim**  
+MASTER: **6/17 — Lending / Earn / LQC Staking**  
+COMPLETED IN CURRENT RESTART PATH: **6/13 Lending Core repository E2E PASS; 6/14 Supply Earn reuse gate PASS; 6/15 LQC Staking Vault PASS; 6/16 Reward Accounting / Claim PASS**  
+CURRENT EXECUTABLE: **6/17 Lock / Cooldown / Unstake**  
 ON-CHAIN BOUNDARY: the verified 10/10 clean BSC Testnet Lending deployment is preserved, but Governance configuration, market enablement, new Testnet transactions, and production activation each remain separately gated and are not implied by repository PASS.  
 WORKING RULE: verified earlier Master stages are reused; only evidence gaps or real implementation gaps are developed.
 

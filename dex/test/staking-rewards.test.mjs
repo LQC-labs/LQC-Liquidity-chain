@@ -25,7 +25,7 @@ describe("Master 6/16 LQC Staking Reward Accounting",function(){
     other=await provider.getSigner(2);
 
     token=await deploy("MockERC20","mocks/MockERC20",owner,"LQC Test","tLQC");
-    vault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,token.target,owner.address);
+    vault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,token.target,owner.address,7*24*60*60);
     rewards=await deploy("LQCStakingRewards","staking/LQCStakingRewards",owner,vault.target,owner.address);
     await(await vault.initializeRewardAccounting(rewards.target)).wait();
 
@@ -120,7 +120,7 @@ describe("Master 6/16 LQC Staking Reward Accounting",function(){
 
   it("rejects fee-on-transfer reward funding so reserve accounting cannot drift",async function(){
     const feeToken=await deploy("MockFeeOnTransferToken","mocks/MockFeeOnTransferToken",owner,"Fee LQC","fLQC");
-    const feeVault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,feeToken.target,owner.address);
+    const feeVault=await deploy("LQCStakingVault","staking/LQCStakingVault",owner,feeToken.target,owner.address,7*24*60*60);
     const feeRewards=await deploy("LQCStakingRewards","staking/LQCStakingRewards",owner,feeVault.target,owner.address);
     await(await feeVault.initializeRewardAccounting(feeRewards.target)).wait();
 

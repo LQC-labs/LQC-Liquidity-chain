@@ -39,7 +39,8 @@ Before starting the next new Staking implementation, complete this short reposit
 3. **DONE in this synchronization set** — actual main-state matrix updated from repository/test/CI/Testnet/on-chain evidence;
 4. **DONE in this synchronization set** — `docs/MASTER_DEVELOPMENT_PLAN.md` current position and `docs/IMPLEMENTATION_MATRIX.md` synchronized;
 5. **DONE** — Master 6/15 LQC Staking Vault implemented and merged after CI PASS;
-6. **CURRENT EXECUTABLE** — Master 6/16 Reward Accounting / Claim.
+6. **DONE** — Master 6/16 Reward Accounting / Claim merged after CI PASS;
+7. **CURRENT EXECUTABLE** — Master 6/17 Lock / Cooldown / Unstake.
 
 ## Preserved Staking direction and timing
 
@@ -53,8 +54,8 @@ Development timing:
 
 - 6/14 Supply Earn verification must PASS first;
 - 6/15 LQC Staking Vault — **PASS**;
-- 6/16 Reward Accounting / Claim — **CURRENT**;
-- 6/17 Lock / Cooldown / Unstake;
+- 6/16 Reward Accounting / Claim — **PASS**;
+- 6/17 Lock / Cooldown / Unstake — **CURRENT**;
 - 6/18 Staking Governance / Emergency Controls;
 - 6/19 Lending + Earn + Staking E2E.
 
@@ -63,6 +64,15 @@ The LQC Staking Vault is one canonical, independently accounted vault. It is not
 A future Launchpad reuses the stable Staking state through a reviewed read-only/versioned interface for eligibility data such as balance, lock duration, staking weight or snapshot state. Launchpad does not create a second staking custody domain, does not take staking principal, and does not mutate staking reward accounting.
 
 Exact staking reward budget/emission parameters remain a later economic/governance decision; no new token supply or guaranteed APY is implied.
+
+## Future Earn expansion boundary
+
+After 6/19 completes the canonical LQC Staking path, future major-asset Earn products may be expanded without changing LQC Staking custody:
+- USDT/USDC Lending Supply Earn remains borrower-interest-driven;
+- future USDT/USDC Locked Earn is implemented as separate asset-specific vault/accounting modules;
+- a unified Earn UI/registry may present LQC Staking, Supply Earn and future Locked Earn together;
+- stablecoin principal/rewards must not be mixed into the LQC Staking Vault;
+- new Earn assets are added through reviewed modules/interfaces rather than rewriting existing Lending or Staking Core.
 
 ## Resume rule
 
