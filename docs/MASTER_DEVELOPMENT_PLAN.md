@@ -100,8 +100,8 @@ Before CEX due diligence, the whitepaper, README, contracts/configuration, testn
 ## Current position
 
 MASTER: **7/5 — Futures**  
-COMPLETED IN CURRENT RESTART PATH: **Stage 6 repository E2E PASS; 7/1 Futures reuse regression PASS; 7/2 Independent Runtime Reference Oracle PASS; 7/3 BSC Testnet artifact/deployment lineage PASS; 7/4 Perp Accounting Gap Review PASS**  
-NEXT EXECUTABLE: **7/5 Selective On-chain Futures Gap Implementation + Regression — partial reduction first, then funding, fees, insurance/bad debt, partial liquidation and bounded ADL**  
+COMPLETED IN CURRENT RESTART PATH: **Stage 6 repository E2E PASS; 7/1 Futures reuse regression PASS; 7/2 Independent Runtime Reference Oracle PASS; 7/3 BSC Testnet artifact/deployment lineage PASS; 7/4 Perp Accounting Gap Review PASS; 7/5-1 Canonical Partial Position Reduction PASS**  
+NEXT EXECUTABLE: **7/5-2 Funding checkpoint/accounting**  
 ON-CHAIN BOUNDARY: the verified 10/10 clean BSC Testnet Lending deployment is preserved, but Governance configuration, market enablement, new Testnet transactions, and production activation each remain separately gated and are not implied by repository PASS.  
 WORKING RULE: verified earlier Master stages are reused; only evidence gaps or real implementation gaps are developed.
 
