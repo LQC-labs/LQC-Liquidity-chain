@@ -113,15 +113,35 @@ describe("LQC minimal Lending core",function(){
     assert.ok(await core.badDebtOf(id,borrower.address)<badBefore);assert.ok(await core.accruedReserves(id)<reserveBefore);
   });
 
+  it("prevents reserve withdrawal while bad debt is outstanding",async function(){
+    await createBadDebt();const reserveBefore=await core.accruedReserves(id);assert.ok(reserveBefore>0n);assert.ok(await core.badDebtOf(id,borrower.address)>0n);
+    await assert.rejects(core.withdrawReserves(id,reserveBefore,owner.address));
+  });
+
+  it("blocks new borrowing while bad debt remains even after collateral is restored",async function(){
+    await createBadDebt();await(await core.connect(borrower).depositCollateral(id,ethers.parseEther("5"),gas)).wait();
+    await assert.rejects(core.connect(borrower).borrow(id,ethers.parseEther("10"),borrower.address));
+  });
+
+  it("allows ordinary repayment to reduce recorded bad debt",async function(){
+    await createBadDebt();const badBefore=await core.badDebtOf(id,borrower.address);
+    await(await core.connect(other).repay(id,ethers.parseEther("1"),borrower.address,gas)).wait();
+    assert.ok(await core.badDebtOf(id,borrower.address)<badBefore);
+  });
+
   it("allows governance recapitalization with real debt tokens",async function(){
     await createBadDebt();const badBefore=await core.badDebtOf(id,borrower.address),cashBefore=await debt.balanceOf(core.target);
     await(await core.recapitalizeBadDebt(id,borrower.address,ethers.parseEther("5"),gas)).wait();
     assert.ok(await core.badDebtOf(id,borrower.address)<badBefore);assert.ok(await debt.balanceOf(core.target)>cashBefore);
   });
 
-  it("requires a paused market and caps cumulative supplier loss at twenty percent",async function(){
+  it("requires pause and exhausted reserves before bounded supplier loss",async function(){
     await createBadDebt("200");await assert.rejects(core.realizeBadDebtLoss(id,borrower.address,ethers.parseEther("10")));
-    await(await registry.connect(guardian).setMarketEnabled(id,false)).wait();const claimBefore=await core.liquidityOf(id,lender.address);
+    await(await registry.connect(guardian).setMarketEnabled(id,false)).wait();
+    const reserveBefore=await core.accruedReserves(id);assert.ok(reserveBefore>0n);
+    await assert.rejects(core.realizeBadDebtLoss(id,borrower.address,ethers.parseEther("10")));
+    await(await core.coverBadDebtWithReserves(id,borrower.address,reserveBefore,gas)).wait();assert.equal(await core.accruedReserves(id),0n);
+    const claimBefore=await core.liquidityOf(id,lender.address);
     await(await core.realizeBadDebtLoss(id,borrower.address,ethers.parseEther("30"),gas)).wait();const claimAfter=await core.liquidityOf(id,lender.address);
     assert.ok(claimAfter<claimBefore);assert.ok(await core.realizedSupplierLosses(id)>0n);await assert.rejects(core.realizeBadDebtLoss(id,borrower.address,ethers.parseEther("50")));
   });
