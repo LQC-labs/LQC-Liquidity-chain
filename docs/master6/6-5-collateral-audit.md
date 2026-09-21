@@ -22,7 +22,11 @@ Audit the existing Lending collateral path before adding or changing custody log
 - safe collateral exit after debt repayment even when new market risk is paused;
 - separation from Futures collateral and accounting domains.
 
-Existing regression coverage includes exact deposit accounting, cap overflow rejection without drift, exact receiver withdrawal, zero/invalid withdrawal rejection, 50% max-LTV withdrawal protection, paused-market safe exits, and stale-oracle fail-closed behavior where risk evaluation is required.
+## Regression evidence reused
+
+- `dex/test/lending-collateral-boundaries.test.mjs`: exact deposit accounting, cap overflow rejection without drift, exact receiver withdrawal, and invalid / over-withdraw rejection.
+- `dex/test/lending-core.test.mjs`: 50% max-LTV withdrawal protection and paused-market safe exits after repayment.
+- `dex/test/lending-security-invariant-gate.test.mjs`: exact-transfer custody, non-reentrancy, and separated collateral / debt accounting domains.
 
 ## Reuse decision
 
