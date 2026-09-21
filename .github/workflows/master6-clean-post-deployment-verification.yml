@@ -1,0 +1,32 @@
+name: Master 6 Clean Lending Post-Deployment Verification
+on:
+  pull_request:
+    paths:
+      - 'dex/scripts/verify-master6-clean-post-deployment.mjs'
+      - 'dex/deployments/master6-clean-post-deployment-evidence-bsc-testnet-97.json'
+      - 'dex/deployments/master6-clean-post-deployment-verification-bsc-testnet-97.json'
+      - 'dex/deployments/master6-live-execution-packet-bsc-testnet-97.json'
+      - 'test/master6-clean-post-deployment-verification.test.js'
+      - '.github/workflows/master6-clean-post-deployment-verification.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-post-deployment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Run static post-deployment safety regression
+        run: node --test test/master6-clean-post-deployment-verification.test.js
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Verify 10/10 deployment across two BSC Testnet RPCs
+        working-directory: dex
+        run: node scripts/verify-master6-clean-post-deployment.mjs
