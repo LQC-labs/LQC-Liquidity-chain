@@ -8,12 +8,50 @@ on:
       - 'dex/scripts/preflight-master6-clean-lending.mjs'
       - '.github/workflows/master6-live-execution-packet.yml'
   workflow_dispatch:
+    inputs:
+      deployer:
+        description: 'Approved BSC Testnet deployer address'
+        required: true
+        type: string
+      source_commit:
+        description: 'Pinned source commit as 0x + 40 hex characters'
+        required: true
+        type: string
+      approval_phrase:
+        description: 'Must equal APPROVE_6_12_TESTNET_DEPLOYMENT'
+        required: true
+        type: string
 permissions:
   contents: read
 jobs:
+  validate:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile current Lending sources
+        working-directory: dex
+        run: npm run compile
+      - name: Validate live packet generator syntax
+        working-directory: dex
+        run: node --check scripts/generate-master6-live-execution-packet.mjs
   live-packet:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      MASTER6_DEPLOYER: ${{ inputs.deployer }}
+      MASTER6_SOURCE_COMMIT: ${{ inputs.source_commit }}
+      MASTER6_EXECUTION_APPROVAL: ${{ inputs.approval_phrase }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
