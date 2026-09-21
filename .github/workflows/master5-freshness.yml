@@ -1,0 +1,24 @@
+name: Master 5 Oracle Freshness
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/LQCOracleManager.sol'
+      - 'docs/ORACLE_INTERFACE_BOUNDARY.md'
+      - 'docs/master5/5-5-freshness.md'
+      - 'test/master5-freshness.test.js'
+      - '.github/workflows/master5-freshness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: node test/master5-freshness.test.js
+      - run: node test/master5-reference-feed.test.js
+      - run: node test/master5-primary-feed.test.js
