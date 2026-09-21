@@ -1,0 +1,12 @@
+'use strict';
+const assert=require('assert');
+const {evaluate}=require('../scripts/master3-best-execution-proof-replay-guard');
+const base={stage:'3/9',pass:true,activationAuthorized:false,proofDigest:'sha256:abc',selectedRouteId:'a',chainId:'97',routerAddress:'0xABC',nonce:'1',consumedReplayKeys:[]};
+const first=evaluate(base);
+assert.strictEqual(first.pass,true); assert.strictEqual(first.activationAuthorized,false);
+assert.strictEqual(evaluate({...base,consumedReplayKeys:first.nextConsumedReplayKeys}).pass,false);
+assert.notStrictEqual(evaluate({...base,nonce:'2'}).replayKey,first.replayKey);
+assert.strictEqual(evaluate({...base,nonce:'01'}).pass,false);
+assert.strictEqual(evaluate({...base,futuresStateUsed:true}).pass,false);
+assert.strictEqual(evaluate({...base,activationAuthorized:true}).pass,false);
+console.log('Master 3/10 proof replay guard: PASS');
