@@ -8,6 +8,7 @@ interface ILQCLendingMarkets {
     struct MarketConfig { address collateralAsset; address debtAsset; uint8 collateralDecimals; uint8 debtDecimals; uint16 maxLtvBps; uint16 liquidationThresholdBps; uint16 liquidationBonusBps; uint128 supplyCap; uint128 borrowCap; uint128 minBorrow; bool enabled; }
     struct AccountRisk { uint256 collateralValue; uint256 debtValue; uint256 maxDebtValue; uint256 liquidationDebtValue; uint256 healthFactor; bool borrowAllowed; bool liquidatable; }
     function getMarket(bytes32 id) external view returns (MarketConfig memory);
+    function validateMarketEnabled(bytes32 id) external view;
     function validateCaps(bytes32 id,uint256 totalSupplyAfter,uint256 totalBorrowAfter) external view;
     function validateBorrowAmount(bytes32 id,uint256 accountDebtAfter) external view;
     function accountRisk(bytes32 id,uint256 collateralAmount,uint256 debtAmount) external view returns(AccountRisk memory);
@@ -66,7 +67,7 @@ contract LQCLendingCore {
 
     function depositCollateral(bytes32 id,uint256 amount) external nonReentrant{
         if(amount==0)revert InvalidAmount();_accrue(id);ILQCLendingMarkets.MarketConfig memory config=registry.getMarket(id);MarketState storage state=marketStates[id];
-        uint256 totalAfter=uint256(state.totalCollateral)+amount;registry.validateCaps(id,totalAfter,_totalDebt(state,_borrowIndex(id)));
+        uint256 totalAfter=uint256(state.totalCollateral)+amount;registry.validateMarketEnabled(id);
         _pullExact(config.collateralAsset,msg.sender,amount);state.totalCollateral=_toUint128(totalAfter);collateralOf[id][msg.sender]+=amount;emit CollateralDeposited(id,msg.sender,amount);
     }
 
@@ -78,7 +79,7 @@ contract LQCLendingCore {
 
     function supplyLiquidity(bytes32 id,uint256 amount) external nonReentrant{
         if(amount==0)revert InvalidAmount();_accrue(id);ILQCLendingMarkets.MarketConfig memory config=registry.getMarket(id);MarketState storage state=marketStates[id];
-        registry.validateCaps(id,state.totalCollateral,_totalDebt(state,_borrowIndex(id)));uint256 supplyIndex=_supplyIndex(id);uint256 shares=amount*RAY/supplyIndex;if(shares==0)revert InvalidAmount();
+        uint256 supplyIndex=_supplyIndex(id);uint256 totalSupplyAfter=_totalSupply(state,supplyIndex)+amount;registry.validateCaps(id,totalSupplyAfter,_totalDebt(state,_borrowIndex(id)));uint256 shares=amount*RAY/supplyIndex;if(shares==0)revert InvalidAmount();
         _pullExact(config.debtAsset,msg.sender,amount);state.totalSupplyShares=_toUint128(uint256(state.totalSupplyShares)+shares);liquiditySharesOf[id][msg.sender]+=shares;emit LiquiditySupplied(id,msg.sender,amount,shares);
     }
 
@@ -92,7 +93,7 @@ contract LQCLendingCore {
     function borrow(bytes32 id,uint256 amount,address receiver) external nonReentrant{
         if(amount==0)revert InvalidAmount();if(receiver==address(0))revert ZeroAddress();_accrue(id);if(badDebtSharesOf[id][msg.sender]!=0)revert UnsafePosition();if(amount>availableLiquidity(id))revert InsufficientLiquidity();MarketState storage state=marketStates[id];
         uint256 borrowIndex=_borrowIndex(id);uint256 shares=_ceilDiv(amount*RAY,borrowIndex);uint256 debtAfter=(debtSharesOf[id][msg.sender]+shares)*borrowIndex/RAY;
-        uint256 totalBorrowAfter=(uint256(state.totalDebtShares)+shares)*borrowIndex/RAY;registry.validateCaps(id,state.totalCollateral,totalBorrowAfter);registry.validateBorrowAmount(id,debtAfter);
+        uint256 totalBorrowAfter=(uint256(state.totalDebtShares)+shares)*borrowIndex/RAY;registry.validateCaps(id,_totalSupply(state,_supplyIndex(id)),totalBorrowAfter);registry.validateBorrowAmount(id,debtAfter);
         if(!registry.accountRisk(id,collateralOf[id][msg.sender],debtAfter).borrowAllowed)revert UnsafePosition();ILQCLendingMarkets.MarketConfig memory config=registry.getMarket(id);
         debtSharesOf[id][msg.sender]+=shares;state.totalDebtShares=_toUint128(uint256(state.totalDebtShares)+shares);config.debtAsset.safeTransfer(receiver,amount);emit Borrowed(id,msg.sender,receiver,amount,shares);
     }
