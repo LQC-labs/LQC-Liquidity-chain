@@ -1,0 +1,41 @@
+name: Master 6 Live Wallet Handoff
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/lending/**'
+      - 'dex/scripts/generate-master6-live-execution-packet.mjs'
+      - '.github/workflows/master6-live-wallet-handoff.yml'
+permissions:
+  contents: read
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MASTER6_DEPLOYER: 0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB
+      MASTER6_SOURCE_COMMIT: 0x87745b4bfb3ad49e73c14a8f62282986e72148bc
+      MASTER6_EXECUTION_APPROVAL: APPROVE_6_12_TESTNET_DEPLOYMENT
+      MASTER6_OUTPUT_FILE: master6-live-execution-packet.json
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile current Lending sources
+        working-directory: dex
+        run: npm run compile
+      - name: Materialize current live execution packet
+        working-directory: dex
+        run: node scripts/generate-master6-live-execution-packet.mjs
+      - name: Upload live execution packet
+        uses: actions/upload-artifact@v4
+        with:
+          name: master6-live-execution-packet
+          path: dex/master6-live-execution-packet.json
+          if-no-files-found: error
+          retention-days: 7
