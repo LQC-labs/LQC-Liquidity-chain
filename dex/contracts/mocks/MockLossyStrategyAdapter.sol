@@ -11,6 +11,9 @@ contract MockLossyStrategyAdapter is ILQCStrategyAdapter {
     address public immutable asset;
     address public immutable vault;
     uint256 public totalManagedAssets;
+
+    bytes32 public constant ADAPTER_ID = keccak256("LQC_MOCK_LOSSY_STRATEGY");
+    uint32 public constant ADAPTER_VERSION = 1;
     uint256 public lossBps;
 
     error Forbidden();
