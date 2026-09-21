@@ -52,16 +52,28 @@ export function normalizeRuntime(code,immutableReferences={}){
 }
 
 export function compareRuntime(onchainCode,a){
-  const normalizedOnchain=normalizeRuntime(onchainCode,a.immutableReferences||{});
-  const normalizedCurrent=normalizeRuntime(a.deployedBytecode,a.immutableReferences||{});
+  const refs=a.immutableReferences||{};
+  const normalizedCurrent=normalizeRuntime(a.deployedBytecode,refs);
+  let normalizedOnchain=null;
+  let normalizationError=null;
+  try {
+    normalizedOnchain=normalizeRuntime(onchainCode,refs);
+  } catch (error) {
+    normalizationError=error.message;
+  }
+
+  const normalizedRuntimeMatch=normalizedOnchain!==null && normalizedOnchain===normalizedCurrent;
   return {
     exactLengthMatch:(onchainCode.length===a.deployedBytecode.length),
-    immutableReferenceCount:Object.values(a.immutableReferences||{}).flat().length,
+    immutableReferenceCount:Object.values(refs).flat().length,
     onchainCodeHash:ethers.keccak256(onchainCode),
     currentArtifactCodeHash:ethers.keccak256(a.deployedBytecode),
-    normalizedOnchainHash:ethers.keccak256(normalizedOnchain),
+    normalizedOnchainHash:normalizedOnchain===null ? null : ethers.keccak256(normalizedOnchain),
     normalizedCurrentHash:ethers.keccak256(normalizedCurrent),
-    normalizedRuntimeMatch:normalizedOnchain===normalizedCurrent
+    normalizedRuntimeMatch,
+    comparisonReason:normalizationError || (normalizedRuntimeMatch
+      ? "CURRENT_ARTIFACT_RUNTIME_MATCH"
+      : "CURRENT_ARTIFACT_RUNTIME_DIVERGED")
   };
 }
 
