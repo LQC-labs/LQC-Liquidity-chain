@@ -1,13 +1,5 @@
 name: Master 6 Clean Lending Multi-RPC Preflight
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/**'
-      - 'dex/scripts/prepare-master6-clean-lending-deployment.mjs'
-      - 'dex/scripts/preflight-master6-clean-lending.mjs'
-      - 'docs/master6/6-12-clean-lending-multi-rpc-preflight.md'
-      - 'test/master6-clean-lending-preflight.test.js'
-      - '.github/workflows/master6-clean-lending-preflight.yml'
   workflow_dispatch:
 permissions:
   contents: read
