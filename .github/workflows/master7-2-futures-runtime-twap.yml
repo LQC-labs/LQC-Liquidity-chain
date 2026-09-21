@@ -1,0 +1,48 @@
+name: Master 7 2 Futures Runtime TWAP
+
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/futures/LQCV3TwapReferenceAdapter.sol'
+      - 'dex/contracts/futures/LQCAggregatorOracleAdapter.sol'
+      - 'dex/contracts/futures/mocks/MockV3TwapPool.sol'
+      - 'dex/scripts/futures-twap-price-conversion.mjs'
+      - 'dex/test/futures-twap-runtime-reference.test.mjs'
+      - 'dex/test/futures-twap-price-conversion.test.mjs'
+      - 'dex/test/futures-twap-reference-qualification.test.mjs'
+      - 'dex/test/futures-oracle-adapter.test.mjs'
+      - 'docs/master7/7-2-futures-runtime-twap.md'
+      - '.github/workflows/master7-2-futures-runtime-twap.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  runtime-twap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci --ignore-scripts
+      - name: Compile current protocol sources
+        working-directory: dex
+        run: npm run compile
+      - name: Run runtime TWAP and existing qualification/conversion gates
+        working-directory: dex
+        run: >
+          npx mocha --timeout 30000
+          test/futures-twap-runtime-reference.test.mjs
+          test/futures-twap-price-conversion.test.mjs
+          test/futures-twap-reference-qualification.test.mjs
+          test/futures-oracle-adapter.test.mjs
+      - name: Re-run Futures security and production-oracle boundaries
+        working-directory: dex
+        run: npx mocha --timeout 30000 test/futures-security-gate.test.mjs test/futures-production-oracle-gate.test.mjs

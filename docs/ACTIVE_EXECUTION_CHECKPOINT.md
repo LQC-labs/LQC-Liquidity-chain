@@ -44,7 +44,8 @@ Before starting the next new Staking implementation, complete this short reposit
 8. **DONE** — Master 6/18 Staking Governance / Emergency Controls merged after CI PASS;
 9. **DONE in this gate** — Master 6/19 Lending + Earn + Staking repository E2E;
 10. **DONE in this gate** — Master 7/1 Futures latest-main regression + selective reuse/gap reconciliation PASS;
-11. **NEXT EXECUTABLE** — Master 7/2 Independent Reference Oracle, using PR #296 only as a selective reuse candidate.
+11. **DONE in this gate** — Master 7/2 Independent Runtime Reference Oracle selectively rebuilt from PR #296 design and validated on current main;
+12. **NEXT EXECUTABLE** — Master 7/3 Current Artifact / BSC Testnet Deployment Lineage Reconciliation.
 
 ## Preserved Staking direction and timing
 
@@ -93,8 +94,8 @@ The next development lane is Master 7 Futures. Reuse the existing Futures founda
 ## Master 7 Futures execution order
 
 - 7/1 Latest-main Regression / Reuse Reconciliation — **PASS in this gate**
-- 7/2 Independent Reference Oracle — **NEXT**
-- 7/3 Current Artifact / BSC Testnet Deployment Lineage Reconciliation
+- 7/2 Independent Reference Oracle — **PASS in this gate**
+- 7/3 Current Artifact / BSC Testnet Deployment Lineage Reconciliation — **NEXT**
 - 7/4 Perp Accounting Gap Review — Funding / Fees / Partial Close / Insurance / ADL
 - 7/5 Selective On-chain Futures Gap Implementation + Regression
 - 7/6 Futures Risk / Governance / Emergency Integration
