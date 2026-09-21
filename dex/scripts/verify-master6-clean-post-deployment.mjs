@@ -40,6 +40,11 @@ function validatePacket(live,evidence){
   if(live.packet?.startingNonce!=="17"||live.packet?.deployments?.length!==10) throw Error("Master 6 deployment packet shape mismatch");
   if(evidence.recordType!=="LQC_MASTER6_CLEAN_POST_DEPLOYMENT_EVIDENCE"||evidence.network?.chainId!==97||evidence.activationAuthorized!==false) throw Error("Invalid post-deployment evidence");
   if(!eq(evidence.deployer,live.deployer)||evidence.startingNonce!=="17"||evidence.finalPendingNonce!=="27"||evidence.transactions?.length!==10) throw Error("Post-deployment evidence boundary mismatch");
+  if(
+    evidence.deployerProvenance?.type!=="REUSED_FUTURES_TESTNET_DEPLOYER"
+    ||evidence.deployerProvenance?.evidence!==live.deployerEvidence
+    ||!String(evidence.deployerProvenance?.note||"").includes("new Lending contract addresses")
+  ) throw Error("Futures deployer provenance boundary mismatch");
   const supplied=evidence.transactions.filter(x=>x.hash!==null).map(x=>x.hash.toLowerCase());
   if(new Set(supplied).size!==supplied.length||evidence.transactions.slice(1).some(x=>!ethers.isHexString(x.hash,32))) throw Error("Post-deployment transaction hashes invalid");
   if(evidence.transactions[0].hash!==null&&!ethers.isHexString(evidence.transactions[0].hash,32)) throw Error("First deployment hash must be null or bytes32");
