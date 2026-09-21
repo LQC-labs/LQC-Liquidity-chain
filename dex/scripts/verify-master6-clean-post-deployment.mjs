@@ -40,12 +40,32 @@ function validatePacket(live,evidence){
   if(live.packet?.startingNonce!=="17"||live.packet?.deployments?.length!==10) throw Error("Master 6 deployment packet shape mismatch");
   if(evidence.recordType!=="LQC_MASTER6_CLEAN_POST_DEPLOYMENT_EVIDENCE"||evidence.network?.chainId!==97||evidence.activationAuthorized!==false) throw Error("Invalid post-deployment evidence");
   if(!eq(evidence.deployer,live.deployer)||evidence.startingNonce!=="17"||evidence.finalPendingNonce!=="27"||evidence.transactions?.length!==10) throw Error("Post-deployment evidence boundary mismatch");
-  if(new Set(evidence.transactions.map(x=>x.hash.toLowerCase())).size!==10||evidence.transactions.some(x=>!ethers.isHexString(x.hash,32))) throw Error("Post-deployment transaction hashes invalid");
+  const supplied=evidence.transactions.filter(x=>x.hash!==null).map(x=>x.hash.toLowerCase());
+  if(new Set(supplied).size!==supplied.length||evidence.transactions.slice(1).some(x=>!ethers.isHexString(x.hash,32))) throw Error("Post-deployment transaction hashes invalid");
+  if(evidence.transactions[0].hash!==null&&!ethers.isHexString(evidence.transactions[0].hash,32)) throw Error("First deployment hash must be null or bytes32");
   for(let i=0;i<10;i++){
     const tx=evidence.transactions[i],d=live.packet.deployments[i];
     if(tx.order!==i+1||tx.label!==d.label||tx.nonce!==d.deployerNonce) throw Error("Post-deployment transaction ordering mismatch #"+(i+1));
   }
 }
+async function resolveTransactionHashes(provider,live,evidence){
+  const hashes=evidence.transactions.map(x=>x.hash);
+  if(hashes[0]!==null) return hashes;
+  const anchor=await provider.getTransactionReceipt(hashes[1]);
+  if(!anchor?.blockNumber) throw Error("Cannot resolve first deployment hash: tx2 receipt missing");
+  const deployer=live.deployer.toLowerCase();
+  for(let blockNumber=anchor.blockNumber;blockNumber>=Math.max(0,anchor.blockNumber-250);blockNumber--){
+    const block=await provider.send("eth_getBlockByNumber",[ethers.toQuantity(blockNumber),true]);
+    for(const tx of block?.transactions||[]){
+      if(tx?.from?.toLowerCase()===deployer&&Number(BigInt(tx.nonce))===17&&tx.to===null){
+        hashes[0]=tx.hash;
+        return hashes;
+      }
+    }
+  }
+  throw Error("Cannot resolve first deployment hash from nearby canonical blocks");
+}
+
 async function currentBindings(provider,live){
   const d=Object.fromEntries(live.packet.deployments.map(x=>[x.label,addr(x.predictedAddress)]));
   const roles=live.packet.roles;
@@ -88,6 +108,8 @@ async function currentBindings(provider,live){
 export async function verifyMaster6PostDeployment({providers,live,evidence,minConfirmations=3}){
   validatePacket(live,evidence);
   if(!Array.isArray(providers)||providers.length<2||minConfirmations<3) throw Error("Use 2+ BSC Testnet RPCs and at least 3 confirmations");
+  const resolvedHashes=await resolveTransactionHashes(providers[0],live,evidence);
+  if(resolvedHashes.some(hash=>!ethers.isHexString(hash,32))||new Set(resolvedHashes.map(x=>x.toLowerCase())).size!==10) throw Error("Resolved deployment hashes invalid");
   const observations=[];
   for(const provider of providers){
     if(Number((await provider.getNetwork()).chainId)!==97) throw Error("BSC Testnet chain mismatch");
@@ -96,8 +118,8 @@ export async function verifyMaster6PostDeployment({providers,live,evidence,minCo
     if(pendingNonce!==27) throw Error("Final deployer pending nonce is not 27");
     const deployments=[];
     for(let i=0;i<10;i++){
-      const d=live.packet.deployments[i],ev=evidence.transactions[i];
-      const [tx,receipt]=await Promise.all([provider.getTransaction(ev.hash),provider.getTransactionReceipt(ev.hash)]);
+      const d=live.packet.deployments[i],ev=evidence.transactions[i],hash=resolvedHashes[i];
+      const [tx,receipt]=await Promise.all([provider.getTransaction(hash),provider.getTransactionReceipt(hash)]);
       if(!tx||!receipt||receipt.status!==1) throw Error("Missing or failed deployment transaction #"+(i+1));
       if(!eq(tx.from,live.deployer)||tx.to!==null||tx.nonce!==Number(d.deployerNonce)) throw Error("Deployment transaction envelope mismatch #"+(i+1));
       if(sha256(tx.data)!==d.initCodeDigest) throw Error("Deployment init code mismatch #"+(i+1));
@@ -108,7 +130,7 @@ export async function verifyMaster6PostDeployment({providers,live,evidence,minCo
       if(confirmations<minConfirmations) throw Error("Insufficient confirmations #"+(i+1));
       const code=await provider.getCode(d.predictedAddress);
       if(!code||code==="0x") throw Error("Missing runtime code #"+(i+1));
-      deployments.push({order:d.order,label:d.label,nonce:d.deployerNonce,transactionHash:ev.hash.toLowerCase(),blockNumber:receipt.blockNumber,blockHash:receipt.blockHash.toLowerCase(),contractAddress:addr(receipt.contractAddress),runtimeCodeDigest:sha256(code),confirmations});
+      deployments.push({order:d.order,label:d.label,nonce:d.deployerNonce,transactionHash:hash.toLowerCase(),blockNumber:receipt.blockNumber,blockHash:receipt.blockHash.toLowerCase(),contractAddress:addr(receipt.contractAddress),runtimeCodeDigest:sha256(code),confirmations});
     }
     observations.push({pendingNonce:String(pendingNonce),deployments,bindings:await currentBindings(provider,live)});
   }
