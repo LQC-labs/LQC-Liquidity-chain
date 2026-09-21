@@ -6,12 +6,16 @@ import {SafeTransferLib} from "../libraries/SafeTransferLib.sol";
 import {ILQCStakingRead} from "./interfaces/ILQCStakingRead.sol";
 
 interface ILQCStakingRewardCheckpoint {
+    function stakingVault() external view returns (address);
+    function rewardToken() external view returns (address);
     function checkpoint(address account) external;
 }
 
 /// @notice Canonical custody/accounting vault for LQC staking principal.
 /// @dev Rewards are accounted in a separate Master 6/16 module. The vault only
 ///      checkpoints the configured reward module before a principal balance change.
+///      Repository-only candidate: no deployment/user deposits until the 6/17
+///      exit path, 6/18 controls and subsequent release gates are complete.
 contract LQCStakingVault is ILQCStakingRead {
     using SafeTransferLib for address;
 
@@ -57,11 +61,17 @@ contract LQCStakingVault is ILQCStakingRead {
         emit OwnershipTransferred(address(0), owner_);
     }
 
-    /// @notice One-time binding to the canonical reward-accounting module.
-    /// @dev Replacement/migration policy belongs to Master 6/18 governance controls.
-    function initializeRewardAccounting(address module) external onlyOwner {
+    /// @notice One-time binding before the first stake, to a module for THIS vault.
+    /// @dev Prevents reward history being introduced after uncheckpointed balances.
+    ///      Replacement/migration policy belongs to Master 6/18 governance controls.
+    function initializeRewardAccounting(address module) external onlyOwner nonReentrant {
         if (module == address(0) || module.code.length == 0) revert InvalidModule();
         if (rewardAccounting != address(0)) revert AlreadyConfigured();
+        if (totalStaked != 0) revert InvalidModule();
+        ILQCStakingRewardCheckpoint candidate = ILQCStakingRewardCheckpoint(module);
+        if (candidate.stakingVault() != address(this) || candidate.rewardToken() != asset) {
+            revert InvalidModule();
+        }
         rewardAccounting = module;
         emit RewardAccountingInitialized(module);
     }

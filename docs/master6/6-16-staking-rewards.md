@@ -1,66 +1,46 @@
 # Master 6/16 — LQC Staking Reward Accounting / Claim
 
-Status: **repository implementation gate**
+Status: **merged accounting foundation plus binding-hardening candidate; exact-revision CI/review required**
+Canonical foundation: PR #315, main `9e84866321356a77cddb6d6e8add5c38fb592f46`.
 
-## Purpose
+## Purpose and reuse
 
-Add variable, pre-funded LQC reward accounting to the canonical 6/15 Staking Vault without mixing staking principal with Lending or inventing a fixed APY.
+Continue the existing variable, pre-funded LQC reward implementation. Do not replace it with the overlapping PR #316, which is closed and preserved only as review material.
 
-## Architecture
+Principal custody stays in `LQCStakingVault`; reward custody/accounting stays in `LQCStakingRewards`. The vault checkpoints before a principal increase. The binding-hardening follow-up validates the prerequisites for that rule: mutual vault/asset identity, binding before the first stake, and funding only after the reward module is actually bound.
 
-Principal custody remains in:
-
-- `LQCStakingVault`
-
-Reward custody/accounting is separate in:
-
-- `LQCStakingRewards`
-
-The Staking Vault performs a reward checkpoint before any principal balance increase. This prevents a late staker from receiving rewards accrued before that stake.
-
-## Implemented in 6/16
+## Implemented scope
 
 - separate reward custody from staking principal;
-- pre-funded LQC reward schedules;
-- cumulative reward-per-token accounting;
-- per-user checkpointing;
-- claimable reward accounting;
+- pre-funded LQC schedules and cumulative reward-per-token accounting;
+- per-user checkpoint and claimable balances;
 - exact-transfer reward funding and claims;
-- reserve solvency tracking;
-- schedule top-up with the unvested remainder rolled forward;
-- one-time binding from the canonical Staking Vault to the reward-accounting module;
+- reserve solvency tracking, with full-reserve validation before a claim;
+- top-up with the unvested scheduled remainder rolled forward;
+- one-time reward binding, reverse vault/asset identity validation;
+- rejection of late binding and funding an unbound or duplicate reward module;
+- reentrancy guards for funding, claims and checkpoints;
 - two-step ownership transfer.
 
-## Economic boundary
+## Economic boundary and unresolved release requirements
 
-No fixed APY is encoded.
+No fixed APY is encoded. Runtime fixture budgets are not production approvals. The implementation does not mint tokens or spend Lending accounting balances.
 
-`fundRewards(amount, duration)` only distributes LQC that has already been transferred into the reward module. The contract has no mint authority.
+This foundation implements one LQC reward stream. It is NOT a completed independently accounted ecosystem-plus-revenue system. Exact budgets, source wallets, emission bounds, circulating-supply treatment and separate protocol-revenue accounting remain economic/governance and release prerequisites. Do not mix future revenue with ecosystem funding merely because both use LQC.
 
-The exact reward budget, epoch policy, source wallet, emission limits, circulating-supply treatment, and protocol-revenue conversion/distribution policy remain Governance/economic decisions. The current module supplies the accounting primitive; it does not authorize a reward budget.
+Zero-staker periods, division rounding and unused-budget return require explicit accounting/disposal review before activation. Already earned liabilities must never be swept. Passing focused CI does not resolve these remaining requirements.
 
-## Isolation invariants
+## Review and tests
 
-- staking principal is held only by the Staking Vault;
-- reward LQC is held only by the Reward module;
-- reward claims cannot consume staking principal;
-- Lending supply, collateral, reserves and bad debt are untouched;
-- future Launchpad consumers remain read-only to staking state;
-- no new LQC supply is created.
+The initialization-boundary regression tests sufficient-funds/allowance funding before binding, a reward module for another vault, late binding after existing stakes, and a second unbound reward module. Existing Staking and Lending regressions are reused.
 
-## Explicitly deferred
+The hardening patch is maintained on `codex/master6-16-reward-binding-hardening`, based on the already merged PR #315. Its review must finish before advancing this conversation to 6/17. No old branch is force-pushed or merged wholesale.
 
-- lock / cooldown / unstake — **6/17**;
-- pause, emergency, reward-governance bounds and migration controls — **6/18**;
-- Lending + Earn + Staking E2E — **6/19**;
-- Testnet deployment/activation — separately reviewed after the repository gates.
+## Release boundary
 
-## Evidence meaning
+- 6/17: lock / cooldown / unstake, with reward checkpoint before every balance decrease.
+- 6/18: pause, emergency, reward-governance limits and migration controls.
+- 6/19: Lending + Earn + Staking integrated E2E.
+- Testnet deployment and activation: separate review and explicit authorization.
 
-Passing 6/16 means:
-
-**VARIABLE PRE-FUNDED REWARD ACCOUNTING + CLAIM IMPLEMENTED AND TESTED**
-
-It does not mean a reward budget is approved, APY is promised, Testnet is activated, or production funds are authorized.
-
-Next: **6/17 Lock / Cooldown / Unstake**.
+The user exit path is absent. Do not deploy this incomplete candidate, accept user principal or activate real rewards. A repository PASS is not audit or production readiness.

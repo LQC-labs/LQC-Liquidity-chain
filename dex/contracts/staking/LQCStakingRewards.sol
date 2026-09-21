@@ -5,6 +5,10 @@ import {IERC20} from "../interfaces/IERC20.sol";
 import {SafeTransferLib} from "../libraries/SafeTransferLib.sol";
 import {ILQCStakingRead} from "./interfaces/ILQCStakingRead.sol";
 
+interface ILQCStakingRewardBinding {
+    function rewardAccounting() external view returns (address);
+}
+
 /// @notice Variable, pre-funded LQC reward accounting for the canonical Staking Vault.
 /// @dev This module has no mint authority and does not custody staking principal.
 ///      Exact reward budgets/emission policy remain governance/economic decisions.
@@ -45,6 +49,7 @@ contract LQCStakingRewards {
     error UnsupportedTokenBehavior();
     error InsufficientRewardReserve();
     error Reentrancy();
+    error RewardModuleNotBound();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
@@ -75,7 +80,7 @@ contract LQCStakingRewards {
     }
 
     /// @notice Called by the Staking Vault before changing an account's principal balance.
-    function checkpoint(address account) external onlyVault {
+    function checkpoint(address account) external onlyVault nonReentrant {
         if (account == address(0)) revert ZeroAddress();
         _updateReward(account);
     }
@@ -85,6 +90,9 @@ contract LQCStakingRewards {
     function fundRewards(uint256 amount, uint256 duration) external onlyOwner nonReentrant {
         if (amount == 0) revert ZeroAmount();
         if (duration == 0) revert InvalidDuration();
+        if (ILQCStakingRewardBinding(address(stakingVault)).rewardAccounting() != address(this)) {
+            revert RewardModuleNotBound();
+        }
 
         _updateReward(address(0));
 
@@ -113,7 +121,9 @@ contract LQCStakingRewards {
         _updateReward(msg.sender);
         amount = rewards[msg.sender];
         if (amount == 0) revert ZeroAmount();
-        if (amount > rewardReserve) revert InsufficientRewardReserve();
+        if (amount > rewardReserve || IERC20(rewardToken).balanceOf(address(this)) < rewardReserve) {
+            revert InsufficientRewardReserve();
+        }
 
         rewards[msg.sender] = 0;
         rewardReserve -= amount;
