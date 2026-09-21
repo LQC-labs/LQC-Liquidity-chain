@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "recordType": "LQC_MASTER6_CLEAN_TESTNET_DEPLOYMENT_DECISION",
+  "network": {"name": "BSC Testnet", "chainId": 97},
+  "status": "FRESH_VALIDATION_REQUIRED",
+  "historicalEvidence": {
+    "stage0": "HISTORICAL_VALID_EVIDENCE",
+    "stage1": "HISTORICAL_VALID_EVIDENCE",
+    "stage2": "HISTORICAL_ONLY_UNTIL_REVALIDATED",
+    "stage3": "HISTORICAL_ONLY_UNTIL_REVALIDATED",
+    "stage4": "PREPARATION_ONLY"
+  },
+  "mandatoryFreshDeployment": [
+    "LQCLendingMarketRegistry",
+    "LQCLendingCore"
+  ],
+  "reuseOnlyAfterRuntimeAndBindingRevalidation": [
+    "LQCOracleManager",
+    "LQCInterestRateModel",
+    "LQCLendingInterestIndex"
+  ],
+  "requiresCurrentDeploymentEvidence": [
+    "LQCLiquidationEngine"
+  ],
+  "activationAuthorized": false,
+  "next": "Prepare a commit-pinned BSC Testnet deployment/revalidation package; do not broadcast from this decision gate."
+}
