@@ -1,9 +1,7 @@
 name: Master 3 Router Proof Revalidation
 
 on:
-  pull_request:
   workflow_dispatch:
-
 permissions:
   contents: read
 
