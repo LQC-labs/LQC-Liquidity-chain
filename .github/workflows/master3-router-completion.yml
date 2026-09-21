@@ -1,9 +1,5 @@
 name: Master 3 Router Completion Gate
 on:
-  pull_request:
-    paths:
-      - 'docs/master3/3-12-router-completion-gate.md'
-      - '.github/workflows/master3-router-completion.yml'
   workflow_dispatch:
 permissions:
   contents: read
