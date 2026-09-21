@@ -77,9 +77,9 @@ Before CEX due diligence, the whitepaper, README, contracts/configuration, testn
 
 ## Current position
 
-MASTER: **6/18 — Lending / Earn / LQC Staking**  
-COMPLETED IN CURRENT RESTART PATH: **6/13 Lending Core repository E2E PASS; 6/14 Supply Earn reuse gate PASS; 6/15 LQC Staking Vault PASS; 6/16 Reward Accounting / Claim PASS; 6/17 Lock / Cooldown / Unstake PASS**  
-CURRENT EXECUTABLE: **6/18 Staking Governance / Emergency Controls**  
+MASTER: **7/15 — Futures**  
+COMPLETED IN CURRENT RESTART PATH: **6/13 Lending Core repository E2E PASS; 6/14 Supply Earn reuse gate PASS; 6/15 LQC Staking Vault PASS; 6/16 Reward Accounting / Claim PASS; 6/17 Lock / Cooldown / Unstake PASS; 6/18 Staking Governance / Emergency Controls PASS; 6/19 Lending + Earn + Staking repository E2E PASS**  
+NEXT EXECUTABLE: **Master 7 Futures — latest-main regression + selective reuse/gap reconciliation**  
 ON-CHAIN BOUNDARY: the verified 10/10 clean BSC Testnet Lending deployment is preserved, but Governance configuration, market enablement, new Testnet transactions, and production activation each remain separately gated and are not implied by repository PASS.  
 WORKING RULE: verified earlier Master stages are reused; only evidence gaps or real implementation gaps are developed.
 
