@@ -10,22 +10,36 @@ interface ILQCStakingRewardCheckpoint {
 }
 
 /// @notice Canonical custody/accounting vault for LQC staking principal.
-/// @dev Rewards are accounted in a separate Master 6/16 module. The vault only
-///      checkpoints the configured reward module before a principal balance change.
+/// @dev Rewards are accounted in a separate Master 6/16 module.
+///      Master 6/17 adds user-controlled lock extension plus a two-step cooldown exit.
+///      Governance/emergency mutation controls remain Master 6/18.
 contract LQCStakingVault is ILQCStakingRead {
     using SafeTransferLib for address;
+
+    struct PendingUnstake {
+        uint128 amount;
+        uint64 availableAt;
+    }
 
     address public immutable override asset;
     address public owner;
     address public pendingOwner;
     address public rewardAccounting;
 
+    uint64 public cooldownDuration;
     uint256 public override totalStaked;
+    uint256 public override totalPendingUnstake;
     mapping(address => uint256) public override stakedBalance;
+    mapping(address => uint64) public override lockUntil;
+    mapping(address => PendingUnstake) private pendingUnstakes;
 
     uint256 private unlocked = 1;
 
     event Staked(address indexed caller, address indexed account, uint256 amount);
+    event LockExtended(address indexed account, uint64 previousLockUntil, uint64 newLockUntil);
+    event UnstakeRequested(address indexed account, uint256 amount, uint64 availableAt);
+    event UnstakeCancelled(address indexed account, uint256 amount);
+    event Unstaked(address indexed account, address indexed receiver, uint256 amount);
     event RewardAccountingInitialized(address indexed module);
     event OwnershipTransferStarted(address indexed owner, address indexed pendingOwner);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -37,6 +51,14 @@ contract LQCStakingVault is ILQCStakingRead {
     error Reentrancy();
     error AlreadyConfigured();
     error InvalidModule();
+    error InvalidCooldown();
+    error InvalidLock();
+    error LockedStake();
+    error PendingExitExists();
+    error NoPendingExit();
+    error CooldownActive();
+    error InsufficientStake();
+    error AmountOverflow();
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
@@ -50,10 +72,12 @@ contract LQCStakingVault is ILQCStakingRead {
         unlocked = 1;
     }
 
-    constructor(address asset_, address owner_) {
+    constructor(address asset_, address owner_, uint64 cooldownDuration_) {
         if (asset_ == address(0) || owner_ == address(0)) revert ZeroAddress();
+        if (cooldownDuration_ == 0) revert InvalidCooldown();
         asset = asset_;
         owner = owner_;
+        cooldownDuration = cooldownDuration_;
         emit OwnershipTransferred(address(0), owner_);
     }
 
@@ -84,10 +108,86 @@ contract LQCStakingVault is ILQCStakingRead {
         emit Staked(msg.sender, account, amount);
     }
 
-    /// @notice Confirms that actual token custody covers all accounted staking principal.
-    /// @dev Unsolicited token donations may create surplus but never increase staked balances.
+    /// @notice Voluntarily extends the caller's staking lock.
+    /// @dev Lock can only move forward. Product presets such as 90/180 days live in UI/config,
+    ///      not as hard-coded economic promises in the Core vault.
+    function extendLock(uint64 newLockUntil) external {
+        uint64 previous = lockUntil[msg.sender];
+        if (newLockUntil <= block.timestamp || newLockUntil <= previous) revert InvalidLock();
+        lockUntil[msg.sender] = newLockUntil;
+        emit LockExtended(msg.sender, previous, newLockUntil);
+    }
+
+    /// @notice Removes principal from active staking/reward weight and starts the cooldown.
+    function requestUnstake(uint256 amount) external nonReentrant {
+        if (amount == 0) revert ZeroAmount();
+        if (block.timestamp < lockUntil[msg.sender]) revert LockedStake();
+        if (pendingUnstakes[msg.sender].amount != 0) revert PendingExitExists();
+
+        uint256 active = stakedBalance[msg.sender];
+        if (amount > active) revert InsufficientStake();
+        if (amount > type(uint128).max) revert AmountOverflow();
+
+        _checkpoint(msg.sender);
+
+        stakedBalance[msg.sender] = active - amount;
+        totalStaked -= amount;
+
+        uint64 availableAt = uint64(block.timestamp + cooldownDuration);
+        pendingUnstakes[msg.sender] = PendingUnstake(uint128(amount), availableAt);
+        totalPendingUnstake += amount;
+
+        emit UnstakeRequested(msg.sender, amount, availableAt);
+    }
+
+    /// @notice Cancels a pending exit and returns principal to active reward weight.
+    /// @dev A checkpoint occurs before restoring active stake so cooldown time earns no retroactive rewards.
+    function cancelUnstake() external nonReentrant {
+        PendingUnstake memory pending = pendingUnstakes[msg.sender];
+        if (pending.amount == 0) revert NoPendingExit();
+
+        _checkpoint(msg.sender);
+
+        delete pendingUnstakes[msg.sender];
+        totalPendingUnstake -= pending.amount;
+        stakedBalance[msg.sender] += pending.amount;
+        totalStaked += pending.amount;
+
+        emit UnstakeCancelled(msg.sender, pending.amount);
+    }
+
+    /// @notice Transfers principal only after the cooldown has completed.
+    function completeUnstake(address receiver) external nonReentrant returns (uint256 amount) {
+        if (receiver == address(0)) revert ZeroAddress();
+
+        PendingUnstake memory pending = pendingUnstakes[msg.sender];
+        if (pending.amount == 0) revert NoPendingExit();
+        if (block.timestamp < pending.availableAt) revert CooldownActive();
+
+        amount = pending.amount;
+        delete pendingUnstakes[msg.sender];
+        totalPendingUnstake -= amount;
+
+        uint256 vaultBefore = IERC20(asset).balanceOf(address(this));
+        uint256 receiverBefore = IERC20(asset).balanceOf(receiver);
+        asset.safeTransfer(receiver, amount);
+        if (
+            vaultBefore - IERC20(asset).balanceOf(address(this)) != amount
+                || IERC20(asset).balanceOf(receiver) - receiverBefore != amount
+        ) revert UnsupportedTokenBehavior();
+
+        emit Unstaked(msg.sender, receiver, amount);
+    }
+
+    function pendingUnstakeOf(address account) external view override returns (uint256 amount, uint64 availableAt) {
+        PendingUnstake memory pending = pendingUnstakes[account];
+        return (pending.amount, pending.availableAt);
+    }
+
+    /// @notice Confirms that actual token custody covers active and cooldown principal.
+    /// @dev Unsolicited token donations may create surplus but never increase staking credit.
     function isFullyBacked() external view override returns (bool) {
-        return IERC20(asset).balanceOf(address(this)) >= totalStaked;
+        return IERC20(asset).balanceOf(address(this)) >= totalStaked + totalPendingUnstake;
     }
 
     function transferOwnership(address newOwner) external onlyOwner {
