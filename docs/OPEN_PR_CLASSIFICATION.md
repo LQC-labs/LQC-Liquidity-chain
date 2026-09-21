@@ -6,9 +6,7 @@ This classification does **not** delete branch history. It determines whether an
 
 ## ACTIVE
 
-| PR | Subject | Current use |
-|---:|---|---|
-| #296 | Futures runtime V3 TWAP reference adapter | **Master 7/2 selective reuse candidate**. Rebase/review only the adapter + tests against current main; do not merge the historical PR wholesale. |
+No historical PR is currently authoritative for Master 7/3. Current `main` evidence controls the deployment-lineage reconciliation.
 
 ## REUSE — selective candidate, never merge wholesale without current-main review
 
@@ -35,6 +33,7 @@ This classification does **not** delete branch history. It determines whether an
 
 | PR | Subject | Reason |
 |---:|---|---|
+| #296 | Futures runtime V3 TWAP reference adapter | Selectively rebuilt and revalidated in Master 7/2; old diverged PR is superseded and should not be merged |
 | #250 | Futures parallel reuse/gap inventory | Superseded as a status document by Master 7/1 current-main reconciliation; preserve only as history |
 | #210 | Futures cross-source oracle deviation gate | Current on-chain Aggregator Oracle already has independent-reference deviation enforcement; old helper may remain review tooling but is not a Core merge candidate |
 | #70 | Lending Stage 3 isolated supply vault | Superseded by canonical Lending Core supply/share accounting and 6/14 decision: no duplicate Earn vault |
