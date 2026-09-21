@@ -135,15 +135,15 @@ describe("LQC minimal Lending core",function(){
     assert.ok(await core.badDebtOf(id,borrower.address)<badBefore);assert.ok(await debt.balanceOf(core.target)>cashBefore);
   });
 
-  it("requires pause and exhausted reserves before bounded supplier loss",async function(){
+  it("applies reserves first and only then realizes bounded supplier loss on a paused market",async function(){
     await createBadDebt("200");await assert.rejects(core.realizeBadDebtLoss(id,borrower.address,ethers.parseEther("10")));
     await(await registry.connect(guardian).setMarketEnabled(id,false)).wait();
-    const reserveBefore=await core.accruedReserves(id);assert.ok(reserveBefore>0n);
-    await assert.rejects(core.realizeBadDebtLoss(id,borrower.address,ethers.parseEther("10")));
-    await(await core.coverBadDebtWithReserves(id,borrower.address,reserveBefore,gas)).wait();assert.equal(await core.accruedReserves(id),0n);
-    const claimBefore=await core.liquidityOf(id,lender.address);
-    await(await core.realizeBadDebtLoss(id,borrower.address,ethers.parseEther("30"),gas)).wait();const claimAfter=await core.liquidityOf(id,lender.address);
-    assert.ok(claimAfter<claimBefore);assert.ok(await core.realizedSupplierLosses(id)>0n);await assert.rejects(core.realizeBadDebtLoss(id,borrower.address,ethers.parseEther("50")));
+    const reserveBefore=await core.accruedReserves(id),badBefore=await core.badDebtOf(id,borrower.address),claimBefore=await core.liquidityOf(id,lender.address);
+    assert.ok(reserveBefore>0n);
+    await(await core.realizeBadDebtLoss(id,borrower.address,ethers.parseEther("30"),gas)).wait();
+    const reserveAfter=await core.accruedReserves(id),badAfter=await core.badDebtOf(id,borrower.address),claimAfter=await core.liquidityOf(id,lender.address),supplierLoss=await core.realizedSupplierLosses(id);
+    assert.ok(reserveAfter<reserveBefore);assert.ok(claimAfter<claimBefore);assert.ok(supplierLoss>0n);assert.ok(badBefore-badAfter>supplierLoss);
+    await assert.rejects(core.realizeBadDebtLoss(id,borrower.address,ethers.parseEther("50")));
   });
 
   it("fails closed when either collateral oracle is stale",async function(){
