@@ -1,13 +1,5 @@
 name: Master 6 Clean Lending Post-Deployment Verification
 on:
-  pull_request:
-    paths:
-      - 'dex/scripts/verify-master6-clean-post-deployment.mjs'
-      - 'dex/deployments/master6-clean-post-deployment-evidence-bsc-testnet-97.json'
-      - 'dex/deployments/master6-clean-post-deployment-verification-bsc-testnet-97.json'
-      - 'dex/deployments/master6-live-execution-packet-bsc-testnet-97.json'
-      - 'test/master6-clean-post-deployment-verification.test.js'
-      - '.github/workflows/master6-clean-post-deployment-verification.yml'
   workflow_dispatch:
 permissions:
   contents: read
