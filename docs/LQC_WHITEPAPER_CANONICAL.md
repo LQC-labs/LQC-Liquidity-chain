@@ -87,7 +87,24 @@ Staking includes explicit reward accounting/claim, lock, cooldown, unstake, emer
 
 Token-denominated rewards must reconcile to the fixed LQC supply and an approved existing allocation. Protocol-revenue-funded rewards are separately accounted and are not guaranteed yield.
 
-### 7.3 Future Safety / Insurance Staking
+### 7.3 Shared Staking Utility for Lending/Earn and Future Launchpad
+
+LQC uses one canonical Staking Vault rather than creating separate staking pools for Lending/Earn and Launchpad. The Staking Vault is developed first as part of the Lending/Earn stage, but it remains an independent Core utility that can later be consumed by other approved ecosystem modules.
+
+For a future LQC Launchpad, staking principal remains in the canonical LQC Staking Vault. Launchpad contracts must not create a second staking custody domain merely to determine allocation eligibility. Instead, an approved read-only/versioned staking interface may expose bounded data such as staked balance, lock duration, staking weight, and snapshot state for Launchpad tier or allocation calculations.
+
+Launchpad integration must not:
+- transfer or rehypothecate staking principal;
+- mutate Lending Core accounting;
+- mutate staking reward accounting;
+- treat Launchpad eligibility as an additional reward emission;
+- bypass staking cooldown, withdrawal, governance, or emergency controls.
+
+This design allows one LQC stake to provide multiple reviewed utilities over time, including staking rewards, future Launchpad eligibility, and potential governance utility, without requiring the user to lock the same LQC in multiple protocol-specific staking pools.
+
+Development timing is dependency-based: the canonical Staking Vault, reward accounting, lock/cooldown, governance controls, and Lending/Earn/Staking E2E are completed first. Launchpad-specific staking integration is added only when the Launchpad workstream becomes active and after the staking interface is stable and reviewed.
+
+### 7.4 Future Safety / Insurance Staking
 
 Safety/Insurance Staking is post-pilot scope and requires separate economic simulation, slashing/loss rules, independent audit, legal review, user disclosure, and governance approval.
 
@@ -127,7 +144,7 @@ No single private key should control token supply, treasury, oracle, routing, bu
 
 Approved utility direction includes Lending loan-origination and repayment fee settlement in LQC with protocol burn, subject to final implementation, economic analysis, legal review, governance approval, and on-chain verification.
 
-Additional utility includes the separately accounted LQC Staking Vault and may later include governance/ecosystem functions after implementation and review.
+Additional utility includes the separately accounted LQC Staking Vault. The same canonical staking state may later support reviewed ecosystem functions such as Launchpad tier/allocation eligibility and governance utility through versioned interfaces, without creating duplicate staking custody or duplicate reward accounting.
 
 ## 14. Canonical Tokenomics
 
