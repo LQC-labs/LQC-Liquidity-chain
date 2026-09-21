@@ -1,0 +1,41 @@
+name: Master 6 Governance Proposal Materialize
+on:
+  pull_request:
+    paths:
+      - 'dex/scripts/prepare-master6-governance-configuration.mjs'
+      - 'dex/scripts/verify-master6-clean-post-deployment.mjs'
+      - 'dex/deployments/master6-live-execution-packet-bsc-testnet-97.json'
+      - 'dex/deployments/master6-clean-post-deployment-evidence-bsc-testnet-97.json'
+      - 'dex/deployments/master6-clean-post-deployment-verification-bsc-testnet-97.json'
+      - '.github/workflows/master6-governance-proposal-materialize.yml'
+permissions:
+  contents: read
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      MASTER6_GOVERNANCE_OUTPUT_FILE: 'master6-governance-configuration-proposal.json'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install DEX dependencies
+        working-directory: dex
+        run: npm ci
+      - name: Compile current Lending sources
+        working-directory: dex
+        run: npm run compile
+      - name: Materialize live Governance proposal packet
+        working-directory: dex
+        run: node scripts/prepare-master6-governance-configuration.mjs
+      - name: Upload Governance proposal packet
+        uses: actions/upload-artifact@v4
+        with:
+          name: master6-governance-configuration-proposal
+          path: dex/master6-governance-configuration-proposal.json
+          if-no-files-found: error
+          retention-days: 7
