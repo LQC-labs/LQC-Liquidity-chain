@@ -107,6 +107,10 @@ contract LQCLendingMarketRegistry {
         emit MarketStatusChanged(id, enabled);
     }
 
+    function validateMarketEnabled(bytes32 id) external view {
+        _enabledMarket(id);
+    }
+
     function validateCaps(bytes32 id, uint256 totalSupplyAfter, uint256 totalBorrowAfter) external view {
         MarketConfig memory config = _enabledMarket(id);
         if (totalSupplyAfter > config.supplyCap || totalBorrowAfter > config.borrowCap) revert CapExceeded();
