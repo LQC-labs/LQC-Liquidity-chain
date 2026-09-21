@@ -116,8 +116,14 @@ export async function prepareMaster6GovernanceProposalPacket({providers=RPCS.map
 
 async function main(){
   const out=await prepareMaster6GovernanceProposalPacket();
-  console.log("MASTER6_GOVERNANCE_PROPOSAL_PACKET_BEGIN");
-  console.log(JSON.stringify(out,null,2));
-  console.log("MASTER6_GOVERNANCE_PROPOSAL_PACKET_END");
+  const json=JSON.stringify(out,null,2);
+  if(process.env.MASTER6_GOVERNANCE_OUTPUT_FILE){
+    fs.writeFileSync(process.env.MASTER6_GOVERNANCE_OUTPUT_FILE,json+"\n");
+    console.log("WROTE_MASTER6_GOVERNANCE_PROPOSAL_PACKET "+process.env.MASTER6_GOVERNANCE_OUTPUT_FILE);
+  }else{
+    console.log("MASTER6_GOVERNANCE_PROPOSAL_PACKET_BEGIN");
+    console.log(json);
+    console.log("MASTER6_GOVERNANCE_PROPOSAL_PACKET_END");
+  }
 }
 if(import.meta.url===new URL("file://"+process.argv[1]).href) await main();
