@@ -1,0 +1,21 @@
+name: Master 6 Clean Lending Execution Approval Boundary
+on:
+  pull_request:
+    paths:
+      - 'dex/scripts/build-master6-clean-execution-approval.mjs'
+      - 'docs/master6/6-12-clean-lending-execution-approval.md'
+      - 'test/master6-clean-lending-execution-approval.test.js'
+      - '.github/workflows/master6-clean-lending-execution-approval.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  approval-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test test/master6-clean-lending-execution-approval.test.js
