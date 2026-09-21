@@ -1,12 +1,5 @@
 name: Master 5 Reference Feed
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/lending/LQCOracleManager.sol'
-      - 'docs/ORACLE_INTERFACE_BOUNDARY.md'
-      - 'docs/master5/5-3-reference-feed.md'
-      - 'test/master5-reference-feed.test.js'
-      - '.github/workflows/master5-reference-feed.yml'
   workflow_dispatch:
 permissions:
   contents: read
