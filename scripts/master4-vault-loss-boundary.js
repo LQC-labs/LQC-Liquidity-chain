@@ -7,7 +7,7 @@ function audit(source){
   'if (!depositsPaused || !allocationsPaused) revert EmergencyModeRequired()',
   'if (emergencyMaxLossBps > BPS) revert InvalidLossLimit()',
   'if (loss * BPS > debtRepaid * lossLimitBps) revert LossLimitExceeded()',
-  'strategyDebt -= debtRepaid','accountedAssets -= loss',
+  'strategyDebt -= debtRepaid','accountedAssets -= loss','strategyDebt = reportedAssets',
   'if (strategyDebt != 0) revert StrategyHasDebt()','_requireFullyBacked()'
  ];
  const missing=required.filter(x=>!source.includes(x));
