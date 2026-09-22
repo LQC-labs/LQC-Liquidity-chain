@@ -38,7 +38,7 @@ test("Master 7/1 reuse boundary remains explicit as later Futures stages extend 
     assert.ok(engine.includes(`function ${fn}`),fn);
   }
   assert.ok(!engine.includes("LQCLendingCore"));
-  assert.ok(engine.includes("Insurance/bad-debt spending, partial liquidation and ADL remain later 7/5 substeps."));
+  assert.ok(engine.includes("Partial liquidation and ADL remain later 7/5 substeps."));
 });
 
 test("Master 7/1 preserves exact BSC Testnet deployment evidence without inferring missing hashes",()=>{
