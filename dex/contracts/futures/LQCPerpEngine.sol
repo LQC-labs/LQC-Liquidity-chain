@@ -6,8 +6,8 @@ import {LQCFuturesVault} from "./LQCFuturesVault.sol";
 import {ILQCFuturesOracle} from "./ILQCFuturesOracle.sol";
 
 /// @notice Isolated-margin perpetual engine for LQC Flow Futures.
-/// @dev Master 7/5 substeps 1-2 add canonical reduction plus conserved funding checkpoint/accounting.
-///      Fees, Insurance/bad-debt, partial liquidation and ADL remain later 7/5 substeps.
+/// @dev Master 7/5 substeps 1-3 add canonical reduction, conserved funding, and segregated trading fees.
+///      Insurance/bad-debt spending, partial liquidation and ADL remain later 7/5 substeps.
 contract LQCPerpEngine {
     uint256 public constant BPS = 10_000;
     uint256 public constant PRICE_SCALE = 1e18;
@@ -35,6 +35,8 @@ contract LQCPerpEngine {
     mapping(address => mapping(uint256 => Position)) public positions;
     mapping(uint256 => FundingState) public fundingStates;
     mapping(address => mapping(uint256 => int256)) public positionFundingEntryRay;
+    mapping(uint256 => uint256) public tradingFeeBps;
+    mapping(uint256 => uint256) public insuranceFeeShareBps;
 
     event PositionOpened(
         address indexed account,
@@ -63,6 +65,8 @@ contract LQCPerpEngine {
         int256 pnl
     );
     event FundingConfigured(uint256 indexed marketId, uint256 maxAbsDeltaPerUpdateRay);
+    event TradingFeeConfigured(uint256 indexed marketId, uint256 feeBps, uint256 insuranceShareBps);
+    event TradingFeeCharged(address indexed account, uint256 indexed marketId, uint256 notionalUsd, uint256 fee, uint256 insuranceAmount);
     event FundingIndexUpdated(
         uint256 indexed marketId,
         int256 previousIndexRay,
@@ -93,6 +97,7 @@ contract LQCPerpEngine {
     error InvalidFundingDelta();
     error FundingDeltaTooLarge();
     error FundingOverflow();
+    error InvalidFeeConfiguration();
 
     modifier onlyRegistryOwner() {
         if (msg.sender != registry.owner()) revert Forbidden();
@@ -103,6 +108,16 @@ contract LQCPerpEngine {
         if (registry_ == address(0) || vault_ == address(0)) revert InvalidAmount();
         registry = LQCFuturesMarketRegistry(registry_);
         vault = LQCFuturesVault(vault_);
+    }
+
+    /// @notice Configures the per-market Futures trading fee and its Insurance reserve share.
+    /// @dev BPS values are bounded; Treasury receives the remainder. Reserve spending is deferred to later gates.
+    function configureTradingFee(uint256 marketId, uint256 feeBps, uint256 insuranceShareBps_) external onlyRegistryOwner {
+        if (marketId == 0 || marketId > registry.marketCount()) revert FundingMarketNotFound();
+        if (feeBps > BPS || insuranceShareBps_ > BPS) revert InvalidFeeConfiguration();
+        tradingFeeBps[marketId] = feeBps;
+        insuranceFeeShareBps[marketId] = insuranceShareBps_;
+        emit TradingFeeConfigured(marketId, feeBps, insuranceShareBps_);
     }
 
     /// @notice Sets the per-market maximum absolute funding-index change accepted per update.
@@ -159,6 +174,7 @@ contract LQCPerpEngine {
 
         uint256 price = _price(indexToken, oracle);
         vault.lockCollateral(msg.sender, collateralToken, margin);
+        _chargeTradingFee(msg.sender, marketId, collateralToken, sizeUsd);
 
         positions[msg.sender][marketId] =
             Position({margin: margin, sizeUsd: sizeUsd, entryPrice: price, isLong: isLong, open: true});
@@ -296,6 +312,7 @@ contract LQCPerpEngine {
             stored.margin = remainingMargin;
 
             _settle(account, collateralToken, releasedMargin, realizedPnl);
+            _chargeTradingFee(account, marketId, collateralToken, reduceSizeUsd);
 
             emit PositionReduced(
                 account,
@@ -313,6 +330,7 @@ contract LQCPerpEngine {
         delete positions[account][marketId];
         delete positionFundingEntryRay[account][marketId];
         _settle(account, collateralToken, releasedMargin, realizedPnl);
+        _chargeTradingFee(account, marketId, collateralToken, reduceSizeUsd);
 
         emit PositionReduced(
             account,
@@ -325,6 +343,17 @@ contract LQCPerpEngine {
             realizedPnl
         );
         return (releasedMargin, realizedPnl, exitPrice, 0);
+    }
+
+    function _chargeTradingFee(address account, uint256 marketId, address collateralToken, uint256 notionalUsd) private {
+        uint256 feeBps = tradingFeeBps[marketId];
+        if (feeBps == 0) return;
+        if (notionalUsd > type(uint256).max / feeBps) revert InvalidAmount();
+        uint256 fee = notionalUsd * feeBps / BPS;
+        if (fee == 0) return;
+        uint256 insuranceAmount = fee * insuranceFeeShareBps[marketId] / BPS;
+        vault.collectTradingFee(account, collateralToken, fee, insuranceAmount);
+        emit TradingFeeCharged(account, marketId, notionalUsd, fee, insuranceAmount);
     }
 
     function _settleFundingCheckpoint(
