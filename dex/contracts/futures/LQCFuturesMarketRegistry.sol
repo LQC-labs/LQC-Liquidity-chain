@@ -23,12 +23,14 @@ contract LQCFuturesMarketRegistry {
     mapping(uint256 => Market) public markets;
     mapping(bytes32 => uint256) public marketIdBySymbol;
     mapping(uint256 => MarketMode) public marketMode;
+    mapping(uint256 => bool) public recoveryApproved;
 
     event MarketAdded(uint256 indexed marketId, bytes32 indexed symbol, address indexToken, address collateralToken, address oracle);
     event MarketStatusChanged(uint256 indexed marketId, bool active);
     event MarketModeChanged(uint256 indexed marketId, MarketMode previousMode, MarketMode newMode);
     event GuardianChanged(address indexed previousGuardian, address indexed newGuardian);
     event EmergencyTriggerApplied(uint256 indexed marketId, bool oracleHealthy, bool circuitBreakerAllowed, bool residualBadDebt, MarketMode resultingMode);
+    event RecoveryApprovalChanged(uint256 indexed marketId, bool approved);
     event MarketRiskUpdated(uint256 indexed marketId, uint32 maxLeverageBps, uint32 maintenanceMarginBps);
     event MarketOracleUpdated(uint256 indexed marketId, address indexed oracle);
     event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
@@ -125,9 +127,18 @@ contract LQCFuturesMarketRegistry {
         emit EmergencyTriggerApplied(marketId, oracleHealthy, circuitBreakerAllowed, hasResidualBadDebt, target);
     }
 
+    function setRecoveryApproved(uint256 marketId, bool approved) external onlyOwner {
+        _requireMarket(marketId);
+        recoveryApproved[marketId] = approved;
+        emit RecoveryApprovalChanged(marketId, approved);
+    }
+
     function setMarketMode(uint256 marketId, MarketMode newMode) external onlyOwner {
         _requireMarket(marketId);
         MarketMode previous = marketMode[marketId];
+        if (previous == MarketMode.HALTED && newMode == MarketMode.ACTIVE) revert Forbidden();
+        if (previous == MarketMode.REDUCE_ONLY && newMode == MarketMode.ACTIVE && !recoveryApproved[marketId]) revert Forbidden();
+        if (newMode == MarketMode.ACTIVE) recoveryApproved[marketId] = false;
         marketMode[marketId] = newMode;
         markets[marketId].active = newMode != MarketMode.HALTED;
         emit MarketModeChanged(marketId, previous, newMode);
