@@ -514,9 +514,15 @@ contract LQCPerpEngine {
         uint256 maxCoverage;
         if (payment < 0) {
             uint256 debit = uint256(-payment);
+            uint256 available = vault.availableBalance(account, collateralToken);
+            uint256 collectible = position.margin;
+            if (available > type(uint256).max - collectible) revert InvalidAmount();
+            collectible += available;
+
+            uint256 shortfall = debit > collectible ? debit - collectible : 0;
             uint256 coverageBps = maxInsuranceCoverageBps[marketId];
-            if (coverageBps != 0 && debit > type(uint256).max / coverageBps) revert InvalidAmount();
-            maxCoverage = debit * coverageBps / BPS;
+            if (coverageBps != 0 && shortfall > type(uint256).max / coverageBps) revert InvalidAmount();
+            maxCoverage = shortfall * coverageBps / BPS;
         }
 
         (
