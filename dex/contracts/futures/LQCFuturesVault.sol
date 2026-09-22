@@ -19,6 +19,8 @@ contract LQCFuturesVault {
     mapping(address => mapping(address => uint256)) public lockedBalance;
     mapping(address => uint256) public totalAccounted;
     mapping(address => uint256) public fundingPoolBalance;
+    mapping(address => uint256) public insuranceFeeReserve;
+    mapping(address => uint256) public treasuryFeeReserve;
 
     event Deposit(address indexed account, address indexed token, uint256 amount);
     event Withdrawal(address indexed account, address indexed token, uint256 amount);
@@ -26,6 +28,7 @@ contract LQCFuturesVault {
     event CollateralUnlocked(address indexed account, address indexed token, uint256 amount);
     event PnLSettled(address indexed account, address indexed token, int256 pnl);
     event FundingSettled(address indexed account, address indexed token, int256 payment, uint256 fundingPoolBalance);
+    event TradingFeeCollected(address indexed account, address indexed token, uint256 fee, uint256 insuranceAmount, uint256 treasuryAmount);
     event CollateralSupportChanged(address indexed token, bool supported);
     event EngineChanged(address indexed previousEngine, address indexed newEngine);
     event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
@@ -136,9 +139,26 @@ contract LQCFuturesVault {
         emit FundingSettled(account, token, payment, fundingPoolBalance[token]);
     }
 
-    /// @notice True when all user-accounted collateral plus the dedicated funding pool is backed by tokens in the Vault.
+    /// @notice Collect a Futures trading fee from available collateral and segregate protocol reserves.
+    /// @dev Fee reserves remain inside this Vault and are not spendable until later Insurance/Treasury policy gates.
+    function collectTradingFee(address account, address token, uint256 fee, uint256 insuranceAmount) external onlyEngine {
+        if (fee == 0 || insuranceAmount > fee) revert InvalidAmount();
+        uint256 available = availableBalance[account][token];
+        if (available < fee) revert InsufficientAvailableBalance();
+
+        uint256 treasuryAmount = fee - insuranceAmount;
+        availableBalance[account][token] = available - fee;
+        totalAccounted[token] -= fee;
+        insuranceFeeReserve[token] += insuranceAmount;
+        treasuryFeeReserve[token] += treasuryAmount;
+
+        emit TradingFeeCollected(account, token, fee, insuranceAmount, treasuryAmount);
+    }
+
+    /// @notice True when all user-accounted collateral plus dedicated protocol pools/reserves are backed by tokens in the Vault.
     function isFullyBacked(address token) external view returns (bool) {
-        return IERC20(token).balanceOf(address(this)) >= totalAccounted[token] + fundingPoolBalance[token];
+        return IERC20(token).balanceOf(address(this)) >=
+            totalAccounted[token] + fundingPoolBalance[token] + insuranceFeeReserve[token] + treasuryFeeReserve[token];
     }
 
     /// @notice Apply realized PnL after a position is reduced/closed.
@@ -147,7 +167,9 @@ contract LQCFuturesVault {
         if (pnl > 0) {
             uint256 profit = uint256(pnl);
             uint256 tokenBalance = IERC20(token).balanceOf(address(this));
-            if (tokenBalance < totalAccounted[token] + profit) revert InsufficientVaultLiquidity();
+            uint256 reserved =
+                fundingPoolBalance[token] + insuranceFeeReserve[token] + treasuryFeeReserve[token];
+            if (tokenBalance < totalAccounted[token] + reserved + profit) revert InsufficientVaultLiquidity();
             availableBalance[account][token] += profit;
             totalAccounted[token] += profit;
         } else if (pnl < 0) {
