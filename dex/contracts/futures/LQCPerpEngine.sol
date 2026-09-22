@@ -442,6 +442,7 @@ contract LQCPerpEngine {
         }
 
         if (fullLiquidation) {
+            openInterestUsd[marketId] -= position.sizeUsd;
             delete positions[account][marketId];
             delete positionFundingEntryRay[account][marketId];
             _settle(account, marketId, collateralToken, position.margin, pnl);
@@ -462,6 +463,7 @@ contract LQCPerpEngine {
 
         stored.sizeUsd = remainingSizeUsd;
         stored.margin = remainingMargin;
+        openInterestUsd[marketId] -= reduceSizeUsd;
 
         emit PositionReduced(
             account,
@@ -535,6 +537,7 @@ contract LQCPerpEngine {
 
             stored.sizeUsd = remainingSizeUsd;
             stored.margin = remainingMargin;
+            openInterestUsd[marketId] -= reduceSizeUsd;
 
             _settle(account, marketId, collateralToken, releasedMargin, realizedPnl);
             _chargeTradingFee(account, marketId, collateralToken, reduceSizeUsd);
@@ -552,6 +555,7 @@ contract LQCPerpEngine {
             return (releasedMargin, realizedPnl, exitPrice, remainingSizeUsd);
         }
 
+        openInterestUsd[marketId] -= reduceSizeUsd;
         delete positions[account][marketId];
         delete positionFundingEntryRay[account][marketId];
         _settle(account, marketId, collateralToken, releasedMargin, realizedPnl);
