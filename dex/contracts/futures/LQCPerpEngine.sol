@@ -80,6 +80,7 @@ contract LQCPerpEngine {
         uint256 reductionBps,
         uint256 minRemainingSizeUsd
     );
+    event AdlExecuted(address indexed account, uint256 indexed marketId, uint256 reducedSizeUsd, uint256 absorbedBadDebt, uint256 remainingSizeUsd, uint256 price);
     event PositionPartiallyLiquidated(
         address indexed account,
         uint256 indexed marketId,
@@ -142,6 +143,8 @@ contract LQCPerpEngine {
     error InvalidAdlConfiguration();
     error AdlNotEnabled();
     error AdlBadDebtRequired();
+    error AdlPositionNotProfitable();
+    error AdlReductionTooLarge();
 
     modifier onlyRegistryOwner() {
         if (msg.sender != registry.owner()) revert Forbidden();
@@ -180,6 +183,43 @@ contract LQCPerpEngine {
     function isAdlEmergencyActive(uint256 marketId, address collateralToken) public view returns (bool) {
         if (marketId == 0 || marketId > registry.marketCount()) return false;
         return adlEnabled[marketId] && maxAdlReductionBps[marketId] != 0 && vault.residualBadDebt(collateralToken) != 0;
+    }
+
+    /// @notice Executes a Governance-only, bounded ADL reduction against explicit residual Futures bad debt.
+    /// @dev This primitive cannot create new debt: only profitable position slices may absorb existing residual debt.
+    function executeAdl(address account, uint256 marketId, uint256 reduceSizeUsd) external onlyRegistryOwner {
+        if (!adlEnabled[marketId]) revert AdlNotEnabled();
+        Position storage stored = positions[account][marketId];
+        if (!stored.open) revert PositionNotFound();
+        if (reduceSizeUsd == 0 || reduceSizeUsd > stored.sizeUsd) revert InvalidReduction();
+
+        (, address indexToken, address collateralToken, address oracle,,,) = registry.markets(marketId);
+        uint256 debt = vault.residualBadDebt(collateralToken);
+        if (debt == 0) revert AdlBadDebtRequired();
+
+        uint256 cap = stored.sizeUsd * maxAdlReductionBps[marketId] / BPS;
+        if (cap == 0 || reduceSizeUsd > cap) revert AdlReductionTooLarge();
+
+        uint256 price = _price(indexToken, oracle);
+        Position memory slice = Position({margin: 0, sizeUsd: reduceSizeUsd, entryPrice: stored.entryPrice, isLong: stored.isLong, open: true});
+        int256 slicePnl = _pnl(slice, price);
+        if (slicePnl <= 0) revert AdlPositionNotProfitable();
+
+        uint256 profit = uint256(slicePnl);
+        uint256 absorbed = profit < debt ? profit : debt;
+        uint256 releasedMargin = stored.margin * reduceSizeUsd / stored.sizeUsd;
+        if (releasedMargin == 0) revert InvalidReduction();
+
+        stored.sizeUsd -= reduceSizeUsd;
+        stored.margin -= releasedMargin;
+        vault.unlockCollateral(account, collateralToken, releasedMargin);
+        vault.absorbAdlBadDebt(collateralToken, absorbed);
+
+        if (stored.sizeUsd == 0) {
+            delete positions[account][marketId];
+            delete positionFundingEntryRay[account][marketId];
+        }
+        emit AdlExecuted(account, marketId, reduceSizeUsd, absorbed, stored.sizeUsd, price);
     }
 
     /// @notice Configures the bounded partial-liquidation step for a market.
