@@ -27,6 +27,6 @@ jobs:
       - name: Compile contracts
         run: npm run compile
       - name: 7/5 canonical accounting regression
-        run: node --test test/futures-partial-reduction.test.mjs test/futures-funding-accounting.test.mjs test/futures-fee-accounting.test.mjs test/futures-insurance-bad-debt.test.mjs test/futures-partial-liquidation-onchain.test.mjs test/futures-adl-execution-onchain.test.mjs test/futures-7-5-integrated-invariants.test.mjs
+        run: npx mocha --timeout 30000 test/futures-partial-reduction.test.mjs test/futures-funding-accounting.test.mjs test/futures-fee-accounting.test.mjs test/futures-insurance-bad-debt.test.mjs test/futures-partial-liquidation-onchain.test.mjs test/futures-adl-execution-onchain.test.mjs test/futures-7-5-integrated-invariants.test.mjs
       - name: Broad Futures regression
-        run: node --test test/futures*.test.mjs
+        run: npx mocha --timeout 30000 "test/futures*.test.mjs"
