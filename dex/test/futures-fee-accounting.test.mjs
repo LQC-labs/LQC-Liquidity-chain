@@ -61,6 +61,27 @@ describe("Master 7/5-3 Futures trading fee accounting",function(){
     assert.equal(await vault.isFullyBacked(token),true);
   });
 
+  it("does not let positive PnL consume Funding or fee reserves",async function(){
+    const a=await trader.getAddress(), token=await collateral.getAddress();
+
+    await(await engine.connect(trader).openPosition(1,usd("1000"),usd("5000"),true)).wait();
+
+    // Leave no unaccounted liquidity beyond the segregated fee reserves.
+    // A profitable reduction must therefore fail instead of treating reserves as PnL backing.
+    await(await oracle.setPrice(await indexToken.getAddress(),usd("55000"),{gasLimit:100_000n})).wait();
+
+    const beforePosition=Array.from(await engine.positions(a,1));
+    const insuranceBefore=await vault.insuranceFeeReserve(token);
+    const treasuryBefore=await vault.treasuryFeeReserve(token);
+
+    await assert.rejects(engine.connect(trader).reducePosition(1,usd("2000")));
+
+    assert.deepEqual(Array.from(await engine.positions(a,1)),beforePosition);
+    assert.equal(await vault.insuranceFeeReserve(token),insuranceBefore);
+    assert.equal(await vault.treasuryFeeReserve(token),treasuryBefore);
+    assert.equal(await vault.isFullyBacked(token),true);
+  });
+
   it("rejects unauthorized and out-of-range fee configuration",async function(){
     await assert.rejects(engine.connect(trader).configureTradingFee(1,FEE_BPS,INSURANCE_SHARE_BPS));
     await assert.rejects(engine.configureTradingFee(1,10001,0));

@@ -49,7 +49,10 @@ Before starting the next new Staking implementation, complete this short reposit
 13. **DONE in this gate** — Master 7/4 Perp Accounting Gap Review PASS; application-layer logic is reusable, while canonical on-chain settlement gaps are identified;
 14. **DONE in this gate** — Master 7/5-1 Canonical Partial Position Reduction implemented and regression-tested;
 15. **DONE in this gate** — Master 7/5-2 Funding checkpoint/accounting implemented and focused CI PASS;
-16. **NEXT EXECUTABLE** — Master 7/5-3 Trading Fee Accounting + explicit reserve routing.
+16. **DONE in this gate** — Master 7/5-3 Trading Fee Accounting + explicit reserve routing implemented and focused CI PASS;
+17. **DONE in this gate** — Master 7/5-4 Futures-only Insurance Fund / residual bad debt accounting implemented and focused CI PASS;
+18. **DONE in this gate** — Master 7/5-5 Funding-aware Partial Liquidation implemented and focused CI PASS;
+19. **NEXT EXECUTABLE** — Master 7/5-6 Bounded ADL primitive for explicit residual bad debt.
 
 ## Preserved Staking direction and timing
 
@@ -104,7 +107,10 @@ The next development lane is Master 7 Futures. Reuse the existing Futures founda
 - 7/5 Selective On-chain Futures Gap Implementation + Regression — **IN PROGRESS**
   - 7/5-1 Canonical Partial Position Reduction — **PASS in this gate**
   - 7/5-2 Funding checkpoint/accounting — **PASS in this gate**
-  - 7/5-3 Trading Fee Accounting + explicit reserve routing — **NEXT**
+  - 7/5-3 Trading Fee Accounting + explicit reserve routing — **PASS in this gate**
+  - 7/5-4 Futures-only Insurance Fund / residual bad debt accounting — **PASS in this gate**
+  - 7/5-5 Partial Liquidation — **PASS in this gate**
+  - 7/5-6 Bounded ADL primitive — **NEXT**
 - 7/6 Futures Risk / Governance / Emergency Integration
 - 7/7 Current-release BSC Testnet Futures E2E
 - 7/8 Futures Stage Exit / Intent Handoff
@@ -161,3 +167,16 @@ The repository now follows `docs/INCREMENTAL_VERIFICATION_POLICY.md`.
 8. mandatory full regression at final integration/security gates.
 
 Operational target: validate **changed code first**, then run **full regression at the correct gate**. Do not repeatedly rediscover unchanged historical state.
+
+
+## 7/5-5 incremental-verification result
+
+The approved incremental method was used for this substep:
+
+- verified 7/5-1 through 7/5-4 baseline was reused;
+- only changed Engine/Vault liquidation/funding/Insurance boundaries were revalidated;
+- PR automatic validation was limited to **LQC Futures Focused CI + the active 7/5-5 focused workflow**;
+- historical Master 2–6 workflows were not replayed;
+- mandatory broad/full regression remains scheduled for 7/5-7.
+
+This confirms the repository speed policy is operating as intended without lowering the safety gate.
