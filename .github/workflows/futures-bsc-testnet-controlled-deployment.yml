@@ -1,0 +1,62 @@
+name: Futures BSC testnet controlled deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Type DEPLOY_BSC_TESTNET to authorize testnet transactions"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: futures-bsc-testnet-deployment
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ inputs.confirm == 'DEPLOY_BSC_TESTNET' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: futures-bsc-testnet
+    defaults:
+      run:
+        working-directory: dex
+    env:
+      BSC_TESTNET_RPC_URL: https://data-seed-prebsc-1-s1.bnbchain.org:8545
+      FUTURES_DEPLOYER_ADDRESS: "0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB"
+      FUTURES_OWNER_ADDRESS: "0x89d992f696B40ABbDB6610144faeF336911D8175"
+      FUTURES_MIN_TBNB_RESERVE: "0.3"
+      FUTURES_MAX_DEPLOYMENT_SPEND: "1.0"
+      FUTURES_EXECUTE_DEPLOYMENT: "I_UNDERSTAND_THIS_SENDS_TESTNET_TRANSACTIONS"
+      DEPLOYER_PRIVATE_KEY: ${{ secrets.FUTURES_TESTNET_DEPLOYER_PRIVATE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci
+      - run: npm run compile
+      - name: Verify protected signer is configured
+        shell: bash
+        run: |
+          if [ -z "$DEPLOYER_PRIVATE_KEY" ]; then
+            echo "Missing protected FUTURES_TESTNET_DEPLOYER_PRIVATE_KEY secret."
+            exit 1
+          fi
+      - name: Execute controlled BSC Testnet deployment
+        shell: bash
+        run: |
+          set -o pipefail
+          node scripts/deploy-futures-testnet.mjs | tee futures-testnet-deployment.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: futures-testnet-deployment-result
+          path: dex/futures-testnet-deployment.json
+          if-no-files-found: ignore
+          retention-days: 30
