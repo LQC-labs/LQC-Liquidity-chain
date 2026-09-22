@@ -6,9 +6,9 @@ import {LQCFuturesVault} from "./LQCFuturesVault.sol";
 import {ILQCFuturesOracle} from "./ILQCFuturesOracle.sol";
 
 /// @notice Isolated-margin perpetual engine for LQC Flow Futures.
-/// @dev Master 7/5 substeps 1-4 add canonical reduction, conserved funding, segregated fees,
-///      and bounded Futures-only Insurance/residual-bad-debt accounting.
-///      Partial liquidation and ADL remain later 7/5 substeps.
+/// @dev Master 7/5 substeps 1-5 add canonical reduction, conserved funding, segregated fees,
+///      bounded Futures-only Insurance/residual-bad-debt accounting and bounded partial liquidation.
+///      ADL remains the next 7/5 substep.
 contract LQCPerpEngine {
     uint256 public constant BPS = 10_000;
     uint256 public constant PRICE_SCALE = 1e18;
@@ -39,6 +39,8 @@ contract LQCPerpEngine {
     mapping(uint256 => uint256) public tradingFeeBps;
     mapping(uint256 => uint256) public insuranceFeeShareBps;
     mapping(uint256 => uint256) public maxInsuranceCoverageBps;
+    mapping(uint256 => uint256) public liquidationReductionBps;
+    mapping(uint256 => uint256) public liquidationMinRemainingSizeUsd;
 
     event PositionOpened(
         address indexed account,
@@ -70,6 +72,30 @@ contract LQCPerpEngine {
     event TradingFeeConfigured(uint256 indexed marketId, uint256 feeBps, uint256 insuranceShareBps);
     event TradingFeeCharged(address indexed account, uint256 indexed marketId, uint256 notionalUsd, uint256 fee, uint256 insuranceAmount);
     event InsuranceCoverageConfigured(uint256 indexed marketId, uint256 maxCoverageBps);
+    event PartialLiquidationConfigured(
+        uint256 indexed marketId,
+        uint256 reductionBps,
+        uint256 minRemainingSizeUsd
+    );
+    event PositionPartiallyLiquidated(
+        address indexed account,
+        uint256 indexed marketId,
+        address indexed liquidator,
+        uint256 reducedSizeUsd,
+        uint256 remainingSizeUsd,
+        uint256 remainingMargin,
+        uint256 price,
+        int256 realizedPnl
+    );
+    event LiquidationFundingApplied(
+        address indexed account,
+        uint256 indexed marketId,
+        int256 payment,
+        uint256 marginCredit,
+        uint256 marginDebit,
+        uint256 insuranceCovered,
+        uint256 residualBadDebt
+    );
     event PositionDeficitRecorded(
         address indexed account,
         uint256 indexed marketId,
@@ -109,6 +135,7 @@ contract LQCPerpEngine {
     error FundingOverflow();
     error InvalidFeeConfiguration();
     error InvalidInsuranceConfiguration();
+    error InvalidLiquidationConfiguration();
 
     modifier onlyRegistryOwner() {
         if (msg.sender != registry.owner()) revert Forbidden();
@@ -129,6 +156,22 @@ contract LQCPerpEngine {
         tradingFeeBps[marketId] = feeBps;
         insuranceFeeShareBps[marketId] = insuranceShareBps_;
         emit TradingFeeConfigured(marketId, feeBps, insuranceShareBps_);
+    }
+
+    /// @notice Configures the bounded partial-liquidation step for a market.
+    /// @dev A zero stored reduction means legacy full liquidation. Governance may configure
+    ///      1..10000 bps. minRemainingSizeUsd may be zero to disable dust promotion.
+    function configurePartialLiquidation(
+        uint256 marketId,
+        uint256 reductionBps,
+        uint256 minRemainingSizeUsd
+    ) external onlyRegistryOwner {
+        if (marketId == 0 || marketId > registry.marketCount()) revert FundingMarketNotFound();
+        if (reductionBps == 0 || reductionBps > BPS) revert InvalidLiquidationConfiguration();
+
+        liquidationReductionBps[marketId] = reductionBps;
+        liquidationMinRemainingSizeUsd[marketId] = minRemainingSizeUsd;
+        emit PartialLiquidationConfigured(marketId, reductionBps, minRemainingSizeUsd);
     }
 
     /// @notice Configures the maximum fraction of a realized deficit that Insurance may cover.
@@ -255,8 +298,8 @@ contract LQCPerpEngine {
     }
 
     function liquidate(address account, uint256 marketId) external {
-        Position memory position = positions[account][marketId];
-        if (!position.open) revert PositionNotFound();
+        Position storage stored = positions[account][marketId];
+        if (!stored.open) revert PositionNotFound();
 
         (
             ,
@@ -267,18 +310,82 @@ contract LQCPerpEngine {
             uint32 maintenanceMarginBps,
         ) = registry.markets(marketId);
 
+        Position memory position = stored;
+        position.margin = _settleLiquidationFundingCheckpoint(
+            account,
+            marketId,
+            collateralToken,
+            position
+        );
+        stored.margin = position.margin;
+
         uint256 price = _price(indexToken, oracle);
         int256 pnl = _pnl(position, price);
         int256 equity = int256(position.margin) + pnl;
         uint256 maintenance = (position.sizeUsd * uint256(maintenanceMarginBps)) / BPS;
         if (equity > int256(maintenance)) revert NotLiquidatable();
 
-        // Funding-aware liquidation is intentionally deferred to 7/5-5 where funding debt,
-        // partial liquidation and Insurance/bad-debt are integrated as one risk-reducing path.
-        delete positions[account][marketId];
-        delete positionFundingEntryRay[account][marketId];
-        _settle(account, marketId, collateralToken, position.margin, pnl);
-        emit PositionLiquidated(account, marketId, msg.sender, price, pnl);
+        uint256 reduceSizeUsd = _liquidationReductionSize(marketId, position.sizeUsd);
+        bool fullLiquidation = reduceSizeUsd == position.sizeUsd || position.margin == 0;
+
+        Position memory slice = Position({
+            margin: 0,
+            sizeUsd: reduceSizeUsd,
+            entryPrice: position.entryPrice,
+            isLong: position.isLong,
+            open: true
+        });
+        int256 realizedPnl = _pnl(slice, price);
+
+        if (!fullLiquidation && realizedPnl < 0 && uint256(-realizedPnl) >= position.margin) {
+            fullLiquidation = true;
+            reduceSizeUsd = position.sizeUsd;
+            slice.sizeUsd = position.sizeUsd;
+            realizedPnl = pnl;
+        }
+
+        if (fullLiquidation) {
+            delete positions[account][marketId];
+            delete positionFundingEntryRay[account][marketId];
+            _settle(account, marketId, collateralToken, position.margin, pnl);
+            emit PositionLiquidated(account, marketId, msg.sender, price, pnl);
+            return;
+        }
+
+        uint256 remainingSizeUsd = position.sizeUsd - reduceSizeUsd;
+        uint256 remainingMargin = position.margin;
+
+        if (realizedPnl < 0) {
+            uint256 realizedLoss = uint256(-realizedPnl);
+            vault.settlePnL(account, collateralToken, -int256(realizedLoss));
+            remainingMargin -= realizedLoss;
+        } else if (realizedPnl > 0) {
+            vault.settlePnL(account, collateralToken, realizedPnl);
+        }
+
+        stored.sizeUsd = remainingSizeUsd;
+        stored.margin = remainingMargin;
+
+        emit PositionReduced(
+            account,
+            marketId,
+            reduceSizeUsd,
+            0,
+            remainingSizeUsd,
+            remainingMargin,
+            price,
+            realizedPnl
+        );
+        emit PositionPartiallyLiquidated(
+            account,
+            marketId,
+            msg.sender,
+            reduceSizeUsd,
+            remainingSizeUsd,
+            remainingMargin,
+            price,
+            realizedPnl
+        );
     }
 
     function getPositionPnl(address account, uint256 marketId)
@@ -366,6 +473,80 @@ contract LQCPerpEngine {
         return (releasedMargin, realizedPnl, exitPrice, 0);
     }
 
+    function _liquidationReductionSize(uint256 marketId, uint256 positionSizeUsd)
+        private
+        view
+        returns (uint256 reduceSizeUsd)
+    {
+        uint256 reductionBps = liquidationReductionBps[marketId];
+        if (reductionBps == 0) return positionSizeUsd;
+
+        if (positionSizeUsd > type(uint256).max / reductionBps) revert InvalidAmount();
+        reduceSizeUsd = positionSizeUsd * reductionBps / BPS;
+        if (reduceSizeUsd == 0 || reduceSizeUsd >= positionSizeUsd) return positionSizeUsd;
+
+        uint256 remaining = positionSizeUsd - reduceSizeUsd;
+        uint256 minimumRemaining = liquidationMinRemainingSizeUsd[marketId];
+        if (minimumRemaining != 0 && remaining < minimumRemaining) return positionSizeUsd;
+    }
+
+    function _settleLiquidationFundingCheckpoint(
+        address account,
+        uint256 marketId,
+        address collateralToken,
+        Position memory position
+    ) private returns (uint256 adjustedMargin) {
+        FundingState memory state = fundingStates[marketId];
+        adjustedMargin = position.margin;
+
+        if (!state.configured) {
+            positionFundingEntryRay[account][marketId] = state.cumulativeFundingPerUsdRay;
+            return adjustedMargin;
+        }
+
+        int256 payment = previewFundingPayment(account, marketId);
+        if (payment == 0) {
+            positionFundingEntryRay[account][marketId] = state.cumulativeFundingPerUsdRay;
+            emit FundingSettled(account, marketId, 0, state.cumulativeFundingPerUsdRay);
+            return adjustedMargin;
+        }
+
+        uint256 maxCoverage;
+        if (payment < 0) {
+            uint256 debit = uint256(-payment);
+            uint256 coverageBps = maxInsuranceCoverageBps[marketId];
+            if (coverageBps != 0 && debit > type(uint256).max / coverageBps) revert InvalidAmount();
+            maxCoverage = debit * coverageBps / BPS;
+        }
+
+        (
+            uint256 marginCredit,
+            uint256 marginDebit,
+            uint256 insuranceCovered,
+            uint256 residual
+        ) = vault.settleLiquidationFunding(
+            account,
+            collateralToken,
+            payment,
+            position.margin,
+            maxCoverage
+        );
+
+        adjustedMargin = position.margin + marginCredit - marginDebit;
+        positionFundingEntryRay[account][marketId] = state.cumulativeFundingPerUsdRay;
+
+        emit FundingSettled(account, marketId, payment, state.cumulativeFundingPerUsdRay);
+        emit LiquidationFundingApplied(
+            account,
+            marketId,
+            payment,
+            marginCredit,
+            marginDebit,
+            insuranceCovered,
+            residual
+        );
+    }
+
     function _chargeTradingFee(address account, uint256 marketId, address collateralToken, uint256 notionalUsd) private {
         uint256 feeBps = tradingFeeBps[marketId];
         if (feeBps == 0) return;
@@ -398,7 +579,7 @@ contract LQCPerpEngine {
 
     function _settle(address account, uint256 marketId, address collateralToken, uint256 margin, int256 pnl) private {
         if (pnl >= 0) {
-            vault.unlockCollateral(account, collateralToken, margin);
+            if (margin != 0) vault.unlockCollateral(account, collateralToken, margin);
             if (pnl > 0) vault.settlePnL(account, collateralToken, pnl);
             return;
         }
