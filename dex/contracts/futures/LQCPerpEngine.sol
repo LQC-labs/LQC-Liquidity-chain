@@ -8,7 +8,7 @@ import {ILQCFuturesOracle} from "./ILQCFuturesOracle.sol";
 /// @notice Isolated-margin perpetual engine for LQC Flow Futures.
 /// @dev Master 7/5 substeps 1-5 add canonical reduction, conserved funding, segregated fees,
 ///      bounded Futures-only Insurance/residual-bad-debt accounting and bounded partial liquidation.
-///      ADL remains the next 7/5 substep.
+///      7/5-6 begins with an explicit bounded ADL safety boundary; execution is added only after this gate.
 contract LQCPerpEngine {
     uint256 public constant BPS = 10_000;
     uint256 public constant PRICE_SCALE = 1e18;
@@ -41,6 +41,8 @@ contract LQCPerpEngine {
     mapping(uint256 => uint256) public maxInsuranceCoverageBps;
     mapping(uint256 => uint256) public liquidationReductionBps;
     mapping(uint256 => uint256) public liquidationMinRemainingSizeUsd;
+    mapping(uint256 => uint256) public maxAdlReductionBps;
+    mapping(uint256 => bool) public adlEnabled;
 
     event PositionOpened(
         address indexed account,
@@ -72,6 +74,7 @@ contract LQCPerpEngine {
     event TradingFeeConfigured(uint256 indexed marketId, uint256 feeBps, uint256 insuranceShareBps);
     event TradingFeeCharged(address indexed account, uint256 indexed marketId, uint256 notionalUsd, uint256 fee, uint256 insuranceAmount);
     event InsuranceCoverageConfigured(uint256 indexed marketId, uint256 maxCoverageBps);
+    event AdlSafetyConfigured(uint256 indexed marketId, bool enabled, uint256 maxReductionBps);
     event PartialLiquidationConfigured(
         uint256 indexed marketId,
         uint256 reductionBps,
@@ -136,6 +139,9 @@ contract LQCPerpEngine {
     error InvalidFeeConfiguration();
     error InvalidInsuranceConfiguration();
     error InvalidLiquidationConfiguration();
+    error InvalidAdlConfiguration();
+    error AdlNotEnabled();
+    error AdlBadDebtRequired();
 
     modifier onlyRegistryOwner() {
         if (msg.sender != registry.owner()) revert Forbidden();
@@ -156,6 +162,24 @@ contract LQCPerpEngine {
         tradingFeeBps[marketId] = feeBps;
         insuranceFeeShareBps[marketId] = insuranceShareBps_;
         emit TradingFeeConfigured(marketId, feeBps, insuranceShareBps_);
+    }
+
+    /// @notice Configures the emergency ADL safety boundary only; this does not execute ADL.
+    /// @dev ADL must be explicitly enabled by Governance and is capped per execution.
+    ///      A nonzero residual Futures bad-debt condition is required by the execution gate added next.
+    function configureAdlSafety(uint256 marketId, bool enabled, uint256 maxReductionBps) external onlyRegistryOwner {
+        if (marketId == 0 || marketId > registry.marketCount()) revert FundingMarketNotFound();
+        if (enabled && (maxReductionBps == 0 || maxReductionBps > BPS)) revert InvalidAdlConfiguration();
+        if (!enabled && maxReductionBps != 0) revert InvalidAdlConfiguration();
+        adlEnabled[marketId] = enabled;
+        maxAdlReductionBps[marketId] = maxReductionBps;
+        emit AdlSafetyConfigured(marketId, enabled, maxReductionBps);
+    }
+
+    /// @notice Returns true only when Governance enabled ADL and unresolved Futures bad debt exists.
+    function isAdlEmergencyActive(uint256 marketId, address collateralToken) public view returns (bool) {
+        if (marketId == 0 || marketId > registry.marketCount()) return false;
+        return adlEnabled[marketId] && maxAdlReductionBps[marketId] != 0 && vault.residualBadDebt(collateralToken) != 0;
     }
 
     /// @notice Configures the bounded partial-liquidation step for a market.
