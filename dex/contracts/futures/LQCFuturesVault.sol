@@ -41,6 +41,7 @@ contract LQCFuturesVault {
         uint256 fundingPoolBalance
     );
     event TradingFeeCollected(address indexed account, address indexed token, uint256 fee, uint256 insuranceAmount, uint256 treasuryAmount);
+    event AdlBadDebtAbsorbed(address indexed token, uint256 amount, uint256 residualBadDebtRemaining);
     event BadDebtCovered(
         address indexed token,
         uint256 requestedDeficit,
@@ -279,6 +280,16 @@ contract LQCFuturesVault {
             insuranceFeeReserve[token],
             residualBadDebt[token]
         );
+    }
+
+    /// @notice Applies verified ADL loss absorption only against already-recorded Futures residual bad debt.
+    /// @dev The engine must first realize the same amount from a bounded profitable counter-position.
+    function absorbAdlBadDebt(address token, uint256 amount) external onlyEngine {
+        if (amount == 0) revert InvalidAmount();
+        uint256 debt = residualBadDebt[token];
+        if (amount > debt) revert InvalidAmount();
+        residualBadDebt[token] = debt - amount;
+        emit AdlBadDebtAbsorbed(token, amount, residualBadDebt[token]);
     }
 
     function isFullyBacked(address token) public view returns (bool) {
