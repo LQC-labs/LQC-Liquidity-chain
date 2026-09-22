@@ -30,6 +30,16 @@ contract LQCFuturesVault {
     event CollateralUnlocked(address indexed account, address indexed token, uint256 amount);
     event PnLSettled(address indexed account, address indexed token, int256 pnl);
     event FundingSettled(address indexed account, address indexed token, int256 payment, uint256 fundingPoolBalance);
+    event LiquidationFundingSettled(
+        address indexed account,
+        address indexed token,
+        int256 payment,
+        uint256 marginCredit,
+        uint256 marginDebit,
+        uint256 insuranceCovered,
+        uint256 residualAdded,
+        uint256 fundingPoolBalance
+    );
     event TradingFeeCollected(address indexed account, address indexed token, uint256 fee, uint256 insuranceAmount, uint256 treasuryAmount);
     event BadDebtCovered(
         address indexed token,
@@ -145,6 +155,82 @@ contract LQCFuturesVault {
             fundingPoolBalance[token] += debit;
         }
         emit FundingSettled(account, token, payment, fundingPoolBalance[token]);
+    }
+
+    /// @notice Crystallizes pending funding into isolated-margin risk during liquidation.
+    /// @dev Positive funding credits locked margin. Negative funding consumes this position's
+    ///      locked margin first, then available Futures collateral, then bounded Insurance.
+    ///      Any uncovered remainder is explicit residual bad debt.
+    function settleLiquidationFunding(
+        address account,
+        address token,
+        int256 payment,
+        uint256 maxLockedDebit,
+        uint256 maxInsuranceCoverage
+    )
+        external
+        onlyEngine
+        returns (uint256 marginCredit, uint256 marginDebit, uint256 insuranceCovered, uint256 residual)
+    {
+        if (payment > 0) {
+            uint256 credit = uint256(payment);
+            uint256 pool = fundingPoolBalance[token];
+            if (pool < credit) revert InsufficientFundingPool();
+
+            fundingPoolBalance[token] = pool - credit;
+            lockedBalance[account][token] += credit;
+            totalAccounted[token] += credit;
+            marginCredit = credit;
+        } else if (payment < 0) {
+            uint256 debit = uint256(-payment);
+
+            uint256 locked = lockedBalance[account][token];
+            uint256 lockedLimit = locked < maxLockedDebit ? locked : maxLockedDebit;
+            marginDebit = debit < lockedLimit ? debit : lockedLimit;
+            if (marginDebit != 0) {
+                lockedBalance[account][token] = locked - marginDebit;
+                totalAccounted[token] -= marginDebit;
+                fundingPoolBalance[token] += marginDebit;
+            }
+
+            uint256 remaining = debit - marginDebit;
+            if (remaining != 0) {
+                uint256 available = availableBalance[account][token];
+                uint256 availableDebit = available < remaining ? available : remaining;
+                if (availableDebit != 0) {
+                    availableBalance[account][token] = available - availableDebit;
+                    totalAccounted[token] -= availableDebit;
+                    fundingPoolBalance[token] += availableDebit;
+                    remaining -= availableDebit;
+                }
+            }
+
+            if (remaining != 0) {
+                uint256 allowed = maxInsuranceCoverage < remaining ? maxInsuranceCoverage : remaining;
+                uint256 reserve = insuranceFeeReserve[token];
+                insuranceCovered = reserve < allowed ? reserve : allowed;
+
+                if (insuranceCovered != 0) {
+                    insuranceFeeReserve[token] = reserve - insuranceCovered;
+                    totalInsuranceCovered[token] += insuranceCovered;
+                    fundingPoolBalance[token] += insuranceCovered;
+                }
+
+                residual = remaining - insuranceCovered;
+                if (residual != 0) residualBadDebt[token] += residual;
+            }
+        }
+
+        emit LiquidationFundingSettled(
+            account,
+            token,
+            payment,
+            marginCredit,
+            marginDebit,
+            insuranceCovered,
+            residual,
+            fundingPoolBalance[token]
+        );
     }
 
     /// @notice Collect a Futures trading fee from available collateral and segregate protocol reserves.
