@@ -43,6 +43,8 @@ contract LQCPerpEngine {
     mapping(uint256 => uint256) public liquidationMinRemainingSizeUsd;
     mapping(uint256 => uint256) public maxAdlReductionBps;
     mapping(uint256 => bool) public adlEnabled;
+    mapping(uint256 => uint256) public maxPositionNotionalUsd;
+    mapping(uint256 => uint256) public maxOrderNotionalUsd;
 
     event PositionOpened(
         address indexed account,
@@ -75,6 +77,7 @@ contract LQCPerpEngine {
     event TradingFeeCharged(address indexed account, uint256 indexed marketId, uint256 notionalUsd, uint256 fee, uint256 insuranceAmount);
     event InsuranceCoverageConfigured(uint256 indexed marketId, uint256 maxCoverageBps);
     event AdlSafetyConfigured(uint256 indexed marketId, bool enabled, uint256 maxReductionBps);
+    event MarketNotionalLimitsConfigured(uint256 indexed marketId, uint256 maxPositionNotionalUsd, uint256 maxOrderNotionalUsd);
     event PartialLiquidationConfigured(
         uint256 indexed marketId,
         uint256 reductionBps,
@@ -145,6 +148,9 @@ contract LQCPerpEngine {
     error AdlBadDebtRequired();
     error AdlPositionNotProfitable();
     error AdlReductionTooLarge();
+    error InvalidNotionalLimits();
+    error MaxOrderNotionalExceeded();
+    error MaxPositionNotionalExceeded();
 
     modifier onlyRegistryOwner() {
         if (msg.sender != registry.owner()) revert Forbidden();
@@ -155,6 +161,14 @@ contract LQCPerpEngine {
         if (registry_ == address(0) || vault_ == address(0)) revert InvalidAmount();
         registry = LQCFuturesMarketRegistry(registry_);
         vault = LQCFuturesVault(vault_);
+    }
+
+    function configureMarketNotionalLimits(uint256 marketId, uint256 maxPositionUsd, uint256 maxOrderUsd) external onlyRegistryOwner {
+        if (marketId == 0 || marketId > registry.marketCount()) revert FundingMarketNotFound();
+        if (maxPositionUsd == 0 || maxOrderUsd == 0 || maxOrderUsd > maxPositionUsd) revert InvalidNotionalLimits();
+        maxPositionNotionalUsd[marketId] = maxPositionUsd;
+        maxOrderNotionalUsd[marketId] = maxOrderUsd;
+        emit MarketNotionalLimitsConfigured(marketId, maxPositionUsd, maxOrderUsd);
     }
 
     /// @notice Configures the per-market Futures trading fee and its Insurance reserve share.
@@ -284,6 +298,10 @@ contract LQCPerpEngine {
 
     function openPosition(uint256 marketId, uint256 margin, uint256 sizeUsd, bool isLong) external {
         if (margin == 0 || sizeUsd == 0) revert InvalidAmount();
+        uint256 orderLimit = maxOrderNotionalUsd[marketId];
+        uint256 positionLimit = maxPositionNotionalUsd[marketId];
+        if (orderLimit != 0 && sizeUsd > orderLimit) revert MaxOrderNotionalExceeded();
+        if (positionLimit != 0 && sizeUsd > positionLimit) revert MaxPositionNotionalExceeded();
         Position storage existing = positions[msg.sender][marketId];
         if (existing.open) revert PositionExists();
 
