@@ -4,6 +4,7 @@ pragma solidity ^0.8.24;
 /// @notice Registry for LQC Flow perpetual/futures markets.
 /// @dev Stores market configuration only. Position, margin and settlement logic live in separate contracts.
 contract LQCFuturesMarketRegistry {
+    enum MarketMode { ACTIVE, REDUCE_ONLY, HALTED }
     struct Market {
         bytes32 symbol;
         address indexToken;
@@ -20,9 +21,11 @@ contract LQCFuturesMarketRegistry {
 
     mapping(uint256 => Market) public markets;
     mapping(bytes32 => uint256) public marketIdBySymbol;
+    mapping(uint256 => MarketMode) public marketMode;
 
     event MarketAdded(uint256 indexed marketId, bytes32 indexed symbol, address indexToken, address collateralToken, address oracle);
     event MarketStatusChanged(uint256 indexed marketId, bool active);
+    event MarketModeChanged(uint256 indexed marketId, MarketMode previousMode, MarketMode newMode);
     event MarketRiskUpdated(uint256 indexed marketId, uint32 maxLeverageBps, uint32 maintenanceMarginBps);
     event MarketOracleUpdated(uint256 indexed marketId, address indexed oracle);
     event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
@@ -72,7 +75,17 @@ contract LQCFuturesMarketRegistry {
             active: true
         });
         marketIdBySymbol[symbol] = marketId;
+        marketMode[marketId] = MarketMode.ACTIVE;
         emit MarketAdded(marketId, symbol, indexToken, collateralToken, oracle);
+    }
+
+    function setMarketMode(uint256 marketId, MarketMode newMode) external onlyOwner {
+        _requireMarket(marketId);
+        MarketMode previous = marketMode[marketId];
+        marketMode[marketId] = newMode;
+        markets[marketId].active = newMode != MarketMode.HALTED;
+        emit MarketModeChanged(marketId, previous, newMode);
+        emit MarketStatusChanged(marketId, markets[marketId].active);
     }
 
     function setMarketActive(uint256 marketId, bool active) external onlyOwner {
