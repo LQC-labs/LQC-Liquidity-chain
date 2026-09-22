@@ -37,10 +37,12 @@ describe("Master 7/6-2 guardian emergency escalation",function(){
  it("prevents outsiders from changing emergency mode",async function(){
   await assert.rejects(registry.connect(outsider).setEmergencyMarketMode(1,2));
  });
- it("keeps Governance recovery authority",async function(){
+ it("keeps Governance recovery authority through staged approval",async function(){
   await(await registry.connect(guardian).setEmergencyMarketMode(1,2)).wait();
   await(await registry.setMarketMode(1,1)).wait();
+  await(await registry.setRecoveryApproved(1,true)).wait();
   await(await registry.setMarketMode(1,0)).wait();
   assert.equal(await registry.marketMode(1),0n);
+  assert.equal(await registry.recoveryApproved(1),false);
  });
 });
