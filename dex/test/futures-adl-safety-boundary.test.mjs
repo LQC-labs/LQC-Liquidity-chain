@@ -19,8 +19,11 @@ describe("Master 7/5-6 bounded ADL safety boundary", function () {
     assert.match(engine, /vault\.residualBadDebt\(collateralToken\) != 0/);
   });
 
-  it("does not add position-reduction ADL execution before the safety gate passes", function () {
-    assert.doesNotMatch(engine, /function executeAdl/);
+  it("preserves the safety boundary after bounded ADL execution is added", function () {
+    assert.match(engine, /function executeAdl/);
+    assert.match(engine, /function executeAdl[\s\S]*external onlyRegistryOwner/);
+    assert.match(engine, /AdlBadDebtRequired/);
+    assert.match(engine, /AdlReductionTooLarge/);
     assert.doesNotMatch(engine, /function autoDeleverage/);
   });
 });
