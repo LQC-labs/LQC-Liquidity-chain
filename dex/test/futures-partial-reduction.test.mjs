@@ -151,7 +151,8 @@ describe("Master 7/5-1 Futures canonical partial position reduction",function(){
     const source=fs.readFileSync(new URL("../contracts/futures/LQCPerpEngine.sol",import.meta.url),"utf8");
     assert.ok(source.includes("function reducePosition"));
     assert.ok(!source.includes("LQCLendingCore"));
-    for(const later of["settleFunding","insuranceFund","autoDeleverage"]){
+    assert.ok(source.includes("function settleFunding"));
+    for(const later of["insuranceFund","autoDeleverage"]){
       assert.ok(!source.includes(`function ${later}`),later);
     }
   });
