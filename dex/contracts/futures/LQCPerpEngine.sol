@@ -6,8 +6,8 @@ import {LQCFuturesVault} from "./LQCFuturesVault.sol";
 import {ILQCFuturesOracle} from "./ILQCFuturesOracle.sol";
 
 /// @notice Isolated-margin perpetual engine for LQC Flow Futures.
-/// @dev Master 7/5 substeps 1-2 add canonical reduction plus conserved funding checkpoint/accounting.
-///      Fees, Insurance/bad-debt, partial liquidation and ADL remain later 7/5 substeps.
+/// @dev Master 7/5 substeps 1-3 add canonical reduction, conserved funding, and segregated trading fees.
+///      Insurance/bad-debt spending, partial liquidation and ADL remain later 7/5 substeps.
 contract LQCPerpEngine {
     uint256 public constant BPS = 10_000;
     uint256 public constant PRICE_SCALE = 1e18;
