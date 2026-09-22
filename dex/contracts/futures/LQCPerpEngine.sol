@@ -6,8 +6,9 @@ import {LQCFuturesVault} from "./LQCFuturesVault.sol";
 import {ILQCFuturesOracle} from "./ILQCFuturesOracle.sol";
 
 /// @notice Isolated-margin perpetual engine for LQC Flow Futures.
-/// @dev Master 7/5 substeps 1-3 add canonical reduction, conserved funding, and segregated trading fees.
-///      Insurance/bad-debt spending, partial liquidation and ADL remain later 7/5 substeps.
+/// @dev Master 7/5 substeps 1-4 add canonical reduction, conserved funding, segregated fees,
+///      and bounded Futures-only Insurance/residual-bad-debt accounting.
+///      Partial liquidation and ADL remain later 7/5 substeps.
 contract LQCPerpEngine {
     uint256 public constant BPS = 10_000;
     uint256 public constant PRICE_SCALE = 1e18;
@@ -37,6 +38,7 @@ contract LQCPerpEngine {
     mapping(address => mapping(uint256 => int256)) public positionFundingEntryRay;
     mapping(uint256 => uint256) public tradingFeeBps;
     mapping(uint256 => uint256) public insuranceFeeShareBps;
+    mapping(uint256 => uint256) public maxInsuranceCoverageBps;
 
     event PositionOpened(
         address indexed account,
@@ -67,6 +69,14 @@ contract LQCPerpEngine {
     event FundingConfigured(uint256 indexed marketId, uint256 maxAbsDeltaPerUpdateRay);
     event TradingFeeConfigured(uint256 indexed marketId, uint256 feeBps, uint256 insuranceShareBps);
     event TradingFeeCharged(address indexed account, uint256 indexed marketId, uint256 notionalUsd, uint256 fee, uint256 insuranceAmount);
+    event InsuranceCoverageConfigured(uint256 indexed marketId, uint256 maxCoverageBps);
+    event PositionDeficitRecorded(
+        address indexed account,
+        uint256 indexed marketId,
+        uint256 deficit,
+        uint256 insuranceCovered,
+        uint256 residualBadDebt
+    );
     event FundingIndexUpdated(
         uint256 indexed marketId,
         int256 previousIndexRay,
@@ -98,6 +108,7 @@ contract LQCPerpEngine {
     error FundingDeltaTooLarge();
     error FundingOverflow();
     error InvalidFeeConfiguration();
+    error InvalidInsuranceConfiguration();
 
     modifier onlyRegistryOwner() {
         if (msg.sender != registry.owner()) revert Forbidden();
@@ -118,6 +129,16 @@ contract LQCPerpEngine {
         tradingFeeBps[marketId] = feeBps;
         insuranceFeeShareBps[marketId] = insuranceShareBps_;
         emit TradingFeeConfigured(marketId, feeBps, insuranceShareBps_);
+    }
+
+    /// @notice Configures the maximum fraction of a realized deficit that Insurance may cover.
+    /// @dev This is a Governance-supplied bound, not a hard-coded product value.
+    ///      Available Insurance reserve remains the global physical coverage ceiling.
+    function configureInsuranceCoverage(uint256 marketId, uint256 maxCoverageBps) external onlyRegistryOwner {
+        if (marketId == 0 || marketId > registry.marketCount()) revert FundingMarketNotFound();
+        if (maxCoverageBps > BPS) revert InvalidInsuranceConfiguration();
+        maxInsuranceCoverageBps[marketId] = maxCoverageBps;
+        emit InsuranceCoverageConfigured(marketId, maxCoverageBps);
     }
 
     /// @notice Sets the per-market maximum absolute funding-index change accepted per update.
@@ -256,7 +277,7 @@ contract LQCPerpEngine {
         // partial liquidation and Insurance/bad-debt are integrated as one risk-reducing path.
         delete positions[account][marketId];
         delete positionFundingEntryRay[account][marketId];
-        _settle(account, collateralToken, position.margin, pnl);
+        _settle(account, marketId, collateralToken, position.margin, pnl);
         emit PositionLiquidated(account, marketId, msg.sender, price, pnl);
     }
 
@@ -311,7 +332,7 @@ contract LQCPerpEngine {
             stored.sizeUsd = remainingSizeUsd;
             stored.margin = remainingMargin;
 
-            _settle(account, collateralToken, releasedMargin, realizedPnl);
+            _settle(account, marketId, collateralToken, releasedMargin, realizedPnl);
             _chargeTradingFee(account, marketId, collateralToken, reduceSizeUsd);
 
             emit PositionReduced(
@@ -329,7 +350,7 @@ contract LQCPerpEngine {
 
         delete positions[account][marketId];
         delete positionFundingEntryRay[account][marketId];
-        _settle(account, collateralToken, releasedMargin, realizedPnl);
+        _settle(account, marketId, collateralToken, releasedMargin, realizedPnl);
         _chargeTradingFee(account, marketId, collateralToken, reduceSizeUsd);
 
         emit PositionReduced(
@@ -375,7 +396,7 @@ contract LQCPerpEngine {
         emit FundingSettled(account, marketId, payment, state.cumulativeFundingPerUsdRay);
     }
 
-    function _settle(address account, address collateralToken, uint256 margin, int256 pnl) private {
+    function _settle(address account, uint256 marketId, address collateralToken, uint256 margin, int256 pnl) private {
         if (pnl >= 0) {
             vault.unlockCollateral(account, collateralToken, margin);
             if (pnl > 0) vault.settlePnL(account, collateralToken, pnl);
@@ -383,12 +404,22 @@ contract LQCPerpEngine {
         }
 
         uint256 loss = uint256(-pnl);
-        if (loss >= margin) {
-            vault.settlePnL(account, collateralToken, -int256(margin));
-        } else {
+        if (loss < margin) {
             vault.settlePnL(account, collateralToken, -int256(loss));
             vault.unlockCollateral(account, collateralToken, margin - loss);
+            return;
         }
+
+        vault.settlePnL(account, collateralToken, -int256(margin));
+        uint256 deficit = loss - margin;
+        if (deficit == 0) return;
+
+        uint256 coverageBps = maxInsuranceCoverageBps[marketId];
+        if (coverageBps != 0 && deficit > type(uint256).max / coverageBps) revert InvalidAmount();
+        uint256 maxCoverage = deficit * coverageBps / BPS;
+        (uint256 covered, uint256 residual) = vault.coverBadDebt(collateralToken, deficit, maxCoverage);
+
+        emit PositionDeficitRecorded(account, marketId, deficit, covered, residual);
     }
 
     function _pnl(Position memory position, uint256 price) private pure returns (int256) {
