@@ -1,0 +1,32 @@
+name: Master 7/5-7 Integrated Futures Regression
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/contracts/futures/**"
+      - "dex/test/futures-*.test.mjs"
+      - ".github/workflows/master7-5-7-integrated-futures.yml"
+  workflow_dispatch:
+
+jobs:
+  integrated:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Compile contracts
+        run: npm run compile
+      - name: 7/5 canonical accounting regression
+        run: node --test test/futures-partial-reduction.test.mjs test/futures-funding-accounting.test.mjs test/futures-fee-accounting.test.mjs test/futures-insurance-bad-debt.test.mjs test/futures-partial-liquidation-onchain.test.mjs test/futures-adl-execution-onchain.test.mjs test/futures-7-5-integrated-invariants.test.mjs
+      - name: Broad Futures regression
+        run: node --test test/futures*.test.mjs
