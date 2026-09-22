@@ -28,7 +28,7 @@ describe("Master 7/6-1 on-chain emergency market state",function(){
   await(await registry.setMarketMode(1,1)).wait();
   await(await engine.connect(trader).reducePosition(1,usd("1000"))).wait();
   await(await engine.connect(trader).closePosition(1)).wait();
-  await assert.rejects(engine.connect(trader).openPosition(1,usd("1000"),usd("5000"),true));
+  await assert.rejects(async()=>{ const tx=await engine.connect(trader).openPosition(1,usd("1000"),usd("5000"),true,{gasLimit:1_000_000n}); await tx.wait(); });
  });
  it("blocks new opens in HALTED",async function(){
   await(await registry.setMarketMode(1,2)).wait();
