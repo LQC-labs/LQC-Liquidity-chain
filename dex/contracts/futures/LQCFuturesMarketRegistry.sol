@@ -17,6 +17,7 @@ contract LQCFuturesMarketRegistry {
 
     address public owner;
     address public pendingOwner;
+    address public guardian;
     uint256 public marketCount;
 
     mapping(uint256 => Market) public markets;
@@ -26,6 +27,7 @@ contract LQCFuturesMarketRegistry {
     event MarketAdded(uint256 indexed marketId, bytes32 indexed symbol, address indexToken, address collateralToken, address oracle);
     event MarketStatusChanged(uint256 indexed marketId, bool active);
     event MarketModeChanged(uint256 indexed marketId, MarketMode previousMode, MarketMode newMode);
+    event GuardianChanged(address indexed previousGuardian, address indexed newGuardian);
     event MarketRiskUpdated(uint256 indexed marketId, uint32 maxLeverageBps, uint32 maintenanceMarginBps);
     event MarketOracleUpdated(uint256 indexed marketId, address indexed oracle);
     event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
@@ -40,6 +42,11 @@ contract LQCFuturesMarketRegistry {
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert Forbidden();
+        _;
+    }
+
+    modifier onlyOwnerOrGuardian() {
+        if (msg.sender != owner && msg.sender != guardian) revert Forbidden();
         _;
     }
 
@@ -77,6 +84,26 @@ contract LQCFuturesMarketRegistry {
         marketIdBySymbol[symbol] = marketId;
         marketMode[marketId] = MarketMode.ACTIVE;
         emit MarketAdded(marketId, symbol, indexToken, collateralToken, oracle);
+    }
+
+    function setGuardian(address newGuardian) external onlyOwner {
+        if (newGuardian == address(0)) revert ZeroAddress();
+        address previous = guardian;
+        guardian = newGuardian;
+        emit GuardianChanged(previous, newGuardian);
+    }
+
+    /// @notice Guardian may only escalate restrictions; only Governance may restore ACTIVE or loosen HALTED.
+    function setEmergencyMarketMode(uint256 marketId, MarketMode newMode) external onlyOwnerOrGuardian {
+        _requireMarket(marketId);
+        MarketMode previous = marketMode[marketId];
+        if (msg.sender == guardian) {
+            if (newMode == MarketMode.ACTIVE || uint8(newMode) < uint8(previous)) revert Forbidden();
+        }
+        marketMode[marketId] = newMode;
+        markets[marketId].active = newMode != MarketMode.HALTED;
+        emit MarketModeChanged(marketId, previous, newMode);
+        emit MarketStatusChanged(marketId, markets[marketId].active);
     }
 
     function setMarketMode(uint256 marketId, MarketMode newMode) external onlyOwner {
