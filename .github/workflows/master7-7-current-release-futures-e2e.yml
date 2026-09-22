@@ -34,7 +34,10 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Compile current-release contracts
         run: npm run compile
-      - name: Verify current-release deployment readiness (no transactions)\n        run: node scripts/verify-master7-7-current-release-readiness.mjs\n      - name: Broad Futures regression\n        run: npx mocha --timeout 30000 "test/futures*.test.mjs"
+      - name: Verify current-release deployment readiness (no transactions)
+        run: node scripts/verify-master7-7-current-release-readiness.mjs
+      - name: Broad Futures regression
+        run: npx mocha --timeout 30000 "test/futures*.test.mjs"
       - name: Master 7 architecture and risk boundaries
         working-directory: .
         shell: bash
