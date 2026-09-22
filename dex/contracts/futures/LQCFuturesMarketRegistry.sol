@@ -28,6 +28,7 @@ contract LQCFuturesMarketRegistry {
     event MarketStatusChanged(uint256 indexed marketId, bool active);
     event MarketModeChanged(uint256 indexed marketId, MarketMode previousMode, MarketMode newMode);
     event GuardianChanged(address indexed previousGuardian, address indexed newGuardian);
+    event EmergencyTriggerApplied(uint256 indexed marketId, bool oracleHealthy, bool circuitBreakerAllowed, bool residualBadDebt, MarketMode resultingMode);
     event MarketRiskUpdated(uint256 indexed marketId, uint32 maxLeverageBps, uint32 maintenanceMarginBps);
     event MarketOracleUpdated(uint256 indexed marketId, address indexed oracle);
     event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
@@ -104,6 +105,24 @@ contract LQCFuturesMarketRegistry {
         markets[marketId].active = newMode != MarketMode.HALTED;
         emit MarketModeChanged(marketId, previous, newMode);
         emit MarketStatusChanged(marketId, markets[marketId].active);
+    }
+
+    /// @notice Applies fail-closed emergency signals supplied by an authorized Guardian/Governance monitor.
+    /// @dev This function may only tighten restrictions. Recovery remains a separate Governance action.
+    function applyEmergencyTriggers(uint256 marketId, bool oracleHealthy, bool circuitBreakerAllowed, bool hasResidualBadDebt) external onlyOwnerOrGuardian {
+        _requireMarket(marketId);
+        MarketMode current = marketMode[marketId];
+        MarketMode target = current;
+        if (!oracleHealthy || !circuitBreakerAllowed) target = MarketMode.HALTED;
+        else if (hasResidualBadDebt && current == MarketMode.ACTIVE) target = MarketMode.REDUCE_ONLY;
+        if (uint8(target) < uint8(current)) revert Forbidden();
+        if (target != current) {
+            marketMode[marketId] = target;
+            markets[marketId].active = target != MarketMode.HALTED;
+            emit MarketModeChanged(marketId, current, target);
+            emit MarketStatusChanged(marketId, markets[marketId].active);
+        }
+        emit EmergencyTriggerApplied(marketId, oracleHealthy, circuitBreakerAllowed, hasResidualBadDebt, target);
     }
 
     function setMarketMode(uint256 marketId, MarketMode newMode) external onlyOwner {
