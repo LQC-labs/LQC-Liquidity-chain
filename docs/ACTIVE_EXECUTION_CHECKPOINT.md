@@ -145,3 +145,19 @@ Repository Cleanup 1 is approved and applied as an operational optimization only
 - Full broad regression is reserved for milestone/integration gates such as 7/5-7, 7/7, Master 12, and Security/Audit gates unless a change materially touches shared Core behavior.
 
 This cleanup is intended to reduce GitHub Runner queue time and repeated full-suite execution while retaining reproducible historical evidence.
+
+
+## Incremental verification — 8 active rules
+
+The repository now follows `docs/INCREMENTAL_VERIFICATION_POLICY.md`.
+
+1. reuse verified baseline;
+2. classify actual changed scope first;
+3. focused PR validation;
+4. dependency-aware regression;
+5. archive completed workflows out of automatic CI;
+6. one focused workflow for the active substep, retire after PASS;
+7. broad regression does not block every implementation iteration;
+8. mandatory full regression at final integration/security gates.
+
+Operational target: validate **changed code first**, then run **full regression at the correct gate**. Do not repeatedly rediscover unchanged historical state.

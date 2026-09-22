@@ -1,73 +1,66 @@
-name: LQC Flow Futures tests
+name: LQC Futures Focused CI
 
 on:
   pull_request:
     paths:
-      - "dex/app/futures/**"
       - "dex/contracts/futures/**"
+      - "dex/app/futures/**"
       - "dex/test/futures*.test.mjs"
       - "dex/test/lqc-flow-futures.test.mjs"
+      - "test/master7-*.test.js"
       - ".github/workflows/futures-tests.yml"
-  push:
-    branches:
-      - feature/lqc-flow-futures
-    paths:
-      - "dex/app/futures/**"
-      - "dex/contracts/futures/**"
-      - "dex/test/futures*.test.mjs"
-      - "dex/test/lqc-flow-futures.test.mjs"
-      - ".github/workflows/futures-tests.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: futures-tests-${{ github.workflow }}-${{ github.ref }}
+  group: futures-focused-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  futures:
-    name: Futures compile and tests
+  focused:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
     defaults:
       run:
         working-directory: dex
-
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: npm
           cache-dependency-path: dex/package-lock.json
-
       - name: Install locked dependencies
         run: npm ci --ignore-scripts
-
       - name: Syntax-check Futures app modules
         run: |
           for file in app/futures/*.js; do node --check "$file"; done
-
-      - name: Compile contracts
+      - name: Compile current contracts
         run: npm run compile
-
-      - name: Run Futures contract tests
-        run: npx mocha --timeout 30000 test/futures.test.mjs test/lqc-flow-futures.test.mjs
-
-      - name: Run Futures Mocha JS tests
+      - name: Focused Futures contract/accounting regression
+        shell: bash
+        run: |
+          files=(test/futures.test.mjs)
+          for f in             test/futures-partial-reduction.test.mjs             test/futures-funding-accounting.test.mjs             test/futures-funding-engine.test.mjs             test/futures-fee-engine.test.mjs             test/futures-security-gate.test.mjs
+          do
+            [[ -f "$f" ]] && files+=("$f")
+          done
+          npx mocha --timeout 30000 "${files[@]}"
+      - name: Focused Futures controller regression
+        shell: bash
         run: |
           files=()
-          for file in test/futures*.test.mjs; do
-            case "$file" in
-              test/futures.test.mjs|test/futures-liquidation-controller.test.mjs|test/futures-position-book-cross-rollback.test.mjs|test/futures-order-engine.test.mjs|test/futures-position-engine.test.mjs|test/futures-funding-controller.test.mjs|test/futures-fee-controller.test.mjs|test/futures-insurance-adl-controller.test.mjs|test/futures-shared-insurance-flow.test.mjs) ;;
-              *) files+=("$file") ;;
-            esac
+          for f in             test/futures-funding-controller.test.mjs             test/futures-fee-controller.test.mjs             test/futures-position-engine.test.mjs             test/futures-position-book-cross-rollback.test.mjs
+          do
+            [[ -f "$f" ]] && files+=("$f")
           done
-          if ((${#files[@]})); then npx mocha --timeout 30000 "${files[@]}"; fi
-
-      - name: Run Futures Node JS tests
-        run: node --test test/futures-liquidation-controller.test.mjs test/futures-position-book-cross-rollback.test.mjs test/futures-order-engine.test.mjs test/futures-position-engine.test.mjs test/futures-funding-controller.test.mjs test/futures-fee-controller.test.mjs test/futures-insurance-adl-controller.test.mjs test/futures-shared-insurance-flow.test.mjs
+          if ((${#files[@]})); then node --test "${files[@]}"; fi
+      - name: Preserve Master 7 architecture boundaries
+        working-directory: .
+        shell: bash
+        run: |
+          files=()
+          for f in test/master7-*.test.js; do [[ -f "$f" ]] && files+=("$f"); done
+          if ((${#files[@]})); then node --test "${files[@]}"; fi

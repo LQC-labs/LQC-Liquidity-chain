@@ -1,12 +1,8 @@
-name: LQC DEX CI
+name: LQC DEX Final Regression
 
 on:
   push:
     branches: [main]
-    paths:
-      - "dex/**"
-      - ".github/workflows/dex-ci.yml"
-  pull_request:
     paths:
       - "dex/**"
       - ".github/workflows/dex-ci.yml"
@@ -16,26 +12,24 @@ permissions:
   contents: read
 
 concurrency:
-  group: lqc-dex-ci-${{ github.ref }}
+  group: lqc-dex-final-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  compile-and-test:
+  full-regression:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: dex
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: dex/package-lock.json
       - name: Install locked dependencies
         run: npm ci
-      - name: Compile and run complete DEX test suite
+      - name: Full post-merge regression
         run: npm test

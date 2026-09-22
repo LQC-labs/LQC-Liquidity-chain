@@ -2,22 +2,12 @@ name: Futures BSC testnet read-only preflight
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - "dex/contracts/futures/**"
-      - "dex/scripts/preflight-futures-testnet-deploy.mjs"
-      - ".github/workflows/futures-testnet-readonly-preflight.yml"
 
 permissions:
   contents: read
 
-concurrency:
-  group: futures-testnet-readonly-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   preflight:
-    name: Chain 97 balance and deployment budget
     runs-on: ubuntu-latest
     timeout-minutes: 10
     defaults:
