@@ -49,7 +49,8 @@ Before starting the next new Staking implementation, complete this short reposit
 13. **DONE in this gate** — Master 7/4 Perp Accounting Gap Review PASS; application-layer logic is reusable, while canonical on-chain settlement gaps are identified;
 14. **DONE in this gate** — Master 7/5-1 Canonical Partial Position Reduction implemented and regression-tested;
 15. **DONE in this gate** — Master 7/5-2 Funding checkpoint/accounting implemented and focused CI PASS;
-16. **NEXT EXECUTABLE** — Master 7/5-3 Trading Fee Accounting + explicit reserve routing.
+16. **DONE in this gate** — Master 7/5-3 Trading Fee Accounting + explicit reserve routing implemented and focused CI PASS;
+17. **NEXT EXECUTABLE** — Master 7/5-4 Futures-only Insurance Fund / residual bad debt accounting.
 
 ## Preserved Staking direction and timing
 
@@ -104,7 +105,8 @@ The next development lane is Master 7 Futures. Reuse the existing Futures founda
 - 7/5 Selective On-chain Futures Gap Implementation + Regression — **IN PROGRESS**
   - 7/5-1 Canonical Partial Position Reduction — **PASS in this gate**
   - 7/5-2 Funding checkpoint/accounting — **PASS in this gate**
-  - 7/5-3 Trading Fee Accounting + explicit reserve routing — **NEXT**
+  - 7/5-3 Trading Fee Accounting + explicit reserve routing — **PASS in this gate**
+  - 7/5-4 Futures-only Insurance Fund / residual bad debt accounting — **NEXT**
 - 7/6 Futures Risk / Governance / Emergency Integration
 - 7/7 Current-release BSC Testnet Futures E2E
 - 7/8 Futures Stage Exit / Intent Handoff
