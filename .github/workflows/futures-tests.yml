@@ -43,7 +43,7 @@ jobs:
         shell: bash
         run: |
           files=(test/futures.test.mjs)
-          for f in             test/futures-partial-reduction.test.mjs             test/futures-funding-accounting.test.mjs             test/futures-funding-engine.test.mjs             test/futures-fee-engine.test.mjs             test/futures-fee-accounting.test.mjs             test/futures-security-gate.test.mjs
+          for f in             test/futures-partial-reduction.test.mjs             test/futures-funding-accounting.test.mjs             test/futures-funding-engine.test.mjs             test/futures-fee-engine.test.mjs             test/futures-fee-accounting.test.mjs             test/futures-insurance-bad-debt.test.mjs             test/futures-security-gate.test.mjs
           do
             [[ -f "$f" ]] && files+=("$f")
           done

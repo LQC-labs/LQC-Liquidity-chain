@@ -50,7 +50,8 @@ Before starting the next new Staking implementation, complete this short reposit
 14. **DONE in this gate** — Master 7/5-1 Canonical Partial Position Reduction implemented and regression-tested;
 15. **DONE in this gate** — Master 7/5-2 Funding checkpoint/accounting implemented and focused CI PASS;
 16. **DONE in this gate** — Master 7/5-3 Trading Fee Accounting + explicit reserve routing implemented and focused CI PASS;
-17. **NEXT EXECUTABLE** — Master 7/5-4 Futures-only Insurance Fund / residual bad debt accounting.
+17. **DONE in this gate** — Master 7/5-4 Futures-only Insurance Fund / residual bad debt accounting implemented and focused CI PASS;
+18. **NEXT EXECUTABLE** — Master 7/5-5 Partial Liquidation using the canonical reduction primitive.
 
 ## Preserved Staking direction and timing
 
@@ -106,7 +107,8 @@ The next development lane is Master 7 Futures. Reuse the existing Futures founda
   - 7/5-1 Canonical Partial Position Reduction — **PASS in this gate**
   - 7/5-2 Funding checkpoint/accounting — **PASS in this gate**
   - 7/5-3 Trading Fee Accounting + explicit reserve routing — **PASS in this gate**
-  - 7/5-4 Futures-only Insurance Fund / residual bad debt accounting — **NEXT**
+  - 7/5-4 Futures-only Insurance Fund / residual bad debt accounting — **PASS in this gate**
+  - 7/5-5 Partial Liquidation — **NEXT**
 - 7/6 Futures Risk / Governance / Emergency Integration
 - 7/7 Current-release BSC Testnet Futures E2E
 - 7/8 Futures Stage Exit / Intent Handoff
