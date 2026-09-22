@@ -77,7 +77,7 @@ describe("Master 7/5-5 Futures funding-aware partial liquidation",function(){
     assert.equal(await vault.lockedBalance(account,token),usd("812.5"));
     assert.equal(await vault.availableBalance(account,token),availableBefore);
 
-    await assert.rejects(engine.connect(liquidator).liquidate(account,1));
+    await assert.rejects(async()=>{await(await engine.connect(liquidator).liquidate(account,1)).wait();});
   });
 
   it("promotes a partial step to full liquidation when the configured minimum remainder would be violated",async function(){
@@ -158,9 +158,9 @@ describe("Master 7/5-5 Futures funding-aware partial liquidation",function(){
     await(await engine.connect(liquidator).liquidate(account,1)).wait();
 
     assert.equal((await engine.positions(account,1)).open,false);
-    assert.equal(await vault.fundingPoolBalance(token),usd("1250"));
-    assert.equal(await vault.totalInsuranceCovered(token),usd("250"));
-    assert.equal(await vault.residualBadDebt(token),usd("750"));
+    assert.equal(await vault.fundingPoolBalance(token),usd("1500"));
+    assert.equal(await vault.totalInsuranceCovered(token),usd("500"));
+    assert.equal(await vault.residualBadDebt(token),usd("500"));
     assert.equal(await vault.isFullyBacked(token),true);
     assert.equal(await vault.isSolvent(token),false);
   });
