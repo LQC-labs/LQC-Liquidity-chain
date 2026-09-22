@@ -20,7 +20,7 @@ test("7/4 gap classification remains explicit as 7/5 substeps are implemented",(
   assert.ok(engine.includes("PositionPartiallyLiquidated"));
   assert.ok(engine.includes("function configureAdlSafety"));
   assert.ok(engine.includes("function isAdlEmergencyActive"));
-  assert.ok(!engine.includes("function executeAdl"));
+  // 7/5-6 execution gate now exists, but remains Governance-only and bounded by explicit emergency state.\n  assert.ok(engine.includes("function executeAdl"));\n  assert.ok(engine.includes("external onlyRegistryOwner"));\n  assert.ok(engine.includes("AdlBadDebtRequired"));\n  assert.ok(engine.includes("AdlReductionTooLarge"));
   assert.ok(!engine.includes("function autoDeleverage"));
 });
 
