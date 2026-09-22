@@ -1,0 +1,55 @@
+name: Master 7 5 2 Futures Funding Accounting
+
+on:
+  pull_request:
+    paths:
+      - 'dex/contracts/futures/LQCPerpEngine.sol'
+      - 'dex/contracts/futures/LQCFuturesVault.sol'
+      - 'dex/test/futures-funding-accounting.test.mjs'
+      - 'dex/test/futures-partial-reduction.test.mjs'
+      - 'dex/test/futures.test.mjs'
+      - 'dex/app/futures/funding-engine.js'
+      - 'dex/app/futures/funding-controller.js'
+      - 'dex/test/futures-funding-engine.test.mjs'
+      - 'dex/test/futures-funding-controller.test.mjs'
+      - 'test/master7-4-perp-gap-review.test.js'
+      - 'test/master7-futures-reuse-regression.test.js'
+      - 'docs/master7/7-5-2-futures-funding-accounting.md'
+      - '.github/workflows/master7-5-2-futures-funding-accounting.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  funding-accounting:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked DEX dependencies
+        working-directory: dex
+        run: npm ci --ignore-scripts
+      - name: Compile current protocol sources
+        working-directory: dex
+        run: npm run compile
+      - name: Run focused on-chain funding and reduction tests
+        working-directory: dex
+        run: >
+          npx mocha --timeout 30000
+          test/futures-funding-accounting.test.mjs
+          test/futures-partial-reduction.test.mjs
+          test/futures.test.mjs
+      - name: Re-run application funding specification tests
+        working-directory: dex
+        run: >
+          npx mocha --timeout 30000
+          test/futures-funding-engine.test.mjs
+          test/futures-funding-controller.test.mjs
+      - name: Verify evolving Master 7 boundaries
+        run: node --test test/master7-4-perp-gap-review.test.js test/master7-futures-reuse-regression.test.js
