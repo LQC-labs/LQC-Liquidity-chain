@@ -8,16 +8,16 @@ test("7/4 gap classification remains explicit as 7/5 substeps are implemented",(
   const engine=read("dex/contracts/futures/LQCPerpEngine.sol");
   for(const fn of[
     "openPosition","closePosition","liquidate","getPositionPnl","reducePosition",
-    "settleFunding","configureTradingFee"
+    "settleFunding","configureTradingFee","configureInsuranceCoverage"
   ]){
     assert.ok(engine.includes(`function ${fn}`),fn);
   }
   for(const missing of[
-    "partialClose","insuranceFund","badDebt","adl","autoDeleverage"
+    "partialClose","adl","autoDeleverage"
   ]){
     assert.equal(engine.includes(missing),false,missing);
   }
-  assert.ok(engine.includes("Insurance/bad-debt spending, partial liquidation and ADL remain later 7/5 substeps."));
+  assert.ok(engine.includes("Partial liquidation and ADL remain later 7/5 substeps."));
 });
 
 test("7/4 confirms Funding exists as tested application-layer accounting",()=>{
@@ -49,7 +49,7 @@ test("7/4 reduction specification is now reused by the canonical 7/5-1 on-chain 
   assert.ok(!engine.includes("function partialClose"));
 });
 
-test("7/4 confirms Insurance and ADL are application-layer models, not current on-chain custody/accounting",()=>{
+test("7/4 application Insurance/ADL specs are reused while 7/5-4 adds canonical Insurance/bad-debt accounting",()=>{
   const insurance=read("dex/app/futures/insurance-engine.js");
   const service=read("dex/app/futures/insurance-fund-service.js");
   const controller=read("dex/app/futures/insurance-adl-controller.js");
@@ -62,8 +62,11 @@ test("7/4 confirms Insurance and ADL are application-layer models, not current o
   assert.ok(controller.includes("createDemoInsuranceAdlController"));
   assert.ok(adl.includes("buildAdlPlan"));
 
+  assert.ok(vault.includes("residualBadDebt"));
+  assert.ok(vault.includes("insuranceFeeReserve"));
+  assert.ok(perp.includes("configureInsuranceCoverage"));
   for(const source of[vault,perp]){
-    for(const forbidden of["InsuranceFund","insuranceFund","badDebt","autoDeleverage","adl"]){
+    for(const forbidden of["autoDeleverage","function adl"]){
       assert.equal(source.includes(forbidden),false,forbidden);
     }
   }
