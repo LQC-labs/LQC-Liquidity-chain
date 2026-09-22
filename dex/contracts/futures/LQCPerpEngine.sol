@@ -297,7 +297,7 @@ contract LQCPerpEngine {
             bool active
         ) = registry.markets(marketId);
 
-        if (!active) revert MarketInactive();
+        if (!active || registry.marketMode(marketId) != LQCFuturesMarketRegistry.MarketMode.ACTIVE) revert MarketInactive();
         if (sizeUsd * BPS > margin * uint256(maxLeverageBps)) revert LeverageTooHigh();
 
         uint256 price = _price(indexToken, oracle);
