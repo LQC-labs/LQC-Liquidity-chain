@@ -13,11 +13,14 @@ test("7/4 gap classification remains explicit as 7/5 substeps are implemented",(
     assert.ok(engine.includes(`function ${fn}`),fn);
   }
   for(const missing of[
-    "partialClose","adl","autoDeleverage"
+    "partialClose","autoDeleverage"
   ]){
     assert.equal(engine.includes(missing),false,missing);
   }
   assert.ok(engine.includes("PositionPartiallyLiquidated"));
+  assert.ok(engine.includes("function configureAdlSafety"));
+  assert.ok(engine.includes("function isAdlEmergencyActive"));
+  assert.ok(!engine.includes("function executeAdl"));
   assert.ok(!engine.includes("function autoDeleverage"));
 });
 
