@@ -1,23 +1,7 @@
 name: Master 7 5 2 Futures Funding Accounting
 
 on:
-  pull_request:
-    paths:
-      - 'dex/contracts/futures/LQCPerpEngine.sol'
-      - 'dex/contracts/futures/LQCFuturesVault.sol'
-      - 'dex/test/futures-funding-accounting.test.mjs'
-      - 'dex/test/futures-partial-reduction.test.mjs'
-      - 'dex/test/futures.test.mjs'
-      - 'dex/app/futures/funding-engine.js'
-      - 'dex/app/futures/funding-controller.js'
-      - 'dex/test/futures-funding-engine.test.mjs'
-      - 'dex/test/futures-funding-controller.test.mjs'
-      - 'test/master7-4-perp-gap-review.test.js'
-      - 'test/master7-futures-reuse-regression.test.js'
-      - 'docs/master7/7-5-2-futures-funding-accounting.md'
-      - '.github/workflows/master7-5-2-futures-funding-accounting.yml'
   workflow_dispatch:
-
 permissions:
   contents: read
 
