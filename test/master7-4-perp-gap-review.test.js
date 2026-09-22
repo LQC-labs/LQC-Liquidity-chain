@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 
 const read=(p)=>fs.readFileSync(p,"utf8");
+// Master 7/5-3 boundary: on-chain trading-fee accounting is now implemented; Insurance spending/bad debt/ADL remain deferred.
 
 test("7/4 gap classification remains explicit as 7/5 substeps are implemented",()=>{
   const engine=read("dex/contracts/futures/LQCPerpEngine.sol");
