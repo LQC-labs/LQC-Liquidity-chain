@@ -1,0 +1,81 @@
+name: Master 7/7 Current-release Futures E2E Gate
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/contracts/futures/**"
+      - "dex/scripts/verify-futures-deployment-lineage.mjs"
+      - "dex/scripts/verify-futures-bsc-testnet.js"
+      - "dex/test/futures*.test.mjs"
+      - "test/master7-*.test.js"
+      - "docs/master-plan/7-7-current-release-futures-e2e.md"
+      - ".github/workflows/master7-7-current-release-futures-e2e.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: master7-7-futures-e2e-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  repository-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Compile current-release contracts
+        run: npm run compile
+      - name: Broad Futures regression
+        run: npx mocha --timeout 30000 "test/futures*.test.mjs"
+      - name: Master 7 architecture and risk boundaries
+        working-directory: .
+        shell: bash
+        run: |
+          files=()
+          for f in test/master7-*.test.js; do
+            if [[ -f "$f" ]]; then files+=("$f"); fi
+          done
+          if ((${#files[@]})); then node --test "${files[@]}"; fi
+  chain97-readonly-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      BSC_TESTNET_RPC_URL: https://data-seed-prebsc-1-s1.bnbchain.org:8545
+      BSC_TESTNET_RPC: https://data-seed-prebsc-1-s1.bnbchain.org:8545
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Compile current-release artifacts
+        run: npm run compile
+      - name: Verify recorded chain-97 wiring read-only
+        run: node scripts/verify-futures-bsc-testnet.js
+      - name: Reconcile recorded deployment with current-release artifacts
+        run: node scripts/verify-futures-deployment-lineage.mjs
+      - name: Enforce historical deployment classification
+        run: |
+          node -e 'const fs=require("fs");const r=JSON.parse(fs.readFileSync("futures-lineage-report.json","utf8"));if(r.chainId!==97)throw Error("Expected chainId 97");if(r.transactionOccurred!==false)throw Error("read-only gate sent transaction");if(r.activationAuthorized!==false)throw Error("activation authorized");if(r.productionOracleReady!==false)throw Error("historical Oracle misclassified");if(!r.contracts?.Oracle?.testOnly)throw Error("historical Oracle not test-only");console.log("PASS historical evidence classification")'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: master7-7-futures-chain97-lineage
+          path: dex/futures-lineage-report.json
+          if-no-files-found: error
+          retention-days: 30
