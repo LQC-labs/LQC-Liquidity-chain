@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "status": "approved-project-design",
+  "versionDate": "2026-09-09",
+  "token": { "name": "Liquidity Chain", "symbol": "LQC", "plannedNetwork": "BNB Smart Chain" },
+  "totalSupply": "1000000000",
+  "plannedTgeCirculation": "150000000",
+  "plannedTgeCirculationPercent": 15,
+  "allocations": [
+    { "id": "future-ecosystem-rewards", "name": "Future Ecosystem Rewards", "sharePercent": 35, "tokens": "350000000", "tgeUnlock": "0", "release": "At least 7 years; maximum 50,000,000 LQC per year" },
+    { "id": "community-initial", "name": "Community Initial", "sharePercent": 20, "tokens": "200000000", "tgeUnlock": "80000000", "release": "Remaining 120,000,000 LQC activity-based over 24 months" },
+    { "id": "team-core", "name": "Team & Core Contributors", "sharePercent": 20, "tokens": "200000000", "tgeUnlock": "0", "release": "12-month cliff, then 36-month monthly vesting" },
+    { "id": "protocol-treasury", "name": "Protocol Treasury", "sharePercent": 10, "tokens": "100000000", "tgeUnlock": "10000000", "release": "Remaining 90,000,000 LQC through a 5-year budget framework" },
+    { "id": "liquidity-market-making", "name": "Liquidity & Market Making", "sharePercent": 10, "tokens": "100000000", "tgeUnlock": "50000000", "release": "Remaining 50,000,000 LQC linked to exchange and pool growth" },
+    { "id": "grants-strategic-ecosystem", "name": "Grants & Strategic Ecosystem", "sharePercent": 5, "tokens": "50000000", "tgeUnlock": "10000000", "release": "Remaining 40,000,000 LQC released against milestones" }
+  ],
+  "deploymentStatus": "not-deployed"
+}
