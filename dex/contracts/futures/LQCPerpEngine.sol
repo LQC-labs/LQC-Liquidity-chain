@@ -45,6 +45,8 @@ contract LQCPerpEngine {
     mapping(uint256 => bool) public adlEnabled;
     mapping(uint256 => uint256) public maxPositionNotionalUsd;
     mapping(uint256 => uint256) public maxOrderNotionalUsd;
+    mapping(uint256 => uint256) public maxOpenInterestUsd;
+    mapping(uint256 => uint256) public openInterestUsd;
 
     event PositionOpened(
         address indexed account,
@@ -78,6 +80,7 @@ contract LQCPerpEngine {
     event InsuranceCoverageConfigured(uint256 indexed marketId, uint256 maxCoverageBps);
     event AdlSafetyConfigured(uint256 indexed marketId, bool enabled, uint256 maxReductionBps);
     event MarketNotionalLimitsConfigured(uint256 indexed marketId, uint256 maxPositionNotionalUsd, uint256 maxOrderNotionalUsd);
+    event MarketOpenInterestLimitConfigured(uint256 indexed marketId, uint256 maxOpenInterestUsd);
     event PartialLiquidationConfigured(
         uint256 indexed marketId,
         uint256 reductionBps,
@@ -151,6 +154,7 @@ contract LQCPerpEngine {
     error InvalidNotionalLimits();
     error MaxOrderNotionalExceeded();
     error MaxPositionNotionalExceeded();
+    error MaxOpenInterestExceeded();
 
     modifier onlyRegistryOwner() {
         if (msg.sender != registry.owner()) revert Forbidden();
@@ -161,6 +165,13 @@ contract LQCPerpEngine {
         if (registry_ == address(0) || vault_ == address(0)) revert InvalidAmount();
         registry = LQCFuturesMarketRegistry(registry_);
         vault = LQCFuturesVault(vault_);
+    }
+
+    function configureMarketOpenInterestLimit(uint256 marketId, uint256 maxOpenInterest) external onlyRegistryOwner {
+        if (marketId == 0 || marketId > registry.marketCount() || maxOpenInterest == 0) revert InvalidNotionalLimits();
+        if (maxOpenInterest < openInterestUsd[marketId]) revert InvalidNotionalLimits();
+        maxOpenInterestUsd[marketId] = maxOpenInterest;
+        emit MarketOpenInterestLimitConfigured(marketId, maxOpenInterest);
     }
 
     function configureMarketNotionalLimits(uint256 marketId, uint256 maxPositionUsd, uint256 maxOrderUsd) external onlyRegistryOwner {
@@ -225,6 +236,7 @@ contract LQCPerpEngine {
         if (releasedMargin == 0) revert InvalidReduction();
 
         stored.sizeUsd -= reduceSizeUsd;
+        openInterestUsd[marketId] -= reduceSizeUsd;
         stored.margin -= releasedMargin;
         vault.unlockCollateral(account, collateralToken, releasedMargin);
         vault.absorbAdlBadDebt(collateralToken, absorbed);
@@ -302,6 +314,8 @@ contract LQCPerpEngine {
         uint256 positionLimit = maxPositionNotionalUsd[marketId];
         if (orderLimit != 0 && sizeUsd > orderLimit) revert MaxOrderNotionalExceeded();
         if (positionLimit != 0 && sizeUsd > positionLimit) revert MaxPositionNotionalExceeded();
+        uint256 oiLimit = maxOpenInterestUsd[marketId];
+        if (oiLimit != 0 && openInterestUsd[marketId] + sizeUsd > oiLimit) revert MaxOpenInterestExceeded();
         Position storage existing = positions[msg.sender][marketId];
         if (existing.open) revert PositionExists();
 
@@ -324,6 +338,7 @@ contract LQCPerpEngine {
 
         positions[msg.sender][marketId] =
             Position({margin: margin, sizeUsd: sizeUsd, entryPrice: price, isLong: isLong, open: true});
+        openInterestUsd[marketId] += sizeUsd;
         positionFundingEntryRay[msg.sender][marketId] = fundingStates[marketId].cumulativeFundingPerUsdRay;
 
         emit PositionOpened(msg.sender, marketId, isLong, margin, sizeUsd, price);
@@ -427,6 +442,7 @@ contract LQCPerpEngine {
         }
 
         if (fullLiquidation) {
+            openInterestUsd[marketId] -= position.sizeUsd;
             delete positions[account][marketId];
             delete positionFundingEntryRay[account][marketId];
             _settle(account, marketId, collateralToken, position.margin, pnl);
@@ -447,6 +463,7 @@ contract LQCPerpEngine {
 
         stored.sizeUsd = remainingSizeUsd;
         stored.margin = remainingMargin;
+        openInterestUsd[marketId] -= reduceSizeUsd;
 
         emit PositionReduced(
             account,
@@ -520,6 +537,7 @@ contract LQCPerpEngine {
 
             stored.sizeUsd = remainingSizeUsd;
             stored.margin = remainingMargin;
+            openInterestUsd[marketId] -= reduceSizeUsd;
 
             _settle(account, marketId, collateralToken, releasedMargin, realizedPnl);
             _chargeTradingFee(account, marketId, collateralToken, reduceSizeUsd);
@@ -537,6 +555,7 @@ contract LQCPerpEngine {
             return (releasedMargin, realizedPnl, exitPrice, remainingSizeUsd);
         }
 
+        openInterestUsd[marketId] -= reduceSizeUsd;
         delete positions[account][marketId];
         delete positionFundingEntryRay[account][marketId];
         _settle(account, marketId, collateralToken, releasedMargin, realizedPnl);
