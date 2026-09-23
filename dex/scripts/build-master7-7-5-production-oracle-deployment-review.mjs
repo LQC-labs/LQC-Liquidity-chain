@@ -14,7 +14,8 @@ const artifact = (source, name) => {
 export async function buildProductionOracleDeploymentReview(env) {
   const config = validateProductionOracleConfig(env);
   const deployer = ethers.getAddress(env.FUTURES_DEPLOYER_ADDRESS);
-  if (!/^\\d+$/.test(String(env.FUTURES_DEPLOYER_NONCE ?? ""))) throw new Error("FUTURES_DEPLOYER_NONCE must be a non-negative integer");\n  const nonce = BigInt(env.FUTURES_DEPLOYER_NONCE);
+  if (!/^\\d+$/.test(String(env.FUTURES_DEPLOYER_NONCE ?? ""))) throw new Error("FUTURES_DEPLOYER_NONCE must be a non-negative integer");
+  const nonce = BigInt(env.FUTURES_DEPLOYER_NONCE);
 
   const primary = artifact("futures/LQCAggregatorOracleAdapter.sol", "LQCAggregatorOracleAdapter");
   const twap = artifact("futures/LQCV3TwapReferenceAdapter.sol", "LQCV3TwapReferenceAdapter");
