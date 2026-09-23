@@ -1,0 +1,28 @@
+name: Master 7/7-7G Tick Movement Diagnostic
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/app/futures-v3-tick-movement-diagnostic.html"
+      - "dex/app/futures/v3-tick-movement-diagnostic.js"
+      - "dex/test/master7-7-7g-tick-movement-diagnostic.test.mjs"
+      - ".github/workflows/master7-7-7g-tick-movement-diagnostic.yml"
+permissions:
+  contents: read
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: node --check app/futures/v3-tick-movement-diagnostic.js
+      - run: npx mocha --timeout 30000 "test/master7-7-7g-tick-movement-diagnostic.test.mjs"
