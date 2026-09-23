@@ -7,7 +7,7 @@ describe("Futures testnet deployment gate",()=>{
  it("fails closed without explicit authorization",()=>assert.throws(()=>validateDeploymentAuthorization(base),/authorization/));
  it("requires a runtime private key only after authorization",()=>assert.throws(()=>validateDeploymentAuthorization({...base,FUTURES_EXECUTE_DEPLOYMENT:"I_UNDERSTAND_THIS_SENDS_TESTNET_TRANSACTIONS"}),/PRIVATE_KEY/));
  it("rejects any wrong authorization phrase",()=>assert.throws(()=>validateDeploymentAuthorization({...base,FUTURES_EXECUTE_DEPLOYMENT:"yes"}),/authorization/));
- it("builds owner-only Vault engine configuration without impersonating deployer",()=>{
+ it("rejects the legacy Mock-Oracle path unless explicitly classified test-only",()=>{\n   const key="0x"+"11".repeat(32);\n   const signer=new ethers.Wallet(key);\n   assert.throws(()=>validateDeploymentAuthorization({\n     ...base,\n     FUTURES_DEPLOYER_ADDRESS:signer.address,\n     FUTURES_EXECUTE_DEPLOYMENT:"I_UNDERSTAND_THIS_SENDS_TESTNET_TRANSACTIONS",\n     DEPLOYER_PRIVATE_KEY:key\n   }),/TEST ONLY/);\n });\n it("builds owner-only Vault engine configuration without impersonating deployer",()=>{
    const vault="0x3333333333333333333333333333333333333333", engine="0x4444444444444444444444444444444444444444";
    const action=buildOwnerConfiguration(vault,engine);
    const iface=new ethers.Interface(["function setEngine(address newEngine)"]);
