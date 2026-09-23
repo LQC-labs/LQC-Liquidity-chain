@@ -36,7 +36,7 @@ describe("LQCPythReferenceAdapter", function(){
  it("normalizes positive and deeply negative supported exponents",async function(){
    const adapter=await fixture();
    let now=BigInt((await provider.getBlock("latest")).timestamp);
-   await (await pyth.setPrice(2n,1n,2,now)).wait();
+   await (await pyth.setPrice(2n,0n,2,now)).wait();
    assert.equal((await adapter.latestRoundData())[1],200000000000000000000n);
    now=BigInt((await provider.getBlock("latest")).timestamp);
    await (await pyth.setPrice(123456789n,1n,-20,now)).wait();
