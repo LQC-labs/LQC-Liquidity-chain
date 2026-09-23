@@ -99,10 +99,11 @@ Before CEX due diligence, the whitepaper, README, contracts/configuration, testn
 
 ## Current position
 
-MASTER: **7/5 — Futures**  
-COMPLETED IN CURRENT RESTART PATH: **Stage 6 repository E2E PASS; 7/1 Futures reuse regression PASS; 7/2 Independent Runtime Reference Oracle PASS; 7/3 BSC Testnet artifact/deployment lineage PASS; 7/4 Perp Accounting Gap Review PASS; 7/5-1 Canonical Partial Position Reduction PASS; 7/5-2 Funding checkpoint/accounting PASS; 7/5-3 Trading Fee Accounting / Reserve Routing PASS; 7/5-4 Futures-only Insurance Fund / residual bad debt accounting PASS; 7/5-5 Funding-aware Partial Liquidation PASS**  
-NEXT EXECUTABLE: **7/5-6 Bounded ADL primitive for explicit residual bad debt**  
-ON-CHAIN BOUNDARY: the verified 10/10 clean BSC Testnet Lending deployment is preserved, but Governance configuration, market enablement, new Testnet transactions, and production activation each remain separately gated and are not implied by repository PASS.  
+MASTER: **7/7 — Futures Current-release BSC Testnet E2E**  
+COMPLETED IN CURRENT RESTART PATH: **Stage 6 repository E2E PASS; 7/1 Futures reuse regression PASS; 7/2 Independent Runtime Reference Oracle PASS; 7/3 BSC Testnet artifact/deployment lineage PASS; 7/4 Perp Accounting Gap Review PASS; 7/5 Selective On-chain Futures Gap Implementation + Regression PASS; 7/6 Futures Risk / Governance / Emergency Integration PASS**  
+CURRENT EXECUTABLE: **7/7 Current-release BSC Testnet Futures E2E — repository/read-only gates in progress; current-release production-equivalent Oracle chain-97 deployment evidence remains required before PASS.**  
+NEXT AFTER 7/7 PASS: **7/8 Futures Stage Exit / Intent Handoff.**  
+ON-CHAIN BOUNDARY: historical BSC Testnet wiring remains reusable evidence only; Mock Oracle deployments are TEST ONLY. No new Testnet transaction, Governance mutation, market activation, wallet signature, or production activation is implied by repository PASS.  
 WORKING RULE: verified earlier Master stages are reused; only evidence gaps or real implementation gaps are developed. Validation follows `docs/INCREMENTAL_VERIFICATION_POLICY.md`: changed-scope focused CI first, dependency-aware regression second, mandatory full regression at integration/security gates.
 
 
