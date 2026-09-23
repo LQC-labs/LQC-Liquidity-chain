@@ -17,6 +17,10 @@ const MAX_CONFIDENCE_BPS=500;
 let provider,signer,account,artifacts;
 
 const $=(id)=>document.getElementById(id);
+const setDeployEnabled=(enabled)=>{
+  $("deployHelper").disabled=!enabled;
+  $("deployAdapter").disabled=!enabled;
+};
 const setStatus=(m)=>{$("status").textContent=m;};
 const copy=async(text)=>{
  try{await navigator.clipboard.writeText(text);return true;}catch{}
@@ -27,7 +31,7 @@ const copy=async(text)=>{
 async function loadArtifacts(){
  const r=await fetch("./futures-production-oracle-mobile-artifacts.json",{cache:"no-store"});
  const base=await r.json();
- const rp=await fetch("./futures-pyth-runtime-artifacts.json",{cache:"no-store"});
+ const rp=await fetch("./futures/futures-pyth-runtime-artifacts.json",{cache:"no-store"});
  const p=await rp.json();
  artifacts={...base.contracts,...p.contracts};
 }
@@ -72,7 +76,8 @@ async function deployAdapter(){
 }
 
 window.addEventListener("DOMContentLoaded",async()=>{
- $("buildVersion").textContent="8C-UMD-v2";
+ $("buildVersion").textContent="8C-UMD-v3";
+ setDeployEnabled(false);
  setStatus("JS 로드 성공 — artifact 확인 중...");
  $("connect").onclick=()=>connect().catch(e=>setStatus(e.message));
  $("deployHelper").onclick=()=>deployHelper().catch(e=>setStatus(e.shortMessage||e.message));
@@ -83,9 +88,12 @@ window.addEventListener("DOMContentLoaded",async()=>{
  $("priceId").textContent=PRICE_ID;
  try{
    await loadArtifacts();
-   setStatus("준비됨 — TokenPocket 연결을 눌러주세요.");
+   if(!artifacts?.PythUpdateHelper || !artifacts?.PythReference) throw new Error("Pyth runtime artifacts missing required contracts");
+   setDeployEnabled(true);
+   setStatus("준비됨 — TokenPocket 연결 후 배포할 수 있습니다.");
  }catch(e){
    console.error(e);
+   setDeployEnabled(false);
    setStatus("배포 artifact 로딩 실패: "+(e.message||String(e)));
  }
 });
