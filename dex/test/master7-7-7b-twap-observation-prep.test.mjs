@@ -12,7 +12,12 @@ describe("Master 7/7-7B TWAP observation prep",()=>{
     assert.match(s,/increaseObservationCardinalityNext/);
     assert.doesNotMatch(s,/exactInput|exactInputSingle|mint\(|burn\(|collect\(|approve\(/);
   });
-  it("rechecks 1800-second observe readiness and post-transaction cardinalityNext",()=>{
+  it("prepares capacity when the deployed adapter still requires cardinality >= 2",()=>{
+    assert.match(s,/cardinality>=2/);
+    assert.match(s,/cardinalityNext>=TARGET_NEXT/);
+    assert.match(s,/increaseObservationCardinalityNext/);
+  });
+  it("still checks 1800-second observe readiness and post-transaction cardinalityNext",()=>{
     assert.match(s,/LOOKBACK=1800/);
     assert.match(s,/observe/);
     assert.match(s,/cardinalityNext<TARGET_NEXT/);
