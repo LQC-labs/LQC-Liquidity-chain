@@ -1,0 +1,27 @@
+name: Pyth Deploy Page Init Recovery
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/app/futures/futures-pyth-testnet-deploy.js"
+      - "dex/test/master7-7-8c-pyth-page-init-recovery.test.mjs"
+      - ".github/workflows/pyth-deploy-page-init-recovery.yml"
+permissions: {contents: read}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults: {run: {working-directory: dex}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - run: npm ci --ignore-scripts
+      - run: npx mocha "test/master7-7-8c-pyth-page-init-recovery.test.mjs"
+      - run: npm run compile
+      - run: node scripts/build-master7-7-8c-pyth-runtime-artifacts.mjs
+      - name: Emit runtime artifact bundle for commit
+        run: |
+          echo "PYTH_RUNTIME_ARTIFACT_BASE64_BEGIN"
+          base64 -w0 app/futures/futures-pyth-runtime-artifacts.json
+          echo
+          echo "PYTH_RUNTIME_ARTIFACT_BASE64_END"

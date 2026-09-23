@@ -65,7 +65,6 @@ async function deployAdapter(){
 }
 
 window.addEventListener("DOMContentLoaded",async()=>{
- await loadArtifacts();
  $("connect").onclick=()=>connect().catch(e=>setStatus(e.message));
  $("deployHelper").onclick=()=>deployHelper().catch(e=>setStatus(e.shortMessage||e.message));
  $("deployAdapter").onclick=()=>deployAdapter().catch(e=>setStatus(e.shortMessage||e.message));
@@ -73,4 +72,11 @@ window.addEventListener("DOMContentLoaded",async()=>{
  $("expected").textContent=EXPECTED_DEPLOYER;
  $("pyth").textContent=PYTH_CORE;
  $("priceId").textContent=PRICE_ID;
+ try{
+   await loadArtifacts();
+   setStatus("준비됨 — TokenPocket 연결을 눌러주세요.");
+ }catch(e){
+   console.error(e);
+   setStatus("배포 artifact 로딩 실패: "+(e.message||String(e)));
+ }
 });
