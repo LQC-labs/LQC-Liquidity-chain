@@ -71,6 +71,24 @@ describe("Master 7/2 Futures V3 TWAP runtime reference adapter",function(){
     assert.ok(answer>0n);
   });
 
+  it("reproduces the live BSC inverse-direction mean tick 91749",async function(){
+    const ref=await makeAdapter(quote,index,1);
+    const liveMeanTick=91749;
+    await(await pool.setState(2_182_852_421_433_811_220n,2n**96n,liveMeanTick,8,true,true,0,liveMeanTick*300)).wait();
+    const [,answer]=await ref.latestRoundData();
+    const expected=twapTickToScaledPrice({
+      tick:liveMeanTick,
+      token0:await index.getAddress(),
+      token1:await quote.getAddress(),
+      indexToken:await quote.getAddress(),
+      quoteToken:await index.getAddress(),
+      token0Decimals:18,
+      token1Decimals:18
+    });
+    assert.equal(answer,expected);
+    assert.ok(answer>0n);
+  });
+
   it("matches inverse-pair pricing at the same arithmetic mean tick",async function(){
     const ref=await makeAdapter(quote,index);
     for(const tick of[-300,0,300]){
