@@ -13,5 +13,5 @@ describe("Master 7/7-7O final Governance verifier",()=>{
    ]) assert.match(s,new RegExp(x,"i"));
  });
  it("requires heartbeat 3600 and deviation 500",()=>{assert.match(s,/HEARTBEAT=3600/);assert.match(s,/DEVIATION=500/);});
- it("verifies feedConfigs and getPrice read-only",()=>{assert.match(s,/feedConfigs/);assert.match(s,/getPrice/);assert.doesNotMatch(s,/setFeed|setCircuitBreaker|sendTransaction/);});
+ it("verifies config and fail-closed circuit breaker behavior read-only",()=>{assert.match(s,/feedConfigs/);assert.match(s,/ExcessivePriceDeviation/);assert.match(s,/stageExitReady/);assert.match(s,/deviationBps/);assert.doesNotMatch(s,/setFeed|setCircuitBreaker|sendTransaction/);});
 });
