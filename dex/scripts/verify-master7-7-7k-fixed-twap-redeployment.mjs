@@ -17,6 +17,8 @@ const ABI=[
  "function quoteToken() view returns(address)",
  "function observationWindow() view returns(uint32)",
  "function minimumLiquidity() view returns(uint128)",
+ "function indexTokenDecimals() view returns(uint8)",
+ "function quoteTokenDecimals() view returns(uint8)",
  "function latestRoundData() view returns(uint80,int256,uint256,uint256,uint80)"
 ];
 
@@ -51,8 +53,8 @@ export async function verifyFixedRedeployment(provider){
  if(await provider.getCode(address)==="0x")throw new Error("No runtime bytecode at redeployed adapter.");
 
  const c=new ethers.Contract(address,ABI,provider);
- const [pool,indexToken,quoteToken,window,minLiquidity]=await Promise.all([
-   c.pool(),c.indexToken(),c.quoteToken(),c.observationWindow(),c.minimumLiquidity()
+ const [pool,indexToken,quoteToken,window,minLiquidity,storedIndexDecimals,storedQuoteDecimals]=await Promise.all([
+   c.pool(),c.indexToken(),c.quoteToken(),c.observationWindow(),c.minimumLiquidity(),c.indexTokenDecimals(),c.quoteTokenDecimals()
  ]);
  if(ethers.getAddress(pool)!==ethers.getAddress(EXPECTED_POOL))throw new Error("Pool mismatch.");
  if(ethers.getAddress(indexToken)!==ethers.getAddress(EXPECTED_INDEX))throw new Error("Index token mismatch.");
@@ -120,6 +122,11 @@ export async function verifyFixedRedeployment(provider){
      minimumLiquidity:minLiquidity.toString()
    },
    livePoolState:{
+     token0:ethers.getAddress(token0),
+     token1:ethers.getAddress(token1),
+     adapterStoredIndexDecimals:Number(storedIndexDecimals),
+     adapterStoredQuoteDecimals:Number(storedQuoteDecimals),
+     indexIsToken0:ethers.getAddress(EXPECTED_INDEX)===ethers.getAddress(token0),
      sqrtPriceX96:slot[0].toString(),
      tick:Number(slot[1]),
      observationIndex:Number(slot[2]),
