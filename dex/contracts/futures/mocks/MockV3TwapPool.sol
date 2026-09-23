@@ -9,6 +9,7 @@ contract MockV3TwapPool {
     int24 public tick;
     uint16 public observationCardinality;
     bool public unlocked;
+    uint32 public feeProtocol;
     bool public observationAvailable = true;
     int56 public pastTickCumulative;
     int56 public currentTickCumulative;
@@ -40,12 +41,16 @@ contract MockV3TwapPool {
         currentTickCumulative = currentTickCumulative_;
     }
 
+    function setFeeProtocol(uint32 feeProtocol_) external {
+        feeProtocol = feeProtocol_;
+    }
+
     function slot0()
         external
         view
-        returns (uint160, int24, uint16, uint16, uint16, uint8, bool)
+        returns (uint160, int24, uint16, uint16, uint16, uint32, bool)
     {
-        return (sqrtPriceX96, tick, 0, observationCardinality, observationCardinality, 0, unlocked);
+        return (sqrtPriceX96, tick, 0, observationCardinality, observationCardinality, feeProtocol, unlocked);
     }
 
     function observe(uint32[] calldata secondsAgos)
