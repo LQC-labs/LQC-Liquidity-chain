@@ -11,7 +11,8 @@ describe("Master 7/7-7K fixed TWAP redeployment verifier",()=>{
  });
  it("verifies transaction initcode against the current compiled fixed artifact",()=>{
    assert.match(s,/startsWith/);
-   assert.match(s,/current fixed artifact bytecode/);
+   assert.match(s,/PRE_FIX_TWAP_DEPLOYMENT_INVALIDATED_BY_CURRENT_ARTIFACT/);
+  assert.match(s,/initcodeMatchesCurrentFixedArtifact:false/);
  });
  it("is read-only and verifies latestRoundData",()=>{
    assert.doesNotMatch(s,/sendTransaction|eth_sendTransaction/);
