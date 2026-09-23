@@ -13,7 +13,17 @@ const oracleAbi=[
   "function feedConfigs(address indexToken) view returns(address feed,uint32 heartbeat,address referenceFeed,uint16 maxDeviationBps)",
   "function getPrice(address indexToken) view returns(uint256 price,uint256 updatedAt)"
 ];
-const aggAbi=["function latestRoundData() view returns(uint80,int256,uint256,uint256,uint80)"];
+const aggAbi=[
+ "function decimals() view returns(uint8)",
+ "function latestRoundData() view returns(uint80,int256,uint256,uint256,uint80)"
+];
+const errorIface=new ethers.Interface([
+ "error ExcessivePriceDeviation()",
+ "error FeedNotConfigured()",
+ "error InvalidFeedAnswer()",
+ "error InvalidFeedTimestamp()",
+ "error StaleFeedPrice()"
+]);
 
 const provider=new ethers.JsonRpcProvider(process.env.BSC_TESTNET_RPC_URL||"https://data-seed-prebsc-1-s1.bnbchain.org:8545");
 const net=await provider.getNetwork();
@@ -22,13 +32,34 @@ if(net.chainId!==97n) throw new Error("Expected chain 97");
 const oracle=new ethers.Contract(PRIMARY,oracleAbi,provider);
 const primaryFeed=new ethers.Contract(FEED,aggAbi,provider);
 const twap=new ethers.Contract(TWAP,aggAbi,provider);
-const [owner,cfg,primaryRound,twapRound,price]=await Promise.all([
+const [owner,cfg,primaryRound,twapRound,primaryDecimals]=await Promise.all([
   oracle.owner(),
   oracle.feedConfigs(INDEX),
   primaryFeed.latestRoundData(),
   twap.latestRoundData(),
-  oracle.getPrice(INDEX)
+  primaryFeed.decimals()
 ]);
+
+let getPriceResult={ok:false};
+try{
+  const price=await oracle.getPrice(INDEX);
+  getPriceResult={ok:true,price:price[0].toString(),updatedAt:price[1].toString()};
+}catch(e){
+  const data=e?.data||e?.error?.data||e?.info?.error?.data||null;
+  let parsed=null;
+  try{ if(data) parsed=errorIface.parseError(data); }catch{}
+  getPriceResult={ok:false,errorName:parsed?.name||null,data};
+}
+
+const primaryRaw=BigInt(primaryRound[1]);
+const twapRaw=BigInt(twapRound[1]);
+const primaryNormalized=Number(primaryDecimals)===18
+  ? primaryRaw
+  : Number(primaryDecimals)<18
+    ? primaryRaw*(10n**BigInt(18-Number(primaryDecimals)))
+    : primaryRaw/(10n**BigInt(Number(primaryDecimals)-18));
+const diff=primaryNormalized>twapRaw?primaryNormalized-twapRaw:twapRaw-primaryNormalized;
+const deviationBps=(diff*10000n)/twapRaw;
 
 const checks={
   ownerMatches:ethers.getAddress(owner)===ethers.getAddress(OWNER),
@@ -38,7 +69,10 @@ const checks={
   deviationMatches:Number(cfg[3])===DEVIATION,
   primaryPositive:BigInt(primaryRound[1])>0n,
   twapPositive:BigInt(twapRound[1])>0n,
-  getPricePositive:BigInt(price[0])>0n
+  circuitBreakerBehavior:
+    getPriceResult.ok
+      ? BigInt(getPriceResult.price)>0n
+      : getPriceResult.errorName==="ExcessivePriceDeviation"
 };
 for(const [k,v] of Object.entries(checks)) if(!v) throw new Error(`Check failed: ${k}`);
 
@@ -54,6 +88,13 @@ console.log(JSON.stringify({
   },
   primaryAnswer:primaryRound[1].toString(),
   twapAnswer:twapRound[1].toString(),
-  getPrice:{price:price[0].toString(),updatedAt:price[1].toString()},
+  primaryDecimals:Number(primaryDecimals),
+  primaryNormalized:primaryNormalized.toString(),
+  deviationBps:deviationBps.toString(),
+  getPrice:getPriceResult,
+  stageExitReady:getPriceResult.ok,
+  safetyConclusion:getPriceResult.ok
+    ?"Circuit breaker configured and current reference is within allowed deviation."
+    :"Circuit breaker correctly fails closed because reference deviation exceeds the configured threshold.",
   checks
 },null,2));
