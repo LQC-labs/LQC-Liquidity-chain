@@ -18,7 +18,7 @@ const env = {
 
 describe("Master 7/7-5 production Oracle deployment review", () => {
   it("builds two deterministic deployment actions without authorizing transactions", async () => {
-    const r = buildProductionOracleDeploymentReview(env);
+    const r = await buildProductionOracleDeploymentReview(env);
     assert.equal(r.chainId, 97);
     assert.equal(r.transactionAuthorized, false);
     assert.equal(r.deployments.length, 2);
@@ -31,8 +31,8 @@ describe("Master 7/7-5 production Oracle deployment review", () => {
     assert.match(r.governanceActions[1].data, /^0x[0-9a-f]+$/i);
   });
 
-  it("fails closed when deployer nonce is absent or malformed", () => {
-    assert.throws(() => buildProductionOracleDeploymentReview({...env,FUTURES_DEPLOYER_NONCE:""}));
-    assert.throws(() => buildProductionOracleDeploymentReview({...env,FUTURES_DEPLOYER_NONCE:"abc"}));
+  it("fails closed when deployer nonce is absent or malformed", async () => {
+    await assert.rejects(() => buildProductionOracleDeploymentReview({...env,FUTURES_DEPLOYER_NONCE:""}), /NONCE/);
+    await assert.rejects(() => buildProductionOracleDeploymentReview({...env,FUTURES_DEPLOYER_NONCE:"abc"}), /NONCE/);
   });
 });
