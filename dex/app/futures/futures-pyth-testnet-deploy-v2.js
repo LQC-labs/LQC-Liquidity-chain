@@ -29,11 +29,10 @@ const copy=async(text)=>{
 };
 
 async function loadArtifacts(){
- const r=await fetch("./futures-production-oracle-mobile-artifacts.json",{cache:"no-store"});
- const base=await r.json();
  const rp=await fetch("./futures/futures-pyth-runtime-artifacts.json",{cache:"no-store"});
+ if(!rp.ok) throw new Error("Pyth runtime artifact HTTP "+rp.status);
  const p=await rp.json();
- artifacts={...base.contracts,...p.contracts};
+ artifacts=p.contracts;
 }
 
 async function connect(){
@@ -76,7 +75,7 @@ async function deployAdapter(){
 }
 
 window.addEventListener("DOMContentLoaded",async()=>{
- $("buildVersion").textContent="8C-UMD-v3";
+ $("buildVersion").textContent="8C-UMD-v4";
  setDeployEnabled(false);
  setStatus("JS 로드 성공 — artifact 확인 중...");
  $("connect").onclick=()=>connect().catch(e=>setStatus(e.message));
