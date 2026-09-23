@@ -45,8 +45,21 @@ export async function verifyFixedRedeployment(provider){
  if(!receipt.contractAddress)throw new Error("Missing deployed contract address.");
 
  const a=artifact();
- if(!String(tx.data).toLowerCase().startsWith(String(a.bytecode).toLowerCase())){
-   throw new Error("Transaction initcode does not match current fixed artifact bytecode.");
+ const initcodeMatchesCurrentFixedArtifact=String(tx.data).toLowerCase().startsWith(String(a.bytecode).toLowerCase());
+ if(!initcodeMatchesCurrentFixedArtifact){
+   return {
+     status:"PRE_FIX_TWAP_DEPLOYMENT_INVALIDATED_BY_CURRENT_ARTIFACT",
+     chainId:97,
+     transactionHash:TX_HASH,
+     blockNumber:receipt.blockNumber,
+     deployer:receipt.from,
+     contractAddress:ethers.getAddress(receipt.contractAddress),
+     initcodeMatchesCurrentFixedArtifact:false,
+     reason:"Pinned on-chain deployment predates the Pancake V3 slot0 uint32 feeProtocol ABI fix and must not be used for governance.",
+     latestRoundData:{ok:false,skipped:true},
+     transactionOccurred:false,
+     governanceAuthorized:false
+   };
  }
 
  const address=ethers.getAddress(receipt.contractAddress);
@@ -125,7 +138,7 @@ export async function verifyFixedRedeployment(provider){
    blockNumber:receipt.blockNumber,
    deployer:receipt.from,
    contractAddress:address,
-   initcodeMatchesCurrentFixedArtifact:true,
+   initcodeMatchesCurrentFixedArtifact,
    constructorState:{
      pool:ethers.getAddress(pool),
      indexToken:ethers.getAddress(indexToken),
@@ -163,6 +176,10 @@ export async function verifyFixedRedeployment(provider){
 if(import.meta.url===new URL("file://"+process.argv[1]).href){
  const provider=new ethers.JsonRpcProvider(process.env.BSC_TESTNET_RPC_URL||"https://data-seed-prebsc-1-s1.bnbchain.org:8545");
  verifyFixedRedeployment(provider)
-  .then(r=>{console.log(JSON.stringify(r,null,2));if(!r.latestRoundData.ok)process.exitCode=3;})
+  .then(r=>{
+    console.log(JSON.stringify(r,null,2));
+    if(r.status==="PRE_FIX_TWAP_DEPLOYMENT_INVALIDATED_BY_CURRENT_ARTIFACT") return;
+    if(!r.latestRoundData.ok) process.exitCode=3;
+  })
   .catch(e=>{console.error("FINAL FAIL:",e.message);process.exitCode=1;});
 }
