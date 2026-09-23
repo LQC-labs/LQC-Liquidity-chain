@@ -1,0 +1,23 @@
+name: Master 7/7-7M Governance Oracle Config Page
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/app/futures-governance-oracle-config.html"
+      - "dex/app/futures/governance-oracle-config-page.js"
+      - "dex/test/master7-7-7m-governance-oracle-config-page.test.mjs"
+      - ".github/workflows/master7-7-7m-governance-oracle-config-page.yml"
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - run: npm ci --ignore-scripts
+      - run: npx mocha "test/master7-7-7m-governance-oracle-config-page.test.mjs"
