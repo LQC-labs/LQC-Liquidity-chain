@@ -81,6 +81,14 @@ Master 7 reuses the existing Futures implementation and BSC Testnet evidence. Hi
 - Futures margin, position, PnL, insurance and ADL accounting remain separate from Lending debt/collateral accounting.
 - Current BSC Testnet Registry/Vault/Oracle/Engine evidence is reused but does not automatically prove latest-main bytecode identity.
 - The existing Aggregator Oracle circuit breaker is reused; an independent runtime reference source remains a bounded gap.
+- Stage 7 Oracle baseline: Chainlink remains the Primary Oracle. The independent Reference Oracle must be a separately sourced provider validated on-chain or via verifiable signed payloads before Governance activation.
+- The Reference Oracle is not permanently tied to one provider. Pyth is a candidate, not a mandatory dependency; a better provider may replace it if objective validation shows higher freshness, availability, independence, manipulation resistance, operational simplicity, and lower integration risk.
+- Circuit-breaker baseline deviation remains 500 bps unless a later documented risk review changes it. The threshold must not be widened merely to make an unhealthy reference source pass.
+- Staleness/freshness is mandatory. A stale Primary or Reference source must fail closed.
+- DEX TWAP is retained as monitoring/anomaly-detection evidence, not as the canonical Futures Reference Oracle unless future liquidity and manipulation-resistance evidence independently qualifies it.
+- Reference candidates are observed read-only before Governance activation. Required evidence includes price deviation, freshness/publish time, confidence where available, update continuity, decimal/exponent normalization, fail-closed behavior, and regression/E2E compatibility.
+- Governance may activate a Reference source only after the candidate passes the observation gate; any replacement follows the same validation sequence.
+- Current BSC Testnet evidence: WBNB/BUSD V2/V3 reference pools are price-distorted versus Chainlink and are disqualified as the canonical Reference source. Pyth Core BNB/USD on the tested BSC Testnet deployment was stale and outside the 500 bps band at the observed point, so it is not yet activation-ready.
 - Application-layer Funding/Fee/Insurance/ADL implementations and tests are useful foundations but are not misrepresented as already integrated on-chain Perp accounting.
 - Any historical Futures PR must be revalidated against current `main` before selective reuse.
 - Production activation remains blocked until Oracle, economic-risk, current-release Testnet E2E, audit and Governance gates pass.
