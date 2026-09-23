@@ -1,0 +1,28 @@
+name: Master 7/7-7F Cardinality Materialization
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/app/futures-v3-cardinality-materialization.html"
+      - "dex/app/futures/v3-cardinality-materialization.js"
+      - "dex/test/master7-7-7f-cardinality-materialization.test.mjs"
+      - ".github/workflows/master7-7-7f-cardinality-materialization.yml"
+permissions:
+  contents: read
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: node --check app/futures/v3-cardinality-materialization.js
+      - run: npx mocha --timeout 30000 "test/master7-7-7f-cardinality-materialization.test.mjs"
