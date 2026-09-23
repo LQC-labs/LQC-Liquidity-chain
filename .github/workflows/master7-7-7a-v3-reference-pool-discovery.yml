@@ -1,0 +1,28 @@
+name: Master 7/7-7A V3 Reference Pool Discovery
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/app/futures-v3-reference-pool-discovery.html"
+      - "dex/app/futures/v3-reference-pool-discovery.js"
+      - "dex/test/master7-7-7a-v3-reference-pool-discovery.test.mjs"
+      - ".github/workflows/master7-7-7a-v3-reference-pool-discovery.yml"
+permissions:
+  contents: read
+jobs:
+  discovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: node --check app/futures/v3-reference-pool-discovery.js
+      - run: npx mocha --timeout 30000 "test/master7-7-7a-v3-reference-pool-discovery.test.mjs"
