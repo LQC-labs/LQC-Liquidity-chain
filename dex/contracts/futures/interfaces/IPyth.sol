@@ -10,4 +10,8 @@ interface IPyth {
     }
 
     function getPriceNoOlderThan(bytes32 id, uint256 age) external view returns (Price memory price);
+
+    function getUpdateFee(bytes[] calldata updateData) external view returns (uint256 feeAmount);
+
+    function updatePriceFeeds(bytes[] calldata updateData) external payable;
 }

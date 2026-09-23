@@ -1,0 +1,22 @@
+name: Master 7/7-8A Pyth Update Helper
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/contracts/futures/LQCPythUpdateHelper.sol"
+      - "dex/contracts/futures/interfaces/IPyth.sol"
+      - "dex/contracts/futures/mocks/MockPyth.sol"
+      - "dex/test/futures-pyth-update-helper.test.mjs"
+      - ".github/workflows/master7-7-8a-pyth-update-helper.yml"
+permissions: {contents: read}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults: {run: {working-directory: dex}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - run: npm ci --ignore-scripts
+      - run: npm run compile
+      - run: npx mocha --timeout 30000 "test/futures-pyth-update-helper.test.mjs" "test/futures-pyth-reference-adapter.test.mjs"
