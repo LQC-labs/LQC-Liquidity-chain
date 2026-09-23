@@ -10,8 +10,9 @@ const abi=[
  "function owner() view returns(address)",
  "function setFeed(address indexToken,address feed,uint32 heartbeat)",
  "function setCircuitBreaker(address indexToken,address referenceFeed,uint16 maxDeviationBps)",
- "function getPrice(address indexToken) view returns(uint256,bool)",
- "function feeds(address) view returns(address feed,uint32 heartbeat)"
+ "function getPrice(address indexToken) view returns(uint256,uint256)",
+ "function feeds(address indexToken) view returns(address)",
+ "function feedConfigs(address indexToken) view returns(address feed,uint32 heartbeat,address referenceFeed,uint16 maxDeviationBps)"
 ];
 const aggAbi=["function latestRoundData() view returns(uint80,int256,uint256,uint256,uint80)"];
 let provider,signer,contract,account,feedDone=false,cbDone=false;
@@ -36,11 +37,26 @@ document.getElementById("connect").onclick=async()=>{
   await ensureChainOwner();
   const primaryFeed=new ethers.Contract(FEED,aggAbi,provider);
   const twap=new ethers.Contract(TWAP,aggAbi,provider);
-  const [p,t]=await Promise.all([primaryFeed.latestRoundData(),twap.latestRoundData()]);
+  const [p,t,current]=await Promise.all([primaryFeed.latestRoundData(),twap.latestRoundData(),contract.feedConfigs(INDEX)]);
   if(BigInt(p[1])<=0n||BigInt(t[1])<=0n)throw new Error("Oracle price가 0 이하입니다.");
-  document.getElementById("preflight").textContent=JSON.stringify({chainId:97,owner:account,primaryAnswer:p[1].toString(),twapAnswer:t[1].toString(),twapUpdatedAt:t[3].toString()},null,2);
-  document.getElementById("setFeed").disabled=false;
-  status("Preflight PASS. setFeed만 먼저 실행하세요.","ok");
+  const currentFeed=ethers.getAddress(current[0]);
+  const currentHeartbeat=Number(current[1]);
+  const currentReference=ethers.getAddress(current[2]);
+  const currentDeviation=Number(current[3]);
+  feedDone=currentFeed===ethers.getAddress(FEED)&&currentHeartbeat===HEARTBEAT;
+  cbDone=feedDone&&currentReference===ethers.getAddress(TWAP)&&currentDeviation===DEVIATION;
+  document.getElementById("preflight").textContent=JSON.stringify({chainId:97,owner:account,primaryAnswer:p[1].toString(),twapAnswer:t[1].toString(),twapUpdatedAt:t[3].toString(),currentFeed,currentHeartbeat,currentReference,currentDeviation,feedDone,cbDone},null,2);
+  if(feedDone){
+    document.getElementById("setFeed").textContent="2. setFeed 완료";
+    document.getElementById("setFeed").disabled=true;
+    document.getElementById("setCb").disabled=cbDone;
+    if(cbDone) document.getElementById("setCb").textContent="3. setCircuitBreaker 완료";
+    status(cbDone?"Governance Oracle 설정이 이미 완료되어 있습니다.":"setFeed 온체인 완료 확인. 이제 setCircuitBreaker만 실행하세요.","ok");
+  }else{
+    document.getElementById("setFeed").disabled=false;
+    document.getElementById("setCb").disabled=true;
+    status("Preflight PASS. setFeed만 먼저 실행하세요.","ok");
+  }
  }catch(e){status(e.shortMessage||e.message||String(e),"error")}
 };
 document.getElementById("setFeed").onclick=async()=>{
@@ -51,7 +67,7 @@ document.getElementById("setFeed").onclick=async()=>{
   const tx=await contract.setFeed(INDEX,FEED,HEARTBEAT);
   status("setFeed 채굴 대기...\n"+tx.hash);
   const r=await tx.wait();if(r.status!==1)throw new Error("setFeed 실패");
-  const f=await contract.feeds(INDEX);
+  const f=await contract.feedConfigs(INDEX);
   if(ethers.getAddress(f[0])!==ethers.getAddress(FEED)||Number(f[1])!==HEARTBEAT)throw new Error("setFeed post-state 불일치");
   feedDone=true;b.textContent="2. setFeed 완료";document.getElementById("setCb").disabled=false;
   document.getElementById("txs").textContent="setFeed: "+tx.hash;
@@ -66,6 +82,8 @@ document.getElementById("setCb").onclick=async()=>{
   const tx=await contract.setCircuitBreaker(INDEX,TWAP,DEVIATION);
   status("setCircuitBreaker 채굴 대기...\n"+tx.hash);
   const r=await tx.wait();if(r.status!==1)throw new Error("setCircuitBreaker 실패");
+  const cfg=await contract.feedConfigs(INDEX);
+  if(ethers.getAddress(cfg[2])!==ethers.getAddress(TWAP)||Number(cfg[3])!==DEVIATION)throw new Error("setCircuitBreaker post-state 불일치");
   cbDone=true;b.textContent="3. setCircuitBreaker 완료";
   document.getElementById("txs").textContent+="\nsetCircuitBreaker: "+tx.hash;
   status("Governance Oracle 설정 완료. 다음은 독립 read-only 검증 단계입니다.","ok");
