@@ -14,23 +14,18 @@ const env = {
   FUTURES_TWAP_MIN_LIQUIDITY: "100"
 };
 
-class MockProvider {
-  async getNetwork(){ return {chainId:97n}; }
-  async getCode(){ return "0x1234"; }
-  async getBlock(){ return {number:123,timestamp:10000}; }
-  async call(tx){
-    const sig=tx.data.slice(0,10);
-    const enc=(types,values)=>"0x"+new (await import("ethers")).ethers.AbiCoder().encode(types,values).slice(2);
-    throw new Error("unexpected call "+sig);
-  }
-}
-
 describe("Master 7/7-6 production Oracle live preflight", () => {
   it("exports a read-only preflight function", () => {
     assert.equal(typeof preflightProductionOracleDeployment, "function");
   });
-  it("fails closed on wrong chain before any transaction", async () => {
-    const provider={getNetwork:async()=>({chainId:56n})};
-    await assert.rejects(()=>preflightProductionOracleDeployment(env,provider),/chainId 97/);
+
+  it("fails closed on wrong chain before any contract reads or transaction", async () => {
+    const provider = {
+      getNetwork: async () => ({ chainId: 56n })
+    };
+    await assert.rejects(
+      () => preflightProductionOracleDeployment(env, provider),
+      /chainId 97/
+    );
   });
 });
