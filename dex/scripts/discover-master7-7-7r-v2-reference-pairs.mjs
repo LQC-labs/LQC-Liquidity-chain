@@ -5,7 +5,7 @@ const QUOTE="0xeD24FC36d5Ee211Ea25A80239Fb8C4Cfd80f12Ee";
 const FEED="0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526";
 const FACTORIES=[
  {label:"V2_A",address:"0x6725F303b657a9451d8BA641348b6761A6CC7a17"},
- {label:"V2_B",address:"0xb7926C0430Afb07AA7DEfDE6DA862aE0Bde767bc"}
+ {label:"V2_B",address:"0xb7926c0430afb07aa7defde6da862ae0bde767bc"}
 ];
 
 const provider=new ethers.JsonRpcProvider(process.env.BSC_TESTNET_RPC_URL||"https://data-seed-prebsc-1-s1.bnbchain.org:8545");
