@@ -1,0 +1,28 @@
+name: Master 7/7-7B TWAP Observation Prep
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/app/futures-v3-twap-observation-prep.html"
+      - "dex/app/futures/v3-twap-observation-prep.js"
+      - "dex/test/master7-7-7b-twap-observation-prep.test.mjs"
+      - ".github/workflows/master7-7-7b-twap-observation-prep.yml"
+permissions:
+  contents: read
+jobs:
+  prep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: node --check app/futures/v3-twap-observation-prep.js
+      - run: npx mocha --timeout 30000 "test/master7-7-7b-twap-observation-prep.test.mjs"
