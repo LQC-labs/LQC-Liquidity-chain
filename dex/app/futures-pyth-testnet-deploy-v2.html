@@ -1,0 +1,11 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LQC Pyth Testnet Deploy</title><style>
+body{font-family:system-ui;margin:0;background:#f5fffb;color:#10231c}.wrap{max-width:760px;margin:auto;padding:18px}.card{background:white;border:1px solid #cceadd;border-radius:16px;padding:16px;margin:12px 0}button{width:100%;padding:14px;margin:7px 0;border:0;border-radius:12px;font-weight:700}code,.mono{word-break:break-all;font-family:ui-monospace,monospace;font-size:13px}.warn{background:#fff8dd;border-color:#f0d26b}.ok{background:#eafbf4}h1{font-size:22px}</style><script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script></head><body><div class="wrap">
+<h1>7/7-8C Pyth Testnet Deployment v2</h1><div style="font-size:12px">Build: <span id="buildVersion">8C-UMD-v2</span></div>
+<div class="card warn"><b>중요:</b> 이 페이지는 배포 전용입니다. Hermes fresh 검증 전에는 Governance referenceFeed를 변경하지 마세요.</div>
+<div class="card"><b>사용 지갑</b><div id="expected" class="mono"></div><b>네트워크</b><div>BSC Testnet (97)</div><button id="connect">TokenPocket 연결</button><div id="account" class="mono"></div></div>
+<div class="card"><b>Pyth Core</b><div id="pyth" class="mono"></div><button data-copy="pyth">복사</button><b>BNB/USD Price ID</b><div id="priceId" class="mono"></div><button data-copy="priceId">복사</button></div>
+<div class="card"><h3>1. LQCPythUpdateHelper</h3><button id="deployHelper">Update Helper 배포</button><div>Tx: <span id="helperTx" class="mono"></span></div><div>Address: <span id="helperAddr" class="mono"></span></div><button data-copy="helperAddr">주소 복사</button></div>
+<div class="card"><h3>2. LQCPythReferenceAdapter</h3><div>maxAge: 120 sec / maxConfidence: 500 bps</div><button id="deployAdapter">Reference Adapter 배포</button><div>Tx: <span id="adapterTx" class="mono"></span></div><div>Address: <span id="adapterAddr" class="mono"></span></div><button data-copy="adapterAddr">주소 복사</button></div>
+<div class="card ok"><b>상태</b><div id="status">준비됨 — 아직 거래 없음</div></div>
+<script src="./futures/futures-pyth-testnet-deploy-v2.js"></script></div></body></html>
