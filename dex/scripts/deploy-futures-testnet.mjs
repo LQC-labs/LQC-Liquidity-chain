@@ -11,6 +11,7 @@ export function validateDeploymentAuthorization(env){
   const c=validateFuturesPreflightConfig(env);
   if(env.FUTURES_EXECUTE_DEPLOYMENT!=="I_UNDERSTAND_THIS_SENDS_TESTNET_TRANSACTIONS") throw new Error("Explicit Futures testnet deployment authorization is required.");
   if(!env.DEPLOYER_PRIVATE_KEY) throw new Error("DEPLOYER_PRIVATE_KEY is required at runtime and must never be committed.");
+  if(env.FUTURES_DEPLOYMENT_PROFILE!=="LEGACY_MOCK_TEST_ONLY") throw new Error("Legacy Mock-Oracle deployer is TEST ONLY. Current-release 7/7 production-equivalent deployment requires a separate production Oracle path.");
   const wallet=new ethers.Wallet(env.DEPLOYER_PRIVATE_KEY);
   if(wallet.address!==c.deployer) throw new Error("Runtime signer does not match FUTURES_DEPLOYER_ADDRESS.");
   return c;
