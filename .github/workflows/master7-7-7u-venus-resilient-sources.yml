@@ -1,0 +1,21 @@
+name: Master 7/7-7U Venus Resilient Source Independence
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/scripts/validate-master7-7-7u-venus-resilient-sources.mjs"
+      - "dex/test/master7-7-7u-venus-resilient-sources.test.mjs"
+      - ".github/workflows/master7-7-7u-venus-resilient-sources.yml"
+permissions: {contents: read}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults: {run: {working-directory: dex}}
+    env: {BSC_TESTNET_RPC_URL: "https://data-seed-prebsc-1-s1.bnbchain.org:8545"}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - run: npm ci --ignore-scripts
+      - run: npx mocha "test/master7-7-7u-venus-resilient-sources.test.mjs"
+      - run: node scripts/validate-master7-7-7u-venus-resilient-sources.mjs
