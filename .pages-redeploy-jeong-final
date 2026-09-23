@@ -1,3 +1,3 @@
 Pages redeploy trigger
-Reason: publish Pyth TokenPocket v2 deployment page
-Target commit: 6e5196c7b06a6ae8414f55c819a433844b6bf5dc
+Reason: publish Pyth TokenPocket v3 artifact-path fix
+Target merge: e11947a7625896dd2060e9ec99c113998df6cecf
