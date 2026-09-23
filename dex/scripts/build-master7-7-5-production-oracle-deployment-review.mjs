@@ -11,10 +11,10 @@ const artifact = (source, name) => {
   return a;
 };
 
-export function buildProductionOracleDeploymentReview(env) {
+export async function buildProductionOracleDeploymentReview(env) {
   const config = validateProductionOracleConfig(env);
   const deployer = ethers.getAddress(env.FUTURES_DEPLOYER_ADDRESS);
-  const nonce = BigInt(env.FUTURES_DEPLOYER_NONCE);
+  if (!/^\\d+$/.test(String(env.FUTURES_DEPLOYER_NONCE ?? ""))) throw new Error("FUTURES_DEPLOYER_NONCE must be a non-negative integer");\n  const nonce = BigInt(env.FUTURES_DEPLOYER_NONCE);
 
   const primary = artifact("futures/LQCAggregatorOracleAdapter.sol", "LQCAggregatorOracleAdapter");
   const twap = artifact("futures/LQCV3TwapReferenceAdapter.sol", "LQCV3TwapReferenceAdapter");
@@ -22,8 +22,8 @@ export function buildProductionOracleDeploymentReview(env) {
   const primaryFactory = new ethers.ContractFactory(primary.abi, primary.bytecode);
   const twapFactory = new ethers.ContractFactory(twap.abi, twap.bytecode);
 
-  const primaryTx = primaryFactory.getDeployTransaction(config.owner);
-  const twapTx = twapFactory.getDeployTransaction(
+  const primaryTx = await primaryFactory.getDeployTransaction(config.owner);
+  const twapTx = await twapFactory.getDeployTransaction(
     config.twapPool,
     config.indexToken,
     config.quoteToken,
@@ -105,7 +105,7 @@ export function buildProductionOracleDeploymentReview(env) {
 
 if (import.meta.url === new URL("file://" + process.argv[1]).href) {
   try {
-    console.log(JSON.stringify(buildProductionOracleDeploymentReview(process.env), null, 2));
+    console.log(JSON.stringify(await buildProductionOracleDeploymentReview(process.env), null, 2));
   } catch (e) {
     console.error("FINAL FAIL:", e.message);
     process.exit(1);
