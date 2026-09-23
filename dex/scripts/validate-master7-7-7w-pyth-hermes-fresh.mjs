@@ -2,13 +2,18 @@ import { ethers } from "ethers";
 
 const FEED_ID="2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4f";
 const CHAINLINK="0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526";
-const HERMES="https://hermes.pyth.network/v2/updates/price/latest";
+const HERMES="https://pyth.dourolabs.app/hermes/v2/updates/price/latest";
 
 const provider=new ethers.JsonRpcProvider(process.env.BSC_TESTNET_RPC_URL||"https://data-seed-prebsc-1-s1.bnbchain.org:8545");
 if((await provider.getNetwork()).chainId!==97n) throw new Error("Expected BSC Testnet chain 97");
 
 const url=HERMES+"?ids%5B%5D=0x"+FEED_ID;
-const response=await fetch(url,{headers:{"accept":"application/json"}});
+const apiKey=process.env.PYTH_API_KEY;
+if(!apiKey) throw new Error("PYTH_API_KEY_MISSING");
+const response=await fetch(url,{headers:{
+  "accept":"application/json",
+  "authorization":"Bearer "+apiKey
+}});
 if(!response.ok) throw new Error("Hermes HTTP "+response.status);
 const data=await response.json();
 if(!Array.isArray(data.parsed)||data.parsed.length<1) throw new Error("Hermes parsed price missing.");
