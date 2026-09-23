@@ -1,0 +1,37 @@
+name: Master 7/7-4 Production Oracle Gate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/scripts/verify-master7-7-4-production-oracle-config.mjs"
+      - "dex/test/master7-7-4-production-oracle-config.test.mjs"
+      - ".github/workflows/master7-7-4-production-oracle-gate.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: master7-7-4-production-oracle-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  production-oracle-config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci --ignore-scripts
+      - name: Focused 7/7-4 config tests
+        run: npx mocha --timeout 30000 "test/master7-7-4-production-oracle-config.test.mjs"
+      - name: Compile current-release Oracle contracts
+        run: npm run compile
