@@ -11,7 +11,9 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     defaults: {run: {working-directory: dex}}
-    env: {BSC_TESTNET_RPC_URL: "https://data-seed-prebsc-1-s1.bnbchain.org:8545"}
+    env:
+      BSC_TESTNET_RPC_URL: "https://data-seed-prebsc-1-s1.bnbchain.org:8545"
+      PYTH_API_KEY: ${{ secrets.PYTH_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
