@@ -105,6 +105,18 @@ export async function verifyFixedRedeployment(provider){
  }
  const latest=await tryLatest();
  const latestHighGas=await tryLatest({gasLimit:15_000_000n});
+ let debugTrace={supported:false};
+ try{
+   const data=c.interface.encodeFunctionData("latestRoundData");
+   const trace=await provider.send("debug_traceCall",[
+     {to:address,data,gas:"0xe4e1c0"},
+     "latest",
+     {tracer:"callTracer",timeout:"20s"}
+   ]);
+   debugTrace={supported:true,trace};
+ }catch(e){
+   debugTrace={supported:false,error:e?.shortMessage||e?.message||String(e),data:errData(e)};
+ }
 
  return {
    status:latest.ok?"FIXED_TWAP_REDEPLOYMENT_VERIFIED":"FIXED_TWAP_REDEPLOYMENT_RUNTIME_FAIL",
@@ -142,6 +154,7 @@ export async function verifyFixedRedeployment(provider){
    },
    latestRoundData:latest,
    latestRoundDataHighGas:latestHighGas,
+   debugTraceCall:debugTrace,
    transactionOccurred:false,
    governanceAuthorized:false
  };
