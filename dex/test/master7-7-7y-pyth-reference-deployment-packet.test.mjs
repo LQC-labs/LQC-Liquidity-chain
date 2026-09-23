@@ -1,11 +1,9 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { execFileSync } from "node:child_process";
 
 const root=path.resolve(import.meta.dirname,"..");
 describe("7/7-7Y Pyth reference deployment packet",()=>{
-  before(()=>{execFileSync(process.execPath,["scripts/compile.mjs"],{cwd:root,stdio:"inherit"});execFileSync(process.execPath,["scripts/build-master7-7-7y-pyth-reference-deployment-packet.mjs"],{cwd:root,stdio:"inherit"});});
   it("pins reviewed BSC Testnet constructor inputs",()=>{
     const p=JSON.parse(fs.readFileSync(path.join(root,"app","futures","futures-pyth-reference-deployment-packet.json"),"utf8"));
     assert.equal(p.config.chainId,97);
