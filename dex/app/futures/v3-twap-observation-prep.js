@@ -50,18 +50,18 @@ async function inspect(){
 }
 function render(result){
  $("state").textContent=JSON.stringify(result,null,2);
- if(result.observeReady){
+ if(result.cardinality>=2){
    ready=false;$("prepare").disabled=true;
-   status("이미 1800초 TWAP observe가 가능합니다. 추가 cardinality 거래가 필요하지 않습니다.","ok");
+   status("TWAP Adapter의 cardinality>=2 요구조건을 이미 충족합니다. 추가 capacity 거래가 필요하지 않습니다.","ok");
    return;
  }
  if(result.cardinalityNext>=TARGET_NEXT){
    ready=false;$("prepare").disabled=true;
-   status("cardinalityNext는 이미 목표 이상입니다. 실제 observationCardinality가 증가하려면 이후 별도 pool state-change가 필요합니다. 자동 스왑은 실행하지 않습니다.","warn");
+   status("cardinalityNext는 이미 목표 이상입니다. 실제 observationCardinality가 2 이상이 되려면 이후 Pool state-change가 필요합니다. 자동 스왑은 실행하지 않습니다.","warn");
    return;
  }
  ready=true;$("prepare").disabled=false;
- status("읽기 검증 통과. observationCardinalityNext만 "+TARGET_NEXT+"로 늘릴 준비가 됐습니다. 이 거래는 유동성/토큰을 이동하지 않습니다.","ok");
+ status("풀 observe(1800)는 가능하지만 Adapter는 cardinality>=2를 요구합니다. observationCardinalityNext만 "+TARGET_NEXT+"로 늘릴 준비가 됐습니다.","ok");
 }
 async function connect(){
  try{
@@ -81,7 +81,7 @@ async function prepare(){
    const accounts=await req("eth_accounts");
    if(!accounts[0]||accounts[0].toLowerCase()!==APPROVED_SIGNER.toLowerCase())throw Error("연결 지갑이 변경됐습니다.");
    const before=await inspect();
-   if(before.observeReady)throw Error("이미 TWAP-ready입니다. 거래를 보내지 않습니다.");
+   if(before.cardinality>=2)throw Error("이미 Adapter cardinality 요구조건을 충족합니다.");
    if(before.cardinalityNext>=TARGET_NEXT)throw Error("이미 cardinalityNext 목표 이상입니다.");
    const data=iface.encodeFunctionData("increaseObservationCardinalityNext",[TARGET_NEXT]);
    const tx={from:APPROVED_SIGNER,to:POOL,value:"0x0",data};
