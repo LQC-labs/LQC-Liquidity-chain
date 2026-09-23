@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ethers } from "ethers";
+import { twapTickToScaledPrice } from "./futures-twap-price-conversion.mjs";
 
 const TX_HASH="0xf417e52a85e1bb212db6418bbe6178483ef4e55d1e78b2b8b1f1e68f1cfa4e19";
 const EXPECTED_FROM="0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB";
@@ -59,19 +60,49 @@ export async function verifyFixedRedeployment(provider){
  if(BigInt(window)!==EXPECTED_WINDOW)throw new Error("Observation window mismatch.");
  if(BigInt(minLiquidity)!==EXPECTED_MIN_LIQ)throw new Error("Minimum liquidity mismatch.");
 
- const latest={ok:false};
- try{
-   const r=await c.latestRoundData();
-   latest.ok=true;
-   latest.roundId=r[0].toString();
-   latest.answer=r[1].toString();
-   latest.startedAt=r[2].toString();
-   latest.updatedAt=r[3].toString();
-   latest.answeredInRound=r[4].toString();
- }catch(e){
-   latest.error=e.shortMessage||e.message||String(e);
-   latest.data=errData(e);
+ const poolAbi=[
+   "function token0() view returns(address)",
+   "function token1() view returns(address)",
+   "function slot0() view returns(uint160,int24,uint16,uint16,uint16,uint8,bool)",
+   "function liquidity() view returns(uint128)",
+   "function observe(uint32[] secondsAgos) view returns(int56[],uint160[])"
+ ];
+ const tokenAbi=["function decimals() view returns(uint8)"];
+ const p=new ethers.Contract(EXPECTED_POOL,poolAbi,provider);
+ const index=new ethers.Contract(EXPECTED_INDEX,tokenAbi,provider);
+ const quote=new ethers.Contract(EXPECTED_QUOTE,tokenAbi,provider);
+ const [token0,token1,slot,liquidity,obs,indexDecimals,quoteDecimals]=await Promise.all([
+   p.token0(),p.token1(),p.slot0(),p.liquidity(),p.observe([Number(EXPECTED_WINDOW),0]),index.decimals(),quote.decimals()
+ ]);
+ const ticks=obs[0];
+ const delta=ticks[1]-ticks[0];
+ const w=EXPECTED_WINDOW;
+ let mean=delta/w;
+ if(delta<0n && delta%w!==0n)mean-=1n;
+ const expectedPrice=twapTickToScaledPrice({
+   tick:Number(mean),
+   token0,token1,indexToken:EXPECTED_INDEX,quoteToken:EXPECTED_QUOTE,
+   token0Decimals:Number(indexDecimals),token1Decimals:Number(quoteDecimals)
+ });
+
+ async function tryLatest(overrides){
+   const out={ok:false};
+   try{
+     const r=await c.latestRoundData(overrides||{});
+     out.ok=true;
+     out.roundId=r[0].toString();
+     out.answer=r[1].toString();
+     out.startedAt=r[2].toString();
+     out.updatedAt=r[3].toString();
+     out.answeredInRound=r[4].toString();
+   }catch(e){
+     out.error=e.shortMessage||e.message||String(e);
+     out.data=errData(e);
+   }
+   return out;
  }
+ const latest=await tryLatest();
+ const latestHighGas=await tryLatest({gasLimit:15_000_000n});
 
  return {
    status:latest.ok?"FIXED_TWAP_REDEPLOYMENT_VERIFIED":"FIXED_TWAP_REDEPLOYMENT_RUNTIME_FAIL",
@@ -88,7 +119,22 @@ export async function verifyFixedRedeployment(provider){
      observationWindow:Number(window),
      minimumLiquidity:minLiquidity.toString()
    },
+   livePoolState:{
+     sqrtPriceX96:slot[0].toString(),
+     tick:Number(slot[1]),
+     observationIndex:Number(slot[2]),
+     observationCardinality:Number(slot[3]),
+     observationCardinalityNext:Number(slot[4]),
+     unlocked:slot[6],
+     liquidity:liquidity.toString(),
+     tickCumulatives:ticks.map(String),
+     arithmeticMeanTick:Number(mean),
+     indexDecimals:Number(indexDecimals),
+     quoteDecimals:Number(quoteDecimals),
+     expectedScaledPrice:expectedPrice.toString()
+   },
    latestRoundData:latest,
+   latestRoundDataHighGas:latestHighGas,
    transactionOccurred:false,
    governanceAuthorized:false
  };
