@@ -7,6 +7,16 @@ describe("Futures testnet deployment gate",()=>{
  it("fails closed without explicit authorization",()=>assert.throws(()=>validateDeploymentAuthorization(base),/authorization/));
  it("requires a runtime private key only after authorization",()=>assert.throws(()=>validateDeploymentAuthorization({...base,FUTURES_EXECUTE_DEPLOYMENT:"I_UNDERSTAND_THIS_SENDS_TESTNET_TRANSACTIONS"}),/PRIVATE_KEY/));
  it("rejects any wrong authorization phrase",()=>assert.throws(()=>validateDeploymentAuthorization({...base,FUTURES_EXECUTE_DEPLOYMENT:"yes"}),/authorization/));
+ it("rejects the legacy Mock-Oracle path unless explicitly classified test-only",()=>{
+   const key="0x"+"11".repeat(32);
+   const signer=new ethers.Wallet(key);
+   assert.throws(()=>validateDeploymentAuthorization({
+     ...base,
+     FUTURES_DEPLOYER_ADDRESS:signer.address,
+     FUTURES_EXECUTE_DEPLOYMENT:"I_UNDERSTAND_THIS_SENDS_TESTNET_TRANSACTIONS",
+     DEPLOYER_PRIVATE_KEY:key
+   }),/TEST ONLY/);
+ });
  it("builds owner-only Vault engine configuration without impersonating deployer",()=>{
    const vault="0x3333333333333333333333333333333333333333", engine="0x4444444444444444444444444444444444444444";
    const action=buildOwnerConfiguration(vault,engine);
