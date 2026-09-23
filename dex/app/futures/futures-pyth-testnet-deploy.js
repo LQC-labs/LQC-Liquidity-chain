@@ -1,4 +1,11 @@
-import { ethers } from "https://cdn.jsdelivr.net/npm/ethers@6.15.0/+esm";
+const ethers = window.ethers;
+if (!ethers) {
+  document.addEventListener("DOMContentLoaded",()=>{
+    const el=document.getElementById("status");
+    if(el) el.textContent="ethers 라이브러리 로딩 실패";
+  });
+  throw new Error("ETHERS_UMD_NOT_LOADED");
+}
 
 const EXPECTED_CHAIN_ID=97n;
 const EXPECTED_DEPLOYER="0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB";
@@ -65,6 +72,8 @@ async function deployAdapter(){
 }
 
 window.addEventListener("DOMContentLoaded",async()=>{
+ $("buildVersion").textContent="8C-UMD-v1";
+ setStatus("JS 로드 성공 — artifact 확인 중...");
  $("connect").onclick=()=>connect().catch(e=>setStatus(e.message));
  $("deployHelper").onclick=()=>deployHelper().catch(e=>setStatus(e.shortMessage||e.message));
  $("deployAdapter").onclick=()=>deployAdapter().catch(e=>setStatus(e.shortMessage||e.message));
