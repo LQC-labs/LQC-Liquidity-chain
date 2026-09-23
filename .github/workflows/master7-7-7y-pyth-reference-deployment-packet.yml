@@ -1,0 +1,22 @@
+name: Master 7/7-7Y Pyth Reference Deployment Packet
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/scripts/build-master7-7-7y-pyth-reference-deployment-packet.mjs"
+      - "dex/test/master7-7-7y-pyth-reference-deployment-packet.test.mjs"
+      - ".github/workflows/master7-7-7y-pyth-reference-deployment-packet.yml"
+      - "dex/contracts/futures/LQCPythReferenceAdapter.sol"
+permissions: {contents: read}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults: {run: {working-directory: dex}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - run: npm ci --ignore-scripts
+      - run: npm run compile
+      - run: node scripts/build-master7-7-7y-pyth-reference-deployment-packet.mjs
+      - run: npx mocha --timeout 30000 "test/master7-7-7y-pyth-reference-deployment-packet.test.mjs"
