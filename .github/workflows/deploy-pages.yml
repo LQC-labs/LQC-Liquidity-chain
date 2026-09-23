@@ -36,6 +36,9 @@ jobs:
       - name: Build canonical Futures mobile artifact
         working-directory: dex
         run: npm run build:futures-mobile-artifacts
+      - name: Build production-equivalent Futures Oracle mobile artifact
+        working-directory: dex
+        run: node scripts/build-futures-production-oracle-mobile-artifacts.mjs
       - name: Setup Pages
         uses: actions/configure-pages@v5
         with:
