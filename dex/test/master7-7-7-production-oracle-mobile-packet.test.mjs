@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import {assertProductionOracleMobileContext,assertProductionOracleMobileBudget,PRODUCTION_ORACLE_MOBILE} from "../app/futures/production-oracle-mobile-deployment.js";
 
 describe("Master 7/7-7 production Oracle mobile packet",()=>{
@@ -15,4 +16,10 @@ describe("Master 7/7-7 production Oracle mobile packet",()=>{
     assert.throws(()=>assertProductionOracleMobileBudget({startBalanceWei:4n*10n**17n,currentBalanceWei:4n*10n**17n,estimatedCostWei:11n*10n**16n}),/0.1 tBNB|0.3 tBNB/);
   });
   it("never supports private-key input",()=>assert.equal(PRODUCTION_ORACLE_MOBILE.privateKeyInputSupported,false));
+  it("uses actual TWAP observe success instead of an arbitrary cardinality threshold",()=>{
+    const source=readFileSync(new URL("../app/futures/production-oracle-mobile-deployer-page.js",import.meta.url),"utf8");
+    assert.doesNotMatch(source,/Number\(slot\[3\]\)<2/);
+    assert.match(source,/observe",\[\[c\.window,0\]\]/);
+    assert.match(source,/observeReady:true/);
+  });
 });
