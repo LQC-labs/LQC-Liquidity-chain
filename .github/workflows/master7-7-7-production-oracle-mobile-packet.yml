@@ -1,0 +1,37 @@
+name: Master 7/7-7 Production Oracle Mobile Packet
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/app/futures-production-oracle-mobile-deploy.html"
+      - "dex/app/futures/production-oracle-mobile-deployment.js"
+      - "dex/app/futures/production-oracle-mobile-deployer-page.js"
+      - "dex/scripts/build-futures-production-oracle-mobile-artifacts.mjs"
+      - "dex/test/master7-7-7-production-oracle-mobile-packet.test.mjs"
+      - ".github/workflows/master7-7-7-production-oracle-mobile-packet.yml"
+      - ".github/workflows/deploy-pages.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-packet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run compile
+      - run: node scripts/build-futures-production-oracle-mobile-artifacts.mjs
+      - run: node --check app/futures/production-oracle-mobile-deployment.js
+      - run: node --check app/futures/production-oracle-mobile-deployer-page.js
+      - run: npx mocha --timeout 30000 "test/master7-7-7-production-oracle-mobile-packet.test.mjs"
