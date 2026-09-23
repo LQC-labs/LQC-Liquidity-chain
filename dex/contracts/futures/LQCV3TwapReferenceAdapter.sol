@@ -7,7 +7,7 @@ interface ILQCV3TwapPool {
     function token0() external view returns (address);
     function token1() external view returns (address);
     function liquidity() external view returns (uint128);
-    function slot0() external view returns (uint160,int24,uint16,uint16,uint16,uint8,bool);
+    function slot0() external view returns (uint160,int24,uint16,uint16,uint16,uint32,bool);
     function observe(uint32[] calldata secondsAgos)
         external
         view
