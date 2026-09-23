@@ -34,6 +34,14 @@ describe("Master 7/2 Futures V3 TWAP runtime reference adapter",function(){
       await pool.getAddress(),await indexToken.getAddress(),await quoteToken.getAddress(),300,minLiquidity
     ]);
 
+  it("accepts Pancake V3 uint32 feeProtocol values above uint8",async function(){
+    const ref=await makeAdapter(index,quote,1);
+    await(await pool.setFeeProtocol(0xce40ce40)).wait();
+    await(await pool.setState(2_182_852_421_433_811_220n,2n**96n,91749,8,true,true,0,91749*300)).wait();
+    const [,answer]=await ref.latestRoundData();
+    assert.ok(answer>0n);
+  });
+
   it("matches the existing integer TWAP conversion for positive zero and negative ticks",async function(){
     const ref=await makeAdapter();
     for(const tick of[-600,-1,0,1,600]){
