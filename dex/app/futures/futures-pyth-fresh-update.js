@@ -30,9 +30,13 @@ async function connect(){
 async function fetchPayload(){
  const key=$("apiKey").value.trim();
  if(!key) throw new Error("Pyth API Key를 입력해주세요.");
- $("apiKey").value="";
  const url=HERMES+"?ids%5B%5D="+encodeURIComponent(FEED_ID);
- const r=await fetch(url,{headers:{accept:"application/json",authorization:"Bearer "+key},cache:"no-store"});
+ let r;
+ try{
+   r=await fetch(url,{headers:{accept:"application/json",authorization:"Bearer "+key},cache:"no-store"});
+ } finally {
+   $("apiKey").value="";
+ }
  if(!r.ok) throw new Error("Hermes HTTP "+r.status);
  const j=await r.json();
  const parsed=j.parsed?.[0]?.price;
