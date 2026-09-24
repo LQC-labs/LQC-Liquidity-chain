@@ -31,5 +31,9 @@ jobs:
           cache-dependency-path: dex/package-lock.json
       - name: Install locked dependencies
         run: npm ci
+      - name: Compile contracts for generated regression fixtures
+        run: npm run compile
+      - name: Generate 7/7-7Y Pyth deployment packet fixture
+        run: node scripts/build-master7-7-7y-pyth-reference-deployment-packet.mjs
       - name: Full post-merge regression
         run: npm test
