@@ -1,3 +1,4 @@
+// 7/7-8E CI trigger
 const ethers = window.ethers;
 if (!ethers) throw new Error("ETHERS_UMD_NOT_LOADED");
 
