@@ -1,0 +1,21 @@
+name: Master 7/7-8E Pyth Fresh Update Mobile
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/app/futures-pyth-fresh-update.html"
+      - "dex/app/futures/futures-pyth-fresh-update.js"
+      - "dex/test/master7-7-8e-pyth-fresh-update-mobile.test.mjs"
+      - ".github/workflows/master7-7-8e-pyth-fresh-update-mobile.yml"
+permissions: {contents: read}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults: {run: {working-directory: dex}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: "22"}
+      - run: npm ci --ignore-scripts
+      - run: npx mocha "test/master7-7-8e-pyth-fresh-update-mobile.test.mjs"
+      - run: node --check app/futures/futures-pyth-fresh-update.js
