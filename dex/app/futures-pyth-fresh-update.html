@@ -1,0 +1,13 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LQC Pyth Fresh Update</title><style>
+body{font-family:system-ui;margin:0;background:#f5fffb;color:#10231c}.wrap{max-width:760px;margin:auto;padding:18px}.card{background:white;border:1px solid #cceadd;border-radius:16px;padding:16px;margin:12px 0}button,input{width:100%;box-sizing:border-box;padding:14px;margin:7px 0;border-radius:12px}button{border:0;font-weight:700}.mono{word-break:break-all;font-family:ui-monospace,monospace;font-size:13px}.warn{background:#fff8dd;border-color:#f0d26b}.ok{background:#eafbf4}</style>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.15.0/dist/ethers.umd.min.js"></script></head><body><div class="wrap">
+<h1>7/7-8E Pyth Fresh Update</h1><div>Build: <span id="buildVersion">HTML</span></div>
+<div class="card warn"><b>중요:</b> API Key는 저장하지 않습니다. fresh update와 Reference 확인까지만 진행하며 Governance referenceFeed는 변경하지 않습니다.</div>
+<div class="card"><b>사용 지갑</b><div id="expected" class="mono"></div><b>네트워크</b><div>BSC Testnet (97)</div><button id="connect">TokenPocket 연결</button><div id="account" class="mono"></div></div>
+<div class="card"><b>Update Helper</b><div id="helper" class="mono"></div><b>Reference Adapter</b><div id="adapter" class="mono"></div><b>BNB/USD Feed ID</b><div id="feed" class="mono"></div></div>
+<div class="card"><h3>1. Hermes fresh payload</h3><input id="apiKey" type="password" autocomplete="off" placeholder="Pyth API Key — 저장되지 않음"><button id="fetch" disabled>Fresh Payload 조회</button><div>price: <span id="price"></span></div><div>expo: <span id="expo"></span></div><div>publishTime: <span id="publishTime"></span></div><div>payload count: <span id="payloadCount"></span></div></div>
+<div class="card"><h3>2. Pyth Core Update</h3><button id="update" disabled>Update Helper로 Pyth 갱신</button><div>fee: <span id="fee"></span></div><div>Tx: <span id="tx" class="mono"></span></div></div>
+<div class="card"><h3>3. Reference Adapter 확인</h3><div>answer(1e18): <span id="answer" class="mono"></span></div><div>updatedAt: <span id="updatedAt"></span></div><div>age sec: <span id="age"></span></div></div>
+<div class="card ok"><b>상태</b><div id="status">준비됨 — 아직 거래 없음</div></div>
+<script src="./futures/futures-pyth-fresh-update.js"></script></div></body></html>
