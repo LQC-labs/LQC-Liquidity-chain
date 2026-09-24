@@ -6,6 +6,8 @@ on:
       - "dex/contracts/futures/**"
       - "dex/app/futures/**"
       - "dex/test/futures*.test.mjs"
+      - "dex/test/master7-7-8e-pyth-fresh-update-mobile.test.mjs"
+      - "dex/app/futures-pyth-fresh-update.html"
       - "dex/test/lqc-flow-futures.test.mjs"
       - "test/master7-*.test.js"
       - ".github/workflows/futures-tests.yml"
@@ -37,6 +39,8 @@ jobs:
       - name: Syntax-check Futures app modules
         run: |
           for file in app/futures/*.js; do node --check "$file"; done
+      - name: Validate 7/7-8E Pyth fresh update mobile flow
+        run: npx mocha "test/master7-7-8e-pyth-fresh-update-mobile.test.mjs"
       - name: Compile current contracts
         run: npm run compile
       - name: Focused Futures contract/accounting regression
