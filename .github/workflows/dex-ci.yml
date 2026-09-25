@@ -6,6 +6,11 @@ on:
     paths:
       - "dex/**"
       - ".github/workflows/dex-ci.yml"
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/**"
+      - ".github/workflows/dex-ci.yml"
   workflow_dispatch:
 
 permissions:
