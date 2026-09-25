@@ -1,3 +1,4 @@
+const fs = require("fs");
 const { ethers } = require("ethers");
 
 const RPC = process.env.BSC_TESTNET_RPC || "https://bsc-testnet-dataseed.bnbchain.org";
@@ -22,9 +23,15 @@ async function main() {
   if (network.chainId !== EXPECTED.chainId) throw new Error(`chainId: expected 97, got ${network.chainId}`);
   console.log("PASS chainId: 97");
 
+  const runtime = {};
   for (const [label,address] of [["Registry",EXPECTED.registry],["Vault",EXPECTED.vault],["Engine",EXPECTED.engine]]) {
     const code = await provider.getCode(address);
     if (code === "0x") throw new Error(`${label}: no runtime bytecode at ${address}`);
+    runtime[label] = {
+      address: norm(address),
+      codeHash: ethers.keccak256(code),
+      runtimeBytes: (code.length - 2) / 2
+    };
     console.log(`PASS ${label}.runtime: bytecode present`);
   }
 
@@ -32,16 +39,54 @@ async function main() {
   const vault = new ethers.Contract(EXPECTED.vault, vaultAbi, provider);
   const engine = new ethers.Contract(EXPECTED.engine, engineAbi, provider);
 
-  assertEq("Registry.owner", await registry.owner(), EXPECTED.owner);
-  assertEq("Vault.owner", await vault.owner(), EXPECTED.owner);
-  assertEq("Vault.engine", await vault.engine(), EXPECTED.engine);
-  assertEq("Engine.registry", await engine.registry(), EXPECTED.registry);
-  assertEq("Engine.vault", await engine.vault(), EXPECTED.vault);
+  const registryOwner = await registry.owner();
+  const vaultOwner = await vault.owner();
+  const vaultEngine = await vault.engine();
+  const engineRegistry = await engine.registry();
+  const engineVault = await engine.vault();
 
-  const rp = await registry.pendingOwner();
-  const vp = await vault.pendingOwner();
-  console.log(`INFO Registry.pendingOwner: ${rp}`);
-  console.log(`INFO Vault.pendingOwner: ${vp}`);
+  assertEq("Registry.owner", registryOwner, EXPECTED.owner);
+  assertEq("Vault.owner", vaultOwner, EXPECTED.owner);
+  assertEq("Vault.engine", vaultEngine, EXPECTED.engine);
+  assertEq("Engine.registry", engineRegistry, EXPECTED.registry);
+  assertEq("Engine.vault", engineVault, EXPECTED.vault);
+
+  const registryPendingOwner = await registry.pendingOwner();
+  const vaultPendingOwner = await vault.pendingOwner();
+  console.log(`INFO Registry.pendingOwner: ${registryPendingOwner}`);
+  console.log(`INFO Vault.pendingOwner: ${vaultPendingOwner}`);
+
+  const latest = await provider.getBlock("latest");
+  const report = {
+    schema: "lqc-master7-7-chain97-wiring-v1",
+    status: "VERIFIED_READ_ONLY",
+    chainId: Number(network.chainId),
+    observedBlockNumber: latest.number,
+    observedBlockTimestamp: latest.timestamp,
+    transactionOccurred: false,
+    deploymentAuthorized: false,
+    activationAuthorized: false,
+    expected: {
+      owner: norm(EXPECTED.owner),
+      registry: norm(EXPECTED.registry),
+      vault: norm(EXPECTED.vault),
+      engine: norm(EXPECTED.engine)
+    },
+    runtime,
+    ownership: {
+      registryOwner: norm(registryOwner),
+      registryPendingOwner: norm(registryPendingOwner),
+      vaultOwner: norm(vaultOwner),
+      vaultPendingOwner: norm(vaultPendingOwner)
+    },
+    wiring: {
+      vaultEngine: norm(vaultEngine),
+      engineRegistry: norm(engineRegistry),
+      engineVault: norm(engineVault)
+    }
+  };
+
+  fs.writeFileSync("futures-chain97-wiring-report.json", JSON.stringify(report, null, 2) + "\n");
   console.log("FINAL PASS: core BSC Testnet Futures wiring matches the recorded deployment.");
 }
 main().catch((e)=>{ console.error("FINAL FAIL:", e.message); process.exit(1); });
