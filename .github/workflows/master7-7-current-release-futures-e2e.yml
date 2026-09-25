@@ -8,6 +8,7 @@ on:
       - "dex/scripts/verify-futures-deployment-lineage.mjs"
       - "dex/scripts/verify-futures-bsc-testnet.js"
       - "dex/test/futures*.test.mjs"
+      - "dex/test/master7-7-current-release-e2e-evidence.test.mjs"
       - "test/master7-*.test.js"
       - "docs/master-plan/7-7-current-release-futures-e2e.md"
       - ".github/workflows/master7-7-current-release-futures-e2e.yml"
@@ -44,6 +45,8 @@ jobs:
           path: dex/master7-7-current-release-readiness.json
           if-no-files-found: error
           retention-days: 30
+      - name: Master 7/7 evidence boundary regression
+        run: npx mocha "test/master7-7-current-release-e2e-evidence.test.mjs"
       - name: Broad Futures regression
         run: npx mocha --timeout 30000 "test/futures*.test.mjs"
       - name: Master 7 architecture and risk boundaries
