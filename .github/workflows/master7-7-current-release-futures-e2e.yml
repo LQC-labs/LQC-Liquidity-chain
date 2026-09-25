@@ -85,7 +85,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: master7-7-futures-chain97-lineage
-          path: dex/futures-lineage-report.json
+          name: master7-7-futures-chain97-evidence
+          path: |
+            dex/futures-chain97-wiring-report.json
+            dex/futures-lineage-report.json
           if-no-files-found: error
           retention-days: 30
