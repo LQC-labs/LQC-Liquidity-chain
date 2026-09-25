@@ -1,5 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
+import { execFileSync } from "node:child_process";
 
 const root=path.resolve(import.meta.dirname,"..");
 
@@ -11,14 +13,33 @@ const requiredArtifacts=[
   ["futures/LQCPerpEngine.sol","LQCPerpEngine"]
 ];
 
+function sha256(data){
+  return crypto.createHash("sha256").update(data).digest("hex");
+}
+
+function currentCommitSha(){
+  const sha=execFileSync("git",["rev-parse","HEAD"],{cwd:root,encoding:"utf8"}).trim();
+  if(!/^[0-9a-f]{40}$/i.test(sha)) throw new Error("Unable to pin tested commit SHA");
+  return sha;
+}
+
 function artifact(source,name){
   const file=path.join(root,"artifacts","contracts",source,`${name}.json`);
   if(!fs.existsSync(file)) throw new Error(`Missing current-release artifact: ${name}`);
-  const a=JSON.parse(fs.readFileSync(file,"utf8"));
+  const raw=fs.readFileSync(file);
+  const a=JSON.parse(raw.toString("utf8"));
   if(!a.bytecode || a.bytecode==="0x" || !a.deployedBytecode || a.deployedBytecode==="0x"){
     throw new Error(`Empty current-release artifact: ${name}`);
   }
-  return {name,bytecodeBytes:(a.bytecode.length-2)/2,runtimeBytes:(a.deployedBytecode.length-2)/2};
+  return {
+    name,
+    source,
+    artifactFileSha256:sha256(raw),
+    creationBytecodeSha256:sha256(Buffer.from(a.bytecode.slice(2),"hex")),
+    runtimeBytecodeSha256:sha256(Buffer.from(a.deployedBytecode.slice(2),"hex")),
+    bytecodeBytes:(a.bytecode.length-2)/2,
+    runtimeBytes:(a.deployedBytecode.length-2)/2
+  };
 }
 
 const historicalPreflight=fs.readFileSync(path.join(root,"scripts","preflight-futures-testnet-deploy.mjs"),"utf8");
@@ -35,10 +56,17 @@ for(const marker of ["observationWindow","minimumLiquidity","observe(secondsAgos
   if(!twap.includes(marker)) throw new Error(`TWAP reference boundary missing: ${marker}`);
 }
 
+const testedCommitSha=currentCommitSha();
 const artifacts=requiredArtifacts.map(([source,name])=>artifact(source,name));
 const report={
-  schema:"lqc-master7-7-current-release-readiness-v1",
+  schema:"lqc-master7-7-current-release-readiness-v2",
   status:"READY_FOR_SEPARATELY_AUTHORIZED_TESTNET_DEPLOYMENT",
+  evidence:{
+    testedCommitSha,
+    artifactHashAlgorithm:"sha256",
+    exactCommitPinned:true,
+    compiledArtifactHashesPinned:true
+  },
   chainIdRequired:97,
   transactionOccurred:false,
   deploymentAuthorized:false,
