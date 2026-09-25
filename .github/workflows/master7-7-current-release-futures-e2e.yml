@@ -4,6 +4,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "dex/contracts/futures/**"
+      - "dex/scripts/verify-master7-7-current-release-readiness.mjs"
       - "dex/scripts/verify-futures-deployment-lineage.mjs"
       - "dex/scripts/verify-futures-bsc-testnet.js"
       - "dex/test/futures*.test.mjs"
@@ -36,6 +37,13 @@ jobs:
         run: npm run compile
       - name: Verify current-release deployment readiness (no transactions)
         run: node scripts/verify-master7-7-current-release-readiness.mjs
+      - name: Upload pinned current-release readiness evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: master7-7-current-release-readiness
+          path: dex/master7-7-current-release-readiness.json
+          if-no-files-found: error
+          retention-days: 30
       - name: Broad Futures regression
         run: npx mocha --timeout 30000 "test/futures*.test.mjs"
       - name: Master 7 architecture and risk boundaries
