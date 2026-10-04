@@ -131,7 +131,7 @@ describe("LQC DEX pre-submission simulation", function () {
     assert.match(app, /let plan=await freshExecutionPlan\(value,path\)/);
     assert.match(app, /plan=await freshExecutionPlan\(value,path\)/);
     assert.match(app, /if\(!quoteNeedsRefresh\(e\)\)throw e/);
-    assert.match(app, /await quote\(\);if\(!quoteSnapshot\)throw e;return validate\(\)/);
+    assert.match(app, /await quote\(\);if\(economicQuoteChanged\(e\)\|\|!quoteSnapshot\)throw e;return validate\(\)/);
     assert.match(app, /if\(minimalMode\)\{const min=plan\.minimumOut/);
   });
 
