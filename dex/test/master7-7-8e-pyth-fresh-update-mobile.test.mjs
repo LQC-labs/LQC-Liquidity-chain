@@ -37,7 +37,7 @@ describe("7/7-8E API key request lifecycle", () => {
    }
   });
   vm.runInContext(source, context);
-  return {element, requests, run: () => vm.runInContext("fetchPayload()", context)};
+  return {element, requests, window: context.window, run: () => vm.runInContext("fetchPayload()", context)};
  }
  it("clears the input before a pending authenticated request", async () => {
   const h = harness();
@@ -119,5 +119,89 @@ describe("7/7-8E API key request lifecycle", () => {
   h.requests[0].resolve(response());
   await first;
   assert.equal(h.element("apiKey").value, "fake-key-three");
+ });
+ function pricedResponse(price, data) {
+  return {ok: true, json: async () => ({
+   parsed: [{price: {price, expo: -8, publish_time: Number(price)}}],
+   binary: {data: [data]}
+  })};
+ }
+ it("does not replace newer price and payload with an older response", async () => {
+  const h = harness();
+  h.element("apiKey").value = "fake-one";
+  const first = h.run();
+  h.element("apiKey").value = "fake-two";
+  const second = h.run();
+  h.requests[1].resolve(pricedResponse("200", "bbbb"));
+  await second;
+  const status = h.element("status").textContent;
+  h.requests[0].resolve(pricedResponse("100", "aaaa"));
+  await first;
+  assert.equal(h.element("price").textContent, "200");
+  assert.equal(h.element("publishTime").textContent, 200);
+  assert.deepEqual(Array.from(h.window.__pythUpdateData), ["0xbbbb"]);
+  assert.equal(h.element("status").textContent, status);
+  assert.equal(h.element("update").disabled, false);
+ });
+ it("ignores an older JSON result when a new request starts during parsing", async () => {
+  const h = harness();
+  let finishJson;
+  let jsonStarted;
+  const parsing = new Promise(resolve => {jsonStarted = resolve;});
+  h.element("apiKey").value = "fake-one";
+  const first = h.run();
+  h.requests[0].resolve({ok: true, json: () => new Promise(resolve => {finishJson = resolve; jsonStarted();})});
+  await parsing;
+  h.element("apiKey").value = "fake-two";
+  const second = h.run();
+  h.requests[1].resolve(pricedResponse("200", "bbbb"));
+  await second;
+  finishJson(await pricedResponse("100", "aaaa").json());
+  await first;
+  assert.equal(h.element("price").textContent, "200");
+  assert.deepEqual(Array.from(h.window.__pythUpdateData), ["0xbbbb"]);
+ });
+ it("invalidates the previous payload while a replacement request is pending", async () => {
+  const h = harness();
+  h.element("apiKey").value = "fake-one";
+  const first = h.run();
+  h.requests[0].resolve(pricedResponse("100", "aaaa"));
+  await first;
+  h.element("apiKey").value = "fake-two";
+  const second = h.run();
+  assert.equal(h.window.__pythUpdateData, undefined);
+  assert.equal(h.element("update").disabled, true);
+  const rejected = assert.rejects(second, /Hermes HTTP 401/);
+  h.requests[1].resolve({ok: false, status: 401});
+  await rejected;
+  assert.equal(h.window.__pythUpdateData, undefined);
+  assert.equal(h.element("update").disabled, true);
+ });
+ it("does not revive an older payload after the newest request fails", async () => {
+  const h = harness();
+  h.element("apiKey").value = "fake-one";
+  const first = h.run();
+  h.element("apiKey").value = "fake-two";
+  const second = h.run();
+  const rejected = assert.rejects(second, /network failure/);
+  h.requests[1].reject(new Error("network failure"));
+  await rejected;
+  h.requests[0].resolve(pricedResponse("100", "aaaa"));
+  await first;
+  assert.equal(h.window.__pythUpdateData, undefined);
+  assert.equal(h.element("update").disabled, true);
+ });
+ it("ignores an older request failure after the newest request succeeds", async () => {
+  const h = harness();
+  h.element("apiKey").value = "fake-one";
+  const first = h.run();
+  h.element("apiKey").value = "fake-two";
+  const second = h.run();
+  h.requests[1].resolve(pricedResponse("200", "bbbb"));
+  await second;
+  h.requests[0].reject(new Error("outdated network failure"));
+  await first;
+  assert.equal(h.element("price").textContent, "200");
+  assert.deepEqual(Array.from(h.window.__pythUpdateData), ["0xbbbb"]);
  });
 });
