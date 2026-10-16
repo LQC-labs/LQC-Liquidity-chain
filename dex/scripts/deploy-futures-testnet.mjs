@@ -5,7 +5,7 @@ import { validateFuturesPreflightConfig, assertFuturesBudget } from "./preflight
 
 const CHAIN_ID=97n;
 const root=path.resolve(import.meta.dirname,"..");
-const artifact=(source,name)=>JSON.parse(fs.readFileSync(path.join(root,"artifacts/contracts",source,`${name}.json`)));
+const artifact=(source,name)=>JSON.parse(fs.readFileSync(path.join(root,"artifacts/contracts",source,name+".json")));
 
 export function validateDeploymentAuthorization(env){
   const c=validateFuturesPreflightConfig(env);
@@ -24,7 +24,7 @@ async function checkedDeploy(wallet,provider,a,args,label){
   const f=new ethers.ContractFactory(a.abi,a.bytecode,wallet);
   const c=await f.deploy(...args); await c.waitForDeployment();
   const address=await c.getAddress();
-  if((await provider.getCode(address))==="0x") throw new Error(`${label} deployment has no runtime bytecode.`);
+  if((await provider.getCode(address))==="0x") throw new Error(label+" deployment has no runtime bytecode.");
   return c;
 }
 export async function deployFuturesTestnet(env,provider=new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL)){
@@ -45,4 +45,4 @@ export async function deployFuturesTestnet(env,provider=new ethers.JsonRpcProvid
   return {status:"DEPLOYED_AWAITING_GOVERNANCE_CONFIGURATION",chainId:97,deployer:wallet.address,owner:config.owner,balanceBeforeTbnb:ethers.formatEther(before),balanceAfterTbnb:ethers.formatEther(after),contracts:{registry:await registry.getAddress(),vault:vaultAddress,oracle:await oracle.getAddress(),engine:engineAddress},ownerAction:buildOwnerConfiguration(vaultAddress,engineAddress)};
 }
 async function main(){const r=await deployFuturesTestnet(process.env); console.log(JSON.stringify(r,null,2));}
-if(import.meta.url===new URL(`file://${process.argv[1]}`).href) main().catch(e=>{console.error(e.message);process.exitCode=1;});
+if(import.meta.url===new URL("file://"+process.argv[1]).href) main().catch(e=>{console.error(e.message);process.exitCode=1;});
