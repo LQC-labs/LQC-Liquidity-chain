@@ -48,6 +48,8 @@ jobs:
           done
           if ((${#files[@]})); then node --test "${files[@]}"; fi
   chain97-readonly-evidence:
+    # Live RPC observations require an explicit manual run, never PR/push CI.
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:

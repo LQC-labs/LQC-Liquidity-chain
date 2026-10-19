@@ -1,13 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
+import {pathToFileURL} from "node:url";
 import { ethers } from "ethers";
 
 const root=path.resolve(import.meta.dirname,"..");
 const RPC=process.env.BSC_TESTNET_RPC_URL || "https://data-seed-prebsc-1-s1.bnbchain.org:8545";
-const DEPLOYER="0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB";
-const OWNER="0x89d992f696B40ABbDB6610144faeF336911D8175";
+export const DEPLOYER="0xDe05e09DB1292aFf6ab62164134f1ad384Bca6FB";
+export const OWNER="0x89d992f696B40ABbDB6610144faeF336911D8175";
 
-const specs={
+export const specs={
   Registry:{
     address:"0xfbd1c5c8dbbdadf3eb834f351366daf55f2d73b0",
     tx:"0x3ee3a4f09711d889793b2d9f96071d0ecc4d7c1994b3a8d93f1df9f90b7d3f2d",
@@ -160,6 +161,6 @@ async function main(){
   console.log(JSON.stringify(report,null,2));
 }
 
-if(import.meta.url===new URL(`file://${process.argv[1]}`).href){
+if(process.argv[1]&&import.meta.url===pathToFileURL(path.resolve(process.argv[1])).href){
   main().catch(error=>{console.error(error.stack||error.message);process.exit(1);});
 }
