@@ -1,0 +1,66 @@
+{
+  "task": "2/53",
+  "calculationVersion": "LQC_PURE_EXIT_DIAGNOSTICS_V2",
+  "purpose": "PURE_DIAGNOSTICS_ONLY_NO_ECONOMIC_POLICY_APPROVAL",
+  "numericRepresentation": {
+    "wire": "canonical decimal integer strings; Number and floating-point values rejected",
+    "arithmetic": "BigInt only for quantities, prices, time, units, fractions and allocation checks",
+    "fractions": "positive denominator, gcd-reduced, zero exactly n=0 d=1",
+    "integerization": "not implemented; no floor/ceil/dust defaults"
+  },
+  "formula": {
+    "quantity": "USD18_NOTIONAL",
+    "prices": "FIXED_18",
+    "pnlUsd18": "direction * closedQuantity18 * (market18 - entry18) / entry18",
+    "collateralRaw": "pnlUsd18 * 10^tokenDecimals / collateral18",
+    "profitAndLoss": "gross gain/loss retained separately; net is diagnostic only and does not authorize netting"
+  },
+  "exposure": {
+    "official": "intersection of the actual active quantity intervals with explicit official Epochs ending at E",
+    "gap": "[E, actual close), quantity decreases applied at actual transition timestamps",
+    "independentMethods": [
+      "forward active-state interval integration",
+      "closed-lot quantity times its lifetime",
+      "raw transition integration by parts; no primary delta, generated intervals or intermediate sums reused"
+    ],
+    "recordedComparison": "explicit observed integrals required to claim recorded match; absence remains a blocker",
+    "gapMoney": "always null; never inferred from integral or zero-rate fixture"
+  },
+  "funding": {
+    "totals": "Whole totals only when every official Epoch with positive held position exposure has obligation evidence; missing totals null, submitted subtotal separate.",
+    "allocation": "no implicit split over exit legs; explicit synthetic test allocation only, with exact residual",
+    "realCandidate": "recorded Epoch state 2 is unfinalized; official amount remains null",
+    "evidenceCompleteness": [
+      "MISSING",
+      "PARTIAL",
+      "COMPLETE"
+    ],
+    "allocationStatus": [
+      "MISSING",
+      "PARTIAL",
+      "COMPLETE"
+    ]
+  },
+  "identity": {
+    "evaluationId": "domain + verified source semantic commitment + calculation version + complete explicit input/evidence",
+    "rights": "evaluation IDs do not create a claim, authorize settlement or consume history",
+    "implementation": "Execution record maps calculation version to implementation SHA-256; hashes identify bytes, not correctness."
+  },
+  "policyInputs": {
+    "calculation": "null or explicitly synthetic test evidence; never approved",
+    "freshness": "null, undecided",
+    "gap": "null, undecided",
+    "fundingAllocation": "null or explicitly synthetic test allocation evidence, never approved",
+    "integerization": "null, undecided",
+    "dust": "null, undecided"
+  },
+  "preservedPath": "All task 2/49 input validation modules, test anchors, legacy task 2/41 path and existing tests are copied unchanged",
+  "bridgeLimits": [
+    "Fixed local task 2/45 evidence only",
+    "Current trusted-input bridge supports one complete position and epochs=1; aggregate official integral comparison requires the recorded global position counter=1",
+    "Multiple official Epochs are exercised with synthetic pure-calculation inputs only",
+    "Stored Mock prices are diagnostic evidence, not approved market prices",
+    "No public-chain proof, operational trust registration, token movement, Held use or LP return"
+  ],
+  "output": "NOT_EVALUATED; confirmedAmount and monetaryResult null; fundsAuthority and settlementAuthorized false; no claim or consumption records"
+}

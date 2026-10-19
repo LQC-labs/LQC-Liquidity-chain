@@ -1,0 +1,104 @@
+{
+  "contractName": "LocalVNextOracle",
+  "sourceName": "contracts/futures/mocks/LocalVNextFixtures.sol",
+  "abi": [
+    {
+      "inputs": [],
+      "name": "broken",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "getPrice",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "price",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "p",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "t",
+          "type": "uint256"
+        }
+      ],
+      "name": "set",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "x",
+          "type": "bool"
+        }
+      ],
+      "name": "setBroken",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "updatedAt",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608080604052346015576101b8908161001a8239f35b5f80fdfe6080806040526004361015610012575f80fd5b5f3560e01c9081631ab06ee51461016457816341976e09146100ed575080637519ab50146100d05780637fb1ad62146100ae57806386de9e4f1461007e5763a035b1fe1461005e575f80fd5b3461007a575f36600319011261007a5760205f54604051908152f35b5f80fd5b3461007a57602036600319011261007a5760043580151580910361007a5760ff8019600254169116176002555f80f35b3461007a575f36600319011261007a57602060ff600254166040519015158152f35b3461007a575f36600319011261007a576020600154604051908152f35b3461007a57602036600319011261007a576004356001600160a01b0381160361007a5760ff6002541661012d5760405f5460015482519182526020820152f35b62461bcd60e51b81526020600482015260126024820152714f5241434c455f554e415641494c41424c4560701b6044820152606490fd5b3461007a57604036600319011261007a576004355f5560243560015500fea2646970667358221220b440052fd3b8fe7b8bffbe27881e39cb5a83acff2dbaaef5423ad3e15859d5d064736f6c634300081e0033",
+  "deployedBytecode": "0x6080806040526004361015610012575f80fd5b5f3560e01c9081631ab06ee51461016457816341976e09146100ed575080637519ab50146100d05780637fb1ad62146100ae57806386de9e4f1461007e5763a035b1fe1461005e575f80fd5b3461007a575f36600319011261007a5760205f54604051908152f35b5f80fd5b3461007a57602036600319011261007a5760043580151580910361007a5760ff8019600254169116176002555f80f35b3461007a575f36600319011261007a57602060ff600254166040519015158152f35b3461007a575f36600319011261007a576020600154604051908152f35b3461007a57602036600319011261007a576004356001600160a01b0381160361007a5760ff6002541661012d5760405f5460015482519182526020820152f35b62461bcd60e51b81526020600482015260126024820152714f5241434c455f554e415641494c41424c4560701b6044820152606490fd5b3461007a57604036600319011261007a576004355f5560243560015500fea2646970667358221220b440052fd3b8fe7b8bffbe27881e39cb5a83acff2dbaaef5423ad3e15859d5d064736f6c634300081e0033",
+  "immutableReferences": {},
+  "linkReferences": {}
+}

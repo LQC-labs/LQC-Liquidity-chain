@@ -1,0 +1,183 @@
+{
+  "manifestSchema": "LQC_REVIEW_CANDIDATE_MANIFEST_V1",
+  "runId": "b8d4710e-c323-41a4-9f1c-97bc2bd0f826",
+  "reviewStatus": "CANDIDATE_NOT_TRUSTED_OR_ACTIVATED",
+  "scope": {
+    "chainId": "31337",
+    "evidenceSchema": "LQC_LOCAL_CHAIN_SCOPE_EVIDENCE",
+    "schemaVersion": "3",
+    "queryBlock": {
+      "number": "65",
+      "hash": "0x3efb397d85d999f7d9bb21bf8b3ae25e1eb69666593034cf8e7e77ab1d8e1752",
+      "blockTag": "0x41",
+      "timestamp": "1792382088"
+    },
+    "contracts": [
+      {
+        "role": "LocalFuturesTradingCore",
+        "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+        "runtimeHash": "0x6255d05985440f4dda4571a59e9e7aa68c473a5f784cb9efd4c9e1b744dc8120"
+      },
+      {
+        "role": "LocalFuturesFundingV11",
+        "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+        "runtimeHash": "0xf99243ca96a829aa49382ac4d2ef7d480d5ae1d4ae71b4b578eb66f791b46594"
+      },
+      {
+        "role": "LocalFuturesPartialV11",
+        "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+        "runtimeHash": "0x36eefc6c1b176b75ed8cf67617e43c119f9dd3312aaa957b53b1149ac5faeb03"
+      },
+      {
+        "role": "LocalFuturesExposureLedger",
+        "address": "0xCafac3dD18aC6c6e92c921884f9E4176737C052c",
+        "runtimeHash": "0x397963e5e0ea576102164951f37e85050fdbc1dd86233223ce3592edbe169d6c"
+      },
+      {
+        "role": "LocalFuturesAttribution",
+        "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+        "runtimeHash": "0x2501f2a82f7dc2c785ce02e0c5f64800400a2b52de2dbe4d98f47f6878b17301"
+      },
+      {
+        "role": "LocalFuturesSettlementCoordinator",
+        "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+        "runtimeHash": "0x038281da0113a91e0dfe1e0779f84515bdccae4cfac2903ae0c4bd34704372e9"
+      },
+      {
+        "role": "LocalFuturesCollectionExecutor",
+        "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+        "runtimeHash": "0x5760617eba6d0169561d39bc992eb05e105b27cef51b7233514855dbcebeb8ff"
+      },
+      {
+        "role": "LocalFuturesPayoutSpecification",
+        "address": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+        "runtimeHash": "0x6a86bf144c03c5882139ed98e7fe872f1cff6dc1ac53cdcc622849d485e930f0"
+      },
+      {
+        "role": "LocalFuturesPayoutExecutor",
+        "address": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
+        "runtimeHash": "0x957d6df4fe558962d320bd2f6a7670a0aed82245243f505c9d1f4fb42fd5328d"
+      },
+      {
+        "role": "LocalFuturesWithdrawalVerifier",
+        "address": "0x8dAF17A20c9DBA35f005b6324F493785D239719d",
+        "runtimeHash": "0x8cb3e745d1c0ac0c6d8975c712c0960a627906163da8e13192fb1de016ba65ec"
+      },
+      {
+        "role": "LocalFuturesReleaseVerifier",
+        "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+        "runtimeHash": "0x138e0ef81d82d0566703834819f99bc819f1f3156a0bcfc16397523426e2b10c"
+      },
+      {
+        "role": "LocalFuturesLinkedExposureVerifier",
+        "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+        "runtimeHash": "0x7a63db65473ee4b79d75bf9099e03e8fb695f38b34e1e6fd8d268f0c3a0a56f5"
+      },
+      {
+        "role": "Registry",
+        "address": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
+        "runtimeHash": "0xa6cbfaa6678039a2c8ca50b4cfd879565f137492acfbc77236d3da6d6ba6048b"
+      },
+      {
+        "role": "Token",
+        "address": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+        "runtimeHash": "0x8ff987adb934dc1d4f10623502487c0db34d78038d781250f15bc9b3f96c8398"
+      },
+      {
+        "role": "CollateralOracle",
+        "address": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
+        "runtimeHash": "0xd875f365e732a3d42933ee0dc617461ca91e76ad9c313e1fe37dbd6474de6629"
+      },
+      {
+        "role": "MarketOracle",
+        "address": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
+        "runtimeHash": "0xd875f365e732a3d42933ee0dc617461ca91e76ad9c313e1fe37dbd6474de6629"
+      },
+      {
+        "role": "PreparedStateVerifier",
+        "address": "0x322813Fd9A801c5507c9de605d63CEA4f2CE6c44",
+        "runtimeHash": "0x4ee655949ad769018e0a69c98a2c7a762fab5df88541e51243d4984c0ad61a45"
+      },
+      {
+        "role": "OperationPolicy",
+        "address": "0xa85233C63b9Ee964Add6F2cffe00Fd84eb32338f",
+        "runtimeHash": "0x74085b09feb01f511a2e4da4fbae86d00f9e40e7139e9584b6b205e938d84eb3"
+      },
+      {
+        "role": "TradingPreflightVerifier",
+        "address": "0x7a2088a1bFc9d81c55368AE168C2C02570cB814F",
+        "runtimeHash": "0x46b0a6f5908b254dff5cf32ea1bd1b1df85ce5ea6f5605486c9132fd24d5e910"
+      }
+    ]
+  },
+  "files": {
+    "scopeEvidence": {
+      "path": "scope-evidence.json",
+      "sha256": "e945141cc7f8978ca04071aea27e101576c234a49c4a9d4b6275dd5b9474dfea"
+    },
+    "contractCode": {
+      "path": "contract-code.json",
+      "sha256": "755fe839c5dba28fbf42bcb58fd351847c325fbb3f424d45bda3de268bdf3afc"
+    },
+    "runMetadata": {
+      "path": "../run-metadata.json",
+      "sha256": "53b1f4ac2cde5ed8df1817e1ad0379ad671857739d3d6edafd878fc9c3bc633f"
+    }
+  },
+  "artifactContentHashes": {
+    "LocalFuturesTradingCore": "3f1410d0e83d521d405d7bd3d0303603978018f288d0ef88ca1a932f680b889f",
+    "LocalFuturesFundingV11": "fbb78d75d7420cc5f172dcdb6614076c5b9567dfdfd65108dcc0db35b5d9211f",
+    "LocalFuturesPartialV11": "b8ac06e71a9c6c7ec714f52ebffa00d9ddff238079b1fa29927568c8cd578029",
+    "LocalFuturesExposureLedger": "bb66e4515022a511131ecbcd1844482153240894bee6ae5e9a8d037efc5ca48a",
+    "LocalFuturesAttribution": "8a5145d8cc5d92864a9f74bb184fa2b4d3e219cc9c00c03d2024bbf52ecf11dc",
+    "LocalFuturesSettlementCoordinator": "df9f4a463febe82d5dd0dbe60ead300c6e2e1520de733847a29491225b7de912",
+    "LocalFuturesCollectionExecutor": "73b449d2b82cbfe7f6ba3b42c0e1bd86ca1133f2f951e8bfa8b4d1f9667a186e",
+    "LocalFuturesPayoutSpecification": "a2f74505f6ab7403a0e7459f583b0646834b626305b2287b10c1892f9e53e8e0",
+    "LocalFuturesPayoutExecutor": "a102506179c637939da7ecf7842a9b197a790c5161577b22bc4c8eb7a5e84aa2",
+    "LocalFuturesWithdrawalVerifier": "4c7076def997c39c40b035e0b7eb0f808b4af48d3fbc869f48ae10df40488c5c",
+    "LocalFuturesReleaseVerifier": "ac6288b62375e7323cdd498516c2d704604063b391612455ece28bdfc5343543",
+    "LocalFuturesLinkedExposureVerifier": "419465f1382915e5a749e1103e96b8d5ef8baea62eacc30f4ccb6b08c77d3ad8",
+    "LocalFuturesModularTradingDomainRegistry": "84da5150ca9aaf971c15c062f995d11eb053598d09ae145459a0e656bcff6fed",
+    "LocalVNextToken": "1e48621ab92a471b1676c2ad16dbcf396abbdc4c4e57f9e307745ea27f629b06",
+    "LocalVNextOracle": "f6dfe98cadcd4803852f017ee1c3b1b0fa9ec0e11263eabd1e8fdf86d1680ce7",
+    "LocalFuturesPreparedStateVerifier": "4f0e37cc4be3de36deb35b2d2f3f62d5da9fce8840175c78492363eac02ece33",
+    "LocalFuturesTradingOperationPolicy": "c7b3f5286ed7e944fb44ec2155a9c947db5d952e161e5bf55cd93e738d7b3754",
+    "LocalFuturesTradingPreflightVerifier": "f5e1a2b81e82de61d6769ca5fcab53f4ebf8db0cd24328a6c26f647fe0782026"
+  },
+  "sourceFileHashes": {
+    "dex/test/support/required-plan.mjs": "78b493a694fa8223421dc49c48ed1850c3c4766e0b494c7fe519334258c4b350",
+    "run-metadata.json": "53b1f4ac2cde5ed8df1817e1ad0379ad671857739d3d6edafd878fc9c3bc633f",
+    "run-safe-boundary.cjs": "0042daee8997dc3664b8fa14b42ccab186dc805d48b202310935799c6f25709a",
+    "time-preflight.cjs": "9123d50cf1f6561a4ac42cdaa8be62201a409f178a08964b4aab57b329249368",
+    "collection-preflight.mjs": "c9363dd3bcdb661a3ce6a79676f2d3939a546d23614488791f56b270d97d549f",
+    "preflight.cjs": "e0eeb1b1094848a93ccc207e7ba0e70746586b0a9f649acc63e5f56eb68f2125",
+    "preflight-manifest.json": "9bba5ea9b06c0ab06048c97eea874fadda7b822ef74087a933e6c43e2966871f",
+    "dex/test/futures-v11-trading-core-protected-withdrawal.test.mjs": "c0f057b36269cadee70f1a041f6250a7f1d015e78db9a61eaf4a45ea80fddbd0",
+    "dex/test/support/capture-scope.mjs": "7191c9ce538f170e40bf31ffacaf2ea95da421bee44430aebbebdc949b9bc673",
+    "dex/test/support/anvil-compat.mjs": "b50e09ab6a23faa34a41b2c7b13b874512df79c6651f6aab7ad37e294d36d411",
+    "dex/test/support/public-queries.mjs": "96729a7ccf05001e5a6d9f266c6b57f0b2514302b6ffe2a1e40f9da3ada3d502",
+    "dex/test/support/query-journal.mjs": "1634c845ca376f0311d7e27c668c96f545b0e3620105e0794c4ec8fcbed00a0d"
+  },
+  "policyApproved": false,
+  "priceApproved": false,
+  "autoTrustRegistration": false,
+  "queryJournal": {
+    "path": "query-journal.jsonl",
+    "sha256": "98af210902f8708e8b7ca3739f3f0e303f3870382c153abf9a35f09d3022fc93"
+  },
+  "publicAllowlist": {
+    "path": "public-query-allowlist.json",
+    "sha256": "5f48d88ee55deac75612684a0964bda9c71fa165d2a1db9f9f450ceaf7a47280"
+  },
+  "requiredQueryPlan": {
+    "path": "required-query-plan.json",
+    "sha256": "09b09dd15f7264539ead4d7d96dbce88b8f603cee336f28683dfbd6f1ecaa1fc"
+  },
+  "requiredQuerySummary": {
+    "requests": 539,
+    "responses": 539,
+    "errors": 0,
+    "pending": 0,
+    "requiredFailures": 0
+  }
+}

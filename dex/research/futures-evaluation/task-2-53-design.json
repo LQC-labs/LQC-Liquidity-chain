@@ -1,0 +1,24 @@
+{
+  "purpose": "LOCAL_DIAGNOSTICS_ONLY",
+  "requiredObligations": "Official Epochs with positive validated position exposure integral; submitted list never defines coverage.",
+  "evidenceCompleteness": [
+    "MISSING",
+    "PARTIAL",
+    "COMPLETE"
+  ],
+  "allocationStatus": [
+    "MISSING",
+    "PARTIAL",
+    "COMPLETE"
+  ],
+  "incompleteTotals": "null; submittedSubtotal is explicitly partial evidence, not whole obligation.",
+  "zero": "Only complete synthetic evidence (or proven no required exposure) may have diagnostic zero totals; never confirmed money.",
+  "independence": "Raw transition integration by parts rereads old/next quantities and timestamps. Shares input schema, BigInt parsing and source evidence; not an independent authenticity or policy oracle.",
+  "identity": "V2 plus complete explicit input; implementation file SHA-256 mapping recorded at execution, not a correctness proof.",
+  "limits": [
+    "No economic policy, integerization, dust or Gap-rate defaults",
+    "Actual candidate remains blocked; no claims, settlement, money or chain operations",
+    "No operational trust registration; anchors copied unchanged",
+    "offline-guard supplementary, not OS sandbox proof"
+  ]
+}

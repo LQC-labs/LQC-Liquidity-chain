@@ -1,0 +1,30 @@
+name: Futures offline evaluation
+on:
+  pull_request:
+    paths:
+      - "dex/research/futures-evaluation/**"
+      - ".github/workflows/futures-offline-evaluation.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: futures-offline-evaluation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  offline-evaluation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install existing locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify recorded inputs and diagnostics without a chain
+        run: node research/futures-evaluation/run-tests.cjs

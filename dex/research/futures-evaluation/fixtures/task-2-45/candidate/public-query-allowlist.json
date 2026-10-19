@@ -1,0 +1,2217 @@
+{
+  "schema": "LQC_PUBLIC_QUERY_ALLOWLIST_V1",
+  "runId": "b8d4710e-c323-41a4-9f1c-97bc2bd0f826",
+  "queries": [
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "domainRegistry",
+      "signature": "domainRegistry()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "localFunding",
+      "signature": "localFunding()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "localPartial",
+      "signature": "localPartial()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "tradingPreflight",
+      "signature": "tradingPreflight()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "tradingPreflightCodeHash",
+      "signature": "tradingPreflightCodeHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "governance",
+      "signature": "governance()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "domain",
+      "signature": "domain(uint256)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "exposureBindings",
+      "signature": "exposureBindings(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "exposurePositions",
+      "signature": "exposurePositions(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "coreExposureContext",
+      "signature": "coreExposureContext(uint256)",
+      "arguments": [
+        {
+          "name": "pid",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "exposureAccountPosition",
+      "signature": "exposureAccountPosition(uint256,address)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingCore",
+      "method": "exposurePositionCount",
+      "signature": "exposurePositionCount()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "exposureLedger",
+      "signature": "exposureLedger()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "collectionCoordinator",
+      "signature": "collectionCoordinator()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "collectionExecutor",
+      "signature": "collectionExecutor()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "payoutSpecification",
+      "signature": "payoutSpecification()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "payoutExecutor",
+      "signature": "payoutExecutor()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "fundingSeries",
+      "signature": "fundingSeries(uint256,uint256)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "sid",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "fundingSeriesEpoch",
+      "signature": "fundingSeriesEpoch(uint256,uint256,uint256)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "sid",
+          "type": "uint256"
+        },
+        {
+          "name": "epoch",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "fundingSeriesMember",
+      "signature": "fundingSeriesMember(uint256,uint256,uint256,address)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "sid",
+          "type": "uint256"
+        },
+        {
+          "name": "epoch",
+          "type": "uint256"
+        },
+        {
+          "name": "who",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "fundingSeriesAccount",
+      "signature": "fundingSeriesAccount(uint256,uint256,address)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "sid",
+          "type": "uint256"
+        },
+        {
+          "name": "who",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "repeatCustody",
+      "signature": "repeatCustody(address)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "repeatCash",
+      "signature": "repeatCash(bytes32)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "policyGap",
+      "signature": "policyGap(uint256,uint256,address,uint256)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "sid",
+          "type": "uint256"
+        },
+        {
+          "name": "account",
+          "type": "address"
+        },
+        {
+          "name": "positionId",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "coreExposureSequences",
+      "signature": "coreExposureSequences(bytes32)",
+      "arguments": [
+        {
+          "name": "key",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "repeatPayoutState",
+      "signature": "repeatPayoutState(uint256,bytes32,bytes32)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "rightsKey",
+          "type": "bytes32"
+        },
+        {
+          "name": "receipt",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesFundingV11",
+      "method": "repeatAccountCollected",
+      "signature": "repeatAccountCollected(bytes32)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "funding",
+      "signature": "funding()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "attribution",
+      "signature": "attribution()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "withdrawalVerifier",
+      "signature": "withdrawalVerifier()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "withdrawalVerifierCodeHash",
+      "signature": "withdrawalVerifierCodeHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "releaseVerifier",
+      "signature": "releaseVerifier()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "releaseVerifierCodeHash",
+      "signature": "releaseVerifierCodeHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "linkedExposureVerifier",
+      "signature": "linkedExposureVerifier()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "linkedExposureVerifierCodeHash",
+      "signature": "linkedExposureVerifierCodeHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "settlementCompletionConnected",
+      "signature": "settlementCompletionConnected()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "partialPool",
+      "signature": "partialPool(uint256)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "linkedBasis",
+      "signature": "linkedBasis(uint256)",
+      "arguments": [
+        {
+          "name": "pid",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "linkedHeld",
+      "signature": "linkedHeld(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "tokenAccounted",
+      "signature": "tokenAccounted(address)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "linkedPending",
+      "signature": "linkedPending(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "linkedFinalReserved",
+      "signature": "linkedFinalReserved(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "linkedExit",
+      "signature": "linkedExit(uint256,uint256,bool)",
+      "arguments": [
+        {
+          "name": "pid",
+          "type": "uint256"
+        },
+        {
+          "name": "sequence",
+          "type": "uint256"
+        },
+        {
+          "name": "final_",
+          "type": "bool"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "linkedConsumed",
+      "signature": "linkedConsumed(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "repeatReceiptState",
+      "signature": "repeatReceiptState(uint256,bytes32,bytes32)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "rightsKey",
+          "type": "bytes32"
+        },
+        {
+          "name": "receipt",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "withdrawals",
+      "signature": "withdrawals(bytes32)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "returnWithdrawals",
+      "signature": "returnWithdrawals(uint256,address)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "releasedReturnAvailable",
+      "signature": "releasedReturnAvailable(uint256,address)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "lpShares",
+      "signature": "lpShares(uint256,address)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "releases",
+      "signature": "releases(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPartialV11",
+      "method": "lpObligationStatus",
+      "signature": "lpObligationStatus(uint256)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesExposureLedger",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesExposureLedger",
+      "method": "funding",
+      "signature": "funding()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesExposureLedger",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesExposureLedger",
+      "method": "policyGapConfiguration",
+      "signature": "policyGapConfiguration(uint256,uint256)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "sid",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesExposureLedger",
+      "method": "fundingSeriesMember",
+      "signature": "fundingSeriesMember(uint256,uint256,uint256,address)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "sid",
+          "type": "uint256"
+        },
+        {
+          "name": "epoch",
+          "type": "uint256"
+        },
+        {
+          "name": "who",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesAttribution",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesAttribution",
+      "method": "funding",
+      "signature": "funding()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesAttribution",
+      "method": "partialSettlement",
+      "signature": "partialSettlement()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesAttribution",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesAttribution",
+      "method": "accountKey",
+      "signature": "accountKey(uint256,address)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "who",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesAttribution",
+      "method": "logs",
+      "signature": "logs(bytes32)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesAttribution",
+      "method": "transition",
+      "signature": "transition(uint256,address,uint256)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "who",
+          "type": "address"
+        },
+        {
+          "name": "ordinal",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesAttribution",
+      "method": "finalOrdinal",
+      "signature": "finalOrdinal(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesAttribution",
+      "method": "traces",
+      "signature": "traces(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "funding",
+      "signature": "funding()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "partialSettlement",
+      "signature": "partialSettlement()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "attribution",
+      "signature": "attribution()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "CALCULATION_POLICY",
+      "signature": "CALCULATION_POLICY()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "plan",
+      "signature": "plan(uint256)",
+      "arguments": [
+        {
+          "name": "pid",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "sealedPlan",
+      "signature": "sealedPlan(uint256)",
+      "arguments": [
+        {
+          "name": "pid",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "latestIntegerSpecification",
+      "signature": "latestIntegerSpecification(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "mockPolicy",
+      "signature": "mockPolicy(uint256)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "integerSpecification",
+      "signature": "integerSpecification(bytes32)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesSettlementCoordinator",
+      "method": "collectionQuote",
+      "signature": "collectionQuote(uint256,bytes32)",
+      "arguments": [
+        {
+          "name": "pid",
+          "type": "uint256"
+        },
+        {
+          "name": "specification",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesCollectionExecutor",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesCollectionExecutor",
+      "method": "funding",
+      "signature": "funding()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesCollectionExecutor",
+      "method": "partialSettlement",
+      "signature": "partialSettlement()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesCollectionExecutor",
+      "method": "coordinator",
+      "signature": "coordinator()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesCollectionExecutor",
+      "method": "contextHash",
+      "signature": "contextHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesCollectionExecutor",
+      "method": "fundingAuthorization",
+      "signature": "fundingAuthorization()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesCollectionExecutor",
+      "method": "partialAuthorization",
+      "signature": "partialAuthorization()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesCollectionExecutor",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesCollectionExecutor",
+      "method": "consumedSpecifications",
+      "signature": "consumedSpecifications(bytes32)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesCollectionExecutor",
+      "method": "executions",
+      "signature": "executions(bytes32)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutSpecification",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutSpecification",
+      "method": "funding",
+      "signature": "funding()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutSpecification",
+      "method": "partialSettlement",
+      "signature": "partialSettlement()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutSpecification",
+      "method": "coordinator",
+      "signature": "coordinator()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutSpecification",
+      "method": "attribution",
+      "signature": "attribution()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutSpecification",
+      "method": "actualPaymentStatus",
+      "signature": "actualPaymentStatus()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutSpecification",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutSpecification",
+      "method": "members",
+      "signature": "members(uint256,address)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "funding",
+      "signature": "funding()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "partialSettlement",
+      "signature": "partialSettlement()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "coordinator",
+      "signature": "coordinator()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "attribution",
+      "signature": "attribution()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "payoutSpecification",
+      "signature": "payoutSpecification()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "contextHash",
+      "signature": "contextHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "actualPaymentStatus",
+      "signature": "actualPaymentStatus()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "actualSequenceAvailable",
+      "signature": "actualSequenceAvailable()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "rightsKey",
+      "signature": "rightsKey(uint256,address)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        },
+        {
+          "name": "who",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPayoutExecutor",
+      "method": "progression",
+      "signature": "progression(bytes32)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesWithdrawalVerifier",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesWithdrawalVerifier",
+      "method": "funding",
+      "signature": "funding()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesWithdrawalVerifier",
+      "method": "partialSettlement",
+      "signature": "partialSettlement()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesWithdrawalVerifier",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesReleaseVerifier",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesReleaseVerifier",
+      "method": "funding",
+      "signature": "funding()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesReleaseVerifier",
+      "method": "partialSettlement",
+      "signature": "partialSettlement()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesReleaseVerifier",
+      "method": "settlementCompletionVerifier",
+      "signature": "settlementCompletionVerifier()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesReleaseVerifier",
+      "method": "settlementCompletionVerifierCodeHash",
+      "signature": "settlementCompletionVerifierCodeHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesReleaseVerifier",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesLinkedExposureVerifier",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesLinkedExposureVerifier",
+      "method": "funding",
+      "signature": "funding()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesLinkedExposureVerifier",
+      "method": "partialSettlement",
+      "signature": "partialSettlement()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesLinkedExposureVerifier",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "preparedStateVerifier",
+      "signature": "preparedStateVerifier()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "preparedStateVerifierCodeHash",
+      "signature": "preparedStateVerifierCodeHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "operationPolicy",
+      "signature": "operationPolicy()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "operationPolicyCodeHash",
+      "signature": "operationPolicyCodeHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "deploymentContext",
+      "signature": "deploymentContext()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "VERSION",
+      "signature": "VERSION()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "activated",
+      "signature": "activated()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "cutoff",
+      "signature": "cutoff()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "peers",
+      "signature": "peers(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "approvedCodeHashes",
+      "signature": "approvedCodeHashes(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "registration",
+      "signature": "registration(uint256)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "plannedPreparation",
+      "signature": "plannedPreparation(uint256)",
+      "arguments": [
+        {
+          "name": "id",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesModularTradingDomainRegistry",
+      "method": "preparationContextHashes",
+      "signature": "preparationContextHashes(uint256)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPreparedStateVerifier",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPreparedStateVerifier",
+      "method": "registry",
+      "signature": "registry()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPreparedStateVerifier",
+      "method": "peerSetHash",
+      "signature": "peerSetHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesPreparedStateVerifier",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingOperationPolicy",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingOperationPolicy",
+      "method": "registry",
+      "signature": "registry()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingOperationPolicy",
+      "method": "peerSetHash",
+      "signature": "peerSetHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingOperationPolicy",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingPreflightVerifier",
+      "method": "core",
+      "signature": "core()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingPreflightVerifier",
+      "method": "coreCodeHash",
+      "signature": "coreCodeHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingPreflightVerifier",
+      "method": "registry",
+      "signature": "registry()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingPreflightVerifier",
+      "method": "registryCodeHash",
+      "signature": "registryCodeHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingPreflightVerifier",
+      "method": "attribution",
+      "signature": "attribution()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingPreflightVerifier",
+      "method": "attributionCodeHash",
+      "signature": "attributionCodeHash()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalFuturesTradingPreflightVerifier",
+      "method": "productionEnabled",
+      "signature": "productionEnabled()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalVNextToken",
+      "method": "decimals",
+      "signature": "decimals()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalVNextToken",
+      "method": "frozen",
+      "signature": "frozen()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalVNextToken",
+      "method": "taxed",
+      "signature": "taxed()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalVNextToken",
+      "method": "balanceOf",
+      "signature": "balanceOf(address)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalVNextToken",
+      "method": "allowance",
+      "signature": "allowance(address,address)",
+      "arguments": [
+        {
+          "name": "",
+          "type": "address"
+        },
+        {
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalVNextOracle",
+      "method": "price",
+      "signature": "price()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalVNextOracle",
+      "method": "updatedAt",
+      "signature": "updatedAt()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    },
+    {
+      "artifact": "LocalVNextOracle",
+      "method": "broken",
+      "signature": "broken()",
+      "arguments": [],
+      "target": "recorded contract address for this artifact at Q",
+      "caller": "explicit collector: 0x0000000000000000000000000000000000000000; unchanged financial assertions: original signer, never Registry impersonation",
+      "blockTag": "Q.blockTag",
+      "requiredWhenScheduled": true,
+      "selection": "explicit collector calls or unchanged financial assertions"
+    }
+  ],
+  "registryOnlyValidation": {
+    "directValidatePeers": "PROHIBITED_NOT_CALLED",
+    "normalRegistryPath": "Existing Fixture recordPreparation/activateTrading evidence is separate; not a new direct validatePeers test"
+  }
+}
