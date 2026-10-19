@@ -1,0 +1,30 @@
+name: Futures settlement policy V1 research
+on:
+  pull_request:
+    paths:
+      - "dex/research/futures-evaluation/**"
+      - ".github/workflows/futures-settlement-policy-v1.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: futures-policy-v1-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  policy-v1-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install existing locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify new V1 models without a chain or money authority
+        run: node research/futures-evaluation/run-policy-v1-tests.cjs
