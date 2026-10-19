@@ -1,6 +1,6 @@
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto'),assert=require('node:assert/strict');
 const root=__dirname,sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
-const EXPECTED_PLAN_SHA256='c4711c650750acc9e339f553dcff70834877f369596b05813945fd1dfb521344';
+const EXPECTED_PLAN_SHA256='837dea76a68d2e3affee3d4b2cea014f3dded9cb3446c6e0399d2a25669eed30';
 function main(){
  assert.equal(sha(root+'/test-plan.json'),EXPECTED_PLAN_SHA256,'TEST_PLAN_HASH_MISMATCH');
  const plan=JSON.parse(fs.readFileSync(root+'/test-plan.json'));

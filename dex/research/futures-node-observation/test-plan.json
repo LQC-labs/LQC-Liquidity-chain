@@ -1,7 +1,7 @@
 {
   "purpose": "SYNTHETIC_ONLY_EXPECTED_TEST_IDENTITIES",
   "file": "test/collector.test.mjs",
-  "sha256": "695b48789eb2bae7ae82db272e4c2a87fe4040279843dfff826cc9181516be69",
+  "sha256": "759adf3c65fefac131706a040b4f83da5401308d013d22c31c544d177c56f86b",
   "fullTitles": [
     "BSC Registry node observation synthetic complete synthetic observation fixes all code and state reads to fresh finalized Q",
     "BSC Registry node observation synthetic each run selects finalized again rather than inheriting an old Q",
@@ -29,6 +29,7 @@
     "BSC Registry node observation synthetic oversized response stops before body parsing",
     "BSC Registry node observation synthetic invalid JSON is a sanitized terminal error",
     "BSC Registry node observation synthetic transport enforces request upper bound even outside collector",
-    "BSC Registry node observation synthetic transaction methods are rejected before any network dispatch"
+    "BSC Registry node observation synthetic transaction methods are rejected before any network dispatch",
+    "BSC Registry node observation synthetic CI uses synthetic entry and existing live RPC job is manual only"
   ]
 }

@@ -7,6 +7,8 @@ script's live/latest path is not executed by imports. No new dependency.
 Run synthetic checks from dex: `node research/futures-node-observation/run-tests.cjs`.
 CI runs this command only. It preloads the existing supplementary offline guard;
 all HTTP responses in tests are synthetic. This is not an OS sandbox claim.
+The pre-existing Master 7/7 chain97-readonly-evidence job is restricted to explicit
+workflow_dispatch; PR/push events cannot automatically execute its live RPC path.
 
 Manual collection requires an explicitly supplied `BSC_TESTNET_RPC_URL` and a
 new output directory: `node research/futures-node-observation/collect.mjs <directory>`.

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {fileURLToPath} from 'node:url';
 import {keccak256} from 'ethers';
 import {collectRegistryObservation,LIMITS} from '../collector.mjs';
 import {createNodeTransport} from '../transport.mjs';
@@ -104,5 +105,14 @@ test('transport enforces request upper bound even outside collector',async()=>{
 });
 test('transaction methods are rejected before any network dispatch',async()=>{
  let count=0;const t=createNodeTransport('https://node.invalid',{fetchImpl:async()=>{count++;throw Error('unexpected');}});await assert.rejects(()=>t.request({...payload,method:'eth_sendRawTransaction'}),e=>e.code==='READ_ONLY_METHOD_REQUIRED');assert.equal(count,0);
+});
+test('CI uses synthetic entry and existing live RPC job is manual only',()=>{
+ const repo=fileURLToPath(new URL('../../../../',import.meta.url));
+ const synthetic=fs.readFileSync(path.join(repo,'.github/workflows/futures-node-observation.yml'),'utf8');
+ assert(synthetic.includes('node research/futures-node-observation/run-tests.cjs'));
+ assert(!synthetic.includes('collect.mjs'));assert(!synthetic.includes('BSC_TESTNET_RPC_URL'));
+ const legacy=fs.readFileSync(path.join(repo,'.github/workflows/master7-7-current-release-futures-e2e.yml'),'utf8');
+ const job=legacy.slice(legacy.indexOf('  chain97-readonly-evidence:'));
+ assert.match(job,/^    if: github\.event_name == 'workflow_dispatch'$/m);
 });
 describe('BSC Registry node observation synthetic',()=>{for(const {name,fn} of tests)it(name,fn);});
