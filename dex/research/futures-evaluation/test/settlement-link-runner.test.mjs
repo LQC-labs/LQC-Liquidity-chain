@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),{validatePlanBytes,validatePlanStructure,validateFileManifest}=require('../settlement-link-test-plan.cjs'),validateReport=require('../report-validation.cjs');
+const clone=x=>structuredClone(x),digest='a'.repeat(64),plan=()=>({suites:[{file:'test/example.test.mjs',sha256:digest,fullTitles:['suite required one','suite required two']}]});
+const report=()=>({stats:{tests:2,passes:2,failures:0,pending:0},tests:[{fullTitle:'suite required one'},{fullTitle:'suite required two'}],passes:[{fullTitle:'suite required one'},{fullTitle:'suite required two'}],failures:[],pending:[]});
+const expected={fullTitles:['suite required one','suite required two']};
+describe('settlement link fixed runner plan',()=>{
+ it('reviewed pinned plan bytes pass without reading test titles',()=>{const bytes=fs.readFileSync(new URL('../settlement-link-test-plan.json',import.meta.url));assert(validatePlanBytes(bytes).suites.length>0);});
+ it('modified plan bytes fail the fixed hash check',()=>{const bytes=fs.readFileSync(new URL('../settlement-link-test-plan.json',import.meta.url));assert.throws(()=>validatePlanBytes(Buffer.concat([bytes,Buffer.from(' ')])),/TEST_PLAN_HASH_MISMATCH/);});
+ it('zero expected tests are rejected',()=>{const p=plan();p.suites[0].fullTitles=[];assert.throws(()=>validatePlanStructure(p),/EMPTY_EXPECTED_TEST_PLAN/);});
+ it('duplicate required titles are rejected',()=>{const p=plan();p.suites[0].fullTitles.push(p.suites[0].fullTitles[0]);assert.throws(()=>validatePlanStructure(p),/DUPLICATE_EXPECTED_TITLE/);});
+ it('deleted suite file is rejected before test execution',()=>assert.throws(()=>validateFileManifest(plan(),[]),/EXPECTED_FILE_SET_MISMATCH/));
+ it('deleted test source changes reviewed source hash',()=>assert.throws(()=>validateFileManifest(plan(),[{file:'test/example.test.mjs',sha256:'b'.repeat(64)}]),/TEST_FILE_HASH_MISMATCH/));
+ it('duplicate observed test file is rejected',()=>assert.throws(()=>validateFileManifest(plan(),[{file:'test/example.test.mjs',sha256:digest},{file:'test/example.test.mjs',sha256:digest}]),/DUPLICATE_OBSERVED_TEST_FILE/));
+ it('exact executed list and exit code pass',()=>assert.equal(validateReport(report(),0,expected).status,'PASS'));
+ it('zero actual execution is rejected',()=>{const r=report();r.stats.tests=0;r.tests=[];assert.throws(()=>validateReport(r,0,expected),/ZERO_OR_INVALID_TEST_COUNT/);});
+ it('missing executed required test is rejected',()=>{const r=report();r.tests.pop();r.passes.pop();r.stats.tests=1;r.stats.passes=1;assert.throws(()=>validateReport(r,0,expected),/EXPECTED_TEST_SET_MISMATCH/);});
+ it('unexpected executed test is rejected',()=>{const r=report();r.tests[1].fullTitle='suite unexpected';r.passes[1].fullTitle='suite unexpected';assert.throws(()=>validateReport(r,0,expected),/EXPECTED_TEST_SET_MISMATCH/);});
+ it('duplicate actual execution is rejected',()=>{const r=report();r.tests[1].fullTitle=r.tests[0].fullTitle;assert.throws(()=>validateReport(r,0,expected),/DUPLICATE_EXECUTED_TITLE/);});
+ it('process exit mismatch is rejected',()=>assert.throws(()=>validateReport(report(),1,expected),/EXIT_CODE_MISMATCH/));
+});

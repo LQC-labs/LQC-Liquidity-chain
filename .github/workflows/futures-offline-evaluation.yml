@@ -28,3 +28,5 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
       - name: Verify recorded inputs and diagnostics without a chain
         run: node research/futures-evaluation/run-tests.cjs
+      - name: Verify settlement link diagnosis and fixed test runner without a chain
+        run: node research/futures-evaluation/run-settlement-link-tests.cjs research/futures-evaluation/.results/settlement-link-ci new
