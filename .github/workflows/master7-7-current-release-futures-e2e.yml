@@ -4,15 +4,21 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "dex/contracts/futures/**"
+      - "dex/scripts/verify-master7-7-current-release-readiness.mjs"
       - "dex/scripts/verify-futures-deployment-lineage.mjs"
       - "dex/scripts/verify-futures-bsc-testnet.js"
+      - "dex/scripts/master7-7-evidence-context.mjs"
+      - "dex/scripts/verify-master7-7-evidence-reports.mjs"
       - "dex/test/futures*.test.mjs"
+      - "dex/test/master7-7-current-release-e2e-evidence.test.mjs"
       - "test/master7-*.test.js"
       - "docs/master-plan/7-7-current-release-futures-e2e.md"
       - ".github/workflows/master7-7-current-release-futures-e2e.yml"
   workflow_dispatch:
 permissions:
   contents: read
+env:
+  LQC_PR_HEAD_SHA: ${{ github.event.pull_request.head.sha || '' }}
 concurrency:
   group: master7-7-futures-e2e-${{ github.ref }}
   cancel-in-progress: true
@@ -36,6 +42,10 @@ jobs:
         run: npm run compile
       - name: Verify current-release deployment readiness (no transactions)
         run: node scripts/verify-master7-7-current-release-readiness.mjs
+      - name: Validate readiness report hashes and commit identity
+        run: node scripts/verify-master7-7-evidence-reports.mjs readiness
+      - name: Master 7/7 evidence boundary regression
+        run: npx mocha "test/master7-7-current-release-e2e-evidence.test.mjs"
       - name: Broad Futures regression
         run: npx mocha --timeout 30000 "test/futures*.test.mjs"
       - name: Master 7 architecture and risk boundaries
@@ -47,6 +57,14 @@ jobs:
             if [[ -f "$f" ]]; then files+=("$f"); fi
           done
           if ((${#files[@]})); then node --test "${files[@]}"; fi
+      - name: Upload static readiness evidence (job result is separate)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: master7-7-current-release-readiness
+          path: dex/master7-7-current-release-readiness.json
+          if-no-files-found: error
+          retention-days: 30
   chain97-readonly-evidence:
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -69,11 +87,28 @@ jobs:
         run: npm run compile
       - name: Verify recorded chain-97 wiring read-only
         run: node scripts/verify-futures-bsc-testnet.js
+      - name: Pin lineage reads to the wiring observation block
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            import assert from "node:assert/strict";
+            const r=JSON.parse(fs.readFileSync("futures-chain97-wiring-report.json","utf8"));
+            assert.equal(r.status,"VERIFIED_READ_ONLY");
+            assert.ok(Number.isSafeInteger(r.observedBlockNumber));
+            assert.match(r.observedBlockHash,/^0x[0-9a-f]{64}$/i);
+            fs.appendFileSync(process.env.GITHUB_ENV,`LQC_OBSERVED_BLOCK_NUMBER=${r.observedBlockNumber}\nLQC_OBSERVED_BLOCK_HASH=${r.observedBlockHash}\n`);
+          '
       - name: Reconcile recorded deployment with current-release artifacts
         run: node scripts/verify-futures-deployment-lineage.mjs
-      - name: Enforce historical deployment classification
-        run: |
-          node -e 'const fs=require("fs");const r=JSON.parse(fs.readFileSync("futures-lineage-report.json","utf8"));if(r.chainId!==97)throw Error("Expected chainId 97");if(r.transactionOccurred!==false)throw Error("read-only gate sent transaction");if(r.activationAuthorized!==false)throw Error("activation authorized");if(r.productionOracleReady!==false)throw Error("historical Oracle misclassified");if(!r.contracts?.Oracle?.testOnly)throw Error("historical Oracle not test-only");console.log("PASS historical evidence classification")'
+      - name: Validate both reports and historical deployment classification
+        run: node scripts/verify-master7-7-evidence-reports.mjs chain
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: master7-7-futures-chain97-wiring
+          path: dex/futures-chain97-wiring-report.json
+          if-no-files-found: error
+          retention-days: 30
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -81,3 +116,37 @@ jobs:
           path: dex/futures-lineage-report.json
           if-no-files-found: error
           retention-days: 30
+  evidence-result:
+    needs: [repository-regression, chain97-readonly-evidence]
+    if: always()
+    runs-on: ubuntu-latest
+    env:
+      REGRESSION_RESULT: ${{ needs.repository-regression.result }}
+      CHAIN_RESULT: ${{ needs.chain97-readonly-evidence.result }}
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Record complete gate outcome separately from readiness
+        run: |
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const results={repositoryRegression:process.env.REGRESSION_RESULT,chain97ReadOnlyEvidence:process.env.CHAIN_RESULT};
+            const passed=Object.values(results).every(x=>x==="success");
+            fs.writeFileSync("master7-7-gate-result.json",JSON.stringify({
+              schema:"lqc-master7-7-gate-result-v1",status:passed?"PASSED":"FAILED",
+              scope:"REPOSITORY_REGRESSION_AND_HISTORICAL_READ_ONLY",
+              testedCommitSha:process.env.GITHUB_SHA,pullRequestHeadSha:process.env.LQC_PR_HEAD_SHA||null,
+              runId:process.env.GITHUB_RUN_ID,runAttempt:process.env.GITHUB_RUN_ATTEMPT,results,
+              currentReleaseDeploymentVerified:false,productionOracleReady:false,
+              deploymentAuthorized:false,activationAuthorized:false,transactionOccurred:false
+            },null,2)+"\n");
+          '
+      - uses: actions/upload-artifact@v4
+        with:
+          name: master7-7-gate-result
+          path: master7-7-gate-result.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Require both verification jobs to succeed
+        run: node -e 'const r=require("./master7-7-gate-result.json");if(r.status!=="PASSED")throw Error("Current-release evidence gate did not pass")'

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { ethers } from "ethers";
+import { commitEvidence, observationBlock, assertObservationBlock, writeFailure } from "./master7-7-evidence-context.mjs";
 
 const root=path.resolve(import.meta.dirname,"..");
 const RPC=process.env.BSC_TESTNET_RPC_URL || "https://data-seed-prebsc-1-s1.bnbchain.org:8545";
@@ -84,13 +85,21 @@ async function readAddress(provider,to,signature){
   return iface.decodeFunctionResult(signature.slice(9,signature.indexOf("(")),raw)[0];
 }
 
+const outputPath=path.join(root,"futures-lineage-report.json");
+let context={stage:"commit",evidence:null,block:null};
 async function main(){
+  context.evidence=commitEvidence(root);
+  context.stage="network";
   const provider=new ethers.JsonRpcProvider(RPC);
   const network=await provider.getNetwork();
   if(network.chainId!==97n) throw new Error(`Expected BSC Testnet chainId 97, got ${network.chainId}`);
+  context.stage="observation-block";
+  const block=await observationBlock(provider);
+  context.block=block;
 
   const contracts={};
   for(const [label,spec] of Object.entries(specs)){
+    context.stage=`deployment-and-runtime:${label}`;
     const receipt=await provider.getTransactionReceipt(spec.tx);
     const tx=await provider.getTransaction(spec.tx);
     if(!receipt||!tx) throw new Error(`${label}: deployment transaction unavailable`);
@@ -100,8 +109,9 @@ async function main(){
     }
     if(tx.to!==null) throw new Error(`${label}: recorded deployment tx is not contract creation`);
     if(tx.from.toLowerCase()!==DEPLOYER.toLowerCase()) throw new Error(`${label}: deployer mismatch`);
+    if(receipt.blockNumber>block.number) throw new Error(`${label}: deployment is newer than observation block`);
 
-    const code=await provider.getCode(spec.address);
+    const code=await provider.getCode(spec.address,block.number);
     if(code==="0x") throw new Error(`${label}: no runtime code at recorded address`);
     const a=artifact(spec);
     const comparison=compareRuntime(code,a);
@@ -124,12 +134,14 @@ async function main(){
   const vault=new ethers.Contract(specs.Vault.address,vaultAbi,provider);
   const engine=new ethers.Contract(specs.Engine.address,engineAbi,provider);
 
+  context.stage="ownership-and-wiring";
+  const overrides={blockTag:block.number};
   const wiring={
-    registryOwner:await registry.owner(),
-    vaultOwner:await vault.owner(),
-    vaultEngine:await vault.engine(),
-    engineRegistry:await engine.registry(),
-    engineVault:await engine.vault()
+    registryOwner:await registry.owner(overrides),
+    vaultOwner:await vault.owner(overrides),
+    vaultEngine:await vault.engine(overrides),
+    engineRegistry:await engine.registry(overrides),
+    engineVault:await engine.vault(overrides)
   };
   if(wiring.registryOwner.toLowerCase()!==OWNER.toLowerCase()) throw new Error("Registry owner mismatch");
   if(wiring.vaultOwner.toLowerCase()!==OWNER.toLowerCase()) throw new Error("Vault owner mismatch");
@@ -138,10 +150,18 @@ async function main(){
   if(wiring.engineVault.toLowerCase()!==specs.Vault.address.toLowerCase()) throw new Error("Engine vault mismatch");
 
   const allCurrent=Object.values(contracts).every(x=>x.normalizedRuntimeMatch);
+  context.stage="block-consistency";
+  await assertObservationBlock(provider,block);
   const report={
     schema:"lqc-master7-futures-lineage-v1",
     status:"RECONCILED_READ_ONLY",
     chainId:Number(network.chainId),
+    evidence:context.evidence,
+    observedBlockNumber:block.number,
+    observedBlockHash:block.hash,
+    observedBlockTimestamp:block.timestamp,
+    verificationScope:"HISTORICAL_DEPLOYMENT_CLASSIFICATION_ONLY",
+    currentReleaseDeploymentVerified:allCurrent && !specs.Oracle.testOnly,
     currentArtifactLineage:allCurrent ? "ALL_RECORDED_RUNTIMES_MATCH_CURRENT_ARTIFACTS" : "ONE_OR_MORE_RECORDED_RUNTIMES_DIVERGE_FROM_CURRENT_ARTIFACTS",
     activationAuthorized:false,
     transactionOccurred:false,
@@ -155,11 +175,14 @@ async function main(){
     wiring
   };
 
-  const outputPath=path.join(root,"futures-lineage-report.json");
   fs.writeFileSync(outputPath,JSON.stringify(report,null,2)+"\n");
   console.log(JSON.stringify(report,null,2));
 }
 
 if(import.meta.url===new URL(`file://${process.argv[1]}`).href){
-  main().catch(error=>{console.error(error.stack||error.message);process.exit(1);});
+  main().catch(error=>{
+    writeFailure(outputPath,context,error);
+    console.error(error.stack||error.message);
+    process.exitCode=1;
+  });
 }
