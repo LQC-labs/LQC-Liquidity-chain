@@ -1,0 +1,30 @@
+name: Futures node observation synthetic
+on:
+  pull_request:
+    paths:
+      - "dex/research/futures-node-observation/**"
+      - "dex/scripts/verify-futures-deployment-lineage.mjs"
+      - ".github/workflows/futures-node-observation.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-node-observation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  synthetic-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install existing locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Run synthetic responses only without RPC access
+        run: node research/futures-node-observation/run-tests.cjs
