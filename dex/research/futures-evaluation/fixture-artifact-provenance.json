@@ -1,0 +1,96 @@
+{
+  "purpose": "IMMUTABLE_LOCAL_TEST_RECORDS_NOT_DEPLOYMENT",
+  "files": {
+    "LocalFuturesTradingCore": {
+      "path": "fixtures/artifact-records/LocalFuturesTradingCore.json",
+      "originalBytesSha256": "3f1410d0e83d521d405d7bd3d0303603978018f288d0ef88ca1a932f680b889f",
+      "normalizedContentSha256": "3f1410d0e83d521d405d7bd3d0303603978018f288d0ef88ca1a932f680b889f"
+    },
+    "LocalFuturesFundingV11": {
+      "path": "fixtures/artifact-records/LocalFuturesFundingV11.json",
+      "originalBytesSha256": "fbb78d75d7420cc5f172dcdb6614076c5b9567dfdfd65108dcc0db35b5d9211f",
+      "normalizedContentSha256": "fbb78d75d7420cc5f172dcdb6614076c5b9567dfdfd65108dcc0db35b5d9211f"
+    },
+    "LocalFuturesPartialV11": {
+      "path": "fixtures/artifact-records/LocalFuturesPartialV11.json",
+      "originalBytesSha256": "b8ac06e71a9c6c7ec714f52ebffa00d9ddff238079b1fa29927568c8cd578029",
+      "normalizedContentSha256": "b8ac06e71a9c6c7ec714f52ebffa00d9ddff238079b1fa29927568c8cd578029"
+    },
+    "LocalFuturesExposureLedger": {
+      "path": "fixtures/artifact-records/LocalFuturesExposureLedger.json",
+      "originalBytesSha256": "bb66e4515022a511131ecbcd1844482153240894bee6ae5e9a8d037efc5ca48a",
+      "normalizedContentSha256": "bb66e4515022a511131ecbcd1844482153240894bee6ae5e9a8d037efc5ca48a"
+    },
+    "LocalFuturesAttribution": {
+      "path": "fixtures/artifact-records/LocalFuturesAttribution.json",
+      "originalBytesSha256": "8a5145d8cc5d92864a9f74bb184fa2b4d3e219cc9c00c03d2024bbf52ecf11dc",
+      "normalizedContentSha256": "8a5145d8cc5d92864a9f74bb184fa2b4d3e219cc9c00c03d2024bbf52ecf11dc"
+    },
+    "LocalFuturesSettlementCoordinator": {
+      "path": "fixtures/artifact-records/LocalFuturesSettlementCoordinator.json",
+      "originalBytesSha256": "df9f4a463febe82d5dd0dbe60ead300c6e2e1520de733847a29491225b7de912",
+      "normalizedContentSha256": "df9f4a463febe82d5dd0dbe60ead300c6e2e1520de733847a29491225b7de912"
+    },
+    "LocalFuturesCollectionExecutor": {
+      "path": "fixtures/artifact-records/LocalFuturesCollectionExecutor.json",
+      "originalBytesSha256": "73b449d2b82cbfe7f6ba3b42c0e1bd86ca1133f2f951e8bfa8b4d1f9667a186e",
+      "normalizedContentSha256": "73b449d2b82cbfe7f6ba3b42c0e1bd86ca1133f2f951e8bfa8b4d1f9667a186e"
+    },
+    "LocalFuturesPayoutSpecification": {
+      "path": "fixtures/artifact-records/LocalFuturesPayoutSpecification.json",
+      "originalBytesSha256": "a2f74505f6ab7403a0e7459f583b0646834b626305b2287b10c1892f9e53e8e0",
+      "normalizedContentSha256": "a2f74505f6ab7403a0e7459f583b0646834b626305b2287b10c1892f9e53e8e0"
+    },
+    "LocalFuturesPayoutExecutor": {
+      "path": "fixtures/artifact-records/LocalFuturesPayoutExecutor.json",
+      "originalBytesSha256": "a102506179c637939da7ecf7842a9b197a790c5161577b22bc4c8eb7a5e84aa2",
+      "normalizedContentSha256": "a102506179c637939da7ecf7842a9b197a790c5161577b22bc4c8eb7a5e84aa2"
+    },
+    "LocalFuturesWithdrawalVerifier": {
+      "path": "fixtures/artifact-records/LocalFuturesWithdrawalVerifier.json",
+      "originalBytesSha256": "4c7076def997c39c40b035e0b7eb0f808b4af48d3fbc869f48ae10df40488c5c",
+      "normalizedContentSha256": "4c7076def997c39c40b035e0b7eb0f808b4af48d3fbc869f48ae10df40488c5c"
+    },
+    "LocalFuturesReleaseVerifier": {
+      "path": "fixtures/artifact-records/LocalFuturesReleaseVerifier.json",
+      "originalBytesSha256": "ac6288b62375e7323cdd498516c2d704604063b391612455ece28bdfc5343543",
+      "normalizedContentSha256": "ac6288b62375e7323cdd498516c2d704604063b391612455ece28bdfc5343543"
+    },
+    "LocalFuturesLinkedExposureVerifier": {
+      "path": "fixtures/artifact-records/LocalFuturesLinkedExposureVerifier.json",
+      "originalBytesSha256": "419465f1382915e5a749e1103e96b8d5ef8baea62eacc30f4ccb6b08c77d3ad8",
+      "normalizedContentSha256": "419465f1382915e5a749e1103e96b8d5ef8baea62eacc30f4ccb6b08c77d3ad8"
+    },
+    "LocalFuturesModularTradingDomainRegistry": {
+      "path": "fixtures/artifact-records/LocalFuturesModularTradingDomainRegistry.json",
+      "originalBytesSha256": "84da5150ca9aaf971c15c062f995d11eb053598d09ae145459a0e656bcff6fed",
+      "normalizedContentSha256": "84da5150ca9aaf971c15c062f995d11eb053598d09ae145459a0e656bcff6fed"
+    },
+    "LocalVNextToken": {
+      "path": "fixtures/artifact-records/LocalVNextToken.json",
+      "originalBytesSha256": "1e48621ab92a471b1676c2ad16dbcf396abbdc4c4e57f9e307745ea27f629b06",
+      "normalizedContentSha256": "1e48621ab92a471b1676c2ad16dbcf396abbdc4c4e57f9e307745ea27f629b06"
+    },
+    "LocalVNextOracle": {
+      "path": "fixtures/artifact-records/LocalVNextOracle.json",
+      "originalBytesSha256": "f6dfe98cadcd4803852f017ee1c3b1b0fa9ec0e11263eabd1e8fdf86d1680ce7",
+      "normalizedContentSha256": "f6dfe98cadcd4803852f017ee1c3b1b0fa9ec0e11263eabd1e8fdf86d1680ce7"
+    },
+    "LocalFuturesPreparedStateVerifier": {
+      "path": "fixtures/artifact-records/LocalFuturesPreparedStateVerifier.json",
+      "originalBytesSha256": "4f0e37cc4be3de36deb35b2d2f3f62d5da9fce8840175c78492363eac02ece33",
+      "normalizedContentSha256": "4f0e37cc4be3de36deb35b2d2f3f62d5da9fce8840175c78492363eac02ece33"
+    },
+    "LocalFuturesTradingOperationPolicy": {
+      "path": "fixtures/artifact-records/LocalFuturesTradingOperationPolicy.json",
+      "originalBytesSha256": "c7b3f5286ed7e944fb44ec2155a9c947db5d952e161e5bf55cd93e738d7b3754",
+      "normalizedContentSha256": "c7b3f5286ed7e944fb44ec2155a9c947db5d952e161e5bf55cd93e738d7b3754"
+    },
+    "LocalFuturesTradingPreflightVerifier": {
+      "path": "fixtures/artifact-records/LocalFuturesTradingPreflightVerifier.json",
+      "originalBytesSha256": "f5e1a2b81e82de61d6769ca5fcab53f4ebf8db0cd24328a6c26f647fe0782026",
+      "normalizedContentSha256": "f5e1a2b81e82de61d6769ca5fcab53f4ebf8db0cd24328a6c26f647fe0782026"
+    }
+  },
+  "limits": "Historical compiler artifacts copied byte-for-byte; not compiled from current main or approved for deployment."
+}

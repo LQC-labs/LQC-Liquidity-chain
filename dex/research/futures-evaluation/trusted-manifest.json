@@ -1,0 +1,75 @@
+{
+  "manifestSchema": "LQC_LOCAL_EVIDENCE_MANIFEST_V2",
+  "source": {
+    "path": "C:/Users/user/LQC-Integration/LQC-V11-Equivalence-Recheck-20261018/results-task-2-30/results/epoch-boundary/target-evidence.json",
+    "sha256": "cd561d217f77c846febd65b862826e7fa8873f475c4fe923c41b09173b966041",
+    "adapterSchema": "TASK_2_30_RECORDED_VIEWS_V1"
+  },
+  "expectedScope": {
+    "chainId": null,
+    "evidenceSchema": null,
+    "registry": "0x4ed7c70F96B99c776995fB64377f0d4aB3B0e1C1",
+    "contracts": [
+      {
+        "address": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+        "runtimeHash": "0x6255d05985440f4dda4571a59e9e7aa68c473a5f784cb9efd4c9e1b744dc8120"
+      },
+      {
+        "address": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+        "runtimeHash": "0xf99243ca96a829aa49382ac4d2ef7d480d5ae1d4ae71b4b578eb66f791b46594"
+      },
+      {
+        "address": "0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e",
+        "runtimeHash": "0x36eefc6c1b176b75ed8cf67617e43c119f9dd3312aaa957b53b1149ac5faeb03"
+      },
+      {
+        "address": "0xCafac3dD18aC6c6e92c921884f9E4176737C052c",
+        "runtimeHash": "0x397963e5e0ea576102164951f37e85050fdbc1dd86233223ce3592edbe169d6c"
+      },
+      {
+        "address": "0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82",
+        "runtimeHash": "0x2501f2a82f7dc2c785ce02e0c5f64800400a2b52de2dbe4d98f47f6878b17301"
+      },
+      {
+        "address": "0x0B306BF915C4d645ff596e518fAf3F9669b97016",
+        "runtimeHash": "0x038281da0113a91e0dfe1e0779f84515bdccae4cfac2903ae0c4bd34704372e9"
+      },
+      {
+        "address": "0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1",
+        "runtimeHash": "0x5760617eba6d0169561d39bc992eb05e105b27cef51b7233514855dbcebeb8ff"
+      },
+      {
+        "address": "0x68B1D87F95878fE05B998F19b66F4baba5De1aed",
+        "runtimeHash": "0x6a86bf144c03c5882139ed98e7fe872f1cff6dc1ac53cdcc622849d485e930f0"
+      },
+      {
+        "address": "0x3Aa5ebB10DC797CAC828524e59A333d0A371443c",
+        "runtimeHash": "0x957d6df4fe558962d320bd2f6a7670a0aed82245243f505c9d1f4fb42fd5328d"
+      },
+      {
+        "address": "0x8dAF17A20c9DBA35f005b6324F493785D239719d",
+        "runtimeHash": "0x8cb3e745d1c0ac0c6d8975c712c0960a627906163da8e13192fb1de016ba65ec"
+      },
+      {
+        "address": "0x8A791620dd6260079BF849Dc5567aDC3F2FdC318",
+        "runtimeHash": "0x138e0ef81d82d0566703834819f99bc819f1f3156a0bcfc16397523426e2b10c"
+      },
+      {
+        "address": "0x610178dA211FEF7D417bC0e6FeD39F05609AD788",
+        "runtimeHash": "0x7a63db65473ee4b79d75bf9099e03e8fb695f38b34e1e6fd8d268f0c3a0a56f5"
+      }
+    ],
+    "queryBlock": {
+      "number": null,
+      "hash": null
+    }
+  },
+  "unitPolicy": {
+    "collateralDecimals": [
+      "6",
+      "18"
+    ],
+    "priceUnit": "FIXED_18"
+  },
+  "trust": "LOCAL_REVIEW_PIN_NOT_OPERATIONAL_APPROVAL_OR_CHAIN_PROOF"
+}

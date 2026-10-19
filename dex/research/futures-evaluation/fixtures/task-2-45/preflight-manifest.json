@@ -1,0 +1,10 @@
+{
+  "originalPath": "C:/Users/user/LQC-Integration/github-main-5d8be369-20261016/dex/test/futures-v11-trading-core-protected-withdrawal.test.mjs",
+  "copyRel": "dex/test/futures-v11-trading-core-protected-withdrawal.test.mjs",
+  "prefixBytes": 37277,
+  "suffixBytes": 4,
+  "originalSha256": "7a6299cca7434aaee8c2884fb106c699ca46f111ae9ea0786e4c4a2c2a8f0393",
+  "isolatedSha256": "c0f057b36269cadee70f1a041f6250a7f1d015e78db9a61eaf4a45ea80fddbd0",
+  "allowedSha256": "fecc5696ca9a7e82326d81fba30350a543464ee1e8da82793f9f49c8a33440d0",
+  "timeout": 60000
+}
