@@ -1,0 +1,164 @@
+{
+  "schema": "LQC_REGISTRY_RECONSTRUCTION_PUBLIC_RECORD_V1",
+  "recordKind": "PUBLIC_SUMMARY_DERIVED_FROM_TASK_2_66_NOT_ORIGINAL_MANIFEST",
+  "candidateCommit": "e8bc70ff5672e54503a161e36a36e5a9e6a0dac7",
+  "sourceName": "contracts/futures/LQCFuturesMarketRegistry.sol",
+  "candidateFiles": {
+    "dex/contracts/futures/LQCFuturesMarketRegistry.sol": {
+      "sha256": "019e8de29043e73098458a0945bd256c6276c3e808fe1d0c32bb1a691b4aedb2",
+      "gitBlob": "f5dd408707d82500462f3c0f8a63d48c638a9550"
+    },
+    "dex/scripts/compile.mjs": {
+      "sha256": "6a0726cc035b7f6b91fcc3bd671075f5619750d5c916e9e38c50ea7e43904fe6",
+      "gitBlob": "1035530462870679d6c5bb1fc9bf8d3f2f12eb1f"
+    },
+    "dex/package-lock.json": {
+      "sha256": "43850ee4e75f707ef296eae9f3e9496676195c0c4be12625a007a29f7eafcc85",
+      "gitBlob": "871ba530cf90a09cf0da383799960f443961ae18"
+    },
+    "dex/package.json": {
+      "sha256": "26df467fc3121694df8d1eb3c6624d1e8b08562bf57536b32ff1d19514e2197f",
+      "gitBlob": "e8c81d12c70f6c139711475e3984ed99d0a2dfaf"
+    }
+  },
+  "compiler": "0.8.30+commit.73712a01.Emscripten.clang",
+  "settings": {
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "viaIR": true,
+    "evmVersion": "shanghai",
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode.object",
+          "evm.deployedBytecode.object"
+        ]
+      }
+    }
+  },
+  "sourceClosure": "One import-free Registry; historical source key preserved. Not an entire historical npm-ci build.",
+  "packages": [
+    {
+      "location": "node_modules/solc",
+      "version": "0.8.30",
+      "integrity": "sha512-9Srk/gndtBmoUbg4CE6ypAzPQlElv8ntbnl6SigUBAzgXKn35v87sj04uZeoZWjtDkdzT0qKFcIo/wl63UMxdw==",
+      "tarballSha256": "99fc3d72fadb57f7be4be1d416a4cc6f839bef4c9ab6e7517770ac8f8e92fb9b"
+    },
+    {
+      "location": "node_modules/memorystream",
+      "version": "0.3.1",
+      "integrity": "sha512-S3UwM3yj5mtUSEfP41UZmt/0SCoVYUcU1rkXv+BQ5Ig8ndL4sPoJNBUJERafdPb5jjHJGuMgytgKvKIf58XNBw==",
+      "tarballSha256": "64f8daa9b9c215b22bb534fe9916e335e99b7cedab7bc9a05f4b2bc4dbf7f2ff"
+    },
+    {
+      "location": "node_modules/follow-redirects",
+      "version": "1.16.0",
+      "integrity": "sha512-y5rN/uOsadFT/JfYwhxRS5R7Qce+g3zG97+JrtFZlC9klX/W5hD7iiLzScI4nZqUS7DNUdhPgw4xI8W2LuXlUw==",
+      "tarballSha256": "eba127bdabdf79d668187c7bac7123c136eee08930dd421416ba8a72613bae77"
+    },
+    {
+      "location": "node_modules/semver",
+      "version": "5.7.2",
+      "integrity": "sha512-cBznnQ9KjJqU67B52RMC65CMarK2600WFnbkcaiwWq3xy/5haFJlshgnpjovMVJ+Hff49d8GEn0b87C5pDQ10g==",
+      "tarballSha256": "e548374dbc4898ddcf349bde966885ac87949be21fd04cd096f53fef0ce655f9"
+    },
+    {
+      "location": "node_modules/js-sha3",
+      "version": "0.8.0",
+      "integrity": "sha512-gF1cRrHhIzNfToc802P800N8PpXS+evLLXfsVpowqmAFR9uwbi89WvXg2QspOmXL8QL86J4T1EpFu+yUkwJY3Q==",
+      "tarballSha256": "e7553c170ef6c9bdd5ae140bb6216867c671918e6c7bb8b2878ecfd45fd25fa4"
+    },
+    {
+      "location": "node_modules/debug",
+      "version": "4.4.3",
+      "integrity": "sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==",
+      "tarballSha256": "89c1ac9c946ee8905a875837114528e97eeae35e03be3190584b2216af43e4a7"
+    },
+    {
+      "location": "node_modules/ms",
+      "version": "2.1.3",
+      "integrity": "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==",
+      "tarballSha256": "f6616e15e530ed552f9daa2d3ce71963947c6bc7c98c9b64fd3e673fd02622c6"
+    }
+  ],
+  "loadedCompilerFiles": {
+    "node_modules/solc/index.js": "5621a3a6709de448b29177adc0729bbb3d7fecc3e089b4566270fdb828afe222",
+    "node_modules/solc/wrapper.js": "eec68ccb2a7bad57950dc56d3ef5b45a8a95b75d85e7ca1012cebeee3774b28a",
+    "node_modules/memorystream/index.js": "cbcfd7ab33d1009f5ae828ca45a918e93e3752b054befecf09964869d88ea612",
+    "node_modules/follow-redirects/index.js": "bdd5d91f6f088a3b73a8703e6fcf09fe92c5f24e5ad8b6b5aff5b26a95a2ace3",
+    "node_modules/follow-redirects/debug.js": "8dbf7e71a9292be180e3469a6b7a164171d3c39dec79e5dbc4aa1c9f09509faf",
+    "node_modules/solc/formatters.js": "03d0445abf318665803a29287c66ab858d0eff01183866f58757f4f2f61fbaa3",
+    "node_modules/solc/common/helpers.js": "8086fe96c9f4edbf375122311153459502f9cae6708c98b4ae3b6c0e4314334c",
+    "node_modules/solc/bindings/index.js": "1868e396a4b5264537fff5e41eed7d63af44130ad39bc522f67dd068a27e43fb",
+    "node_modules/solc/bindings/core.js": "356a6b6a69d88e373a4952e18112db681176d05a2e18a30bcf171193d4bb40e9",
+    "node_modules/solc/bindings/helpers.js": "6ea2a194777cef9d450d2fc1188fcb46e3220cbfe5197dd8b79e1b60a7c8a052",
+    "node_modules/solc/translate.js": "5ec4a375482a58b9ce6b75bfec3c1af2c88a542cbd835c348f519da444582b4c",
+    "node_modules/solc/linker.js": "548965a73525cd10657639ab3563a2657d357fffe9cf0e8958c0e6e6fbd9bd1f",
+    "node_modules/js-sha3/src/sha3.js": "13590a201b2199f00b74ee711edc1bdf744705dca12f43cc6ef64c32b5767fa9",
+    "node_modules/semver/semver.js": "433d72cfd2383f94c8266e3af185841e60ae88d7345d79f87073f473119425d8",
+    "node_modules/solc/bindings/compile.js": "26085b776f88924d3ad3c5a9a0c1e27215aaa12c5468b6b4de184352531b849f",
+    "node_modules/solc/soljson.js": "3bb491a777f76dff9b2fe73ce29ca20e21a971b59a2f2cf8f73415424f00be06"
+  },
+  "unusedCliDependenciesNotRestored": [
+    "tmp@0.0.33",
+    "os-tmpdir@1.0.2"
+  ],
+  "originalEvidenceHashes": {
+    "reconstructionManifestSha256": "4b965b2d43fde603be18742d3927922b7f885ea17e88a3c04acb24ae5b76cda2",
+    "reconstructionScriptSha256": "f27bf48fc48b6e6c7ba084c28d007a6c34308f7997076c3181325f925ad19e6f",
+    "comparisonSha256": "692f4b1fd631131de18e4fdf3c83608b30d49b158aeb348b7b11ede2067fa8d4",
+    "inputSha256": "ed92d85ea60fa988893ef658bce26b9f9f78e02212096bbc8c08b899f51acfa3",
+    "outputSha256": "d23cb51f34b06a917b5f9c65e0591da77ac00f811eb1ac0b254ccc9b41d83d14",
+    "observationReportSha256": "9e93abafefdefda0f2c9e066dfb7fd18e104b081f7a77d706c8b535f9396f2a3",
+    "observationJournalSha256": "780818a1030af63ac3fd03d1cc9e39829e27ae5be941ef47dfd6a845c1e5fdc7"
+  },
+  "observation": {
+    "runId": "9cdb01fb-070f-4b8e-b408-57a98d7c34ed",
+    "chainId": "97",
+    "Q": {
+      "number": "0x835c593",
+      "hash": "0x22711ba1e2ae25279883c0430e2101ad5577cbf715d45d235efaf29977d180b6",
+      "parentHash": "0xcea6e27d199ecc060bb8f56133d8b3f2706b6a173c26ffc88ff0fac1a3334954",
+      "timestamp": "0x6ad655ab"
+    },
+    "registry": "0xfbd1c5c8dbbdadf3eb834f351366daf55f2d73b0",
+    "evidenceLevel": "NODE_OBSERVED",
+    "trustStatus": "UNAPPROVED",
+    "runtimeBytes": 2130,
+    "runtimeKeccak256": "0x133f59f02a8ae90873ceef749b582e4eabe2daad5e595326fd660ea0f7d2233e",
+    "runtimeSha256": "3d1e1eb79a21136bb5d708f5bb13ca00f416e11da8167dd754942a569d9592f0"
+  },
+  "recordedResult": {
+    "status": "RECONSTRUCTED_RUNTIME_MATCH",
+    "runtimeBytes": 2130,
+    "runtimeKeccak256": "0x133f59f02a8ae90873ceef749b582e4eabe2daad5e595326fd660ea0f7d2233e",
+    "differenceCount": 0,
+    "metadataIncluded": true,
+    "maskingApplied": false,
+    "immutableOrLibraryPatching": false
+  },
+  "judgments": {
+    "reconstruction": "RECONSTRUCTED_RUNTIME_MATCH",
+    "deploymentOriginalArtifact": "REQUIRED_ARTIFACT_MISSING",
+    "actualWalletArtifactProvenance": "UNPROVEN",
+    "subsequentSixBuilds": "MISMATCH",
+    "independentChainAuthentication": false,
+    "contractSafetyEstablished": false,
+    "v1Approval": false
+  },
+  "evaluationStatus": "NOT_EVALUATED",
+  "confirmedAmount": null,
+  "fundsAuthority": false,
+  "settlementAuthorized": false,
+  "createsClaim": false,
+  "consumesHistory": false,
+  "returnAuthorized": false,
+  "heldUseAuthorized": false,
+  "lpRecoveryAuthorized": false,
+  "rightsTransferAuthorized": false,
+  "publicRuntimeReview": "Minimal exact hex bytes from a public chain-97 Registry runtime; no endpoint, credential, wallet key, calldata or user filesystem paths. Not original wire-response bytes.",
+  "portableScript": "reproduce.cjs is a path-independent adaptation. The original task-2-66 script is separately hash-identified above and preserved locally. This adaptation was syntax-checked only in task 2/67; compilation was not rerun."
+}

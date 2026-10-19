@@ -1,0 +1,7 @@
+{
+  "compiler-input.json": "ed92d85ea60fa988893ef658bce26b9f9f78e02212096bbc8c08b899f51acfa3",
+  "observed-runtime.hex": "4e22fbf5b4678eab2fda79ac8edaf7210d0e7a7085640401b84052f36bba340b",
+  "provenance.json": "d16f016ec3784e11c5267c4c73a8b78cebf44c7d85a5e2bb7054307a5cdd4b14",
+  "README.md": "c28010bdf0206a3c8024f8b845a1142f9f3cec084a6fcaaee92518ee1afd215a",
+  "reproduce.cjs": "e53ac66bc182f20a710f2bf49466b8e97a40219ba515d068110022299b8f0186"
+}
