@@ -1,6 +1,6 @@
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto'),assert=require('node:assert/strict');
 const root=__dirname,sha=p=>crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
-const EXPECTED_PLAN_SHA256='58781128cb4f9ec30cfb69cb8de0741a70b29b0b605b623e7e336669437b1b74';
+const EXPECTED_PLAN_SHA256='f0b575765b894060459e289923aadf3c73807394ae828e3f27454d2564688fb7';
 let failureOut=null;
 async function main(){
  assert.equal(sha(root+'/suite-plan-policy-v1.json'),EXPECTED_PLAN_SHA256,'TEST_PLAN_HASH_MISMATCH');

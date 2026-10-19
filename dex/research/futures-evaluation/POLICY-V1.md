@@ -36,6 +36,18 @@ The real recorded candidate is diagnosed through the unchanged PR #403 verifier,
 retains all blockers, and is explicitly ineligible for retroactive V1 application.
 There is no independently verified new-Series production source importer here.
 
+The recorded-candidate diagnosis reuses PR #403's existing adapter and diagnostic
+bridge without implementing another Q/journal/Receipt/history validator. Its
+`sourceBinding` retains the original semantic commitment and raw byte hashes.
+`evidenceLevels` separates `LOCAL_MATCH`, `UNVERIFIED`, and `INELIGIBLE`; a failed
+expected-commitment comparison throws `RECORDED_SOURCE_COMMITMENT_MISMATCH` with
+`evidenceStatus=MISMATCH`. An optional expected commitment constrains comparison,
+not trust. Caller-supplied verification or approval fields are rejected.
+Stored exit-price consistency is local evidence only, not Oracle authentication.
+Chain authenticity, finality, V1 approval, real cash and durable consumption remain
+unverified. Existing-Series data cannot enter the V1 research source capability.
+This adapter adds no RPC, chain execution, policy settings or financial authority.
+
 ## Segmentation and Funding
 
 Boundary union: every OI timestamp, all official Epoch ends including E, and O+kD.

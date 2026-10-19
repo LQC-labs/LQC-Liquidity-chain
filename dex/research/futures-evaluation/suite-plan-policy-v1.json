@@ -88,6 +88,21 @@
         "policy V1 prices residual ledger and return diagnosis sub raw amounts are aggregated per account not ceiled per segment",
         "policy V1 prices residual ledger and return diagnosis open Series cannot freeze its incomplete cumulative collection principal"
       ]
+    },
+    {
+      "file": "test/policy-v1-recorded-evidence.test.mjs",
+      "sha256": "a013f09e6236ce38703ed5af5710863e62d4d1192318a012b2a846382c7bb710",
+      "fullTitles": [
+        "policy V1 recorded evidence levels binds existing verified output and raw hashes without changing its evidence",
+        "policy V1 recorded evidence levels separates local stored prices from chain finality and Oracle authentication",
+        "policy V1 recorded evidence levels retains blockers null amounts and every disabled authority",
+        "policy V1 recorded evidence levels accepts only the matching original commitment as a comparison constraint",
+        "policy V1 recorded evidence levels reports an explicit commitment mismatch rather than unknown authentication",
+        "policy V1 recorded evidence levels rejects forged verification approval and caller supplied prior output",
+        "policy V1 recorded evidence levels rejects mixing V1 requests into the legacy diagnosis",
+        "policy V1 recorded evidence levels does not turn a recorded diagnosis into a V1 evaluation source",
+        "policy V1 recorded evidence levels rejects malformed commitments and hidden authentication fields"
+      ]
     }
   ]
 }

@@ -6,7 +6,7 @@ import {validatePolicyV1Config} from './policy-v1-config.mjs';
 import {policyV1Source} from './policy-v1-source.mjs';
 import {buildPolicyV1Segments} from './policy-v1-segments.mjs';
 import {verifyPolicyV1Prices} from './policy-v1-price-evidence.mjs';
-import {evaluateVerifiedLocalCandidate} from './verified-diagnostic-input.mjs';
+import {diagnoseRecordedEvidenceForPolicyV1} from './policy-v1-recorded-evidence.mjs';
 export function evaluatePolicyV1(context,request){
  const configuration=validatePolicyV1Config(request.config);
  const base={schema:'LQC_POLICY_V1_RESEARCH_RESULT',economicPolicy:ECONOMIC_POLICY_VERSION,calculationVersion:POLICY_CALCULATION_VERSION,evaluationStatus:'NOT_EVALUATED',amountSeal:'BLOCKED_NO_INDEPENDENT_PROOF',confirmedAmount:null,monetaryResult:null,settlementComplete:false,activationAllowed:false,...NO_AUTHORITY};
@@ -60,9 +60,8 @@ eq(a.amounts,b.amounts,'RETURN_PROOF_RECONCILIATION');record(a.amounts,['heldRaw
  if(reserve>held)return {...base,blockers:[...base.blockers,'INSUFFICIENT_OWN_COLLATERAL_FOR_PROVEN_RESERVE']};
  return {...base,returnState:'SYNTHETIC_DIAGNOSTIC_ONLY',diagnosticReturnRaw:(held-reserve).toString(),diagnosticReservedRaw:reserve.toString()};
 }
-export function diagnoseRecordedCandidateForPolicyV1(){
- const prior=evaluateVerifiedLocalCandidate();
- return {schema:'LQC_POLICY_V1_EXISTING_CANDIDATE_DIAGNOSIS',economicPolicy:ECONOMIC_POLICY_VERSION,calculationVersion:POLICY_CALCULATION_VERSION,evaluationStatus:'NOT_EVALUATED',confirmedAmount:null,monetaryResult:null,policyV1Amounts:null,activationAllowed:false,...NO_AUTHORITY,blockers:[...prior.result.blockers,'EXISTING_SERIES_NOT_APPROVED_POLICY_V1','POLICY_V1_PARAMETERS_AND_PROOFS_MISSING'],prior};
+export function diagnoseRecordedCandidateForPolicyV1(...args){
+ return diagnoseRecordedEvidenceForPolicyV1(...args);
 }
 
 
