@@ -1,3 +1,4 @@
+import {loadVerifiedRawIntervalReference,bindRawSubmittedIntervals} from './raw-submission-interval-reference.mjs';
 // Test-only projections of existing branded loaders. No source registration or caller success flags.
 import {loadPolicyV1ResearchCase} from './policy-v1-source.mjs';
 import {evaluatePolicyV1} from './policy-v1-evaluator.mjs';
@@ -32,11 +33,10 @@ function epochIdentity(id,accountGroup){
  const parts=id.split('|');assert.equal(parts.length,4,'SUBMITTED_EPOCH_KEY_SCHEMA');const [owner,phase,epoch,period]=parts;
  const e=phase==='OFFICIAL'?epoch:epoch==='GAP'?null:epoch,p=phase==='GAP'?period:null;assert(phase==='GAP'||period==='','SUBMITTED_OFFICIAL_PERIOD');fixedGroupKey(owner,phase,e,p);return {owner,phase,epoch:e,period:p};
 }
-export function projectActualSharedSubmission(name,r,segmentRows){
+export function projectActualSharedSubmission(name,r,rawReference,sharedContext){
  assert(['sequential','partial'].includes(name),'UNSUPPORTED_SHARED_CONNECTION');assert.equal(r.policyMode,'NEW_POLICY_V1_SYNTHETIC','SUBMITTED_POLICY_MODE');
  const unlinked=[],fields={scope:Object.fromEntries(['chainId','domain','series','token','decimals','core','funding','partial'].map(k=>[k,r.scope[k]])),policyMode:r.policyMode,units:null,Q:null,accounts:r.inventory.accounts,positions:null,transitions:null,lots:null,obligations:null,lotAmounts:null,positionTotals:null,accountTotals:null};
- const unavailable=(field,reason)=>unlinked.push({field,reason}),segments=new Map(segmentRows.map(x=>[x.id,x]));
- const segment=id=>{assert(segments.has(id),'SUBMITTED_SEGMENT_LOOKUP_MISSING');return segments.get(id);};
+ const unavailable=(field,reason)=>unlinked.push({field,reason}),binding=bindRawSubmittedIntervals(name,r,rawReference,sharedContext),segment=binding.resolve;
  if(r.inventory.positions!==null)fields.positions=r.inventory.positions.map(p=>({id:p.pid,account:p.account,side:p.side,quantity:quantity(p.initialQuantity18)}));
  if(r.inventory.transitions!==null)fields.transitions=r.inventory.transitions.map(t=>({id:t.index,timestamp:t.timestamp,pid:t.pid,account:t.account,side:t.side,sequence:t.sequence,old:quantity(t.oldQty),next:quantity(t.nextQty)}));
  if(r.inventory.lots!==null)fields.lots=r.inventory.lots.map(l=>({id:l.pid+':'+(l.sequence??'OPEN'),pid:l.pid,account:l.account,sequence:l.sequence,kind:l.kind,quantity:quantity(l.quantity18)}));
@@ -48,14 +48,14 @@ export function projectActualSharedSubmission(name,r,segmentRows){
  }
  for(const [field,value]of Object.entries(fields))if(value===null)unavailable(field,field==='Q'?'SUBMISSION_QUERY_BLOCK_HAS_NUMBER_HASH_BUT_NO_TIMESTAMP':'SUBMITTED_TABLE_OR_UNIT_EVIDENCE_MISSING');
  for(const field of ['O','E','D','rBps','segments','integrals','openPositions','pendingTail'])unavailable(field,'NO_INDEPENDENT_FIELD_IN_SHARED_SUBMISSION');
- unavailable('segmentBoundaries','FROM_EXISTING_CALCULATOR_SEGMENT_ID_LOOKUP_NOT_SUBMISSION_PROOF');
+ unavailable('segmentBoundaries','RAW_SOURCE_BOUNDARIES_BOUND_BUT_NOT_FIELDS_IN_SUBMITTED_SCHEMA');
  return {fields,unlinked};
 }
 export function checkExistingSharedConnection(name,submittedRequest=null){
  assert(['sequential','partial'].includes(name),'UNSUPPORTED_SHARED_CONNECTION');const pair=loadSharedReconciliationCase(name),r=submittedRequest===null?pair.request:submittedRequest,observed=loadFixedObligationObservation(name);
- const projection=projectActualSharedSubmission(name,r,observed.result.history.segments),submissionComparison=compareFixedSubmission(name,projection);
+ const projection=projectActualSharedSubmission(name,r,loadVerifiedRawIntervalReference(name),pair.context),submissionComparison=compareFixedSubmission(name,projection);
  const diagnosis=diagnoseSharedReconciliation(pair.context,r);
- return {comparison:observed.comparison,submissionComparison,projection,diagnosis,queryBlockObservation:r.scope.queryBlock,scopeEvidence:'EXISTING_PINNED_SYNTHETIC_CONTEXT_ONLY_NOT_CHAIN_AUTHENTICATION'};
+ return {rawIntervalBinding:bindRawSubmittedIntervals(name,r,loadVerifiedRawIntervalReference(name),pair.context).diagnostic,comparison:observed.comparison,submissionComparison,projection,diagnosis,queryBlockObservation:r.scope.queryBlock,scopeEvidence:'EXISTING_PINNED_SYNTHETIC_CONTEXT_ONLY_NOT_CHAIN_AUTHENTICATION'};
 }
 export function observeFixedCashLedger(){
  const token='0x000000000000000000000000000000000000000d',spec={schema:'LQC_POLICY_V1_LEDGER_MODEL',scope:{chainId:'31337',domain:'101',series:'201',token,decimals:'6'},policyVersion:'LQC_SETTLEMENT_POLICY_V1',calculationVersion:'LQC_POLICY_V1_RESEARCH_CALCULATOR_1',policyCommitment:hash({synthetic:'cash-reference-policy'}),obligationId:hash({synthetic:'arithmetic-not-funding'}),obligationKind:'FUNDING',debtors:[{account:accounts.A,amount:{n:'7',d:'5'}},{account:accounts.B,amount:{n:'3',d:'5'}}],creditors:[{account:accounts.C,amount:{n:'8',d:'5'}},{account:accounts.D,amount:{n:'2',d:'5'}}]};

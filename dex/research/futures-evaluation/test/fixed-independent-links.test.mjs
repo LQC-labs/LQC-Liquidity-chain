@@ -1,3 +1,4 @@
+import {loadVerifiedRawIntervalReference} from '../lib/raw-submission-interval-reference.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {compareFixedSubmission,fixedGroupKey,validateFixedReferenceBytes,readFixedReference} from '../lib/fixed-independent-comparator.mjs';
@@ -7,8 +8,8 @@ import {buildSyntheticCashEventViews,validateSyntheticCashEventLinks,SYNTHETIC_C
 const copy=x=>structuredClone(x),bad=(fn,part)=>assert.throws(fn,e=>e.message.includes(part));
 describe('fixed reference submitted layers and event links',function(){
  this.timeout(30000);let partial,sequential,segments,eventViews,binding,cash;
- before(()=>{partial=loadSharedReconciliationCase('partial');sequential=loadSharedReconciliationCase('sequential');segments=loadFixedObligationObservation('partial').result.history.segments;cash=observeFixedCashLedger();binding=cash.model.binding;eventViews=buildSyntheticCashEventViews(binding);});
- const projection=r=>projectActualSharedSubmission('partial',r,segments);
+ before(()=>{partial=loadSharedReconciliationCase('partial');sequential=loadSharedReconciliationCase('sequential');segments=loadVerifiedRawIntervalReference('partial');cash=observeFixedCashLedger();binding=cash.model.binding;eventViews=buildSyntheticCashEventViews(binding);});
+ const projection=r=>projectActualSharedSubmission('partial',r,segments,partial.context);
  const compare=r=>compareFixedSubmission('partial',projection(r));
  const corrupt=(field,change,code)=>{const x=copy(eventViews);change(x[field]);bad(()=>validateSyntheticCashEventLinks(x.ledgerEvents,x.bookEvents,x.terminals,binding),code);};
  it('actual partial submitted layers match fixed tables without calculated clones',()=>{const x=checkExistingSharedConnection('partial');assert.equal(x.submissionComparison.comparison,'PARTIAL_FIXED_SUBMISSION');for(const name of ['accounts','positions','transitions','lots','obligations','lotAmounts','positionTotals','accountTotals'])assert(x.submissionComparison.comparedFields.includes(name));assert.equal(x.submissionComparison.fullSubmissionConnectionEstablished,false);});
