@@ -30,3 +30,5 @@ jobs:
         run: node research/futures-evaluation/run-tests.cjs
       - name: Verify settlement link diagnosis and fixed test runner without a chain
         run: node research/futures-evaluation/run-settlement-link-tests.cjs research/futures-evaluation/.results/settlement-link-ci new
+      - name: Verify shared obligation reconciliation and identity guards without a chain
+        run: node research/futures-evaluation/run-shared-reconciliation-tests.cjs research/futures-evaluation/.results/shared-reconciliation-ci new
