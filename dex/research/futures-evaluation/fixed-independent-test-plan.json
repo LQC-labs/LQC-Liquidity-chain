@@ -137,6 +137,33 @@
         "longOpen actual submission metadata forged caller context cannot become a source",
         "longOpen actual submission metadata nonexistent submitted boundaries stay auxiliary and every execution authority stays false"
       ]
+    },
+    {
+      "file": "test/fixed-cash-recalculation.test.mjs",
+      "sha256": "47a47e08ede6724d1130fae38d5bda6db77df72387dc84812a8042208e28231b",
+      "fullTitles": [
+        "fixed cash recalculation rights connection same private ledger projection preserves identities rights reservations and consumption",
+        "fixed cash recalculation rights connection complete submitted projection reaches the unchanged fixed comparator",
+        "fixed cash recalculation rights connection refund right disappearance reaches exact positive fraction",
+        "fixed cash recalculation rights connection duplicated refund right with new ID reaches exact right set",
+        "fixed cash recalculation rights connection same aggregate owner swap reaches individual right owner",
+        "fixed cash recalculation rights connection same owner wrong obligation reaches individual right obligation",
+        "fixed cash recalculation rights connection token substitution reaches individual right token",
+        "fixed cash recalculation rights connection fractional unpaid claim omission reaches exact right set",
+        "fixed cash recalculation rights connection same reservation subtotal overlap reaches fixed interval target",
+        "fixed cash recalculation rights connection duplicate source consumption item reaches exact event set",
+        "fixed cash recalculation rights connection coherent Receipt substitution reaches source event receipt",
+        "fixed cash recalculation rights connection collection reset reaches fixed cumulative collection amount",
+        "fixed cash recalculation rights connection payment reset reaches fixed cumulative payment amount",
+        "fixed cash recalculation rights connection terminal cumulative reset reaches fixed terminal value",
+        "fixed cash recalculation rights connection absent snapshot stays unverified and never becomes zero rights",
+        "fixed cash recalculation rights connection missing rights field remains missing instead of an empty verified list",
+        "fixed cash recalculation rights connection null rights table remains missing with no authoritative amount",
+        "fixed cash recalculation rights connection empty rights submission contradicts fixed positive rights and is rejected",
+        "fixed cash recalculation rights connection caller approval flag cannot expand fixed diagnostic schema",
+        "fixed cash recalculation rights connection fractional claims and refunds remain one liability each with no double reservation",
+        "fixed cash recalculation rights connection normal missing and submitted paths cannot authorize version rights or refund"
+      ]
     }
   ]
 }
