@@ -44,7 +44,7 @@
     },
     {
       "file": "test/fixed-independent-links.test.mjs",
-      "sha256": "6a83a45c17b509224fbf86bc699b7acf71ce172969e83c56967fd5ec0c37fe69",
+      "sha256": "c46216b976aa1bc231ebc5f6f3ac56587c543d2061d23cc0c5cf8555c9a146ba",
       "fullTitles": [
         "fixed reference submitted layers and event links actual partial submitted layers match fixed tables without calculated clones",
         "fixed reference submitted layers and event links actual sequential account Epoch totals link with complete diagnostic group keys",
@@ -69,6 +69,39 @@
         "fixed reference submitted layers and event links same synthetic transaction distinct log items remain accepted",
         "fixed reference submitted layers and event links modified expected bytes are rejected without writing original tables",
         "fixed reference submitted layers and event links all linked diagnostics retain null execution amounts and disabled rights"
+      ]
+    },
+    {
+      "file": "test/raw-submission-interval.test.mjs",
+      "sha256": "83a0d384b393f2b06adb0872c1cb1bc5c2b865d495db2e84c12f3a3472779018",
+      "fullTitles": [
+        "raw submitted interval binding partial actual position and lot metadata bind to raw source",
+        "raw submitted interval binding sequential actual projection retains original raw identities",
+        "raw submitted interval binding valid segment ID with changed boundary reaches raw metadata mismatch",
+        "raw submitted interval binding position phase swap reaches actual phase comparison",
+        "raw submitted interval binding position Epoch swap reaches actual Epoch comparison",
+        "raw submitted interval binding position period swap reaches actual period comparison",
+        "raw submitted interval binding lot phase swap reaches actual phase comparison",
+        "raw submitted interval binding lot Epoch swap reaches actual Epoch comparison",
+        "raw submitted interval binding lot period swap reaches actual period comparison",
+        "raw submitted interval binding submitted transition reorder reaches actual source order comparison",
+        "raw submitted interval binding missing active position reaches actual exact row set",
+        "raw submitted interval binding same timestamp transitions preserve original sequence without extra interval",
+        "raw submitted interval binding open Gap keeps remaining and zero Funding exposure without finalization",
+        "raw submitted interval binding open remaining omission reaches raw remaining comparison",
+        "raw submitted interval binding observed interval omission reaches raw observation comparison",
+        "raw submitted interval binding post Q interval addition reaches raw interval comparison",
+        "raw submitted interval binding non boundary Q creates observation tail not virtual closing event",
+        "raw submitted interval binding tail omission and changed query fail branded observation comparison",
+        "raw submitted interval binding short and long open observations cannot share a submission connection",
+        "raw submitted interval binding caller invented private reference is rejected",
+        "raw submitted interval binding raw helper transition reorder fails before interval derivation",
+        "raw submitted interval binding missing active lot reaches actual exact lot set",
+        "raw submitted interval binding official and Gap boundaries match raw E without double time",
+        "raw submitted interval binding observed integration preserves terminal open exposure",
+        "raw submitted interval binding existing Series cannot enter raw V1 submission binding",
+        "raw submitted interval binding same timestamp submitted order swap reaches raw source order",
+        "raw submitted interval binding all observations preserve null amounts and disabled authorities"
       ]
     }
   ]
