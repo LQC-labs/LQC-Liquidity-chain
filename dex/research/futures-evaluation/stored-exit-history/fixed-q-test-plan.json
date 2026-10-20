@@ -16,13 +16,18 @@
     "fixed Q Solidity JS local bridge report commitment mutation reaches reconstructed commitment check",
     "fixed Q Solidity JS local bridge transaction block above Q is not accepted",
     "fixed Q Solidity JS local bridge event timestamp must match the raw transition",
-    "fixed Q Solidity JS local bridge original packet remains reproducible after mutation cases"
+    "fixed Q Solidity JS local bridge original packet remains reproducible after mutation cases",
+    "fixed Q Solidity JS local bridge research PnL uses each exit price and exact fraction totals",
+    "fixed Q Solidity JS local bridge research PnL leaves Funding limits consumption and money rights unconfirmed",
+    "fixed Q Solidity JS local bridge research domain token mismatch",
+    "fixed Q Solidity JS local bridge research domain decimals mismatch",
+    "fixed Q Solidity JS local bridge research domain Oracle address mismatch"
   ],
   "sourceHashes": {
     "test/bridge-fixture.mjs": "8cf83c58a38035f09bc2df8615e0c5fcd4e1354acd24ecfe9b5e557b10a31656",
-    "test/fixed-q-bridge.mjs": "bbb71b9f1ac11da0aa3d78d4e165d73f241a80e1cecdf0254d4b81af21e9ed9e",
-    "test/fixed-q-bridge.test.mjs": "caaa6976aba838b5dbaf81082b32e73dd74694937781f1b273859ce1f8e626b9",
-    "run-fixed-q-tests.cjs": "04e556a04d87861b6cc8e76a0132bcbf5410266015fd8626b78647fce0369cfe",
+    "test/fixed-q-bridge.mjs": "c44fa50038da8f7ca672b126b32aae09c6f2303ec5822b13b06793e1e8ed0060",
+    "test/fixed-q-bridge.test.mjs": "d729d1bf3952926db1031525b7b04965bba4be85074cdde612c8590e2b553ad0",
+    "run-fixed-q-tests.cjs": "7dcd5d8b7cb79812f3946f4a22ff4c1fb020c86d745d70e23f85d8c70bc078bb",
     "test/runtime-tools.mjs": "ef37735eeb00e21490e2b9e95b36b1bfc767b400b368452f026a72465b160d6a",
     "test/anvil-compat.mjs": "aa715ea7fc1589835d102540e60d1edcbeabd2a0e28bd3acafef1d4bcd403b86",
     "build-common.cjs": "1f30f81c280fdd8af1413ae6ae4fc76516101be3f172d4ebcef698bfcc33b844",
