@@ -1,0 +1,77 @@
+{
+  "purpose": "REVIEWED_LITERAL_REQUIRED_TESTS_NOT_GENERATED_FROM_TEST_SOURCE",
+  "test": "test/verifier.test.mjs",
+  "suites": [
+    {
+      "name": "stored exit verifier adversarial mocks",
+      "titles": [
+        "mock valid stored history has explicit blockers and no amount fields",
+        "mock caller commitment only constrains identical stored result",
+        "mock missing target row reaches sequence check",
+        "mock duplicated row reaches sequence check",
+        "mock reversed rows reach sequence check",
+        "mock other position row cannot replace target final",
+        "mock different Series core context reaches scope check",
+        "mock foreign owner reaches scope check",
+        "mock final Sequence disagreement reaches sequence check",
+        "mock wrong caller final Sequence is not accepted",
+        "mock quantity chain mismatch reaches transition check",
+        "mock wrong direction reaches transition check",
+        "mock corrupted source Receipt reaches Receipt check",
+        "mock LinkedExit timestamp mismatch reaches exit check",
+        "mock reverse original timestamp reaches account order check",
+        "mock cumulative quantity mismatch reaches terminal check",
+        "mock final ordinal mismatch reaches terminal check",
+        "mock code hash mismatch is rejected before link acceptance",
+        "mock linked address drift is rechecked on every view",
+        "mock runtime replacement reaches pinned bytecode check",
+        "mock source log exceeding full-scan bound is rejected",
+        "mock cap256 scans the entire normal account log and reports measured gas",
+        "mock cap256 rejects row257 before scanning",
+        "mock caller cannot supply a page or transition list"
+      ]
+    },
+    {
+      "name": "stored exit verifier actual local V11 storage",
+      "titles": [
+        "actual V11 different stored exit times and prices match full history",
+        "actual V11 identical input gives same commitment without consuming state",
+        "actual V11 same timestamp preserves original partial and final Sequence",
+        "actual V11 open partial history cannot claim complete closure",
+        "actual peers do not accept a constructor pin derived from an unrelated artifact"
+      ]
+    }
+  ],
+  "fullTitles": [
+    "stored exit verifier adversarial mocks mock valid stored history has explicit blockers and no amount fields",
+    "stored exit verifier adversarial mocks mock caller commitment only constrains identical stored result",
+    "stored exit verifier adversarial mocks mock missing target row reaches sequence check",
+    "stored exit verifier adversarial mocks mock duplicated row reaches sequence check",
+    "stored exit verifier adversarial mocks mock reversed rows reach sequence check",
+    "stored exit verifier adversarial mocks mock other position row cannot replace target final",
+    "stored exit verifier adversarial mocks mock different Series core context reaches scope check",
+    "stored exit verifier adversarial mocks mock foreign owner reaches scope check",
+    "stored exit verifier adversarial mocks mock final Sequence disagreement reaches sequence check",
+    "stored exit verifier adversarial mocks mock wrong caller final Sequence is not accepted",
+    "stored exit verifier adversarial mocks mock quantity chain mismatch reaches transition check",
+    "stored exit verifier adversarial mocks mock wrong direction reaches transition check",
+    "stored exit verifier adversarial mocks mock corrupted source Receipt reaches Receipt check",
+    "stored exit verifier adversarial mocks mock LinkedExit timestamp mismatch reaches exit check",
+    "stored exit verifier adversarial mocks mock reverse original timestamp reaches account order check",
+    "stored exit verifier adversarial mocks mock cumulative quantity mismatch reaches terminal check",
+    "stored exit verifier adversarial mocks mock final ordinal mismatch reaches terminal check",
+    "stored exit verifier adversarial mocks mock code hash mismatch is rejected before link acceptance",
+    "stored exit verifier adversarial mocks mock linked address drift is rechecked on every view",
+    "stored exit verifier adversarial mocks mock runtime replacement reaches pinned bytecode check",
+    "stored exit verifier adversarial mocks mock source log exceeding full-scan bound is rejected",
+    "stored exit verifier adversarial mocks mock cap256 scans the entire normal account log and reports measured gas",
+    "stored exit verifier adversarial mocks mock cap256 rejects row257 before scanning",
+    "stored exit verifier adversarial mocks mock caller cannot supply a page or transition list",
+    "stored exit verifier actual local V11 storage actual V11 different stored exit times and prices match full history",
+    "stored exit verifier actual local V11 storage actual V11 identical input gives same commitment without consuming state",
+    "stored exit verifier actual local V11 storage actual V11 same timestamp preserves original partial and final Sequence",
+    "stored exit verifier actual local V11 storage actual V11 open partial history cannot claim complete closure",
+    "stored exit verifier actual local V11 storage actual peers do not accept a constructor pin derived from an unrelated artifact"
+  ],
+  "testSHA256": "2f370b5621cb172f21634abd5ddad11ae4ed404c88bcefd5ba76e338ea56a72e"
+}

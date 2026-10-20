@@ -34,3 +34,25 @@ jobs:
         run: node research/futures-evaluation/run-shared-reconciliation-tests.cjs research/futures-evaluation/.results/shared-reconciliation-ci new
       - name: Verify fixed synthetic references and submitted event links without a chain
         run: node research/futures-evaluation/run-fixed-independent-tests.cjs research/futures-evaluation/.results/fixed-independent-ci
+
+  stored-exit-history-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: dex/research/futures-evaluation/stored-exit-history
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.3
+          cache: npm
+          cache-dependency-path: dex/research/futures-evaluation/stored-exit-history/package-lock.json
+      - name: Install isolated research dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Compile pinned research fixtures
+        run: node compile.cjs
+      - name: Check fail-closed build preflight
+        run: node preflight-selfchecks.cjs
+      - name: Verify stored exit history on local Anvil only
+        run: node run-tests.cjs
