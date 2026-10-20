@@ -1,0 +1,259 @@
+{
+  "purpose": "HAND_DERIVED_LEDGER_ARITHMETIC_NOT_FUNDING_CALCULATION",
+  "case": {
+    "scope": {
+      "chainId": "31337",
+      "domain": "101",
+      "series": "201",
+      "token": "0x000000000000000000000000000000000000000d",
+      "epoch": "1",
+      "phase": "OFFICIAL"
+    },
+    "unit": "RAW_TOKEN_EXACT",
+    "basis": "FUNDING_ONLY_ZERO_INITIAL",
+    "principals": [
+      {
+        "id": "A",
+        "account": "A",
+        "pid": "1",
+        "obligation": "A-debt",
+        "kind": "DEBT",
+        "amount": {
+          "n": "7",
+          "d": "5"
+        }
+      },
+      {
+        "id": "B",
+        "account": "B",
+        "pid": "2",
+        "obligation": "B-debt",
+        "kind": "DEBT",
+        "amount": {
+          "n": "3",
+          "d": "5"
+        }
+      },
+      {
+        "id": "C",
+        "account": "C",
+        "pid": "3",
+        "obligation": "C-claim",
+        "kind": "CLAIM",
+        "amount": {
+          "n": "8",
+          "d": "5"
+        }
+      },
+      {
+        "id": "D",
+        "account": "D",
+        "pid": "4",
+        "obligation": "D-claim",
+        "kind": "CLAIM",
+        "amount": {
+          "n": "2",
+          "d": "5"
+        }
+      }
+    ],
+    "events": [
+      {
+        "id": "1",
+        "account": "A",
+        "pid": "1",
+        "obligation": "A-debt",
+        "kind": "COLLECT",
+        "amount": "2",
+        "sequence": "1",
+        "receipt": "R1",
+        "transaction": "TX",
+        "logIndex": "0",
+        "itemIndex": "0"
+      },
+      {
+        "id": "2",
+        "account": "B",
+        "pid": "2",
+        "obligation": "B-debt",
+        "kind": "COLLECT",
+        "amount": "1",
+        "sequence": "1",
+        "receipt": "R2",
+        "transaction": "TX",
+        "logIndex": "1",
+        "itemIndex": "0"
+      },
+      {
+        "id": "3",
+        "account": "C",
+        "pid": "3",
+        "obligation": "C-claim",
+        "kind": "PAY",
+        "amount": "1",
+        "sequence": "1",
+        "receipt": "R3",
+        "transaction": "TX",
+        "logIndex": "2",
+        "itemIndex": "0"
+      }
+    ],
+    "terminals": [
+      {
+        "id": "A:COLLECT",
+        "sequence": "1",
+        "receipt": "R1",
+        "cumulative": "2"
+      },
+      {
+        "id": "B:COLLECT",
+        "sequence": "1",
+        "receipt": "R2",
+        "cumulative": "1"
+      },
+      {
+        "id": "C:PAY",
+        "sequence": "1",
+        "receipt": "R3",
+        "cumulative": "1"
+      }
+    ],
+    "initialCash": "0",
+    "collected": "3",
+    "paid": "1",
+    "endingCash": "2",
+    "uncollected": {
+      "n": "0",
+      "d": "1"
+    },
+    "unpaid": {
+      "n": "1",
+      "d": "1"
+    },
+    "overpayment": {
+      "n": "1",
+      "d": "1"
+    },
+    "bucketCash": "2",
+    "reserved": {
+      "n": "2",
+      "d": "1"
+    },
+    "rights": [
+      {
+        "id": "A",
+        "account": "A",
+        "pid": "1",
+        "obligation": "A-debt",
+        "token": "0x000000000000000000000000000000000000000d",
+        "kind": "OVERPAYMENT_REFUND",
+        "amount": {
+          "n": "3",
+          "d": "5"
+        }
+      },
+      {
+        "id": "B",
+        "account": "B",
+        "pid": "2",
+        "obligation": "B-debt",
+        "token": "0x000000000000000000000000000000000000000d",
+        "kind": "OVERPAYMENT_REFUND",
+        "amount": {
+          "n": "2",
+          "d": "5"
+        }
+      },
+      {
+        "id": "C",
+        "account": "C",
+        "pid": "3",
+        "obligation": "C-claim",
+        "token": "0x000000000000000000000000000000000000000d",
+        "kind": "FUNDED_CLAIMS",
+        "amount": {
+          "n": "3",
+          "d": "5"
+        }
+      },
+      {
+        "id": "D",
+        "account": "D",
+        "pid": "4",
+        "obligation": "D-claim",
+        "token": "0x000000000000000000000000000000000000000d",
+        "kind": "FUNDED_CLAIMS",
+        "amount": {
+          "n": "2",
+          "d": "5"
+        }
+      }
+    ],
+    "reservations": [
+      {
+        "id": "A",
+        "account": "A",
+        "pid": "1",
+        "obligation": "A-debt",
+        "token": "0x000000000000000000000000000000000000000d",
+        "kind": "OVERPAYMENT_REFUND",
+        "from": {
+          "n": "0",
+          "d": "1"
+        },
+        "to": {
+          "n": "3",
+          "d": "5"
+        }
+      },
+      {
+        "id": "B",
+        "account": "B",
+        "pid": "2",
+        "obligation": "B-debt",
+        "token": "0x000000000000000000000000000000000000000d",
+        "kind": "OVERPAYMENT_REFUND",
+        "from": {
+          "n": "3",
+          "d": "5"
+        },
+        "to": {
+          "n": "1",
+          "d": "1"
+        }
+      },
+      {
+        "id": "C",
+        "account": "C",
+        "pid": "3",
+        "obligation": "C-claim",
+        "token": "0x000000000000000000000000000000000000000d",
+        "kind": "FUNDED_CLAIMS",
+        "from": {
+          "n": "1",
+          "d": "1"
+        },
+        "to": {
+          "n": "8",
+          "d": "5"
+        }
+      },
+      {
+        "id": "D",
+        "account": "D",
+        "pid": "4",
+        "obligation": "D-claim",
+        "token": "0x000000000000000000000000000000000000000d",
+        "kind": "FUNDED_CLAIMS",
+        "from": {
+          "n": "8",
+          "d": "5"
+        },
+        "to": {
+          "n": "2",
+          "d": "1"
+        }
+      }
+    ]
+  }
+}
