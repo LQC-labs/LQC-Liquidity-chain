@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {ethers} from 'ethers';
 import anvil from './anvil-compat.mjs';
+import {artifact} from './runtime-tools.mjs';
 import {createBridgeFixture} from './bridge-fixture.mjs';
 import {observeFixedQ,diagnoseFixedQ,packetForTests,checkFixedQPacketForTests} from './fixed-q-bridge.mjs';
 const out=process.env.LQC116_RESULT_DIR;
@@ -37,5 +38,10 @@ describe('fixed Q Solidity JS local bridge',function(){
   ['event timestamp must match the raw transition','EVENT_TIMESTAMP',p=>{const x=p.transactions.find(t=>t.receipt.logs.some(l=>l.topics[0]===ethers.id('Recorded(uint256,uint256,uint256,uint256,bytes32)')));x.header.timestamp=ethers.toQuantity(BigInt(x.header.timestamp)+1n);}],
  ];
  for(const [name,target,mutate]of cases)it(name,()=>{const p=packetForTests(context);mutate(p);let caught;try{checkFixedQPacketForTests(context,p);}catch(e){caught=e;}assert(caught,'expected rejection');assert(caught.message.includes(target),caught.message);direct.push({name,target,actual:caught.message,directTargetReached:true,boundary:'MUTATED_TRANSPORT_USING_PRIVATE_RUN_REFERENCE_NOT_RPC_AUTHENTICATION'});});
+
+ it('research PnL uses each exit price and exact fraction totals',()=>{const p=diagnoseFixedQ(context).researchPlan;assert.deepEqual(p.legs.map(l=>l.pnlDiagnostic.rawToken),[{n:'1000000',d:'9'},{n:'500000',d:'1'}]);assert.deepEqual(p.positionTotals.rawTokenGain,{n:'5500000',d:'9'});assert.deepEqual(p.positionTotals.usd18Gain,{n:'500000000000000000',d:'1'});assert.notDeepEqual(p.positionTotals.rawTokenGain,{n:'625000',d:'1'});assert.equal(p.positionTotals.nettingAuthorized,false);});
+ it('research PnL leaves Funding limits consumption and money rights unconfirmed',()=>{const a=diagnoseFixedQ(context).researchPlan,b=diagnoseFixedQ(context).researchPlan;assert.equal(a.evaluationId,b.evaluationId);for(const k of ['funding','fees','confirmedAmount','payableAmount','returnAmount','lpRecoveryAmount'])assert.equal(a[k],null,k);assert.equal(a.fundingEvidence.evidenceCompleteness,'MISSING');for(const k of ['authoritativeLimit','priorConsumed','remaining','rights','reservations'])assert.equal(a.account[k],null,k);assert.equal(a.evaluationStatus,'NOT_EVALUATED');for(const[k,v]of Object.entries(a))if(k.endsWith('Authorized')||k.endsWith('Authority')||['createsClaim','consumesHistory','rightsTransitionComplete'].includes(k))assert.equal(v,false,k);});
+ const domainType=new ethers.Interface(artifact('LocalFuturesCore').abi).getFunction('domain').outputs[0].format('sighash');
+ for(const [name,index,value,target]of [['research domain token mismatch',0,ethers.ZeroAddress,'DOMAIN_TOKEN'],['research domain decimals mismatch',6,18n,'DOMAIN_DECIMALS'],['research domain Oracle address mismatch',1,ethers.ZeroAddress,'DOMAIN_MARKET_ORACLE']])it(name,()=>{const p=packetForTests(context);change(p,'domain',[domainType],a=>{a[0][index]=value;});assert.throws(()=>checkFixedQPacketForTests(context,p),new RegExp(target));direct.push({name,target,directTargetReached:true});});
  it('original packet remains reproducible after mutation cases',()=>{const clean=packetForTests(context),before=diagnoseFixedQ(context);packet.qBefore.hash=ethers.id('mutated returned observation');packet.journal[0].request.params[0]=ethers.ZeroAddress;before.scope.query.hash=ethers.id('mutated returned diagnosis');assert.throws(()=>checkFixedQPacketForTests(context,packet),/Q_SCOPE/);assert.deepEqual(checkFixedQPacketForTests(context,clean),diagnoseFixedQ(context));assert.notEqual(diagnoseFixedQ(context).scope.query.hash,before.scope.query.hash);});
 });

@@ -6,7 +6,7 @@ is changed. This is a new execution, not a reconstruction of an earlier run.
 
 Run from this directory: `node run-fixed-q-tests.cjs` after the existing pinned
 build/dependencies are present. The original build gate runs before Mocha/Anvil.
-`fixed-q-test-plan.json` is a separately enumerated 16-title plan; its reviewed
+`fixed-q-test-plan.json` is a separately enumerated 21-title plan (16 retained bridge checks plus five research-output checks); its reviewed
 hash is in `fixed-q-test-pins.cjs`. The runner never updates either file. The plan
 also fixes the bridge and existing JS helper sources. Replacing runner, plan and
 pin together is outside this local integrity boundary, not an attack it prevents.
@@ -117,3 +117,37 @@ creation genealogy. Receipt roles are determined by fixture call order and
 recorded targets/events; raw transaction calldata was not collected. Recorded
 event order is checked for this one-opening/two-exit case, not as a general
 multiple-events-per-transaction log ordering validator.
+
+## Task 2/121: existing-calculator research output
+
+A new isolated run adds one explicit-Q Core.domain view. Token, decimals and
+Oracle addresses are compared against the fixed local fixture before use. The
+existing private raw-history/ABI commitment checks remain; the domain response
+is additionally covered by the separately named JS semantic commitment.
+
+The checked Basis entry price, per-exit quantities/prices and observed decimals
+form the existing evaluateDiagnostics input. No PnL/Funding/rounding formula is
+added or modified. Existing integrateHistory is reused inside that calculator;
+Mock comparison remains unverified without Coordinator evidence. The scope is
+EXISTING_SERIES_LOCAL_PNL_RESEARCH_ONLY, never new economic-policy V1 approval.
+
+For the selected LONG case: leg 1 diagnostic USD gain 0.1 and raw-token fraction
+1000000/9; leg 2 gain 0.4 and 500000/1; raw gain total 5500000/9, rather than
+625000/1 from applying the last collateral price to the whole USD gain. No
+integerization or netting authorization is inferred from these diagnostic values.
+
+Funding, fees, authoritative account limit, prior consumed amount, remaining
+limit, rights and reservations stay null/UNVERIFIED. Missing evidence is not
+zero Funding. Repeated calculation preserves the native position binding and
+evaluation identity for unchanged input; no ledger write, reset, new claim,
+refund, Held use, return or LP action is implemented. All execution rights stay
+false and financial confirmation stays NOT_EVALUATED/null.
+
+Actual task 2/121 executions: new bridge/research suite 21 PASS, exit 0, 4424 ms;
+separate unchanged evaluator regression 51 PASS, exit 0, 7157 ms. Exact lists
+were checked against the updated fixed plan and the existing pinned suite-plan
+respectively. They are not one combined 72-test run. One directory preparation
+ENOENT occurred before tests; it was corrected without starting Anvil. Existing
+compiler output and installed dependencies were reused after the original build
+gate; there was no new installation or compilation, and no public RPC or GitHub
+publication. The original 29-test plan, financial fixtures and anchors are unchanged.
