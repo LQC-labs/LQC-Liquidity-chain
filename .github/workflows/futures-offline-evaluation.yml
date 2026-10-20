@@ -56,3 +56,5 @@ jobs:
         run: node preflight-selfchecks.cjs
       - name: Verify stored exit history on local Anvil only
         run: node run-tests.cjs
+      - name: Compare fixed-Q stored history with existing JS diagnostics on local Anvil only
+        run: node run-fixed-q-tests.cjs
