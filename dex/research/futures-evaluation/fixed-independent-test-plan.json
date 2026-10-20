@@ -103,6 +103,40 @@
         "raw submitted interval binding same timestamp submitted order swap reaches raw source order",
         "raw submitted interval binding all observations preserve null amounts and disabled authorities"
       ]
+    },
+    {
+      "file": "test/long-open-submission.test.mjs",
+      "sha256": "3f91fbf426259f5d5b4913ea24ae69945285691f00c57757c836fce2fe38fbed",
+      "fullTitles": [
+        "longOpen actual submission metadata normal actual rows groups and periods match an independent raw census",
+        "longOpen actual submission metadata zero Funding active SHORT rows and open quantity remain present",
+        "longOpen actual submission metadata position row omission reaches raw active position set",
+        "longOpen actual submission metadata lot row omission reaches raw active lot set",
+        "longOpen actual submission metadata position phase replacement keeps valid IDs and reaches phase guard",
+        "longOpen actual submission metadata position Epoch replacement keeps valid IDs and reaches Epoch guard",
+        "longOpen actual submission metadata position period replacement keeps valid IDs and reaches period guard",
+        "longOpen actual submission metadata lot phase replacement keeps valid IDs and reaches phase guard",
+        "longOpen actual submission metadata lot Epoch replacement keeps valid IDs and reaches Epoch guard",
+        "longOpen actual submission metadata lot period replacement keeps valid IDs and reaches period guard",
+        "longOpen actual submission metadata position Epoch group omission reaches raw group set",
+        "longOpen actual submission metadata position Epoch group replacement preserves count and reaches raw group set",
+        "longOpen actual submission metadata account Epoch group omission reaches raw group set",
+        "longOpen actual submission metadata account Epoch group replacement preserves count and reaches raw group set",
+        "longOpen actual submission metadata old query number reaches explicit auxiliary number binding",
+        "longOpen actual submission metadata different query hash reaches explicit auxiliary hash binding",
+        "longOpen actual submission metadata old query timestamp reaches explicit auxiliary timestamp binding",
+        "longOpen actual submission metadata old actual submitted query reaches submitted scope guard",
+        "longOpen actual submission metadata different history commitment is rejected despite matching prefix segment ID",
+        "longOpen actual submission metadata post Q row addition reaches exact raw active set without monetary recomputation",
+        "longOpen actual submission metadata reused shared reconciliation detects amount drift after metadata succeeds",
+        "longOpen actual submission metadata missing table is explicitly unsupported rather than marked checked",
+        "longOpen actual submission metadata actual Q is a periodic boundary with null tail but no completion",
+        "longOpen actual submission metadata nonboundary helper tail is observation only and source records remain unchanged",
+        "longOpen actual submission metadata helper tail omission reaches tail comparison only",
+        "longOpen actual submission metadata helper tail promotion reaches sealed interval comparison only",
+        "longOpen actual submission metadata forged caller context cannot become a source",
+        "longOpen actual submission metadata nonexistent submitted boundaries stay auxiliary and every execution authority stays false"
+      ]
     }
   ]
 }
