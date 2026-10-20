@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {assert,eq,freeze,hash,hash32,uint,address,strictWire,record,dense,ECONOMIC_POLICY_VERSION} from './policy-v1-common.mjs';
 import {validatePolicyV1Config} from './policy-v1-config.mjs';
 import {POLICY_V1_RESEARCH_FIXTURE_SHA256} from './policy-v1-test-reference.mjs';
+import {EVALUATION_EVIDENCE_VARIATIONS_SHA256} from './shared-evaluation-evidence-reference.mjs';
 const sources=new WeakMap();
 export function loadPolicyV1ResearchCase(name){
  assert(typeof name==='string','CASE_NAME_REQUIRED');
@@ -63,4 +64,22 @@ export function verifyPolicyV1History(context,request){
  eq(h.query,source.request.history.query,'SOURCE_QUERY_BINDING');eq(h.finalPositions,source.request.history.finalPositions,'SOURCE_FINAL_BINDING');
  assert.equal(h.commitment,hash(historyMeaning(h)),'HISTORY_COMMITMENT');assert.equal(h.commitment,source.request.history.commitment,'SOURCE_HISTORY_COMMITMENT');
  return {source,config,states,historyCommitment:h.commitment,accountCount:accounts.size};
+}
+
+// Only pinned synthetic variation recipes register here; no caller source/approval input.
+export function loadPolicyV1EvidenceVariation(name){
+ assert(typeof name==='string','EVIDENCE_VARIATION_NAME_REQUIRED');
+ const bytes=fs.readFileSync(new URL('../shared-evaluation-evidence-variations.json',import.meta.url));
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),EVALUATION_EVIDENCE_VARIATIONS_SHA256,'EVIDENCE_VARIATION_HASH_MISMATCH');
+ const bundle=JSON.parse(bytes);assert.equal(bundle.purpose,'TEST_ONLY_NOT_PRICE_POLICY_OR_CHAIN_APPROVAL','EVIDENCE_VARIATION_PURPOSE');assert(Object.hasOwn(bundle.cases,name),'UNKNOWN_EVIDENCE_VARIATION');
+ const definition=bundle.cases[name],base=loadPolicyV1ResearchCase(definition.baseCase),source=structuredClone(policyV1Source(base.context));
+ if(definition.kind==='PRICE_REPORT_METADATA'){
+  record(definition,['baseCase','kind','selectionKey','selectionField','roundId']);assert.equal(definition.selectionField,'primaryCollateral','UNSUPPORTED_EVIDENCE_VARIATION_FIELD');uint(definition.roundId);
+  const selection=source.request.priceSelections.find(s=>s.key===definition.selectionKey);assert(selection,'VARIATION_SELECTION_MISSING');const original=source.reports[selection[definition.selectionField]];assert(original,'VARIATION_REPORT_MISSING');
+  const id=hash({namespace:'SYNTHETIC_PRICE_EVIDENCE_VARIATION',recipe:EVALUATION_EVIDENCE_VARIATIONS_SHA256,original:original.id,roundId:definition.roundId});
+  source.reports[id]={...original,id,roundId:definition.roundId};selection[definition.selectionField]=id;
+ }else if(definition.kind==='POLICY_IDENTITY'){
+  record(definition,['baseCase','kind','policyId']);hash32(definition.policyId);source.request.config.policyId=definition.policyId;source.series.policyCommitment=validatePolicyV1Config(source.request.config).policyCommitment;
+ }else assert.fail('UNSUPPORTED_EVIDENCE_VARIATION_KIND');
+ const context=freeze({kind:'PINNED_SYNTHETIC_EVIDENCE_VARIATION',caseId:name});sources.set(context,freeze(source));return {context,request:structuredClone(source.request)};
 }

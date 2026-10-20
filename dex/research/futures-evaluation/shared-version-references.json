@@ -1,0 +1,40 @@
+{
+  "schema": "LQC_SYNTHETIC_VERSION_RELATIONS_V1",
+  "purpose": "SYNTHETIC_RULE_TEST_ONLY_NOT_REAL_REEVALUATION_OR_RUNTIME_PROOF",
+  "versions": {
+    "previous": "TEST_ONLY_EVALUATION_A",
+    "successor": "TEST_ONLY_EVALUATION_B"
+  },
+  "syntheticRuntimeLabels": {
+    "Core": "0x1111111111111111111111111111111111111111111111111111111111111111",
+    "Funding": "0x2222222222222222222222222222222222222222222222222222222222222222",
+    "Partial": "0x3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "consumptionAmounts": {
+    "initialRaw": "1",
+    "additionalRaw": "1"
+  },
+  "cases": {
+    "multiple-accounts": {
+      "baseCase": "flip50",
+      "projection": null,
+      "laterQ": false
+    },
+    "sequential": {
+      "baseCase": "flip50",
+      "projection": "sequential-debt",
+      "laterQ": false
+    },
+    "later-q": {
+      "baseCase": "flip50",
+      "projection": "sequential-debt",
+      "laterQ": true
+    },
+    "price-evidence-change": {
+      "baseCase": "flip50",
+      "projection": "sequential-debt",
+      "laterQ": false,
+      "evidenceVariation": "same-value-price-round"
+    }
+  }
+}

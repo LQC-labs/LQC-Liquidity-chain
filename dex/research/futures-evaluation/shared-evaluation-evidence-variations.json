@@ -1,0 +1,18 @@
+{
+  "schema": "LQC_SYNTHETIC_EVALUATION_EVIDENCE_VARIATIONS_V1",
+  "purpose": "TEST_ONLY_NOT_PRICE_POLICY_OR_CHAIN_APPROVAL",
+  "cases": {
+    "same-value-price-round": {
+      "baseCase": "flip50",
+      "kind": "PRICE_REPORT_METADATA",
+      "selectionKey": "BOUNDARY:150",
+      "selectionField": "primaryCollateral",
+      "roundId": "9001"
+    },
+    "same-value-policy-identity": {
+      "baseCase": "flip50",
+      "kind": "POLICY_IDENTITY",
+      "policyId": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
+  }
+}

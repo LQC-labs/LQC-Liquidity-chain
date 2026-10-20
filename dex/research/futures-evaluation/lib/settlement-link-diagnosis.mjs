@@ -22,6 +22,13 @@ export function positionAggregateKey(scope,kind){
  assert(['FUNDING','PNL','FEES'].includes(kind),'UNSUPPORTED_OBLIGATION_KIND');
  return hash({namespace:'LQC_EXISTING_POSITION_AGGREGATE_V2',identity:identity(scope),kind});
 }
+// Shared identity primitive: preserves the existing V2 key bytes; Q is validated but excluded.
+export function detailedFundingIntervalKey(scope,attribution){
+ record(attribution,['phase','epoch','from','to']);assert(['OFFICIAL','GAP'].includes(attribution.phase),'UNSUPPORTED_INTERVAL_KIND');
+ uint(attribution.from);assert(uint(attribution.to)>uint(attribution.from),'INVALID_ATTRIBUTION_INTERVAL');
+ if(attribution.phase==='OFFICIAL')uint(attribution.epoch);else assert.equal(attribution.epoch,null,'GAP_EPOCH_MUST_BE_NULL');
+ return hash({namespace:'LQC_EXISTING_FUNDING_INTERVAL_V2',aggregateKey:positionAggregateKey(scope,'FUNDING'),attribution});
+}
 // Pure input validation/calculation is not source authentication. Production-facing diagnosis uses branded local context below.
 export function deriveDiagnosticObligations(input,scope){
  assert(['LONG','SHORT'].includes(input.position.side),'UNSUPPORTED_POSITION_SIDE');
@@ -31,7 +38,7 @@ export function deriveDiagnosticObligations(input,scope){
   assert(interval.kind==='OFFICIAL'||interval.kind==='GAP','UNSUPPORTED_INTERVAL_KIND');
   if(interval.kind==='OFFICIAL')assert(interval.epoch!==null,'OFFICIAL_EPOCH_REQUIRED');else assert.equal(interval.epoch,null,'GAP_EPOCH_MUST_BE_NULL');
   const attribution={phase:interval.kind,epoch:interval.epoch,from:interval.from,to:interval.to};
-  return {aggregateKey,kind:'FUNDING',...attribution,key:hash({namespace:'LQC_EXISTING_FUNDING_INTERVAL_V2',aggregateKey,attribution}),quantityLong18:interval.long18,quantityShort18:interval.short18};
+  return {aggregateKey,kind:'FUNDING',...attribution,key:detailedFundingIntervalKey(scope,attribution),quantityLong18:interval.long18,quantityShort18:interval.short18};
  });
  assert(obligations.length>0,'NO_SUPPORTED_ATTRIBUTION_INTERVAL');
  assert.equal(new Set(obligations.map(x=>x.key)).size,obligations.length,'DUPLICATE_ATTRIBUTION_INTERVAL');
