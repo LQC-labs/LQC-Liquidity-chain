@@ -1,0 +1,80 @@
+import assert from 'node:assert/strict';
+import {ethers} from 'ethers';
+import {canonical,uint,record,dense} from '../../lib/input-schema.mjs';
+import {commitment as jsonCommitment} from '../../lib/futures-exit-history-input.mjs';
+import {integrateHistory} from '../../lib/exit-diagnostic-evaluator.mjs';
+import {compareMockConditions} from '../../lib/settlement-link-diagnosis.mjs';
+import {fixtureInternals} from './bridge-fixture.mjs';
+import {expectedRuntime} from './runtime-tools.mjs';
+const abi=ethers.AbiCoder.defaultAbiCoder(),contexts=new WeakMap();
+const B='tuple(bytes32 key,uint256 initialSize,uint256 margin,uint256 closed,uint256 held,uint256 sequence,uint256 partials,uint256 entry)';
+const T='tuple(bytes32 key,address owner,uint256 domain,uint256 sid,uint256 opened,uint256 last,uint256 size,uint256 sequence,bool long_)';
+const C='tuple(uint256 sid,bytes32 policy,uint256 origin,uint256 length,uint256 epochs,uint256 historyCap,uint256 batch)';
+const R='tuple(uint256 timestamp,uint256 pid,uint256 sequence,uint256 oldL,uint256 oldS,uint256 nextL,uint256 nextS,bytes32 receipt)';
+const X='tuple(uint256 status,uint256 timestamp,uint256 heldDelta,uint256 closed,uint256 market,uint256 collateral,uint256 marketTime,uint256 collateralTime,uint256 cutoff,uint256 epoch,bytes32 receipt)';
+const wire=x=>typeof x==='bigint'?x.toString():Array.isArray(x)?Array.from(x,wire):x;
+const eq=(a,b,why)=>assert.equal(canonical(a),canonical(b),why);
+const hash=(types,values)=>ethers.keccak256(abi.encode(types,values));
+function verify(packet,ref){
+ record(packet,['schema','runId','chainBefore','chainAfter','qBefore','qAfter','journal','transactions']);
+ assert.equal(packet.schema,'LOCAL_FIXED_Q_STORED_HISTORY_1','SCHEMA');assert.equal(packet.runId,ref.runId,'RUN_SCOPE');
+ assert.equal(packet.chainBefore,'0x7a69','CHAIN_SCOPE');assert.equal(packet.chainAfter,packet.chainBefore,'CHAIN_CHANGED');
+ eq(packet.qBefore,ref.q,'Q_SCOPE');eq(packet.qAfter,ref.q,'Q_HASH_CHANGED');
+ dense(packet.journal,128);assert.equal(packet.journal.length,ref.plan.length,'RAW_EVIDENCE_REQUIRED');
+ const responses=new Map();
+ for(let i=0;i<ref.plan.length;i++){const a=packet.journal[i],p=ref.plan[i];record(a,['name','request','response']);assert.equal(a.name,p.name,'QUERY_ORDER');eq(a.request,p.request,'QUERY_SCOPE');assert(typeof a.response==='string'&&/^0x[0-9a-fA-F]*$/.test(a.response),'RAW_RESPONSE');responses.set(a.name,a.response);}
+ for(let i=0;i<5;i++)assert.equal(responses.get('code'+i).toLowerCase(),ref.codes[i].toLowerCase(),'RUNTIME_'+i);
+ const get=n=>ref.calls.get(n).iface.decodeFunctionResult(ref.calls.get(n).method,responses.get(n));
+ for(const [name,address]of ref.links)assert.equal(get(name)[0].toLowerCase(),address.toLowerCase(),'LINK_'+name);
+ const ctx=get('context'),basis=abi.decode([B],responses.get('basis'))[0],trace=abi.decode([T],responses.get('trace'))[0],cfg=abi.decode([C],responses.get('config'))[0],log=get('log'),binding=get('binding'),series=get('series'),finalOrdinal=get('finalOrdinal')[0],report=get('inspect')[0];
+ const [core,fund,partial,attr]=ref.peers;
+ assert.equal(ctx[0],ref.account,'OWNER');assert.equal(trace.owner,ref.account,'TRACE_OWNER');
+ assert.equal(ctx[1][0],2n,'DOMAIN');assert.equal(ctx[1][1],1n,'SERIES');assert.equal(trace.domain,2n,'TRACE_DOMAIN');assert.equal(trace.sid,1n,'TRACE_SERIES');
+ assert.equal(ctx[2],ethers.id('GAP_LOCAL_ONLY'),'EXPECTED_RESEARCH_POLICY');
+ const key=hash(['address','address','uint256','uint256','address','uint256','bytes32'],[core,fund,2,1,ref.account,1,ctx[2]]);
+ assert.equal(key,ref.key,'ORIGINAL_KEY');assert.equal(basis.key,key,'BASIS_KEY');assert.equal(trace.key,key,'TRACE_KEY');
+ const accountKey=hash(['address','address','address','address','uint256','uint256','bytes32','address'],[attr,partial,core,fund,2,1,ctx[2],ref.account]);assert.equal(get('accountKey')[0],accountKey,'ACCOUNT_KEY');
+ assert.equal(binding[0],1n,'BINDING_SERIES');assert.equal(binding[1],ctx[2],'BINDING_POLICY');assert.equal(cfg.sid,1n,'CONFIG_SERIES');assert.equal(cfg.policy,ctx[2],'CONFIG_POLICY');assert.equal(series[1],ctx[2],'FUNDING_POLICY');
+ eq(wire([cfg.origin,cfg[3],cfg.epochs]),wire(series[0].slice(0,3)),'SERIES_SETTINGS');eq(wire([cfg.origin,cfg[3],cfg.epochs]),ref.settings,'EXPECTED_SETTINGS');
+ for(const seq of[ctx[1][2],basis.sequence,trace.sequence,get('fundingSequence')[0]])assert.equal(seq,3n,'FINAL_SEQUENCE');assert.equal(log[0],3n,'ACCOUNT_COUNT');assert.equal(log[1],0n,'RESERVED');assert.equal(log[2],0n,'LIVE_PID');assert.equal(finalOrdinal,3n,'FINAL_ORDINAL');
+ let digest=hash(['string','uint256','address[4]','bytes32[4]','uint256','bytes32','address','uint256','uint256','bytes32',C],['LOCAL_STORED_EXIT_HISTORY_V1',31337,ref.peers,ref.pins,1,key,ref.account,2,1,ctx[2],cfg]);
+ let old=0n,total=0n,held=0n,last=0n;const rows=[],exits=[];
+ for(let i=1;i<=3;i++){
+  const t=abi.decode([R],responses.get('transition'+i))[0];assert.equal(t.pid,1n,'PID');assert.equal(t.sequence,BigInt(i),'SEQUENCE');assert(t.timestamp>=last&&t.timestamp<=BigInt(ref.q.timestamp),'TIMESTAMP');assert.equal(t.oldL,old,'OLD_QUANTITY');assert.equal(t.oldS,0n,'SIDE');assert.equal(t.nextS,0n,'SIDE');
+  const receipt=hash(['bytes32',...Array(6).fill('uint256')],[key,t.sequence,t.timestamp,t.oldL,t.oldS,t.nextL,t.nextS]);assert.equal(t.receipt,receipt,'BUSINESS_RECEIPT');
+  if(i===1){assert.equal(t.nextL,3n*10n**18n,'OPEN_QUANTITY');assert.equal(t.timestamp,trace.opened,'OPEN_TIME');}else{assert(t.nextL<old,'REDUCTION');total+=old-t.nextL;const e=abi.decode([X],responses.get('exit'+i))[0];assert.equal(e.timestamp,t.timestamp,'EXIT_TIMESTAMP');assert.equal(e.closed,total,'EXIT_QUANTITY');assert.equal(e.receipt,receipt,'EXIT_RECEIPT');assert.equal(e.status,i===3?2n:3n,'EXIT_STATUS');assert.equal(e.cutoff,cfg.origin+cfg[3]*cfg.epochs,'EXIT_CUTOFF');const epoch=t.timestamp>=e.cutoff?cfg.epochs+1n:(t.timestamp-cfg.origin)/cfg[3]+1n;assert.equal(e.epoch,epoch,'EXIT_EPOCH');assert(e.market>0n&&e.collateral>0n&&e.marketTime>0n&&e.collateralTime>0n&&e.marketTime<=t.timestamp&&e.collateralTime<=t.timestamp,'STORED_PRICE_TIME');held+=e.heldDelta;exits.push(wire(e));}
+  digest=hash(['bytes32','uint256',R],[digest,i,t]);if(i>1)digest=hash(['bytes32',X],[digest,abi.decode([X],responses.get('exit'+i))[0]]);
+  rows.push(wire(t));old=t.nextL;last=t.timestamp;
+ }
+ assert.equal(old,0n,'NOT_CLOSED');assert.equal(total,basis.closed,'TOTAL_CLOSED');assert.equal(total,basis.initialSize,'INITIAL_TOTAL');assert.equal(held,basis.held,'HELD');assert.equal(held,basis.margin,'FINAL_MARGIN');assert.equal(basis.partials,1n,'PARTIAL_COUNT');assert.equal(trace.size,0n,'TRACE_REMAINING');assert.equal(trace.last,last,'TRACE_TIME');assert.equal(log[3],last,'ACCOUNT_TIME');assert.equal(ctx[1][3]+ctx[1][4],0n,'CORE_REMAINING');
+ digest=hash(['bytes32',T,B,'uint256'],[digest,trace,basis,3]);
+ assert.equal(report.commitment,digest,'SOLIDITY_COMMITMENT');assert.equal(report.historyMatches,true,'REPORT_HISTORY');assert.equal(report.completelyClosed,true,'REPORT_CLOSED');
+ eq(wire([report.openingCount,report.exitCount,report.accountRecordsScanned,report.cumulativeClosed,report.remaining,report.finalSequence]),['1','2','3',total.toString(),'0','3'],'REPORT_TOTALS');assert.equal(report.amountState,0n,'AMOUNT_STATE');assert.equal(report.blockers,15n,'BLOCKERS');for(const k of ['priceAuthenticated','policyAuthenticated','fundingAuthenticated','chainIndependentlyAuthenticated','settlementAuthorized','createsClaim','consumesHistory','paymentAuthorized','returnAuthorized','heldUseAuthorized','lpRecoveryAuthorized','rightsTransferAuthorized'])assert.equal(report[k],false,'AUTHORITY_'+k);
+ dense(packet.transactions,128);assert.equal(packet.transactions.length,ref.txHashes.length,'TRANSACTION_SET');const events=[];
+ for(let i=0;i<packet.transactions.length;i++){const x=packet.transactions[i],r=x.receipt,h=x.header;assert.equal(r.transactionHash,ref.txHashes[i],'TRANSACTION_HASH');assert.equal(r.status,'0x1','TRANSACTION_STATUS');assert(BigInt(r.blockNumber)<=BigInt(ref.q.number),'TRANSACTION_AFTER_Q');assert.equal(h.hash,r.blockHash,'TRANSACTION_BLOCK_HASH');assert.equal(h.number,r.blockNumber,'TRANSACTION_BLOCK_NUMBER');for(const l of r.logs){assert.equal(l.transactionHash,r.transactionHash,'LOG_TRANSACTION_HASH');assert.equal(l.blockNumber,r.blockNumber,'LOG_BLOCK_NUMBER');assert.equal(l.blockHash,r.blockHash,'LOG_BLOCK_HASH');if(l.address.toLowerCase()!==attr.toLowerCase())continue;const event=ref.attrInterface.parseLog(l);if(event?.name==='Recorded')events.push({event,header:h,receipt:r,log:l});}}
+ assert.equal(events.length,3,'RECORDED_EVENT_COUNT');for(let i=0;i<3;i++){const {event,header,log}=events[i],t=rows[i];eq(wire([event.args[0],event.args[1],event.args[2],event.args[3],event.args[4]]),['2','1',String(i+1),String(i+1),t[7]],'RECORDED_EVENT');assert.equal(BigInt(header.timestamp).toString(),t[0],'EVENT_TIMESTAMP');assert.equal(log.blockHash,header.hash,'EVENT_BLOCK');}
+ // Separate namespace: preserves the existing JS canonical commitment helper, not its candidate payload/schema.
+ const semanticCommitment=jsonCommitment({schema:'LOCAL_STORED_HISTORY_JS_MEANING_1',runId:ref.runId,chainId:'31337',query:ref.q,peers:ref.peers,runtimeHashes:ref.pins,key,rows,exits,transactions:packet.transactions,queries:packet.journal});
+ const diagnosticInput={source:{scope:{chainId:'31337',domain:'2',series:'1',account:ref.account,pid:'1'}},position:{side:'LONG',initialQuantity18:basis.initialSize.toString()},cutoff:(cfg.origin+cfg[3]*cfg.epochs).toString(),officialEpochs:[{epoch:'1',from:cfg.origin.toString(),to:(cfg.origin+cfg[3]).toString()}],transitions:rows.map(a=>Object.fromEntries(['timestamp','pid','sequence','oldL','oldS','nextL','nextS','receipt'].map((k,i)=>[k,a[i]]))),observedIntegrals:null,submittedIntervals:null,units:{marketPrice:'FIXED_18',collateralPrice:'FIXED_18'},prices:exits.map((e,i)=>({sequence:String(i+2),market18:e[4],collateral18:e[5],marketTime:e[6],collateralTime:e[7],provenance:'LOCAL_MOCK_NOT_APPROVED',reference:ethers.keccak256(responses.get('exit'+(i+2)))}))};
+ const existingHistoryDiagnosis=integrateHistory(diagnosticInput),coordinatorComparison=compareMockConditions(diagnosticInput,null);
+ return {existingHistoryDiagnosis,coordinatorComparison,connectionScope:'PURE_EXISTING_HELPERS_ONLY_NOT_EXISTING_CANDIDATE_LOADER_CONTEXT',schema:'LOCAL_FIXED_Q_SOLIDITY_JS_DIAGNOSIS_1',evidence:'LOCAL_ANVIL_CONSISTENCY_ONLY',scope:{chainId:'31337',domain:'2',series:'1',account:ref.account,pid:'1',key,query:structuredClone(ref.q),contracts:[...ref.peers.map((address,i)=>({role:['Core','Funding','Partial','Attribution'][i],address,runtimeHash:ref.pins[i]})),{role:'StoredExitHistoryVerifier',address:ref.plan.find(x=>x.name==='code4').request.params[0],runtimeHash:ethers.keccak256(ref.codes[4])}]},historyMatches:true,completelyClosed:true,solidityCommitment:digest,jsSemanticCommitment:semanticCommitment,evaluationStatus:'NOT_EVALUATED',confirmedAmount:null,returnAmount:null,monetaryResult:null,lpRecoveryAmount:null,settlementAuthorized:false,fundsAuthority:false,createsClaim:false,consumesHistory:false,paymentAuthorized:false,heldUseAuthorized:false,returnAuthorized:false,lpRecoveryAuthorized:false,rightsTransferAuthorized:false,blockers:['INDEPENDENT_CHAIN_AUTHENTICATION_MISSING','ORACLE_AUTHENTICATION_MISSING','POLICY_AUTHENTICATION_MISSING','FUNDING_AUTHENTICATION_MISSING','PERSISTENT_CONSUMPTION_UNVERIFIED','SHARED_HELD_LP_UNVERIFIED']};
+}
+export function diagnoseFixedQ(context){const x=contexts.get(context);assert(x,'PRIVATE_LOCAL_OBSERVATION_REQUIRED');return verify(x.packet,x.ref);}
+// Mutation-test boundary only. Does not issue branded contexts or authenticate submitted bytes.
+export function checkFixedQPacketForTests(context,packet){const x=contexts.get(context);assert(x,'PRIVATE_LOCAL_OBSERVATION_REQUIRED');return verify(packet,x.ref);}
+export function packetForTests(context){const x=contexts.get(context);assert(x,'PRIVATE_LOCAL_OBSERVATION_REQUIRED');return structuredClone(x.packet);}
+export async function observeFixedQ(fixture,provider,rpc,persist){
+ const f=fixtureInternals(fixture);
+ const runId='task-2-116-'+Date.now(),journal=[];let id=0;const request=async(method,params)=>{const n=++id;persist({runId,id:n,event:'REQUEST',method,params});try{const response=await rpc.request({method,params});persist({runId,id:n,event:'RESPONSE',response});return response;}catch(e){persist({runId,id:n,event:'ERROR',message:e.message});throw e;}};
+ const chainBefore=await request('eth_chainId',[]),q=await request('eth_getBlockByNumber',['latest',false]),tag=q.number,scopeQ={number:BigInt(q.number).toString(),hash:q.hash,timestamp:BigInt(q.timestamp).toString()},plan=[],calls=new Map(),links=[];
+ const peers=[f.core.target,f.funding.target,f.partial.target,f.attr.target],codes=[...f.expectedCodes,expectedRuntime('StoredExitHistoryVerifier')];
+ const expectedKey=hash(['address','address','uint256','uint256','address','uint256','bytes32'],[peers[0],peers[1],2,1,f.user.address,1,ethers.id('GAP_LOCAL_ONLY')]);
+ const add=async(name,req)=>{plan.push({name,request:req});const response=await request(req.rpc,req.params);journal.push({name,request:req,response});return response;};
+ for(let i=0;i<5;i++)await add('code'+i,{rpc:'eth_getCode',params:[i<4?peers[i]:f.v.target,tag]});
+ const call=async(name,contract,method,args=[])=>{const req={rpc:'eth_call',params:[{to:contract.target,from:f.gov.address,data:contract.interface.encodeFunctionData(method,args)},tag]};calls.set(name,{iface:contract.interface,method});return add(name,req);};
+ for(const [i,method,j]of[[0,'localFunding',1],[0,'localPartial',2],[1,'core',0],[2,'core',0],[2,'funding',1],[2,'attribution',3],[3,'core',0],[3,'funding',1],[3,'partialSettlement',2]]){const name='link'+i+method;links.push([name,peers[j]]);await call(name,[f.core,f.funding,f.partial,f.attr][i],method);}
+ await call('context',f.core,'coreExposureContext',[1]);await call('basis',f.partial,'linkedBasis',[1]);await call('trace',f.attr,'traces',[1]);await call('config',f.attr,'config',[2]);await call('binding',f.core,'exposureBindings',[2]);await call('series',f.funding,'fundingSeries',[2,1]);await call('fundingSequence',f.funding,'coreExposureSequences',[expectedKey]);const ak=hash(['address','address','address','address','uint256','uint256','bytes32','address'],[peers[3],peers[2],peers[0],peers[1],2,1,calls.get('context').iface.decodeFunctionResult('coreExposureContext',journal.find(x=>x.name==='context').response)[2],f.user.address]);await call('accountKey',f.attr,'accountKey',[2,f.user.address]);await call('log',f.attr,'logs',[ak]);await call('finalOrdinal',f.attr,'finalOrdinal',[1]);for(let i=1;i<=3;i++)await call('transition'+i,f.attr,'transition',[2,f.user.address,i]);for(let i=2;i<=3;i++)await call('exit'+i,f.partial,'linkedExit',[1,i,i===3]);await call('inspect',f.v,'inspect',[1,expectedKey,3,ethers.ZeroHash,true]);
+ const transactions=[];for(const h of f.transactions){const receipt=await request('eth_getTransactionReceipt',[h]),header=await request('eth_getBlockByNumber',[receipt.blockNumber,false]);transactions.push({receipt,header});}
+ const end=await request('eth_getBlockByNumber',[tag,false]),chainAfter=await request('eth_chainId',[]),packet={schema:'LOCAL_FIXED_Q_STORED_HISTORY_1',runId,chainBefore,chainAfter,qBefore:scopeQ,qAfter:{number:BigInt(end.number).toString(),hash:end.hash,timestamp:BigInt(end.timestamp).toString()},journal,transactions};
+ const ref={runId,q:structuredClone(scopeQ),plan:structuredClone(plan),calls,links,peers:[...peers],codes:[...codes],pins:[...f.pins],key:expectedKey,account:f.user.address,settings:[f.start.toString(),'100','1'],txHashes:[...f.transactions],attrInterface:f.attr.interface};Object.freeze(ref.q);const context=Object.freeze({runId});contexts.set(context,{packet:structuredClone(packet),ref});const diagnosis=diagnoseFixedQ(context);return {context,packet,diagnosis};
+}
