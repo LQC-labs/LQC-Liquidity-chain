@@ -4,7 +4,7 @@ import {loadPolicyV1ResearchCase} from './policy-v1-source.mjs';
 import {evaluatePolicyV1} from './policy-v1-evaluator.mjs';
 import {loadSharedReconciliationCase,aggregateRights} from './shared-reconciliation-source.mjs';
 import {diagnoseSharedReconciliation} from './shared-obligation-reconciliation.mjs';
-import {createPolicyV1Ledger,advancePolicyV1Ledger} from './policy-v1-ledger.mjs';
+import {createPolicyV1Ledger,advancePolicyV1Ledger,recalculatePolicyV1Ledger} from './policy-v1-ledger.mjs';
 import {assert,hash,add,wire,fraction,zero} from './policy-v1-common.mjs';
 import {buildSyntheticCashEventViews,validateSyntheticCashEventLinks} from './fixed-independent-cash-events.mjs';
 import {compareFixedObligations,compareFixedCash,compareFixedSubmission,fixedGroupKey} from './fixed-independent-comparator.mjs';
@@ -57,12 +57,32 @@ export function checkExistingSharedConnection(name,submittedRequest=null){
  const diagnosis=diagnoseSharedReconciliation(pair.context,r);
  return {rawIntervalBinding:bindRawSubmittedIntervals(name,r,loadVerifiedRawIntervalReference(name),pair.context).diagnostic,comparison:observed.comparison,submissionComparison,projection,diagnosis,queryBlockObservation:r.scope.queryBlock,scopeEvidence:'EXISTING_PINNED_SYNTHETIC_CONTEXT_ONLY_NOT_CHAIN_AUTHENTICATION'};
 }
-export function observeFixedCashLedger(){
+function fixedCashSource(){
  const token='0x000000000000000000000000000000000000000d',spec={schema:'LQC_POLICY_V1_LEDGER_MODEL',scope:{chainId:'31337',domain:'101',series:'201',token,decimals:'6'},policyVersion:'LQC_SETTLEMENT_POLICY_V1',calculationVersion:'LQC_POLICY_V1_RESEARCH_CALCULATOR_1',policyCommitment:hash({synthetic:'cash-reference-policy'}),obligationId:hash({synthetic:'arithmetic-not-funding'}),obligationKind:'FUNDING',debtors:[{account:accounts.A,amount:{n:'7',d:'5'}},{account:accounts.B,amount:{n:'3',d:'5'}}],creditors:[{account:accounts.C,amount:{n:'8',d:'5'}},{account:accounts.D,amount:{n:'2',d:'5'}}]};
- let model=createPolicyV1Ledger(spec);const eventViews=buildSyntheticCashEventViews(model.binding),eventLink=validateSyntheticCashEventLinks(eventViews.ledgerEvents,eventViews.bookEvents,eventViews.terminals,model.binding);model=advancePolicyV1Ledger(model,spec,eventViews.ledgerEvents);const bookEvents=eventViews.bookEvents,terminals=eventViews.terminals;
+ let model=createPolicyV1Ledger(spec);const eventViews=buildSyntheticCashEventViews(model.binding),eventLink=validateSyntheticCashEventLinks(eventViews.ledgerEvents,eventViews.bookEvents,eventViews.terminals,model.binding);model=advancePolicyV1Ledger(model,spec,eventViews.ledgerEvents);return {spec,model,eventLink,eventViews};
+}
+function projectFixedCashLedger(model,spec,eventViews){
+ const token=spec.scope.token,bookEvents=eventViews.bookEvents,terminals=eventViews.terminals;
  const principalRows=[...spec.debtors.map(x=>({x,kind:'DEBT'})),...spec.creditors.map(x=>({x,kind:'CLAIM'}))];const principals=principalRows.map(({x,kind})=>{const a=Object.keys(accounts).find(a=>accounts[a]===x.account),pid={A:'1',B:'2',C:'3',D:'4'}[a];return {id:a,account:a,pid,obligation:a+(kind==='DEBT'?'-debt':'-claim'),kind,amount:x.amount};});
  const rights=principals.map(p=>({id:p.id,account:p.account,pid:p.pid,obligation:p.obligation,token,kind:p.kind==='DEBT'?'OVERPAYMENT_REFUND':'FUNDED_CLAIMS',amount:p.kind==='DEBT'?model.debtors.find(d=>d.account===accounts[p.id]).refundOutstanding:model.creditors.find(c=>c.account===accounts[p.id]).remaining}));
  let cursor=zero();const reservations=rights.map(r=>{const from=wire(cursor);cursor=add(cursor,fraction(r.amount));const {amount,...identity}=r;return {...identity,from,to:wire(cursor)};});
  const projected={scope:{chainId:'31337',domain:'101',series:'201',token,epoch:'1',phase:'OFFICIAL'},unit:'RAW_TOKEN_EXACT',basis:'FUNDING_ONLY_ZERO_INITIAL',principals,events:bookEvents,terminals,initialCash:'0',collected:model.debtors.reduce((n,d)=>n+BigInt(d.collectedCash),0n).toString(),paid:model.creditors.reduce((n,c)=>n+BigInt(c.paidCash),0n).toString(),endingCash:model.cash,uncollected:model.uncollectedDebt,unpaid:model.creditorRemaining,overpayment:model.refundOutstanding,bucketCash:model.cash,reserved:model.aggregateCashReservation,rights,reservations};
+ return projected;
+}
+export function observeFixedCashLedger(){
+ const {model,spec,eventLink,eventViews}=fixedCashSource(),projected=projectFixedCashLedger(model,spec,eventViews);
  return {model,projected,eventLink,eventViews,comparison:compareFixedCash(projected,structuredClone(projected)),coverage:'EXISTING_LEDGER_AMOUNTS_SYNTHETIC_EVENT_AND_RESERVATION_PROJECTION_NOT_FULL_LOADER'};
+}
+
+// Same fixed private ledger only; never a registered evaluation-to-evaluation rights bridge.
+export function diagnoseFixedCashRecalculation(submittedAfter){
+ assert(arguments.length<=1,'FIXED_RECALCULATION_ARGUMENTS');
+ const {model,spec,eventViews,eventLink}=fixedCashSource(),recalculated=recalculatePolicyV1Ledger(model);
+ assert.equal(recalculated.binding,model.binding,'FIXED_RECALCULATION_BINDING');assert.equal(recalculated.sequence,model.sequence,'FIXED_RECALCULATION_SEQUENCE');
+ const before=projectFixedCashLedger(model,spec,eventViews),after=projectFixedCashLedger(recalculated,spec,eventViews),modelComparison=compareFixedCash(before,after),supplied=arguments.length===1;
+ // The validated book events are source projections, not independent reads of private ledger receipts.
+ const missing=!supplied?[]:submittedAfter===null||submittedAfter===undefined?['snapshot']:Object.keys(after).filter(k=>!Object.hasOwn(submittedAfter,k)||submittedAfter[k]===null||submittedAfter[k]===undefined);
+ const completeSubmission=supplied&&missing.length===0;
+ const submittedComparison=completeSubmission?compareFixedCash(after,submittedAfter):null;
+ return {...modelComparison,schema:'LQC_FIXED_CASH_RECALCULATION_DIAGNOSIS_1',comparison:missing.length?'UNVERIFIED':completeSubmission?'MATCH_FIXED_RECALCULATION_AND_SUBMITTED_VIEW':'MATCH_FIXED_RECALCULATION_ONLY',modelRecalculationState:'MATCH_FIXED_PRIVATE_LEDGER',modelRightsPreserved:true,submittedEvidenceState:missing.length?'MISSING':supplied?'COMPLETE_FIXED_VIEW_MATCH':'NOT_REQUESTED',missingFields:missing,submittedComparison,diagnosticSubmittedRights:completeSubmission?structuredClone(submittedAfter.rights):null,observations:{before:{ledgerBinding:model.binding,ledgerSequence:model.sequence,book:before},recalculated:{ledgerBinding:recalculated.binding,ledgerSequence:recalculated.sequence,book:after}},eventLink,receiptEvidence:'SOURCE_EVENT_PROJECTION_AND_PRIVATE_RECALCULATION_NOT_LEDGER_RECEIPT_AUTHENTICATION',actualEvaluationRightsLinkage:'UNVERIFIED',ledgerKeyMigrationImplemented:false,refundSupported:false,persistentLedgerAuthenticated:false,currentLedgerAuthenticated:false,blockers:[...modelComparison.blockers,'SAME_LEDGER_RECALCULATION_NOT_VERSION_RIGHTS_TRANSFER',...(missing.length?['SUBMITTED_RECALCULATION_EVIDENCE_MISSING']:[])]};
 }

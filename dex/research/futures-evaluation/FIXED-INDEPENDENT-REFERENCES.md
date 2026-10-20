@@ -93,3 +93,72 @@ No aggregate result becomes financially evaluated, payable or returnable. All ex
 ## Task2/87 recorded execution scope
 
 The independent runner's fixed plan selects34 retained/strengthened cases plus23 new linkage cases in ONE run. The earlier2/85 logs remain untouched. A separate shared-regression run selects134 existing cases (runner4, shared58, identities17, version correspondence40, origin/rights15); results are reported separately, never as one combined execution. Sources, full executed title lists, exit codes, source snapshots, fixed-byte comparisons and direct-error classifications are preserved in local results only.
+## Task2/101: same private ledger rights/recalculation connection
+
+Scope is the existing fixed cash arithmetic case only. The previous whole-ledger
+recalculate equality test and the fixed comparator's individual right/reservation
+checks already exist and are reused, not reimplemented. The missing connection
+was recalculating the same private model, projecting that result and linking the
+before/after books and optional submitted book to the unchanged hand-fixed table.
+
+`diagnoseFixedCashRecalculation()` internally constructs the original fixed
+private model, uses `recalculatePolicyV1Ledger(model)` and checks its binding and
+Sequence. The old projection is extracted into a private helper and reused for
+before and recalculated model outputs. The old observeFixedCashLedger interface
+and its resulting values remain unchanged. No new financial formula, rounding,
+reservation policy, source registration or ledger API is added. Only the existing
+connection library has implementation changes; the ledger, comparator, fixed
+cash/obligation JSON and reference pin bytes are unchanged.
+
+A no-argument call means source-model recalculation, NOT a submitted-evidence
+check (`submittedEvidenceState=NOT_REQUESTED`). An explicit null/undefined or
+missing/null required field remains UNVERIFIED/MISSING with
+`diagnosticSubmittedRights=null`; it is not filled with zero. A complete submitted
+view is checked by the existing fixed comparator. An empty rights list contradicts
+the independently fixed positive rights and is rejected. Caller approval fields
+do not expand the fixed schema. Output financial execution amounts stay null and
+all authorities false in every returned result.
+
+Right identities remain the existing fixed labels account/pid/obligation/token/
+kind. They are NOT rewritten to version catalog keys. A,B refund rights remain
+3/5,2/5 raw; C,D unpaid funded claims remain3/5,2/5 raw. Four right rows reserve
+cash2 exactly; fractional components are not added as extra liabilities. The
+returned modelRightsPreserved flag only describes this internal fixed private
+model, never an absent submitted table, real persistent state or version bridge.
+
+Book Receipt/events/terminals are the existing validated source event projection,
+not independently re-read private ledger Receipt records. The unchanged private
+recalculation function retains its stored spec/events; actual model Sequence,
+collected/paid balances and derived rights are projected after recalculation.
+Submitted Receipt/terminal mutations are checked against the fixed source via the
+existing comparator. No independent chain/Receipt/ledger authenticity is claimed.
+Reservations are checked as this fixed exact case, not a new general overlap
+algorithm. Existing general overlap/owner checks are unchanged.
+
+Tests: integration-1 executes105 tests in one run: existing34 reference +23
+submitted/event links +27 raw-interval checks, plus21 new recalculation-connection
+checks.105 PASS/0 FAIL,exit0,24053ms. The unaffected longOpen28 are not repeated;
+there is no full133-pass execution claim. The fixed required plan contains133
+reviewed literal titles so the original CI runner will include all suites when
+run; no workflow/runner implementation change is needed. The isolated impact tool
+validates the full pinned plan/file manifest before excluding the longOpen suite,
+then uses the existing JSON reporter/list/exit-code validator. Its source snapshot,
+syntax results, stdout/stderr, exact execution list and target errors are kept
+locally. No earlier failed/preparation evidence is overwritten.
+
+Direct targets include positive refund fraction loss, duplicate right set,
+owner/obligation/token replacement, unpaid fractional claim omission, fixed-case
+reservation interval overlap, duplicate event set, coherent Receipt substitution,
+collection/payment/terminal reset, missing evidence and empty-positive-right
+contradiction. All mutations enter through the new submitted-view connection;
+existing comparator errors are retained, rather than adding parallel arithmetic.
+
+Base content is main55e57b16d223828dab0e1dda4fbbbeb1c0e9a92c, tree
+a2a585fc6e8aff4f49b74109ba9cd8c81522a7ab (local tree-equivalent parent
+c2bf3775db3d669bc3ed36fcfbe4e65e356b121b). No remote query was needed.
+The actual archived candidate remains UNVERIFIED/PARTIAL/NOT_EVALUATED. No catalog
+is equated to the hand cash principals, no key is migrated, and no registered
+before/after evaluation right transfer is supported. rightsTransitionComplete is
+false, actualEvaluationRightsLinkage UNVERIFIED, refundSupported false. No REFUND
+consumption/transfer, actual money/return/LP authority, contract, anchor, operational
+trust or economic policy is changed. QuickNode#24088 stays pending/payment on hold.
