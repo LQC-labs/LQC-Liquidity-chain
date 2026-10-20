@@ -44,7 +44,7 @@ function source(ref){const s=references.get(ref);assert(s,'RAW_PRIVATE_REFERENCE
 export function inspectRawIntervalReference(ref){const s=source(ref);return {...clone(s.raw),evidence:'PINNED_SYNTHETIC_SOURCE_ONLY',sourceCommitment:s.commitment,auxiliaryConfig:clone(s.config),submittedConfigVerified:false,submittedQTimestampVerified:false};}
 export function compareRawIntervalObservation(ref,observed){const s=source(ref),expected=s.raw;for(const field of ['sourceOrder','intervals','remaining','pendingTail','observed','query','observedIntegrals'])eq(observed[field],expected[field],'RAW_'+field.toUpperCase()+'_MISMATCH');return {status:'RAW_METADATA_MATCH_ONLY',evaluationStatus:'NOT_EVALUATED',confirmedAmount:null,...NO_AUTHORITY};}
 export function bindRawSubmittedIntervals(name,request,ref,sharedContext){
- const s=source(ref);assert(['partial','sequential'].includes(name)&&s.name===name,'RAW_SUBMISSION_CASE_SCOPE');
+ const s=source(ref);assert(['partial','sequential','long-open'].includes(name)&&s.name===name,'RAW_SUBMISSION_CASE_SCOPE');
  const shared=sharedReconciliationSource(sharedContext),original=shared.reference;
  assert.equal(shared.originEvidence.sourceCommitment,s.commitment,'RAW_SOURCE_COMMITMENT');
  eq(request.scope,original.scope,'RAW_SUBMISSION_SCOPE');eq(request.scope.queryBlock,{number:s.history.query.number,hash:s.history.query.hash},'RAW_QUERY_SCOPE');
