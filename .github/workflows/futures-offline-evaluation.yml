@@ -32,3 +32,5 @@ jobs:
         run: node research/futures-evaluation/run-settlement-link-tests.cjs research/futures-evaluation/.results/settlement-link-ci new
       - name: Verify shared obligation reconciliation and identity guards without a chain
         run: node research/futures-evaluation/run-shared-reconciliation-tests.cjs research/futures-evaluation/.results/shared-reconciliation-ci new
+      - name: Verify fixed synthetic references and submitted event links without a chain
+        run: node research/futures-evaluation/run-fixed-independent-tests.cjs research/futures-evaluation/.results/fixed-independent-ci
