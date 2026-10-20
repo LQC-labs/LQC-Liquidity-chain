@@ -61,7 +61,7 @@ export function compareMockConditions(input,mock){
  const comparisons=rows.map(({e,p})=>{const conflicts=[];if(e.timestamp!==mock.exitTime)conflicts.push('EXIT_TIME_MISMATCH');if(p.market18!==mock.exitMarket18)conflicts.push('MARKET_PRICE_MISMATCH');if(p.collateral18!==mock.exitCollateral18)conflicts.push('COLLATERAL_PRICE_MISMATCH');return {sequence:e.sequence,receipt:e.receipt,timestamp:e.timestamp,conflicts};});
  return {status:comparisons.some(r=>r.conflicts.length)?'CONFLICT':'STORED_VALUES_MATCH_ONLY',provenance:'CALLER_COMPARISON_NOT_COORDINATOR_OR_PRICE_AUTHENTICATION',fullCompatibilityEstablished:false,rows:comparisons,...NO_AUTHORITY};
 }
-function entriesState(entries){
+export function entriesState(entries){
  dense(entries,4096);let sequence=0n,subtotal=0n,receipt=null;const seen=new Set();
  for(const row of entries){
   record(row,['sequence','receipt','amount','cumulative']);const h=hash32(row.receipt);assert.notEqual(h,'0x'+'0'.repeat(64),'ZERO_CONSUMPTION_RECEIPT');assert(!seen.has(h),'DUPLICATE_CONSUMPTION_RECEIPT');seen.add(h);

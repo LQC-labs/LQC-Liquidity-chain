@@ -1,0 +1,37 @@
+{
+  "schema": "LQC_SHARED_RECONCILIATION_SYNTHETIC_REFERENCES_V1",
+  "purpose": "TEST_ONLY_NOT_CHAIN_POLICY_OR_LEDGER_AUTHENTICATION",
+  "cases": {
+    "partial": {
+      "baseCase": "partial",
+      "aliases": {},
+      "cash": "COLLECT_PAY"
+    },
+    "sequential": {
+      "baseCase": "flip50",
+      "aliases": {
+        "3": "0x0000000000000000000000000000000000000065",
+        "4": "0x0000000000000000000000000000000000000066"
+      },
+      "cash": "COLLECT_PAY"
+    },
+    "open-gap": {
+      "baseCase": "longOpen",
+      "aliases": {},
+      "cash": "NONE"
+    },
+    "rounding": {
+      "baseCase": "roundAggregation",
+      "aliases": {},
+      "cash": "COLLECT_PAY"
+    },
+    "sequential-debt": {
+      "baseCase": "flip50",
+      "aliases": {
+        "3": "0x0000000000000000000000000000000000000066",
+        "4": "0x0000000000000000000000000000000000000065"
+      },
+      "cash": "COLLECT_PAY"
+    }
+  }
+}
