@@ -1,0 +1,97 @@
+{
+  "schema": "LQC_LOCAL_CALCULATOR_IMPLEMENTATION_RECORD_V1",
+  "purpose": "LOCAL_FILE_IDENTIFICATION_NOT_IMPLEMENTATION_CORRECTNESS_OR_CHAIN_PROOF",
+  "calculationVersion": "LQC_POLICY_V1_RESEARCH_CALCULATOR_1",
+  "coverage": "STATIC_LOCAL_MJS_IMPORT_CLOSURE_ONLY_EXTERNAL_OR_DYNAMIC_CODE_NOT_AUTHENTICATED",
+  "files": [
+    {
+      "file": "lib/authoritative-fields.mjs",
+      "sha256": "a56ae282304e3c72069d3bf1dc29a32b0c8c03b49da189123c4ea9284cb67814"
+    },
+    {
+      "file": "lib/candidate-adapter-v3.mjs",
+      "sha256": "2bd77dfb9cb98fec17ea8799d9a68023580f8a107d6b9103681a4dc185be38ea"
+    },
+    {
+      "file": "lib/candidate-schema-v3.mjs",
+      "sha256": "fdadd796b3aa8837ae0b4abf4e1028c84e98429a3750f93934a8e0076c2602d4"
+    },
+    {
+      "file": "lib/candidate-test-anchor.mjs",
+      "sha256": "aefec25423c593266f73e12b2d6e206e2550abc150e9c980375a052606723e43"
+    },
+    {
+      "file": "lib/evaluation-identity.mjs",
+      "sha256": "8bc0fca559b7d8cc52ec1f48c895229cde92eb15bbf2883c0c7372c66f784b09"
+    },
+    {
+      "file": "lib/exact-rational.mjs",
+      "sha256": "e6d028e0679f2b96c361a20fa37f4dda328a45616911f4ad7d348d0f72d2867e"
+    },
+    {
+      "file": "lib/exit-diagnostic-evaluator.mjs",
+      "sha256": "26976f2a6a318267c70af79c1cc16dd07d5b65e839d97347db47dccf8fe0e578"
+    },
+    {
+      "file": "lib/independent-exposure-reference.mjs",
+      "sha256": "d517f6200ba3801b948f16551c7c9f5ec93ae7fe21de385889ee032cd709738f"
+    },
+    {
+      "file": "lib/independent-query-spec.mjs",
+      "sha256": "c5b0c13bc45256fb38591a1d9c2fc6e6ffec132da0b5e07eb66639916fb6b57c"
+    },
+    {
+      "file": "lib/input-schema.mjs",
+      "sha256": "108a634dae52b73950caf8893dd817ba758e2ae14df95a6a5703c808b3263722"
+    },
+    {
+      "file": "lib/policy-v1-common.mjs",
+      "sha256": "f10d47edc2f386c949344dbd9045ea08e263e593c700d80fa1c1435d45e15711"
+    },
+    {
+      "file": "lib/policy-v1-config.mjs",
+      "sha256": "a21873a89610983fff9e3da9c04b722cdabb20cce3f24a6da0d374e8194caf32"
+    },
+    {
+      "file": "lib/policy-v1-evaluator.mjs",
+      "sha256": "040bfb9913f5f0bca32b9a95e7de59732c99611d517f266a8cef0849d4b09017"
+    },
+    {
+      "file": "lib/policy-v1-ledger.mjs",
+      "sha256": "72bac0765640cac931edf641b2a192390c725266472f20de72b5e9baad4b3b36"
+    },
+    {
+      "file": "lib/policy-v1-price-evidence.mjs",
+      "sha256": "d955bfb9ece0bae6e6ffbd39d139b94666b25e52f85717a59ef7c39040082422"
+    },
+    {
+      "file": "lib/policy-v1-recorded-evidence.mjs",
+      "sha256": "0928e0e18e843c5866aec6435a28c3302a25e64763b535c2ee044bfdef5fa652"
+    },
+    {
+      "file": "lib/policy-v1-segments.mjs",
+      "sha256": "16616668f719497d6904170fe4b96304eed90b6b2700d39c8801c84b7cdce100"
+    },
+    {
+      "file": "lib/policy-v1-source.mjs",
+      "sha256": "efad997f38b871761a70411bf2f05d74844e3d75fe3c0835a89f250de57a10a3"
+    },
+    {
+      "file": "lib/policy-v1-test-reference.mjs",
+      "sha256": "9dbd60c20b215b58744863eb5ab99544223e09a3926c56d79eda5d43e1dd312e"
+    },
+    {
+      "file": "lib/semantic-commitment.mjs",
+      "sha256": "dad0be3784fb984936f9ca8e5e5e9489df9c53e6bb0bbb2e1dd20a4593bb669b"
+    },
+    {
+      "file": "lib/shared-evaluation-evidence-reference.mjs",
+      "sha256": "9c085dd7b0fe6e70e9dfe695aebaa6d684ad34c6511c23758e2b2bcdee11cd70"
+    },
+    {
+      "file": "lib/verified-diagnostic-input.mjs",
+      "sha256": "f3a927bcb19a63536556bae1129d2dbb6c6f253d79bbd34309202783c435c4b2"
+    }
+  ],
+  "dependencyLockSHA256": "485ab89063da2ddc822e84c9a29ca0328c0f1b6a5f7bde8134669a32f3f0a71c"
+}
