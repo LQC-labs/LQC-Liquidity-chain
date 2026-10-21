@@ -30,13 +30,16 @@
     "fixed Q SHORT local bridge SHORT quantity mutation reaches quantity chain",
     "fixed Q SHORT local bridge opposite old OI reaches side check before Receipt digest",
     "fixed Q SHORT local bridge opposite next OI reaches side check before Receipt digest",
-    "fixed Q SHORT local bridge SHORT research keeps all amounts unconfirmed and authorities false"
+    "fixed Q SHORT local bridge SHORT research keeps all amounts unconfirmed and authorities false",
+    "fixed Q falling-price SHORT local bridge actual falling-price history binds direction OI prices Receipts Sequence time and Q",
+    "fixed Q falling-price SHORT local bridge SHORT positive signed legs gains and zero losses match independent fractions",
+    "fixed Q falling-price SHORT local bridge SHORT gains do not authorize settlement return or missing evidence"
   ],
   "sourceHashes": {
-    "test/bridge-fixture.mjs": "fad8298c4c80cb86f1f3cf17fa91f9a304bfdd068b8dea7d47e84523ab6b3c3c",
+    "test/bridge-fixture.mjs": "81a1081980423583c4ffa17bd537bf7e1edde824d3c12b2a995794823dd443bf",
     "test/fixed-q-bridge.mjs": "eb495be82b97d56069bd49bcea5cb5bd6fdec23360cc73f66185ab601f2aceea",
-    "test/fixed-q-bridge.test.mjs": "516d616b2f7266cc8165618b82f380884a67273bd4e571d8b155ba21f535789d",
-    "run-fixed-q-tests.cjs": "d33722905c47efd6d8dfe9991022b010aee17fb6b2bca6eb0353b97e9f6f6b48",
+    "test/fixed-q-bridge.test.mjs": "d217bd71a461bd45e4c711c7588781a5e26c5ee866208296e48774915c05ade3",
+    "run-fixed-q-tests.cjs": "cead406267e67c65eeae44d0c1411ea275ee9b5aac2afafb95028ead37e6ab22",
     "test/runtime-tools.mjs": "ef37735eeb00e21490e2b9e95b36b1bfc767b400b368452f026a72465b160d6a",
     "test/anvil-compat.mjs": "aa715ea7fc1589835d102540e60d1edcbeabd2a0e28bd3acafef1d4bcd403b86",
     "build-common.cjs": "1f30f81c280fdd8af1413ae6ae4fc76516101be3f172d4ebcef698bfcc33b844",

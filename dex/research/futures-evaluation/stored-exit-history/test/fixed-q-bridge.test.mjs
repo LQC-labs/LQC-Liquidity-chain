@@ -84,3 +84,40 @@ describe('fixed Q SHORT local bridge',function(){
   for(const k of ['funding','fees','payableAmount'])assert.equal(p[k],null,k);assert.equal(p.account.rights,null);assert.equal(p.account.remaining,null);assert.equal(p.fundingEvidence.evidenceCompleteness,'MISSING');
  });
 });
+
+// Actual new local history; existing rising LONG and SHORT cases above are unchanged.
+describe('fixed Q falling-price SHORT local bridge',function(){
+ this.timeout(180000);let rpc,provider,context;
+ before(async()=>{
+  rpc=anvil.provider({wallet:{totalAccounts:4}});await rpc.request({method:'anvil_setBlockTimestampInterval',params:[0]});provider=new ethers.BrowserProvider(rpc,undefined,{cacheTimeout:-1,pollingInterval:20});
+  const fixture=await createBridgeFixture(provider,await provider.getSigner(0),await provider.getSigner(1),'SHORT','FALLING');
+  const result=await observeFixedQ(fixture,provider,rpc,row=>fs.appendFileSync(path.join(out,'short-profit-journal.jsonl'),JSON.stringify(row)+'\n'));
+  context=result.context;fs.writeFileSync(path.join(out,'short-profit-observation.json'),JSON.stringify(result.packet,null,2));fs.writeFileSync(path.join(out,'short-profit-diagnosis.json'),JSON.stringify(result.diagnosis,null,2));
+ });
+ after(async()=>{provider?.destroy();await rpc?.disconnect();});
+ it('actual falling-price history binds direction OI prices Receipts Sequence time and Q',()=>{
+  const p=packetForTests(context),abi=ethers.AbiCoder.defaultAbiCoder(),W=10n**18n,raw=n=>p.journal.find(x=>x.name===n).response;
+  const rows=[1,2,3].map(i=>abi.decode([R],raw('transition'+i))[0]),exits=[2,3].map(i=>abi.decode([X],raw('exit'+i))[0]);
+  assert.equal(abi.decode([T],raw('trace'))[0][8],false);
+  assert.deepEqual(rows.map(t=>Array.from(t).slice(3,7)),[[0n,0n,0n,3n*W],[0n,3n*W,0n,2n*W],[0n,2n*W,0n,0n]]);
+  assert.deepEqual(rows.map(t=>t[2]),[1n,2n,3n]);assert.deepEqual(rows.map(t=>t[0]-rows[0][0]),[0n,10n,20n]);
+  assert.deepEqual(exits.map(e=>e[4]),[9n*W/10n,8n*W/10n]);assert.deepEqual(exits.map(e=>e[5]),[9n*W/10n,8n*W/10n]);
+  assert.deepEqual(exits.map(e=>e[10]),rows.slice(1).map(t=>t[7]));assert.deepEqual(exits.map(e=>e[3]),[W,3n*W]);
+  assert.deepEqual(p.qBefore,p.qAfter);const d=diagnoseFixedQ(context);assert(d.historyMatches&&d.completelyClosed);assert.equal(d.researchPlan.side,'SHORT');assert.notEqual(d.solidityCommitment,d.jsSemanticCommitment);
+  assert.equal(d.existingHistoryDiagnosis.integrals.official.short,(50n*W).toString());assert.equal(d.existingHistoryDiagnosis.integrals.official.long,'0');
+ });
+ it('SHORT positive signed legs gains and zero losses match independent fractions',()=>{
+  const p=diagnoseFixedQ(context).researchPlan;
+  // q*(entry-market)/entry: 1*(1-.9)=.1, 2*(1-.8)=.4 USD.
+  // Raw at 6 decimals: (.1/.9)*10^6=1000000/9; (.4/.8)*10^6=500000.
+  assert.deepEqual(p.legs.map(l=>l.pnlDiagnostic.rawToken),[{n:'1000000',d:'9'},{n:'500000',d:'1'}]);
+  assert.deepEqual(p.legs.map(l=>l.pnlDiagnostic.usd18),[{n:'100000000000000000',d:'1'},{n:'400000000000000000',d:'1'}]);
+  for(const k of ['rawTokenNet','rawTokenGain'])assert.deepEqual(p.positionTotals[k],{n:'5500000',d:'9'},k);
+  for(const k of ['usd18Net','usd18Gain'])assert.deepEqual(p.positionTotals[k],{n:'500000000000000000',d:'1'},k);
+  for(const k of ['rawTokenLoss','usd18Loss'])assert.deepEqual(p.positionTotals[k],{n:'0',d:'1'},k);assert.equal(p.positionTotals.nettingAuthorized,false);
+ });
+ it('SHORT gains do not authorize settlement return or missing evidence',()=>{
+  const d=diagnoseFixedQ(context),p=d.researchPlan;for(const x of[d,p]){assert.equal(x.evaluationStatus,'NOT_EVALUATED');for(const k of ['confirmedAmount','returnAmount','lpRecoveryAmount'])assert.equal(x[k],null,k);for(const[k,v]of Object.entries(x))if(k.endsWith('Authorized')||k.endsWith('Authority')||['createsClaim','consumesHistory','rightsTransitionComplete'].includes(k))assert.equal(v,false,k);}
+  for(const k of ['funding','fees','payableAmount'])assert.equal(p[k],null,k);for(const k of ['authoritativeLimit','priorConsumed','remaining','rights','reservations'])assert.equal(p.account[k],null,k);assert.equal(p.fundingEvidence.evidenceCompleteness,'MISSING');assert(p.blockers.includes('EXISTING_SERIES_NOT_APPROVED_POLICY_V1'));
+ });
+});
