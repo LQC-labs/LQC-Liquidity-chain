@@ -33,13 +33,16 @@
     "fixed Q SHORT local bridge SHORT research keeps all amounts unconfirmed and authorities false",
     "fixed Q falling-price SHORT local bridge actual falling-price history binds direction OI prices Receipts Sequence time and Q",
     "fixed Q falling-price SHORT local bridge SHORT positive signed legs gains and zero losses match independent fractions",
-    "fixed Q falling-price SHORT local bridge SHORT gains do not authorize settlement return or missing evidence"
+    "fixed Q falling-price SHORT local bridge SHORT gains do not authorize settlement return or missing evidence",
+    "fixed Q mixed-PnL SHORT local bridge actual mixed-price SHORT history binds stored fields Receipts and Q",
+    "fixed Q mixed-PnL SHORT local bridge signed mixed PnL preserves gains and losses as independent fractions",
+    "fixed Q mixed-PnL SHORT local bridge mixed PnL remains unevaluated with null money and false authorities"
   ],
   "sourceHashes": {
-    "test/bridge-fixture.mjs": "81a1081980423583c4ffa17bd537bf7e1edde824d3c12b2a995794823dd443bf",
+    "test/bridge-fixture.mjs": "8ae1baac52e912b5c59b948adcd7501590f91fa5027dd019e297a771142b386c",
     "test/fixed-q-bridge.mjs": "eb495be82b97d56069bd49bcea5cb5bd6fdec23360cc73f66185ab601f2aceea",
-    "test/fixed-q-bridge.test.mjs": "d217bd71a461bd45e4c711c7588781a5e26c5ee866208296e48774915c05ade3",
-    "run-fixed-q-tests.cjs": "cead406267e67c65eeae44d0c1411ea275ee9b5aac2afafb95028ead37e6ab22",
+    "test/fixed-q-bridge.test.mjs": "c34192159e747dec3e3ca3246b044f034dfc2f72e56b0f535f87d1de73054e68",
+    "run-fixed-q-tests.cjs": "e3d6f64a5b741d3c4ccb45661be108169b21f7db0cd83f4783ee23c263fa98a0",
     "test/runtime-tools.mjs": "ef37735eeb00e21490e2b9e95b36b1bfc767b400b368452f026a72465b160d6a",
     "test/anvil-compat.mjs": "aa715ea7fc1589835d102540e60d1edcbeabd2a0e28bd3acafef1d4bcd403b86",
     "build-common.cjs": "1f30f81c280fdd8af1413ae6ae4fc76516101be3f172d4ebcef698bfcc33b844",
