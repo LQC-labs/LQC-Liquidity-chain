@@ -201,31 +201,34 @@ Potential future revenue sources may include:
 
 Treasury allocation, staking rewards, revenue distribution, additional buyback, and burn mechanisms remain subject to governance, realized protocol revenue, legal review, and published limits.
 
-## Approved Tokenomics Design
+## Approved Tokenomics Design — V1.4
 
-The current approved design uses a fixed total supply of **1,000,000,000 LQC** and planned TGE circulation of **150,000,000 LQC (15%)**.
+**Project-owner-approved design (2026-10-21), pending reviewed repository merge, security/legal release gates and on-chain deployment.** The fixed intended supply is **1,000,000,000 LQC**. The targeted **maximum initial freely transferable allocation** is **143,800,000 LQC (14.38%)**, not a statement of actual circulation.
 
-| Allocation | Share | LQC | TGE / Release Framework |
-|---|---:|---:|---|
-| Future Ecosystem Rewards | 35% | 350,000,000 | 0 at TGE; 7+ years, up to 50M annually |
-| Community Initial | 20% | 200,000,000 | 80M at TGE; remaining 120M activity-based over 24 months |
-| Team & Core Contributors | 20% | 200,000,000 | 0 at TGE; 12-month cliff, then 36-month monthly vesting |
-| Protocol Treasury | 10% | 100,000,000 | 10M at TGE; remaining 90M through a 5-year budget framework |
-| Liquidity & Market Making | 10% | 100,000,000 | 50M at TGE; remaining 50M linked to exchange and pool growth |
-| Grants & Strategic Ecosystem | 5% | 50,000,000 | 10M at TGE; remaining 40M milestone-based |
+| Allocation | Designated wallet name | Share | Total LQC | TGE maximum | Post-TGE plan |
+|---|---|---:|---:|---:|---|
+| Community | LQC Community Wallet | 40% | 400,000,000 | 80,000,000 | 320M capped monthly over 120 months; initial 80M subject to actual recipient distribution |
+| Team & contributors | LQC Team Wallet | 20% | 200,000,000 | 0 | 12-month lock, 36 monthly vesting releases in months 13–48 |
+| Existing investors | LQC Investor Wallet | 3.8% | 38,000,000 | 3,800,000 | 3-month lock, 24 monthly releases in months 4–27; existing contracts subject to legal validation |
+| Liquidity & market making | LQC Liquidity Wallet | 8% | 80,000,000 | 60,000,000 | Remaining 20M subject to approved venue/liquidity mandates |
+| Treasury & operations | LQC Treasury Wallet | 8.2% | 82,000,000 | 0 | Approved and disclosed operating budgets |
+| Validators & staking | LQC Validator Wallet | 10% | 100,000,000 | 0 | Pre-allocated supply only; reward target up to 96 months after native mainnet launch |
+| Ecosystem development | LQC Ecosystem Wallet | 5% | 50,000,000 | 0 | Milestone-driven ecosystem grants |
+| Security & risk reserve | LQC Security Wallet | 3% | 30,000,000 | 0 | Multisig-approved security use; not LQUSD backing |
+| Mainnet activation | LQC Mainnet Wallet | 2% | 20,000,000 | 0 | Stage-based use after mainnet launch; indicative 24 months |
+| **TOTAL** | **9 allocation wallets** | **100%** | **1,000,000,000** | **143,800,000** | |
 
-The planned TGE circulation consists of Community Initial 80M, Liquidity & Market Making 50M, Protocol Treasury 10M, and Grants & Strategic Ecosystem 10M.
+At TGE, planned maximum transferability is Community 80M + Investors 3.8M + Liquidity 60M = **143.8M**; any undistributed, locked or restricted inventory must be excluded from actually reported circulating supply. Community remaining 320M: 120 monthly program limits (10 years); Team 200M: 12-month lock plus 36 monthly releases (months 13–48); Investor remaining 34.2M: 3-month lock plus 24 monthly releases (months 4–27). All actual beneficiary rights remain subject to verified vesting contracts and legal agreement reconciliation.
 
-This is the current approved project design. Contract addresses, on-chain supply controls, final vesting contracts, and verification materials will be published when implementation and review are complete. Earlier drafts using a different total supply are superseded.
+Nine wallet labels identify management responsibility rather than confirming custody balances. Token allocation and vesting restrictions must be enforced by audited contracts where appropriate. See [canonical tokenomics](docs/CANONICAL_TOKENOMICS.md).
 
-### Staking reward and fixed-supply consistency
+### Staking rewards, no inflation, and future mainnet
 
-- LQC Staking does **not** authorize token issuance above the fixed **1,000,000,000 LQC** supply.
-- Any token-denominated staking reward must be funded from a disclosed allocation already included in the approved tokenomics, such as a governance-approved portion of Future Ecosystem Rewards, or from another explicitly reconciled existing allocation.
-- Protocol-revenue-funded rewards must be accounted separately from token-emission rewards and may not be described as guaranteed yield.
-- Reward schedules, source wallets/contracts, vesting or streaming rules, claim logic, circulating-supply treatment, and governance approvals must be disclosed before activation.
-- Staking rewards may not silently consume Team, Treasury, Liquidity/Market-Making, Community, or Grants allocations outside their approved purposes.
-- Every activated reward program must reconcile: fixed total supply, allocation budget, distributed rewards, remaining budget, circulating supply, and on-chain balances.
+- Issuance may **not exceed 1,000,000,000 LQC**. Any user-authorized burning reduces supply.
+- Validator/staking token-denominated incentives may use only an approved portion of the existing **Validators & Staking 10% / 100M LQC** allocation, not new token minting.
+- Protocol-revenue rewards, if activated, require distinct accounting, funded realized revenue and no guaranteed yield. User principal or protected reserves are never reward sources.
+- On any later native-mainnet migration, provable burn or custody-backed lock and controlled 1:1 destination claims must prevent duplicate circulating supply across BSC and the future chain. Exact migration mechanism is **not yet approved or implemented**.
+- Legacy **6-category / 15% TGE** tokenomics was an earlier architecture baseline, preserved in historical commits. CEX submission, official PDF and public website must be reconciled before describing V1.4 as live. No token deployment/audit/listing is claimed.
 
 
 ## Roadmap

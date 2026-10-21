@@ -46,7 +46,7 @@ Internal test PASS is not an external audit PASS. Critical/High findings require
 Maintain:
 - fixed 1B LQC supply;
 - canonical allocation register;
-- TGE 150M/15% methodology;
+- V1.4 maximum targeted TGE transferability **143.8M/14.38%** and separate evidence of **actual** circulating supply (earlier 150M/15% is historical);
 - token contract and verified source when deployed;
 - mint/burn authority;
 - vesting contracts/schedules;

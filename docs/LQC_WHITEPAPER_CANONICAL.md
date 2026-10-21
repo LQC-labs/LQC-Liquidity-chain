@@ -146,23 +146,31 @@ Approved utility direction includes Lending loan-origination and repayment fee s
 
 Additional utility includes the separately accounted LQC Staking Vault. The same canonical staking state may later support reviewed ecosystem functions such as Launchpad tier/allocation eligibility and governance utility through versioned interfaces, without creating duplicate staking custody or duplicate reward accounting.
 
-## 14. Canonical Tokenomics
+## 14. Canonical Tokenomics — V1.4 approved design
 
-Fixed total supply: **1,000,000,000 LQC**.  
-Planned TGE circulation: **150,000,000 LQC (15%)**.
+This is the project-owner-approved **2026-10-21 design**, pending independent contract/legal review and on-chain issuance; approval of a design is not a claim of a live token. The intended total initial/maximum supply is **1,000,000,000 LQC** on BSC first, with no discretionary mint function, and holder-authorized burn. The target is **up to 143,800,000 LQC (14.38%) freely transferable at TGE**, versus the former 150M/15% historical Architecture Freeze plan.
 
-| Allocation | Share | LQC | TGE / Release Framework |
-|---|---:|---:|---|
-| Future Ecosystem Rewards | 35% | 350,000,000 | 0 at TGE; 7+ years, up to 50M annually |
-| Community Initial | 20% | 200,000,000 | 80M at TGE; remaining 120M activity-based over 24 months |
-| Team & Core Contributors | 20% | 200,000,000 | 0 at TGE; 12-month cliff, then 36-month monthly vesting |
-| Protocol Treasury | 10% | 100,000,000 | 10M at TGE; remaining 90M through a 5-year budget framework |
-| Liquidity & Market Making | 10% | 100,000,000 | 50M at TGE; remaining 50M linked to exchange and pool growth |
-| Grants & Strategic Ecosystem | 5% | 50,000,000 | 10M at TGE; remaining 40M milestone-based |
+| Allocation | Designated wallet name | Share | Total LQC | TGE maximum | Post-TGE plan |
+|---|---|---:|---:|---:|---|
+| Community | LQC Community Wallet | 40% | 400,000,000 | 80,000,000 | 320M capped monthly over 120 months; initial 80M subject to actual recipient distribution |
+| Team & contributors | LQC Team Wallet | 20% | 200,000,000 | 0 | 12-month lock, 36 monthly vesting releases in months 13–48 |
+| Existing investors | LQC Investor Wallet | 3.8% | 38,000,000 | 3,800,000 | 3-month lock, 24 monthly releases in months 4–27; existing contracts subject to legal validation |
+| Liquidity & market making | LQC Liquidity Wallet | 8% | 80,000,000 | 60,000,000 | Remaining 20M subject to approved venue/liquidity mandates |
+| Treasury & operations | LQC Treasury Wallet | 8.2% | 82,000,000 | 0 | Approved and disclosed operating budgets |
+| Validators & staking | LQC Validator Wallet | 10% | 100,000,000 | 0 | Pre-allocated supply only; reward target up to 96 months after native mainnet launch |
+| Ecosystem development | LQC Ecosystem Wallet | 5% | 50,000,000 | 0 | Milestone-driven ecosystem grants |
+| Security & risk reserve | LQC Security Wallet | 3% | 30,000,000 | 0 | Multisig-approved security use; not LQUSD backing |
+| Mainnet activation | LQC Mainnet Wallet | 2% | 20,000,000 | 0 | Stage-based use after mainnet launch; indicative 24 months |
+| **TOTAL** | **9 allocation wallets** | **100%** | **1,000,000,000** | **143,800,000** | |
 
-Historical 300M initial-circulation, 3.8% investor-allocation, and earlier vesting concepts are superseded.
+The planned TGE inventory ceiling is 80M Community, 3.8M Existing Investors and 60M Liquidity. **Actual circulating supply** must be separately demonstrated, excluding undistributed, locked or non-transferable inventory. After TGE, Community's remaining 320M is assigned to 120 monthly capped programs (10 years); Team 200M has a 12-month lock and then 36 monthly installments (months 13–48); Investor remaining 34.2M has a 3-month lock and then 24 installments of 1.425M (months 4–27), subject to verified existing contracts.
 
-Staking does not authorize issuance above 1B LQC. Any token-denominated staking reward must use a disclosed, governance-approved budget already reconciled within the fixed allocation framework.
+**Native mainnet portability:** LQC intends to support a future Cosmos SDK / CometBFT / Cosmos EVM / IBC-based native network, but mainnet is not claimed to exist. Native fees, PoS validators and staking can be funded from pre-allocated token budget (Validators & Staking 10% / 100M), without increasing the global 1B maximum supply. Future 1:1 BSC-to-native migration requires a **separately approved and audited** lock/burn-and-claim mechanism that rules out unbacked duplicates or simultaneous double circulation across chains. The Security reserve (3%) is not the separately reserved backing for LQUSD.
+
+All nine management wallets, role-separated signing controls, escrow/vesting schedules, contract source, source-of-supply accounting and CEX evidence must be reproducibly disclosed before public launch. Actual token deployment, audit conclusion, listing and regulatory authorization remain unclaimed.
+
+**Supersession history:** prior six-category allocation, 150M/15% TGE, and prior exclusion of the 3.8% investor bucket were valid historical records but are replaced by this newer approved design **only after repository review/merge**. Preserve the original historical freeze evidence.
+
 
 ## 15. Development and Evidence Status
 

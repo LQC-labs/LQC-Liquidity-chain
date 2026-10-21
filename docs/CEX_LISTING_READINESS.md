@@ -31,7 +31,7 @@ For an actual submission, copy and complete the [`Exchange Due-Diligence Evidenc
 
 | Review item | Status | Required evidence / current reference |
 |---|---|---|
-| Current disclosed tokenomics | Repository disclosure | Fixed total supply: **1,000,000,000 LQC**; planned TGE circulation: **150,000,000 LQC (15%)**. The allocation table in the root [`README.md`](../README.md) is the current repository disclosure. |
+| Current disclosed tokenomics | Repository disclosure | Approved V1.4 design: fixed total supply **1,000,000,000 LQC**; **maximum targeted** TGE transferable inventory **143,800,000 LQC (14.38%)**, not verified actual circulation. Nine allocations and their wallet labels are disclosed in [`CANONICAL_TOKENOMICS.md`](CANONICAL_TOKENOMICS.md) and [`README.md`](../README.md); on-chain deployment/vesting and independent audit remain pending. |
 | Token contract and decimals | Pending external evidence | Final network, canonical contract address, decimals, deployment transaction, deployer, creation bytecode, ABI, and explorer-verified source. |
 | Supply matches contract state | Pending external evidence | `totalSupply`, mint/burn permissions, holder distribution, circulating-supply method, and timestamped explorer/API evidence. |
 | Allocation and TGE reconciliation | Pending external evidence | Signed allocation register whose percentages, token amounts, TGE unlocks, and totals reconcile exactly to the disclosed supply. |

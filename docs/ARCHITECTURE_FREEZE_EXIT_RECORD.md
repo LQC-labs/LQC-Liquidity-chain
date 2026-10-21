@@ -52,3 +52,7 @@ Initial Master 2 order:
 ## Deployment rule after Freeze
 
 The blanket Architecture-Freeze deployment block ends only conceptually. Each later on-chain action remains independently blocked until its own Master-stage prerequisites, fresh artifact/dependency review, explicit approval, and evidence gate are satisfied.
+
+## Post-freeze tokenomics revision (2026-10-21)
+
+The PASS statements above are **historical evidence of the earlier Architecture Freeze** (1B fixed supply, 150M/15% TGE, six categories) and must not be rewritten as though they tested later assumptions. The project owner has subsequently approved the **V1.4 design**: nine categories including the 3.8% existing-investor allocation, 143.8M/14.38% maximum planned TGE transferability, 40% Community with a 10-year release framework, and native-mainnet migration constrained by the global 1B supply cap. This approval is a **design change**, not a new freeze PASS, deployed contract, verified vesting or a listing decision. Reconcile affected current disclosures and review the change before deployment.

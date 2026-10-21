@@ -17,7 +17,7 @@ Add LQC Staking utility without:
 
 Token-denominated rewards may be funded only from a disclosed, governance-approved budget that already exists inside canonical tokenomics.
 
-The preferred candidate domain is a formally earmarked sub-budget of **Future Ecosystem Rewards (35% / 350M LQC)**. This is a candidate source, not an authorization to allocate all 350M to staking.
+**V1.4 allocation update (2026-10-21):** the preferred token-denominated reward source is a separately approved portion of **Validators & Staking (10% / 100M LQC)** within the fixed 1B supply, not the superseded Future Ecosystem Rewards 35% category. This is not permission to use the entire 100M immediately; governance must approve explicit budgets and reward ceilings.
 
 Before activation, Governance must approve:
 - exact staking reward budget;
@@ -95,7 +95,7 @@ Reward source, accounting, epoch policy and claim state are Core economic concep
 
 Architecture G4 is resolved at design level:
 - fixed supply remains 1B LQC;
-- Future Ecosystem Rewards is the preferred token-emission source candidate, subject to a separately approved sub-budget;
+- the original Architecture Freeze G4 decision named Future Ecosystem Rewards (35%) as a provisional source; the subsequent V1.4 approved design (2026-10-21) instead proposes Validators & Staking (10% / 100M) as the prospective source, subject to explicit sub-budget approval. Historical G4 completion evidence is unchanged;
 - realized protocol revenue is a separate variable source;
 - no guaranteed APY;
 - Lending/Staking accounting remains separate;

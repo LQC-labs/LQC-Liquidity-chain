@@ -44,11 +44,12 @@ Use this document as the dated cover index for an exchange review package. Repla
 | ID | Evidence | Status | Location / hash | Owner | Verified date |
 |---|---|---|---|---|---|
 | TOK-01 | Fixed total supply: 1,000,000,000 LQC | Design disclosure | [Contract/explorer evidence when deployed] | Token operations | [date] |
-| TOK-02 | Planned TGE circulation: 150,000,000 LQC (15%) | Design disclosure | [Signed allocation register] | Token operations | [date] |
+| TOK-02 | V1.4 maximum targeted TGE transferable inventory: 143,800,000 LQC (14.38%); **not** actual circulation | Design disclosure | [Signed allocation register / distribution and liquidity inventory] | Token operations | [date] |
 | TOK-03 | Allocation reconciliation | [Pending] | [Percent, amount, TGE and total checks] | Finance | [date] |
 | TOK-04 | Vesting contracts and schedules | [Pending] | [Addresses and verified source] | Token operations | [date] |
 | TOK-05 | Wallet labels and circulating-supply method | [Pending] | [Public methodology] | Finance | [date] |
 | TOK-06 | Mint, burn, pause and upgrade powers | [Pending] | [Explicit capability statement] | Engineering | [date] |
+| TOK-07 | BSC-to-native-mainnet 1:1 migration and global 1B cap controls | [Pending] | [Migration specification, burn/lock proof, reconciliation and audit] | Engineering | [date] |
 
 ## Market and operations evidence
 
