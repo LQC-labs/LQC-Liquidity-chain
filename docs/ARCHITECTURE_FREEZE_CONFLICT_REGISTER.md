@@ -18,6 +18,8 @@ Purpose: prevent stale whitepaper, repository, testnet, tokenomics, and historic
 | CF-11 | Lending Stage1-3 verified deployments vs Stage4 nonce/deployment incident | Revalidate/reuse Stage1-3/Core; reject stale Stage4 predicted address/packet; fresh isolated Stage4 deployment review later | Root cause/reuse boundary recorded in LENDING_STAGE4_ROOT_CAUSE.md | ARCHITECTURE RESOLVED / EXECUTION PENDING |
 | CF-12 | CEX evidence contains pending audit/token/vesting/legal/market evidence | CEX readiness requires reproducible technical evidence plus external audit, token/vesting, circulation, KYB/legal and liquidity/MM evidence | External workstreams defined in EXTERNAL_AUDIT_CEX_EVIDENCE_PLAN.md | PLANNED EXTERNAL GATE — NOT A FREEZE BLOCKER |
 
+| CF-13 | **2026-10-21** V1.4 project-owner-approved nine-way tokenomics, incl. existing investors 3.8%, 143.8M/14.38% maximum targeted TGE | Historical CF-03 records the former six-category 1B/15% rule; new V1.4 supersedes that tokenomics policy only after PR review/merge and publication consistency checks | Keep CF-03 and past freeze evidence as history; reconcile present README, whitepaper, canonical tokenomics, staking sources, PDF, website and CEX evidence before launch | APPROVED DESIGN / IMPLEMENTATION & RECONCILIATION PENDING |
+
 ## Freeze rule
 
 No stale document or historical PR title overrides the current canonical documents. A conflict is closed only when the whitepaper, repository implementation/configuration, tests, testnet evidence, website/public disclosure, and CEX evidence are consistent at the level relevant to that conflict.
