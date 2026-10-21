@@ -1,1 +1,1 @@
-module.exports=Object.freeze({planSHA256:'fc26b5447e2494f97287b9c918b51aa50499890035abdb7b2dbce1087f69bb2b'});
+module.exports=Object.freeze({planSHA256:'2b3f6d70eb84870edd21824484920f0e9b383feeb78864d74bf49a623b553cc5'});
