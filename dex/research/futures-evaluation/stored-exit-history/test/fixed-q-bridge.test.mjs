@@ -45,3 +45,42 @@ describe('fixed Q Solidity JS local bridge',function(){
  for(const [name,index,value,target]of [['research domain token mismatch',0,ethers.ZeroAddress,'DOMAIN_TOKEN'],['research domain decimals mismatch',6,18n,'DOMAIN_DECIMALS'],['research domain Oracle address mismatch',1,ethers.ZeroAddress,'DOMAIN_MARKET_ORACLE']])it(name,()=>{const p=packetForTests(context);change(p,'domain',[domainType],a=>{a[0][index]=value;});assert.throws(()=>checkFixedQPacketForTests(context,p),new RegExp(target));direct.push({name,target,directTargetReached:true});});
  it('original packet remains reproducible after mutation cases',()=>{const clean=packetForTests(context),before=diagnoseFixedQ(context);packet.qBefore.hash=ethers.id('mutated returned observation');packet.journal[0].request.params[0]=ethers.ZeroAddress;before.scope.query.hash=ethers.id('mutated returned diagnosis');assert.throws(()=>checkFixedQPacketForTests(context,packet),/Q_SCOPE/);assert.deepEqual(checkFixedQPacketForTests(context,clean),diagnoseFixedQ(context));assert.notEqual(diagnoseFixedQ(context).scope.query.hash,before.scope.query.hash);});
 });
+
+// A separate actual local deployment, not a fabricated SHORT transport packet.
+describe('fixed Q SHORT local bridge',function(){
+ this.timeout(180000);let rpc,provider,context;
+ const direct=[];
+ before(async()=>{
+  rpc=anvil.provider({wallet:{totalAccounts:4}});await rpc.request({method:'anvil_setBlockTimestampInterval',params:[0]});provider=new ethers.BrowserProvider(rpc,undefined,{cacheTimeout:-1,pollingInterval:20});
+  const fixture=await createBridgeFixture(provider,await provider.getSigner(0),await provider.getSigner(1),'SHORT');
+  const result=await observeFixedQ(fixture,provider,rpc,row=>fs.appendFileSync(path.join(out,'short-observation-journal.jsonl'),JSON.stringify(row)+'\n'));
+  context=result.context;fs.writeFileSync(path.join(out,'short-observation.json'),JSON.stringify(result.packet,null,2));fs.writeFileSync(path.join(out,'short-diagnosis.json'),JSON.stringify(result.diagnosis,null,2));
+ });
+ after(async()=>{fs.writeFileSync(path.join(out,'short-direct-rejection-points.json'),JSON.stringify(direct,null,2));provider?.destroy();await rpc?.disconnect();});
+ it('actual SHORT partial and final closes preserve both OI chains',()=>{
+  const p=packetForTests(context),a=ethers.AbiCoder.defaultAbiCoder(),W=10n**18n;
+  assert.equal(a.decode([T],p.journal.find(r=>r.name==='trace').response)[0][8],false);
+  assert.deepEqual([1,2,3].map(i=>Array.from(a.decode([R],p.journal.find(r=>r.name==='transition'+i).response)[0]).slice(3,7)),[[0n,0n,0n,3n*W],[0n,3n*W,0n,2n*W],[0n,2n*W,0n,0n]]);
+  const d=diagnoseFixedQ(context);assert.equal(d.researchPlan.side,'SHORT');assert.equal(d.completelyClosed,true);assert.equal(d.existingHistoryDiagnosis.integrals.official.short,(50n*W).toString());assert.equal(d.existingHistoryDiagnosis.integrals.official.long,'0');
+ });
+ it('signed SHORT PnL and separate gain loss match hand fractions',()=>{
+  const p=diagnoseFixedQ(context).researchPlan;
+  assert.deepEqual(p.legs.map(l=>l.pnlDiagnostic.rawToken),[{n:'-1000000',d:'9'},{n:'-500000',d:'1'}]);
+  assert.deepEqual(p.legs.map(l=>l.pnlDiagnostic.usd18),[{n:'-100000000000000000',d:'1'},{n:'-400000000000000000',d:'1'}]);
+  assert.deepEqual(p.positionTotals.rawTokenNet,{n:'-5500000',d:'9'});assert.deepEqual(p.positionTotals.rawTokenLoss,{n:'5500000',d:'9'});assert.deepEqual(p.positionTotals.rawTokenGain,{n:'0',d:'1'});
+  assert.deepEqual(p.positionTotals.usd18Net,{n:'-500000000000000000',d:'1'});assert.deepEqual(p.positionTotals.usd18Loss,{n:'500000000000000000',d:'1'});assert.deepEqual(p.positionTotals.usd18Gain,{n:'0',d:'1'});assert.equal(p.positionTotals.nettingAuthorized,false);
+ });
+ const cases=[
+  ['stored direction mutation reaches direction binding','STORED_DIRECTION_MISMATCH',p=>change(p,'trace',[T],a=>{a[0][8]=true;})],
+  ['missing stored direction is rejected without LONG default','STORED_DIRECTION_REQUIRED',p=>{const r=p.journal.find(r=>r.name==='trace');r.response=r.response.slice(0,-64);}],
+  ['unknown ABI direction is rejected without bool coercion','STORED_DIRECTION_INVALID',p=>{const r=p.journal.find(r=>r.name==='trace');r.response=r.response.slice(0,-64)+'2'.padStart(64,'0');}],
+  ['SHORT quantity mutation reaches quantity chain','OLD_QUANTITY',p=>change(p,'transition2',[R],a=>{a[0][4]+=1n;})],
+  ['opposite old OI reaches side check before Receipt digest','OPPOSITE_OLD_OI',p=>change(p,'transition2',[R],a=>{a[0][3]=1n;})],
+  ['opposite next OI reaches side check before Receipt digest','OPPOSITE_NEXT_OI',p=>change(p,'transition2',[R],a=>{a[0][5]=1n;})]
+ ];
+ for(const[name,target,mutate]of cases)it(name,()=>{const p=packetForTests(context);mutate(p);let error;try{checkFixedQPacketForTests(context,p);}catch(e){error=e;}assert(error,'expected rejection');assert(error.message.includes(target),error.message);direct.push({name,target,actual:error.message,directTargetReached:true,boundary:'MUTATED_TRANSPORT_PRIVATE_LOCAL_RUN_NOT_CHAIN_AUTHENTICATION'});});
+ it('SHORT research keeps all amounts unconfirmed and authorities false',()=>{
+  const d=diagnoseFixedQ(context),p=d.researchPlan;for(const x of[d,p]){assert.equal(x.evaluationStatus,'NOT_EVALUATED');for(const k of ['confirmedAmount','returnAmount','lpRecoveryAmount'])assert.equal(x[k],null,k);for(const[k,v]of Object.entries(x))if(k.endsWith('Authorized')||k.endsWith('Authority')||['createsClaim','consumesHistory','rightsTransitionComplete','rightsTransferAuthorized'].includes(k))assert.equal(v,false,k);}
+  for(const k of ['funding','fees','payableAmount'])assert.equal(p[k],null,k);assert.equal(p.account.rights,null);assert.equal(p.account.remaining,null);assert.equal(p.fundingEvidence.evidenceCompleteness,'MISSING');
+ });
+});

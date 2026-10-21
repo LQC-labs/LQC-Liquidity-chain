@@ -151,3 +151,11 @@ ENOENT occurred before tests; it was corrected without starting Anvil. Existing
 compiler output and installed dependencies were reused after the original build
 gate; there was no new installation or compilation, and no public RPC or GitHub
 publication. The original 29-test plan, financial fixtures and anchors are unchanged.
+
+## Stored direction and SHORT local research
+
+The bridge requires the canonical stored Trace ABI bool (0 or 1), binds it to the private fixture direction and checks both OI columns. Missing and noncanonical words fail before decoding; no stored direction defaults to LONG. The fixture's existing LONG default is only the chosen test scenario, never a missing-evidence fallback. A second actual local deployment explicitly opens SHORT and partially/finally closes it. Same-Q, Runtime, private context and both original commitment formats are unchanged.
+
+Independent arithmetic: q18 is USD18 notional. SHORT USD18 PnL = q18*(entry-market)/entry. For entry=1, partial q=1 at market=1.1 and collateral=0.9 yields -0.1 USD and -1,000,000/9 collateral raw (6 decimals). Remaining q=2 at market=1.2 and collateral=0.8 yields -0.4 USD and -500,000 raw. Signed sum=-5,500,000/9 raw; loss magnitude=+5,500,000/9; gain=0. LONG retains the opposite signed gains. Exposure is 3*10+2*10=50 USD18-seconds on SHORT, zero on LONG. No integerization or gain/loss netting authorization is introduced.
+
+Execution inventory: existing 21 LONG/boundary checks and 9 SHORT checks, 30 total in the existing CI command `node run-fixed-q-tests.cjs`. Negative transport mutations use the private run reference and assert their exact target, not an earlier commitment failure. They are not external chain authentication. Prices remain local mocks, Funding/account/rights evidence missing, NOT_EVALUATED, confirmed/return amounts null and execution authorities false. Solidity, policies, evaluator formulas and build pins are unchanged.

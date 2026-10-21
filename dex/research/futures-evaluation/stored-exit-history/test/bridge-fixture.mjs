@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {deploy,mined as minedBase,assertRuntime,expectedRuntime} from './runtime-tools.mjs';
 const fixtures=new WeakMap();
 export function fixtureInternals(x){assert(fixtures.has(x),"LOCAL_FIXTURE_CONTEXT_REQUIRED");return fixtures.get(x);}
-export async function createBridgeFixture(provider,gov,user){
+export async function createBridgeFixture(provider,gov,user,side='LONG'){
+assert(['LONG','SHORT'].includes(side),'FIXTURE_DIRECTION_REQUIRED');
 const W=10n**18n,MAX=ethers.MaxUint256;let core,funding,partial,attr,token,market,oracle,v,start,pid,key,partialTime,finalTime;const result={actualLocal:[]},transactions=[];const mined=async p=>{const r=await minedBase(p);transactions.push(r.hash);return r;};
  const cfg={minOrder:W,maxOrder:10n*W,maxPosition:10n*W,maxOI:100n*W,bufferUsd:W,liquidationCostUsd:W,maxPositions:10,maxBatch:4,marketAge:10000,collateralAge:10000,maxSkew:10000,initialMarginBps:5000,maintenanceBps:4000,stressBps:3000,feeBps:0,insuranceCoverageBps:0,fundingDeltaLimit:10n**25n,policyDigest:ethers.id('GAP_LOCAL_ONLY'),observationPolicyReady:true,fundingPolicyReady:true};
  const at=async t=>{await provider.send('evm_setNextBlockTimestamp',[ethers.toQuantity(t)]);await provider.send('evm_mine',[]);};
@@ -29,9 +30,9 @@ const W=10n**18n,MAX=ethers.MaxUint256;let core,funding,partial,attr,token,marke
  result.expectedCodes=[expectedRuntime('LocalFuturesCore',{governance:gov.address}),expectedRuntime('LocalFuturesFundingV11',{core:core.target,exposureLedger:ledger}),expectedRuntime('LocalFuturesPartialV11',{core:core.target,funding:funding.target,legacyDomainCutoff:1n,withdrawalVerifier:withdrawal,withdrawalVerifierCodeHash:withdrawalHash,releaseVerifier:release.target,releaseVerifierCodeHash:releaseHash,linkedExposureVerifier:linked.target,linkedExposureVerifierCodeHash:linkedHash}),expectedRuntime('LocalFuturesAttribution',{core:core.target,funding:funding.target,partialSettlement:partial.target})];
   v=await deploy('StoredExitHistoryVerifier',gov,[[core.target,funding.target,partial.target,attr.target],pins]);await assertRuntime(provider,v,'StoredExitHistoryVerifier');
   result.actualLocal.push({peers:[core.target,funding.target,partial.target,attr.target],compilerDerivedRuntimeHashes:pins,registryConnected:false,oracle:'LocalVNextOracle MOCK',fundingRate:0,policy:'EXISTING_LOCAL_RESEARCH_NOT_NEW_V1_APPROVAL'});
-  await at(start);await prices(start,W,W);await mined(core.connect(user).openLinkedExposureResearch(2,3n*W,true,100n*10n**6n));pid=await core.exposureAccountPosition(2,user.address);key=(await attr.traces(pid)).key;
+  await at(start);await prices(start,W,W);await mined(core.connect(user).openLinkedExposureResearch(2,3n*W,side==='LONG',100n*10n**6n));pid=await core.exposureAccountPosition(2,user.address);key=(await attr.traces(pid)).key;
   await at(start+10n);await prices(start+10n,11n*W/10n,9n*W/10n);partialTime=await reduce(pid,W,2);
   await at(start+20n);await prices(start+20n,12n*W/10n,8n*W/10n);finalTime=await reduce(pid,2n*W,3);
  })();
-const internals={core,funding,partial,attr,token,market,oracle,v,start,pid,key,partialTime,finalTime,user,gov,transactions,pins:result.actualLocal[0].compilerDerivedRuntimeHashes,expectedCodes:result.expectedCodes};const context=Object.freeze({kind:"LOCAL_RESEARCH_FIXTURE_2_116"});Object.freeze(internals.transactions);Object.freeze(internals.pins);Object.freeze(internals.expectedCodes);Object.freeze(internals);fixtures.set(context,internals);return context;
+const internals={side,core,funding,partial,attr,token,market,oracle,v,start,pid,key,partialTime,finalTime,user,gov,transactions,pins:result.actualLocal[0].compilerDerivedRuntimeHashes,expectedCodes:result.expectedCodes};const context=Object.freeze({kind:"LOCAL_RESEARCH_FIXTURE_2_116"});Object.freeze(internals.transactions);Object.freeze(internals.pins);Object.freeze(internals.expectedCodes);Object.freeze(internals);fixtures.set(context,internals);return context;
 }
