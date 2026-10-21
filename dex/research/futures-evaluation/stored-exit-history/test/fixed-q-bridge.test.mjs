@@ -39,6 +39,28 @@ describe('fixed Q Solidity JS local bridge',function(){
  ];
  for(const [name,target,mutate]of cases)it(name,()=>{const p=packetForTests(context);mutate(p);let caught;try{checkFixedQPacketForTests(context,p);}catch(e){caught=e;}assert(caught,'expected rejection');assert(caught.message.includes(target),caught.message);direct.push({name,target,actual:caught.message,directTargetReached:true,boundary:'MUTATED_TRANSPORT_USING_PRIVATE_RUN_REFERENCE_NOT_RPC_AUTHENTICATION'});});
 
+
+ const storedPriceCases=[
+  ['zero stored market price reaches stored price guard',4,()=>0n,'STORED_PRICE_TIME'],
+  ['zero stored collateral price reaches stored price guard',5,()=>0n,'STORED_PRICE_TIME'],
+  ['market observation after exit reaches stored time guard',6,a=>a[1]+1n,'STORED_PRICE_TIME'],
+  ['collateral observation after exit reaches stored time guard',7,a=>a[1]+1n,'STORED_PRICE_TIME'],
+  ['positive stored market price mutation reaches unchanged commitment',4,a=>a[4]+1n,'SOLIDITY_COMMITMENT']
+ ];
+ for(const[name,index,value,target]of storedPriceCases)it(name,()=>{
+  const clean=packetForTests(context),before=diagnoseFixedQ(context),p=structuredClone(clean),row=p.journal.find(x=>x.name==='exit2'),oldResponse=row.response;
+  change(p,'exit2',[X],a=>{a[0][index]=value(a[0]);});
+  const oldWords=oldResponse.slice(2).match(/.{64}/g),newWords=row.response.slice(2).match(/.{64}/g);
+  assert.deepEqual(oldWords.flatMap((w,i)=>w===newWords[i]?[]:[i]),[index],'SINGLE_ABI_FIELD_MUTATION');
+  const restored=structuredClone(p);restored.journal.find(x=>x.name==='exit2').response=oldResponse;assert.deepEqual(restored,clean,'ONLY_ONE_RESPONSE_FIELD_CHANGED');
+  assert.deepEqual(p.journal.find(x=>x.name==='inspect'),clean.journal.find(x=>x.name==='inspect'),'ORIGINAL_COMMITMENT_UNCHANGED');
+  let error;try{checkFixedQPacketForTests(context,p);}catch(e){error=e;}assert(error,'expected rejection');assert.equal(error.message.split('\n')[0],target,'EXACT_REJECTION_TARGET');
+  assert.deepEqual(packetForTests(context),clean,'PRIVATE_PACKET_UNCHANGED');const after=diagnoseFixedQ(context);assert.deepEqual(after,before,'PRIVATE_DIAGNOSIS_REPRODUCIBLE');
+  for(const x of[after,after.researchPlan]){assert.equal(x.evaluationStatus,'NOT_EVALUATED');for(const k of ['confirmedAmount','returnAmount'])assert.equal(x[k],null,k);for(const[k,v]of Object.entries(x))if(k.endsWith('Authority')||k.endsWith('Authorized')||['createsClaim','consumesHistory','rightsTransitionComplete'].includes(k))assert.equal(v,false,k);}
+  assert.equal(after.researchPlan.payableAmount,null);assert.equal(after.researchPlan.positionTotals.nettingAuthorized,false);
+  direct.push({name,target,actual:error.message,directTargetReached:true,query:'exit2',changedABIField:index,oldWord:oldWords[index],newWord:newWords[index],onlyOneFieldChanged:true,commitmentUnchanged:true,privateObservationReproducible:true,boundary:'LOCAL_PRICE_BYTES_BINDING_NOT_ORACLE_OR_MALICIOUS_NODE_AUTHENTICATION'});
+ });
+
  it('research PnL uses each exit price and exact fraction totals',()=>{const p=diagnoseFixedQ(context).researchPlan;assert.deepEqual(p.legs.map(l=>l.pnlDiagnostic.rawToken),[{n:'1000000',d:'9'},{n:'500000',d:'1'}]);assert.deepEqual(p.positionTotals.rawTokenGain,{n:'5500000',d:'9'});assert.deepEqual(p.positionTotals.usd18Gain,{n:'500000000000000000',d:'1'});assert.notDeepEqual(p.positionTotals.rawTokenGain,{n:'625000',d:'1'});assert.equal(p.positionTotals.nettingAuthorized,false);});
  it('research PnL leaves Funding limits consumption and money rights unconfirmed',()=>{const a=diagnoseFixedQ(context).researchPlan,b=diagnoseFixedQ(context).researchPlan;assert.equal(a.evaluationId,b.evaluationId);for(const k of ['funding','fees','confirmedAmount','payableAmount','returnAmount','lpRecoveryAmount'])assert.equal(a[k],null,k);assert.equal(a.fundingEvidence.evidenceCompleteness,'MISSING');for(const k of ['authoritativeLimit','priorConsumed','remaining','rights','reservations'])assert.equal(a.account[k],null,k);assert.equal(a.evaluationStatus,'NOT_EVALUATED');for(const[k,v]of Object.entries(a))if(k.endsWith('Authorized')||k.endsWith('Authority')||['createsClaim','consumesHistory','rightsTransitionComplete'].includes(k))assert.equal(v,false,k);});
  const domainType=new ethers.Interface(artifact('LocalFuturesCore').abi).getFunction('domain').outputs[0].format('sighash');
