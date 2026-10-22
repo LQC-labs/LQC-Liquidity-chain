@@ -3,11 +3,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {ethers} from 'ethers';
 import anvil from './anvil-compat.mjs';
+import {positionAggregateKey} from '../../lib/settlement-link-diagnosis.mjs';
 import {artifact} from './runtime-tools.mjs';
 import {createBridgeFixture} from './bridge-fixture.mjs';
 import {observeFixedQ,diagnoseFixedQ,packetForTests,checkFixedQPacketForTests} from './fixed-q-bridge.mjs';
 const out=process.env.LQC116_RESULT_DIR;
-let rpc,provider,context,packet;
+let rpc,provider,context,packet,identityReobservation;
 const direct=[];
 function change(p,name,types,fn){const row=p.journal.find(x=>x.name===name);const decoded=Array.from(ethers.AbiCoder.defaultAbiCoder().decode(types,row.response),x=>Array.isArray(x)?Array.from(x):x);fn(decoded);row.response=ethers.AbiCoder.defaultAbiCoder().encode(types,decoded);}
 const T='tuple(bytes32,address,uint256,uint256,uint256,uint256,uint256,uint256,bool)',R='tuple(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bytes32)',X='tuple(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bytes32)';
@@ -18,6 +19,10 @@ describe('fixed Q Solidity JS local bridge',function(){
   const fixture=await createBridgeFixture(provider,await provider.getSigner(0),await provider.getSigner(1));
   const result=await observeFixedQ(fixture,provider,rpc,row=>fs.appendFileSync(path.join(out,'observation-journal.jsonl'),JSON.stringify(row)+'\n'));
   context=result.context;packet=result.packet;fs.writeFileSync(path.join(out,'observation.json'),JSON.stringify(packet,null,2));fs.writeFileSync(path.join(out,'diagnosis.json'),JSON.stringify(result.diagnosis,null,2));
+  // Same fixture deployment and position: mine one empty local block and observe again.
+  await rpc.request({method:'evm_setNextBlockTimestamp',params:[ethers.toQuantity(BigInt(result.packet.qBefore.timestamp)+1n)]});await rpc.request({method:'evm_mine',params:[]});
+  identityReobservation=await observeFixedQ(fixture,provider,rpc,row=>fs.appendFileSync(path.join(out,'identity-reobservation-journal.jsonl'),JSON.stringify(row)+'\n'));
+  fs.writeFileSync(path.join(out,'identity-reobservation.json'),JSON.stringify(identityReobservation.packet,null,2));fs.writeFileSync(path.join(out,'identity-reobservation-diagnosis.json'),JSON.stringify(identityReobservation.diagnosis,null,2));
  });
  after(async()=>{fs.writeFileSync(path.join(out,'direct-rejection-points.json'),JSON.stringify(direct,null,2));provider?.destroy();await rpc?.disconnect();});
  it('normal complete local history binds both commitments at one Q',()=>{const r=diagnoseFixedQ(context);assert(r.historyMatches&&r.completelyClosed);assert.notEqual(r.solidityCommitment,r.jsSemanticCommitment);assert.equal(r.existingHistoryDiagnosis.exits.length,2);assert.equal(r.existingHistoryDiagnosis.integrals.official.long,'50000000000000000000');assert.equal(r.coordinatorComparison.status,'UNVERIFIED');assert.equal(r.evaluationStatus,'NOT_EVALUATED');assert.equal(r.confirmedAmount,null);assert.equal(r.returnAmount,null);for(const [k,v]of Object.entries(r))if(k.endsWith('Authorized')||k.endsWith('Authority')||['createsClaim','consumesHistory'].includes(k))assert.equal(v,false,k);});
@@ -61,6 +66,31 @@ describe('fixed Q Solidity JS local bridge',function(){
   direct.push({name,target,actual:error.message,directTargetReached:true,query:'exit2',changedABIField:index,oldWord:oldWords[index],newWord:newWords[index],onlyOneFieldChanged:true,commitmentUnchanged:true,privateObservationReproducible:true,boundary:'LOCAL_PRICE_BYTES_BINDING_NOT_ORACLE_OR_MALICIOUS_NODE_AUTHENTICATION'});
  });
 
+
+ it('private position identity mapping is reproducible and never authorizes consumption',()=>{
+  const a=diagnoseFixedQ(context),b=diagnoseFixedQ(context),x=a.researchPlan.identityCorrespondence;assert.deepEqual(a,b);
+  assert.equal(x.nativePositionKey,a.scope.key);assert.equal(x.positionAggregateKey,positionAggregateKey(x.scope,'PNL'));assert.notEqual(x.nativePositionKey,x.positionAggregateKey);assert.equal(x.nativeAndAggregateByteEqualityClaimed,false);
+  assert.equal(x.evaluationId,a.researchPlan.evaluationId);assert.equal(x.sourceSemanticCommitment,a.jsSemanticCommitment);assert.deepEqual(x.scope.queryBlock,a.scope.query);
+  assert.deepEqual(x.scope.contracts.map(c=>c.role),['Core','Funding','Partial','Attribution']);assert.equal(a.scope.contracts.length,5);assert.equal(x.scope.contracts.length,4);
+  assert.equal(x.consumptionLink,'UNVERIFIED');assert.equal(x.rightsLink,'UNVERIFIED');assert.equal(x.authoritativeConsumed,null);assert.equal(x.authoritativeRemaining,null);assert.equal(x.ledgerMigrationImplemented,false);
+  x.scope.contracts[0].address=ethers.ZeroAddress;assert.deepEqual(diagnoseFixedQ(context),b,'RETURNED_MAPPING_CANNOT_MUTATE_PRIVATE_CONTEXT');
+  assert.throws(()=>diagnoseFixedQ({runId:context.runId,identityCorrespondence:b.researchPlan.identityCorrespondence}),/PRIVATE_LOCAL_OBSERVATION_REQUIRED/);
+ });
+ it('actual same-deployment later Q and run preserve position identity not evaluation identity',()=>{
+  const a=diagnoseFixedQ(context),b=diagnoseFixedQ(identityReobservation.context),x=a.researchPlan.identityCorrespondence,y=b.researchPlan.identityCorrespondence;
+  assert(BigInt(b.scope.query.number)>BigInt(a.scope.query.number));assert.notEqual(b.scope.query.hash,a.scope.query.hash);assert.notEqual(identityReobservation.packet.runId,packetForTests(context).runId);
+  assert.deepEqual(a.scope.contracts,b.scope.contracts);assert.deepEqual(x.scope.contracts,y.scope.contracts);assert.equal(x.nativePositionKey,y.nativePositionKey);assert.equal(x.positionAggregateKey,y.positionAggregateKey);
+  assert.notEqual(x.sourceSemanticCommitment,y.sourceSemanticCommitment);assert.notEqual(x.evaluationId,y.evaluationId);assert.equal(a.solidityCommitment,b.solidityCommitment);assert.deepEqual(a.researchPlan.positionTotals,b.researchPlan.positionTotals);
+  const first=packetForTests(context);for(const n of ['context','basis','trace','transition1','transition2','transition3','exit2','exit3','inspect'])assert.equal(first.journal.find(x=>x.name===n).response,identityReobservation.packet.journal.find(x=>x.name===n).response,n);
+  for(const d of[a,b]){assert.equal(d.evaluationStatus,'NOT_EVALUATED');for(const k of ['confirmedAmount','returnAmount'])assert.equal(d[k],null);assert.equal(d.researchPlan.payableAmount,null);assert.equal(d.researchPlan.positionTotals.nettingAuthorized,false);for(const obj of[d,d.researchPlan])for(const[k,v]of Object.entries(obj))if(k.endsWith('Authority')||k.endsWith('Authorized')||['createsClaim','consumesHistory','rightsTransitionComplete'].includes(k))assert.equal(v,false,k);}
+ });
+ it('synthetic scope variations distinguish position identities without creating private contexts',()=>{
+  const x=diagnoseFixedQ(context).researchPlan.identityCorrespondence,changes={chainId:'97',domain:'3',series:'2',account:'0x0000000000000000000000000000000000000001',pid:'2'};
+  for(const[k,v]of Object.entries(changes)){const scope=structuredClone(x.scope);scope[k]=v;assert.notEqual(positionAggregateKey(scope,'PNL'),x.positionAggregateKey,k);}
+  for(const field of ['address','runtimeHash','role']){const scope=structuredClone(x.scope);scope.contracts[0][field]=field==='address'?'0x0000000000000000000000000000000000000001':field==='runtimeHash'?ethers.ZeroHash:'OtherCore';assert.notEqual(positionAggregateKey(scope,'PNL'),x.positionAggregateKey,field);}
+  const withVerifier=structuredClone(x.scope);withVerifier.contracts.push(diagnoseFixedQ(context).scope.contracts[4]);assert.notEqual(positionAggregateKey(withVerifier,'PNL'),x.positionAggregateKey,'ROLE_SET_IS_IDENTITY_INPUT');
+  const reordered=structuredClone(x.scope);reordered.contracts.reverse();assert.equal(positionAggregateKey(reordered,'PNL'),x.positionAggregateKey,'EXISTING_ROLE_SORTING');
+ });
  it('research PnL uses each exit price and exact fraction totals',()=>{const p=diagnoseFixedQ(context).researchPlan;assert.deepEqual(p.legs.map(l=>l.pnlDiagnostic.rawToken),[{n:'1000000',d:'9'},{n:'500000',d:'1'}]);assert.deepEqual(p.positionTotals.rawTokenGain,{n:'5500000',d:'9'});assert.deepEqual(p.positionTotals.usd18Gain,{n:'500000000000000000',d:'1'});assert.notDeepEqual(p.positionTotals.rawTokenGain,{n:'625000',d:'1'});assert.equal(p.positionTotals.nettingAuthorized,false);});
  it('research PnL leaves Funding limits consumption and money rights unconfirmed',()=>{const a=diagnoseFixedQ(context).researchPlan,b=diagnoseFixedQ(context).researchPlan;assert.equal(a.evaluationId,b.evaluationId);for(const k of ['funding','fees','confirmedAmount','payableAmount','returnAmount','lpRecoveryAmount'])assert.equal(a[k],null,k);assert.equal(a.fundingEvidence.evidenceCompleteness,'MISSING');for(const k of ['authoritativeLimit','priorConsumed','remaining','rights','reservations'])assert.equal(a.account[k],null,k);assert.equal(a.evaluationStatus,'NOT_EVALUATED');for(const[k,v]of Object.entries(a))if(k.endsWith('Authorized')||k.endsWith('Authority')||['createsClaim','consumesHistory','rightsTransitionComplete'].includes(k))assert.equal(v,false,k);});
  const domainType=new ethers.Interface(artifact('LocalFuturesCore').abi).getFunction('domain').outputs[0].format('sighash');
