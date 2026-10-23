@@ -1,0 +1,26 @@
+{
+  "schema": "LOCAL_ANVIL_LIFECYCLE_MOCK_PLAN_1",
+  "realAnvilAllowed": false,
+  "titles": [
+    "synchronous spawn failure preserves startup error and needs no cleanup kill",
+    "spawn error event is recorded with close and stops an in-flight readiness RPC",
+    "early exit before RPC readiness rejects immediately without another probe",
+    "close without exit before readiness is observed as termination",
+    "exit after normal readiness rejects later requests and records exit and close",
+    "already exited child before cleanup finishes immediately without kill",
+    "natural exit racing with kill false is accepted only after termination",
+    "missing termination events cause bounded cleanup failure retained on repeat",
+    "concurrent and repeated disconnect share completion and send one kill",
+    "disconnect before first request never spawns and permanently rejects requests",
+    "readiness probe exhaustion preserves the exact maximum of 100 attempts",
+    "process exit during retry delay cancels the timer without a second probe",
+    "synchronous exit during kill cannot be missed by cleanup",
+    "startup failure and subsequent cleanup failure remain distinct",
+    "disconnect cancels a hanging readiness RPC and confirms child termination",
+    "existing spawn arguments and RPC semantics are preserved with explicit mocks"
+  ],
+  "sourceHashes": {
+    "test/anvil-compat.mjs": "11fabfeddad8ad85263500d8d80ad4bd24f18e8c2aa4de7f4822da2b17063cb5",
+    "test/anvil-compat.test.mjs": "6119fbd31c58833d7e07311b970a125bbb8c55ebd83cf7831f93cf1a353c4209"
+  }
+}

@@ -50,6 +50,8 @@ jobs:
           cache-dependency-path: dex/research/futures-evaluation/stored-exit-history/package-lock.json
       - name: Install isolated research dependencies without lifecycle scripts
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify Anvil lifecycle with mocked processes and RPC only
+        run: node run-anvil-lifecycle-tests.cjs
       - name: Compile pinned research fixtures
         run: node compile.cjs
       - name: Check fail-closed build preflight
@@ -58,3 +60,15 @@ jobs:
         run: node run-tests.cjs
       - name: Compare fixed-Q stored history with existing JS diagnostics on local Anvil only
         run: node run-fixed-q-tests.cjs
+      - name: Preserve stored-history research results on success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stored-exit-history-research-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            dex/research/futures-evaluation/stored-exit-history/results/
+            !dex/research/futures-evaluation/stored-exit-history/results/**/node_modules
+            !dex/research/futures-evaluation/stored-exit-history/results/**/node_modules/**
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 14

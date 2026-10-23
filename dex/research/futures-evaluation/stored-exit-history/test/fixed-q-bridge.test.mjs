@@ -4,11 +4,12 @@ import path from 'node:path';
 import {ethers} from 'ethers';
 import anvil from './anvil-compat.mjs';
 import {positionAggregateKey} from '../../lib/settlement-link-diagnosis.mjs';
+import {commitment as jsonCommitment} from '../../lib/futures-exit-history-input.mjs';
 import {artifact} from './runtime-tools.mjs';
 import {createBridgeFixture} from './bridge-fixture.mjs';
 import {observeFixedQ,diagnoseFixedQ,packetForTests,checkFixedQPacketForTests} from './fixed-q-bridge.mjs';
 const out=process.env.LQC116_RESULT_DIR;
-let rpc,provider,context,packet,identityReobservation;
+let rpc,provider,context,packet,identityReobservation,fixture;
 const direct=[];
 function change(p,name,types,fn){const row=p.journal.find(x=>x.name===name);const decoded=Array.from(ethers.AbiCoder.defaultAbiCoder().decode(types,row.response),x=>Array.isArray(x)?Array.from(x):x);fn(decoded);row.response=ethers.AbiCoder.defaultAbiCoder().encode(types,decoded);}
 const T='tuple(bytes32,address,uint256,uint256,uint256,uint256,uint256,uint256,bool)',R='tuple(uint256,uint256,uint256,uint256,uint256,uint256,uint256,bytes32)',X='tuple(uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256,bytes32)';
@@ -16,7 +17,7 @@ describe('fixed Q Solidity JS local bridge',function(){
  this.timeout(180000);
  before(async()=>{
   rpc=anvil.provider({wallet:{totalAccounts:4}});await rpc.request({method:'anvil_setBlockTimestampInterval',params:[0]});provider=new ethers.BrowserProvider(rpc,undefined,{cacheTimeout:-1,pollingInterval:20});
-  const fixture=await createBridgeFixture(provider,await provider.getSigner(0),await provider.getSigner(1));
+  fixture=await createBridgeFixture(provider,await provider.getSigner(0),await provider.getSigner(1));
   const result=await observeFixedQ(fixture,provider,rpc,row=>fs.appendFileSync(path.join(out,'observation-journal.jsonl'),JSON.stringify(row)+'\n'));
   context=result.context;packet=result.packet;fs.writeFileSync(path.join(out,'observation.json'),JSON.stringify(packet,null,2));fs.writeFileSync(path.join(out,'diagnosis.json'),JSON.stringify(result.diagnosis,null,2));
   // Same fixture deployment and position: mine one empty local block and observe again.
@@ -91,6 +92,61 @@ describe('fixed Q Solidity JS local bridge',function(){
   const withVerifier=structuredClone(x.scope);withVerifier.contracts.push(diagnoseFixedQ(context).scope.contracts[4]);assert.notEqual(positionAggregateKey(withVerifier,'PNL'),x.positionAggregateKey,'ROLE_SET_IS_IDENTITY_INPUT');
   const reordered=structuredClone(x.scope);reordered.contracts.reverse();assert.equal(positionAggregateKey(reordered,'PNL'),x.positionAggregateKey,'EXISTING_ROLE_SORTING');
  });
+
+ // Expected values are fixed before execution from unchanged fixture actions and pinned storage writers.
+ // No collection/payout binding, collection, release or withdrawal is executed by this fixture.
+ const rawSpecs=[{"name":"rawLinkedConsumed","role":"Partial","method":"linkedConsumed","args":["1"],"types":["uint256"]},{"name":"rawReleases","role":"Partial","method":"releases","args":["1"],"types":["uint256","uint256","bytes32"]},{"name":"rawCollectionCoordinator","role":"Funding","method":"collectionCoordinator","args":[],"types":["address"]},{"name":"rawCollectionExecutor","role":"Funding","method":"collectionExecutor","args":[],"types":["address"]},{"name":"rawPayoutExecutor","role":"Funding","method":"payoutExecutor","args":[],"types":["address"]}];
+ it("raw consumption getters match fixed fixture ABI saved journal and diagnosis at Q",()=>{
+  const clean=packetForTests(context),d=diagnoseFixedQ(context),saved=JSON.parse(fs.readFileSync(path.join(out,'observation.json'))),savedDiagnosis=JSON.parse(fs.readFileSync(path.join(out,'diagnosis.json')));
+  assert.deepEqual(saved,clean);assert.deepEqual(savedDiagnosis,d);assert.deepEqual(d.rawConsumption,d.researchPlan.rawConsumption);
+  const events=fs.readFileSync(path.join(out,'observation-journal.jsonl'),'utf8').trim().split('\n').map(JSON.parse);
+  for(const s of rawSpecs){
+   const row=clean.journal.find(x=>x.name===s.name),r=d.rawConsumption.readings.find(x=>x.name===s.name),owner=d.scope.contracts.find(x=>x.role===s.role).address,iface=new ethers.Interface(artifact(s.role==='Partial'?'LocalFuturesPartialV11':'LocalFuturesFundingV11').abi);
+   assert.equal(row.request.params[1],ethers.toQuantity(BigInt(clean.qBefore.number)));assert.equal(row.request.params[0].to,owner);assert.equal(row.request.params[0].data,iface.encodeFunctionData(s.method,s.args));
+   const expected=s.name==='rawReleases'?[0n,0n,ethers.ZeroHash]:s.types[0]==='address'?[ethers.ZeroAddress]:[0n];assert.equal(row.response,iface.encodeFunctionResult(s.method,expected),'UNCHANGED_FIXTURE_WRITERS_NOT_OBSERVED_EXPECTATIONS');
+   assert.deepEqual(r.request,row.request);assert.equal(r.rawResponse,row.response);assert.equal(r.owner,owner);assert.equal(r.method,s.method);assert.deepEqual(r.arguments,s.args);
+   assert.deepEqual(r.decoded,s.name==='rawReleases'?{released:'0',sequence:'0',completion:ethers.ZeroHash}:s.types[0]==='address'?ethers.ZeroAddress:'0');
+   const request=events.find(x=>x.event==='REQUEST'&&x.method==='eth_call'&&JSON.stringify(x.params)===JSON.stringify(row.request.params));assert(request);assert.equal(events.find(x=>x.event==='RESPONSE'&&x.id===request.id).response,row.response);
+  }
+  fs.writeFileSync(path.join(out,'raw-consumption-comparison.json'),JSON.stringify({basis:'PINNED_ABI_AND_UNCHANGED_FIXTURE_WRITERS_FIXED_BEFORE_RUN',queryBlock:clean.qBefore,readings:d.rawConsumption.readings},null,2));
+ });
+ const rejectRaw=(name,p,target,detail)=>{
+  let caught;try{checkFixedQPacketForTests(context,p);}catch(e){caught=e;}assert(caught);assert.equal(caught.message.split('\n')[0],target);assert.deepEqual(checkFixedQPacketForTests(context,packetForTests(context)),diagnoseFixedQ(context));
+  direct.push({name,target,actual:caught.message,directTargetReached:true,...detail,boundary:'PRIVATE_CAPTURE_BINDING_NOT_INDEPENDENT_RPC_AUTHENTICATION'});
+ };
+ for(const c of [{"name":"raw consumption missing linkedConsumed is rejected","query":"rawLinkedConsumed"},{"name":"raw consumption missing releases is rejected","query":"rawReleases"},{"name":"raw consumption missing collectionCoordinator is rejected","query":"rawCollectionCoordinator"},{"name":"raw consumption missing collectionExecutor is rejected","query":"rawCollectionExecutor"},{"name":"raw consumption missing payoutExecutor is rejected","query":"rawPayoutExecutor"}])it(c.name,()=>{const p=packetForTests(context);p.journal=p.journal.filter(x=>x.name!==c.query);rejectRaw(c.name,p,'RAW_EVIDENCE_REQUIRED',{query:c.query,basis:'FIXED_REQUIRED_REQUEST_SET'});});
+ for(const c of [{"name":"raw consumption malformed ABI linkedConsumed is rejected","query":"rawLinkedConsumed"},{"name":"raw consumption malformed ABI releases is rejected","query":"rawReleases"},{"name":"raw consumption malformed ABI collectionCoordinator is rejected","query":"rawCollectionCoordinator"},{"name":"raw consumption malformed ABI collectionExecutor is rejected","query":"rawCollectionExecutor"},{"name":"raw consumption malformed ABI payoutExecutor is rejected","query":"rawPayoutExecutor"}])it(c.name,()=>{
+  for(const kind of ['empty','truncated','extra']){const p=packetForTests(context),row=p.journal.find(x=>x.name===c.query);row.response=kind==='empty'?'0x':kind==='truncated'?row.response.slice(0,-2):row.response+'00'.repeat(32);rejectRaw(c.name,p,'RAW_CONSUMPTION_ABI:'+c.query,{query:c.query,kind,basis:'PINNED_STATIC_ABI_EXACT_CANONICAL_ENCODING'});}
+ });
+ for(const c of [{"name":"raw consumption different Q linkedConsumed is rejected","query":"rawLinkedConsumed"},{"name":"raw consumption different Q releases is rejected","query":"rawReleases"},{"name":"raw consumption different Q collectionCoordinator is rejected","query":"rawCollectionCoordinator"},{"name":"raw consumption different Q collectionExecutor is rejected","query":"rawCollectionExecutor"},{"name":"raw consumption different Q payoutExecutor is rejected","query":"rawPayoutExecutor"}])it(c.name,()=>{const p=packetForTests(context);p.journal.find(x=>x.name===c.query).request.params[1]='0x1';rejectRaw(c.name,p,'QUERY_SCOPE',{query:c.query,basis:'FIXED_ORIGINAL_Q_REQUEST'});});
+ for(const c of [{"name":"raw consumption linkedConsumed field 0 mutation reaches binding","query":"rawLinkedConsumed","types":["uint256"],"index":0,"type":"uint256"},{"name":"raw consumption releases field 0 mutation reaches binding","query":"rawReleases","types":["uint256","uint256","bytes32"],"index":0,"type":"uint256"},{"name":"raw consumption releases field 1 mutation reaches binding","query":"rawReleases","types":["uint256","uint256","bytes32"],"index":1,"type":"uint256"},{"name":"raw consumption releases field 2 mutation reaches binding","query":"rawReleases","types":["uint256","uint256","bytes32"],"index":2,"type":"bytes32"},{"name":"raw consumption collectionCoordinator field 0 mutation reaches binding","query":"rawCollectionCoordinator","types":["address"],"index":0,"type":"address"},{"name":"raw consumption collectionExecutor field 0 mutation reaches binding","query":"rawCollectionExecutor","types":["address"],"index":0,"type":"address"},{"name":"raw consumption payoutExecutor field 0 mutation reaches binding","query":"rawPayoutExecutor","types":["address"],"index":0,"type":"address"}])it(c.name,()=>{
+  const clean=packetForTests(context),p=structuredClone(clean),row=p.journal.find(x=>x.name===c.query),old=row.response;
+  change(p,c.query,c.types,a=>{a[c.index]=c.type==='address'?'0x0000000000000000000000000000000000000001':c.type==='bytes32'?ethers.id('changed release completion'):a[c.index]+1n;});
+  const a=old.slice(2).match(/.{64}/g),b=row.response.slice(2).match(/.{64}/g);assert.deepEqual(a.flatMap((v,i)=>v===b[i]?[]:[i]),[c.index]);const restored=structuredClone(p);restored.journal.find(x=>x.name===c.query).response=old;assert.deepEqual(restored,clean);
+  rejectRaw(c.name,p,'RAW_CONSUMPTION_BINDING',{query:c.query,index:c.index,before:a[c.index],after:b[c.index],basis:'UNCHANGED_PRIVATE_OBSERVATION_COMMITMENT_CREATED_AT_CAPTURE_NOT_TEST_EXPECTATION'});
+ });
+ it("raw consumption query failure is journaled and never becomes zero",async()=>{
+  const events=[],iface=new ethers.Interface(artifact('LocalFuturesPartialV11').abi),data=iface.encodeFunctionData('linkedConsumed',[1]);let failed=false;
+  const broken={request:async q=>{if(q.method==='eth_call'&&q.params[0].data===data){failed=true;throw Error('INTENTIONAL_RAW_GETTER_FAILURE');}return rpc.request(q);}};
+  await assert.rejects(observeFixedQ(fixture,provider,broken,row=>events.push(row)),/INTENTIONAL_RAW_GETTER_FAILURE/);assert(failed);const error=events.find(x=>x.event==='ERROR');assert(error);assert.equal(error.message,'INTENTIONAL_RAW_GETTER_FAILURE');assert(!events.some(x=>x.event==='RESPONSE'&&x.id===error.id));
+  fs.writeFileSync(path.join(out,'raw-consumption-query-failure.json'),JSON.stringify(events,null,2));
+ });
+ it("raw consumption participates in observation commitment while aggregate identity is unchanged",()=>{
+  const clean=packetForTests(context),d=diagnoseFixedQ(context),raw=d.rawConsumption;
+  assert.equal(jsonCommitment({schema:raw.schema,queryBlock:raw.queryBlock,readings:raw.readings}),raw.observationCommitment);
+  const semantic=(p,r)=>jsonCommitment({schema:'LOCAL_STORED_HISTORY_JS_MEANING_1',runId:p.runId,chainId:'31337',query:p.qBefore,peers:d.scope.contracts.slice(0,4).map(x=>x.address),runtimeHashes:d.scope.contracts.slice(0,4).map(x=>x.runtimeHash),key:d.scope.key,rows:['transition1','transition2','transition3'].map(n=>Array.from(ethers.AbiCoder.defaultAbiCoder().decode([R],p.journal.find(x=>x.name===n).response)[0],x=>typeof x==='bigint'?x.toString():x)),exits:['exit2','exit3'].map(n=>Array.from(ethers.AbiCoder.defaultAbiCoder().decode([X],p.journal.find(x=>x.name===n).response)[0],x=>typeof x==='bigint'?x.toString():x)),transactions:p.transactions,queries:p.journal,rawConsumption:r});
+  assert.equal(semantic(clean,raw),d.jsSemanticCommitment);const changed=structuredClone(raw);changed.readings[0].decoded='1';assert.notEqual(semantic(clean,changed),d.jsSemanticCommitment);
+  const changedPacket=structuredClone(clean);change(changedPacket,'rawLinkedConsumed',['uint256'],a=>{a[0]=1n;});assert.notEqual(semantic(changedPacket,raw),d.jsSemanticCommitment);
+  const later=diagnoseFixedQ(identityReobservation.context);assert.deepEqual(raw.readings.map(x=>x.decoded),later.rawConsumption.readings.map(x=>x.decoded));assert.notEqual(raw.observationCommitment,later.rawConsumption.observationCommitment);
+  assert.equal(d.solidityCommitment,later.solidityCommitment);assert.equal(d.researchPlan.identityCorrespondence.positionAggregateKey,later.researchPlan.identityCorrespondence.positionAggregateKey);assert.equal(positionAggregateKey(d.researchPlan.identityCorrespondence.scope,'PNL'),d.researchPlan.identityCorrespondence.positionAggregateKey);
+ });
+ it("raw consumption remains observation only with unknown consumption and rights",()=>{
+  const d=diagnoseFixedQ(context),raw=d.rawConsumption;for(const k of ['consumptionLink','rightsLink','historyCompleteness'])assert.equal(raw[k],'UNVERIFIED');assert.equal(raw.authoritativeConsumed,null);assert.equal(raw.authoritativeRemaining,null);assert.equal(raw.zeroProvesUnconsumedHistory,false);for(const k of ['entries','terminal','limit','remainingRights'])assert(!Object.hasOwn(raw,k));
+  for(const obj of[d,d.researchPlan]){assert.equal(obj.evaluationStatus,'NOT_EVALUATED');for(const k of ['confirmedAmount','returnAmount','lpRecoveryAmount'])assert.equal(obj[k],null);for(const[k,v]of Object.entries(obj))if(k.endsWith('Authority')||k.endsWith('Authorized')||['createsClaim','consumesHistory','rightsTransitionComplete'].includes(k))assert.equal(v,false,k);}assert.equal(d.researchPlan.payableAmount,null);assert.equal(d.researchPlan.positionTotals.nettingAuthorized,false);
+  const before=packetForTests(context);raw.readings[0].decoded='999';assert.deepEqual(packetForTests(context),before);assert.notEqual(diagnoseFixedQ(context).rawConsumption.readings[0].decoded,'999');
+ });
+ it("raw consumption wrong owner and selector are rejected",()=>{for(const field of ['to','data']){const p=packetForTests(context);p.journal.find(x=>x.name==='rawLinkedConsumed').request.params[0][field]=field==='to'?ethers.ZeroAddress:'0x00000000';rejectRaw('wrong '+field,p,'QUERY_SCOPE',{basis:'PRIVATE_PLANNED_OWNER_AND_ABI_SELECTOR'});}});
+
  it('research PnL uses each exit price and exact fraction totals',()=>{const p=diagnoseFixedQ(context).researchPlan;assert.deepEqual(p.legs.map(l=>l.pnlDiagnostic.rawToken),[{n:'1000000',d:'9'},{n:'500000',d:'1'}]);assert.deepEqual(p.positionTotals.rawTokenGain,{n:'5500000',d:'9'});assert.deepEqual(p.positionTotals.usd18Gain,{n:'500000000000000000',d:'1'});assert.notDeepEqual(p.positionTotals.rawTokenGain,{n:'625000',d:'1'});assert.equal(p.positionTotals.nettingAuthorized,false);});
  it('research PnL leaves Funding limits consumption and money rights unconfirmed',()=>{const a=diagnoseFixedQ(context).researchPlan,b=diagnoseFixedQ(context).researchPlan;assert.equal(a.evaluationId,b.evaluationId);for(const k of ['funding','fees','confirmedAmount','payableAmount','returnAmount','lpRecoveryAmount'])assert.equal(a[k],null,k);assert.equal(a.fundingEvidence.evidenceCompleteness,'MISSING');for(const k of ['authoritativeLimit','priorConsumed','remaining','rights','reservations'])assert.equal(a.account[k],null,k);assert.equal(a.evaluationStatus,'NOT_EVALUATED');for(const[k,v]of Object.entries(a))if(k.endsWith('Authorized')||k.endsWith('Authority')||['createsClaim','consumesHistory','rightsTransitionComplete'].includes(k))assert.equal(v,false,k);});
  const domainType=new ethers.Interface(artifact('LocalFuturesCore').abi).getFunction('domain').outputs[0].format('sighash');
