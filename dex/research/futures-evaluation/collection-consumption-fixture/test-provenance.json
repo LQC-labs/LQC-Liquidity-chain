@@ -1,0 +1,51 @@
+{
+  "base": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a",
+  "reused": [
+    {
+      "file": "test/runtime-tools.mjs",
+      "origin": "stored-exit-history/test/runtime-tools.mjs",
+      "sha256": "ef37735eeb00e21490e2b9e95b36b1bfc767b400b368452f026a72465b160d6a",
+      "byteExact": true,
+      "functions": [
+        "artifact",
+        "expectedRuntime",
+        "assertRuntime",
+        "rejects"
+      ]
+    },
+    {
+      "file": "test/anvil-compat.mjs",
+      "sha256": "8a88683469cb13e998ebf24721aaa04de33e2cf4d6606152955830603701775c",
+      "byteExact": true,
+      "changes": []
+    },
+    {
+      "file": "run-tests.cjs",
+      "origin": "stored-exit-history/run-tests.cjs and run-fixed-q-tests.cjs",
+      "adaptation": "reviewed build gate, pinned source set, exact title validation, one launch, raw results and no automatic retry; no parent dependency linking"
+    }
+  ],
+  "deploymentReference": "Existing Integration futures-v11-zero-funding-collection.test.mjs constructor adapter and zero-Funding accounting; not imported or executed",
+  "newFiles": [
+    "test/collection-harness.mjs",
+    "test/collection-consumption.test.mjs",
+    "run-tests.cjs",
+    "test-pins.cjs",
+    "test-provenance.json"
+  ],
+  "testRequirements": 12,
+  "executableCases": 17,
+  "sourceMutationProhibited": [
+    "Solidity",
+    "build outputs",
+    "build-pins.cjs",
+    "build-common.cjs",
+    "test/anvil-compat.mjs"
+  ],
+  "executionCompatibility": "UNVERIFIED",
+  "consumptionSuccess": "UNVERIFIED",
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED"
+}

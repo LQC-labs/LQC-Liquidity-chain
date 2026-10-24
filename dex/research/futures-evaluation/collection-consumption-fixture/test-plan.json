@@ -1,0 +1,457 @@
+{
+  "schema": "LQC_COLLECTION_IMPLEMENTED_TEST_PLAN_1",
+  "base": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a",
+  "revision": "tests-implementation-01",
+  "writingNote": "손상된 파일의 원문 복원이 아니라 승인된 계획에 따라 새로 작성한 UTF-8 문서이다.",
+  "scope": "단일 SHORT, 완전 종료 1회, Funding 0·fee 0",
+  "tests": [
+    {
+      "id": "C01",
+      "title": "실제 배포 Runtime·immutable 전수 대조",
+      "acceptance": "새 compiler-output의 AST로 immutable ID를 변수에 연결하고 실제 배포 인자로 치환한 runtime과 로컬 배포 코드를 비교한다. 외부 배포 peer와 내부 생성 계약을 모두 포함한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C01"
+      ]
+    },
+    {
+      "id": "C02",
+      "title": "배포 연결·nonce 대조",
+      "acceptance": "Chain ID 31337, governance, pending/latest nonce, Partial 예상 주소, verifier 코드해시와 모든 정방향·역방향 연결을 확인한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C02"
+      ]
+    },
+    {
+      "id": "C03",
+      "title": "정상 정책·Epoch 확정",
+      "acceptance": "origin 전 정책 등록, rate 0·feeBps 0, 단일 Epoch, member 고정, Epoch 상태 3·참가자 및 적분 합계 일치, Attribution done, gap closed·unresolved false를 확인한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C03"
+      ]
+    },
+    {
+      "id": "C04",
+      "title": "600,000 raw 정수 명세 도출",
+      "acceptance": "SHORT size 3e18, 진입 1e18, 종료 1.2e18, 담보가격 1e18, decimals 6, 부분 종료 0으로 loss 600000/1 및 Funding·fee 0을 정상 계산에서 도출한다. quote·storage 주입을 금지한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C04"
+      ]
+    },
+    {
+      "id": "C05",
+      "title": "정상 소비 전후 전체 상태 대조",
+      "acceptance": "linkedConsumed +600000, linkedHeld -600000, pool.lp +600000을 확인한다. 토큰 잔액, allowance, pool.cash, tokenAccounted, Funding 장부·custody, LP 지분은 불변이어야 한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C05"
+      ]
+    },
+    {
+      "id": "C06",
+      "title": "owner 권한 거부",
+      "acceptance": "비소유자 execute가 거부되고 실패 전후 전체 snapshot이 동일한지 확인한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C06"
+      ]
+    },
+    {
+      "id": "C07",
+      "title": "Sequence 거부",
+      "acceptance": "첫 execute에서 0·2를 거부하고 1만 허용한다. 성공 이후 같은 명세의 재실행은 모든 Sequence에서 거부한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C07.1",
+        "C07.2"
+      ]
+    },
+    {
+      "id": "C08",
+      "title": "명세 재사용·stale·다른 position 거부",
+      "acceptance": "정상 함수로 생성한 명세로 중복·오래된 명세·다른 pid의 명세를 검증하고 consumedSpecifications와 실행 장부의 원자성을 확인한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C08.1",
+        "C08.2",
+        "C08.3"
+      ]
+    },
+    {
+      "id": "C09",
+      "title": "직접 호출·권한 우회 거부",
+      "acceptance": "제3자의 Partial.applyCollection 및 Funding.collectRepeat 직접 호출을 거부한다. 정확한 calldata 해시 authorization 검사를 유지한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C09.1",
+        "C09.2"
+      ]
+    },
+    {
+      "id": "C10",
+      "title": "실패 원자성",
+      "acceptance": "모든 거부 사례에서 balances, pool, held, executions, spec-used, authorization, Funding records가 이전 상태 그대로인지 확인한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C10.1",
+        "C10.2"
+      ]
+    },
+    {
+      "id": "C11",
+      "title": "authorization 해제·Funding 0 경로",
+      "acceptance": "성공 및 실패 뒤 두 authorization이 0인지 확인한다. Funding 0에서 collectRepeat·approve·transfer 경로가 실행되지 않았는지 실제 trace로 확인한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C11"
+      ]
+    },
+    {
+      "id": "C12",
+      "title": "Collected 이벤트와 전체 소비 구분",
+      "acceptance": "Collected의 key·specification·Sequence 및 amount=0을 확인한다. 전체 소비 증분 600000은 linkedConsumed와 성분 장부로 별도 확인한다.",
+      "scopeState": "LOCAL_FIXTURE_ONLY",
+      "implementationState": "IMPLEMENTED",
+      "executionState": "NOT_RUN",
+      "executableTestFile": "test/collection-consumption.test.mjs",
+      "staticReviewState": "STATIC_REVIEWED",
+      "caseIds": [
+        "C12"
+      ]
+    }
+  ],
+  "expandedCases": {
+    "scopeState": "PLAN_ONLY",
+    "implementationState": "NOT_IMPLEMENTED",
+    "executionState": "NOT_RUN",
+    "deferred": true,
+    "priorSource": [
+      "dex/test/futures-v11-zero-funding-collection.test.mjs",
+      "dex/test/futures-repeat-collection.test.mjs"
+    ],
+    "cases": [
+      "positive Funding",
+      "multiple Domains",
+      "transfer/approval failure",
+      "token callback/reentry"
+    ],
+    "priorEvidenceReusableAsNewPass": false
+  },
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED",
+  "test": "test/collection-consumption.test.mjs",
+  "suite": "Collection consumption fixture",
+  "cases": [
+    {
+      "caseId": "C01",
+      "requirementId": "C01",
+      "title": "[C01] checks every deployed runtime and immutable against the reviewed output",
+      "fullTitle": "Collection consumption fixture [C01] checks every deployed runtime and immutable against the reviewed output",
+      "expectedRejection": null,
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C02",
+      "requirementId": "C02",
+      "title": "[C02] checks constructor nonce predictions and all deployment connections",
+      "fullTitle": "Collection consumption fixture [C02] checks constructor nonce predictions and all deployment connections",
+      "expectedRejection": null,
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C03",
+      "requirementId": "C03",
+      "title": "[C03] confirms the ordinary policy epoch member and attribution prerequisites",
+      "fullTitle": "Collection consumption fixture [C03] confirms the ordinary policy epoch member and attribution prerequisites",
+      "expectedRejection": null,
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C04",
+      "requirementId": "C04",
+      "title": "[C04] derives a 600000 raw PnL only integer specification through Coordinator",
+      "fullTitle": "Collection consumption fixture [C04] derives a 600000 raw PnL only integer specification through Coordinator",
+      "expectedRejection": null,
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C05",
+      "requirementId": "C05",
+      "title": "[C05] consumes PnL while preserving token balances custody allowances and LP shares",
+      "fullTitle": "Collection consumption fixture [C05] consumes PnL while preserving token balances custody allowances and LP shares",
+      "expectedRejection": null,
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C06",
+      "requirementId": "C06",
+      "title": "[C06] rejects a nonowner at Executor Forbidden without consuming the specification",
+      "fullTitle": "Collection consumption fixture [C06] rejects a nonowner at Executor Forbidden without consuming the specification",
+      "expectedRejection": {
+        "error": "Forbidden",
+        "originRole": "Executor",
+        "guard": "LocalFuturesCollectionExecutor.sol:31 owner check",
+        "proof": "target preconditions/control call + exact custom error bytes + deepest REVERT address + failed transaction snapshot",
+        "selector": "0xee90c468"
+      },
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C07.1",
+      "requirementId": "C07",
+      "title": "[C07.1] rejects initial sequence zero at Executor Invalid",
+      "fullTitle": "Collection consumption fixture [C07.1] rejects initial sequence zero at Executor Invalid",
+      "expectedRejection": {
+        "error": "Invalid",
+        "originRole": "Executor",
+        "guard": "LocalFuturesCollectionExecutor.sol:32 sequence progress guard",
+        "proof": "target preconditions/control call + exact custom error bytes + deepest REVERT address + failed transaction snapshot",
+        "selector": "0x6dac6a09"
+      },
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C07.2",
+      "requirementId": "C07",
+      "title": "[C07.2] rejects initial sequence two at Executor Invalid",
+      "fullTitle": "Collection consumption fixture [C07.2] rejects initial sequence two at Executor Invalid",
+      "expectedRejection": {
+        "error": "Invalid",
+        "originRole": "Executor",
+        "guard": "LocalFuturesCollectionExecutor.sol:32 sequence progress guard",
+        "proof": "target preconditions/control call + exact custom error bytes + deepest REVERT address + failed transaction snapshot",
+        "selector": "0x6dac6a09"
+      },
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C08.1",
+      "requirementId": "C08",
+      "title": "[C08.1] rejects a consumed specification at Executor Forbidden",
+      "fullTitle": "Collection consumption fixture [C08.1] rejects a consumed specification at Executor Forbidden",
+      "expectedRejection": {
+        "error": "Forbidden",
+        "originRole": "Executor",
+        "guard": "LocalFuturesCollectionExecutor.sol:31 consumedSpecifications check",
+        "proof": "target preconditions/control call + exact custom error bytes + deepest REVERT address + failed transaction snapshot",
+        "selector": "0xee90c468"
+      },
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C08.2",
+      "requirementId": "C08",
+      "title": "[C08.2] rejects a stale specification at Coordinator Forbidden before Executor guards",
+      "fullTitle": "Collection consumption fixture [C08.2] rejects a stale specification at Coordinator Forbidden before Executor guards",
+      "expectedRejection": {
+        "error": "Forbidden",
+        "originRole": "Coordinator",
+        "guard": "LocalFuturesSettlementCoordinator.sol:220 latest specification check",
+        "proof": "target preconditions/control call + exact custom error bytes + deepest REVERT address + failed transaction snapshot",
+        "selector": "0xee90c468"
+      },
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C08.3",
+      "requirementId": "C08",
+      "title": "[C08.3] rejects a specification for an unregistered pid at Coordinator Forbidden",
+      "fullTitle": "Collection consumption fixture [C08.3] rejects a specification for an unregistered pid at Coordinator Forbidden",
+      "expectedRejection": {
+        "error": "Forbidden",
+        "originRole": "Coordinator",
+        "guard": "LocalFuturesSettlementCoordinator.sol:220 pid/latest specification binding",
+        "proof": "target preconditions/control call + exact custom error bytes + deepest REVERT address + failed transaction snapshot",
+        "selector": "0xee90c468"
+      },
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C09.1",
+      "requirementId": "C09",
+      "title": "[C09.1] rejects direct Partial collection at its caller Forbidden guard",
+      "fullTitle": "Collection consumption fixture [C09.1] rejects direct Partial collection at its caller Forbidden guard",
+      "expectedRejection": {
+        "error": "Forbidden",
+        "originRole": "Partial",
+        "guard": "LocalFuturesPartialV11.sol:153 sender check; not hash mismatch",
+        "proof": "target preconditions/control call + exact custom error bytes + deepest REVERT address + failed transaction snapshot",
+        "selector": "0xee90c468"
+      },
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C09.2",
+      "requirementId": "C09",
+      "title": "[C09.2] rejects direct Funding collection at its partial caller Forbidden guard",
+      "fullTitle": "Collection consumption fixture [C09.2] rejects direct Funding collection at its partial caller Forbidden guard",
+      "expectedRejection": {
+        "error": "Forbidden",
+        "originRole": "Funding",
+        "guard": "LocalFuturesFundingV11.sol:25 _partialCaller; not funding hash mismatch",
+        "proof": "target preconditions/control call + exact custom error bytes + deepest REVERT address + failed transaction snapshot",
+        "selector": "0xee90c468"
+      },
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C10.1",
+      "requirementId": "C10",
+      "title": "[C10.1] rejects an over held budget at Coordinator Invalid atomically",
+      "fullTitle": "Collection consumption fixture [C10.1] rejects an over held budget at Coordinator Invalid atomically",
+      "expectedRejection": {
+        "error": "Invalid",
+        "originRole": "Coordinator",
+        "guard": "LocalFuturesSettlementCoordinator.sol:165 budget > limit",
+        "proof": "target preconditions/control call + exact custom error bytes + deepest REVERT address + failed transaction snapshot",
+        "selector": "0x6dac6a09"
+      },
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C10.2",
+      "requirementId": "C10",
+      "title": "[C10.2] rejects a wrong modeled account target at Coordinator Mismatch atomically",
+      "fullTitle": "Collection consumption fixture [C10.2] rejects a wrong modeled account target at Coordinator Mismatch atomically",
+      "expectedRejection": {
+        "error": "Mismatch",
+        "originRole": "Coordinator",
+        "guard": "LocalFuturesSettlementCoordinator.sol:208 expectedAccountTarget",
+        "proof": "target preconditions/control call + exact custom error bytes + deepest REVERT address + failed transaction snapshot",
+        "selector": "0x77a93d8d"
+      },
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C11",
+      "requirementId": "C11",
+      "title": "[C11] clears authorizations and makes no Funding or token mutating call",
+      "fullTitle": "Collection consumption fixture [C11] clears authorizations and makes no Funding or token mutating call",
+      "expectedRejection": null,
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "caseId": "C12",
+      "requirementId": "C12",
+      "title": "[C12] distinguishes Collected amount zero from aggregate consumption 600000",
+      "fullTitle": "Collection consumption fixture [C12] distinguishes Collected amount zero from aggregate consumption 600000",
+      "expectedRejection": null,
+      "implementationState": "IMPLEMENTED",
+      "staticReviewState": "STATIC_REVIEWED",
+      "executionState": "NOT_RUN"
+    }
+  ],
+  "fullTitles": [
+    "Collection consumption fixture [C01] checks every deployed runtime and immutable against the reviewed output",
+    "Collection consumption fixture [C02] checks constructor nonce predictions and all deployment connections",
+    "Collection consumption fixture [C03] confirms the ordinary policy epoch member and attribution prerequisites",
+    "Collection consumption fixture [C04] derives a 600000 raw PnL only integer specification through Coordinator",
+    "Collection consumption fixture [C05] consumes PnL while preserving token balances custody allowances and LP shares",
+    "Collection consumption fixture [C06] rejects a nonowner at Executor Forbidden without consuming the specification",
+    "Collection consumption fixture [C07.1] rejects initial sequence zero at Executor Invalid",
+    "Collection consumption fixture [C07.2] rejects initial sequence two at Executor Invalid",
+    "Collection consumption fixture [C08.1] rejects a consumed specification at Executor Forbidden",
+    "Collection consumption fixture [C08.2] rejects a stale specification at Coordinator Forbidden before Executor guards",
+    "Collection consumption fixture [C08.3] rejects a specification for an unregistered pid at Coordinator Forbidden",
+    "Collection consumption fixture [C09.1] rejects direct Partial collection at its caller Forbidden guard",
+    "Collection consumption fixture [C09.2] rejects direct Funding collection at its partial caller Forbidden guard",
+    "Collection consumption fixture [C10.1] rejects an over held budget at Coordinator Invalid atomically",
+    "Collection consumption fixture [C10.2] rejects a wrong modeled account target at Coordinator Mismatch atomically",
+    "Collection consumption fixture [C11] clears authorizations and makes no Funding or token mutating call",
+    "Collection consumption fixture [C12] distinguishes Collected amount zero from aggregate consumption 600000"
+  ],
+  "requiredCaseCount": 17,
+  "failureEvidence": {
+    "revision": "failure-preservation-01",
+    "reporter": "test/evidence-reporter.cjs",
+    "serializer": "test/failure-evidence.cjs",
+    "encoding": "LQC_TYPED_ERROR_1",
+    "bigint": "tagged decimal string; no Number conversion",
+    "finalHook": "first thrown error retained; evidence and cleanup errors recorded separately",
+    "runner": "test/hook/cleanup/evidence/reporter categories; raw stdout/stderr buffers and process status retained; recording failure is fatal",
+    "implementationState": "IMPLEMENTED",
+    "staticReviewState": "STATIC_REVIEWED",
+    "executionState": "NOT_RUN"
+  }
+}

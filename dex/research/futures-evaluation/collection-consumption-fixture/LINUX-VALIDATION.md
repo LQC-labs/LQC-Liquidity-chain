@@ -1,0 +1,105 @@
+# Linux one-shot consumption fixture validation
+
+State: IMPLEMENTED / STATIC_REVIEWED / NOT_RUN. No module evaluation, install,
+compile, test, Anvil, CI or publication was performed to prepare these tools.
+Existing Solidity, compile.cjs, build gate/build pins, 17 tests and their pins
+are unchanged. Local node_modules junctions and private absolute paths are not
+inputs to the Linux job. A fresh checkout must preserve approved source bytes;
+line-ending or other checkout changes fail source/hash checks, never normalize.
+
+## Future authorized invocation only
+
+From this fixture in a clean Linux checkout, Node 22.23.3:
+
+    npm ci --ignore-scripts --no-audit --no-fund
+    node run-linux-once.cjs run
+    node run-linux-once.cjs collect
+
+The workflow records install stdout/stderr/status separately. Its run step is
+conditional on installation success, collection/upload use if: always().
+The new job has a 30-minute ceiling; install 3, run 24, collection 2 minutes.
+Child limits: compile 180s, gate 30s, mocks 120s, real runner 930s (existing real
+runner has its own 900s limit). No forceful process-tree cleanup is claimed.
+Cancellation/job timeout can interrupt recording and upload.
+
+## Gates and failure boundaries
+
+The root Linux dependency directory must be real, not a Windows junction.
+The locked Linux Anvil 1.7.1 optional package/binary must exist; absent packages
+do not authorize a fallback download or modified installation. Existing gate
+checks exact lock/dependency/compiler/soljson and source hashes.
+No existing build/, linux-once/, mock result directory or staging is reused.
+compile runs once, followed by entire input/output/manifest SHA-256 checks
+against linux-validation-plan.json, then the unchanged build gate in a separate
+process. No metadata masking, field removal or automatic pin approval occurs.
+Each subsequent stage runs once. Failure, signal, timeout, recording error,
+hash mismatch or source mutation stops later stages as NOT_RUN. A compile that
+exits zero but mismatches approved bytes is a failed phase, not a reviewed build.
+
+## Separate mock evidence
+
+Six isolated Mocha children cover exact BigInt assertion operands, nested causes
+and AggregateError entries, evidence-only, cleanup-only and simultaneous final
+hook failures, and reporter file-write failure with stderr fallback. The hook
+checks first-error identity (including frozen Error), cleanup call count and
+both recorded codes. Original assertions and the existing 17 tests are untouched.
+Expected child statuses are not outer validation results. All expected status
+and evidence checks must pass before the mock runner exits zero. No mock count
+is added to the 17 Anvil result. Each child has raw logs/status; the outer mock
+stage has separate raw logs/status and summary. No child is retried.
+
+Installed Mocha 12 run-helpers.cjs registers an exit handler that resets status
+from the Mocha failure count. Therefore the reporter-write case deliberately
+expects CLI status zero for a passing test with failed report writing; it also
+requires no readable report and a typed ENOENT stderr fallback. This is classified
+as reporter failure, never a passing test run. The existing real runner rejects
+missing/invalid reporter output even with a zero Mocha CLI status.
+
+## Artifact allow list
+
+Collection copies only named files: three build outputs, installation and phase
+logs/status/summary, six mock case records, at most one real collection result
+directory and one compile-result file, pinned sources and named source snapshots.
+No recursive source/results upload or node_modules traversal is used. Every
+source path component is lstat/realpath checked, links and root escape fail.
+The new output staging directory is created exclusively; files use wx. Inventories
+include copied paths/SHA-256, missing/not-applicable files and collection errors.
+Missing success-required evidence fails collection; optional failure/success
+records remain explicitly missing. Partial compilation/output is retained.
+Workflow upload is only results/linux-artifact/, include-hidden-files false,
+if-no-files-found error, retention 14 days. Collection/upload failure is not
+continue-on-error. Secrets, dependency trees, local evidence helpers and private
+provenance files are not in the allow list. No secret environment is configured.
+
+## Review and remaining execution prerequisites
+
+All source pin/review records describe static preparation only. Six mock cases,
+Linux build reproducibility, real 17 tests, runtime/trace behavior and actual
+failure cleanup remain NOT_RUN. The independent job preserves the workflow's
+existing triggers/concurrency and other jobs. PR creation can naturally trigger
+existing research jobs as well; their results remain separate. A later approval
+must authorize publication/execution; no workflow run or PR is created here.
+Before publication recheck latest main overlap, exact bytes, pins and upload list.
+amount null; authority false; consumption/rights links UNVERIFIED.
+
+## Publication repair: static only
+
+All new-tool output directories are validated component by component before
+creation or use. Invalid directory ancestry disables subsequent filesystem
+recording; finally blocks use stderr instead of recreating/reusing that path.
+Invalid individual output files are blocked without suppressing independent
+records at other validated files. Existing files are never overwritten.
+The mock runner independently attempts stdout, stderr and status writes. Any
+recording error fails the outer validation and retains the original child result,
+base64 raw buffers, primary error and every recording error on a safe file or
+stderr. Case started/validation records and a final case-state summary distinguish
+EXECUTED, RUNNING and NOT_RUN. No child is automatically retried.
+The pinned evidenceRequirements list requires all pinned root sources, install
+records, called-phase logs/status, called mock root records, each started/executed
+case's logs/status/validation and applicable report/identity records. Called Anvil
+also requires all pinned source snapshots; successful phases require their
+additional build/test success records. Missing required files fail collection.
+Manual use of collect must provide the same installation records as the workflow.
+All these failure paths remain NOT_RUN. Path checks do not claim protection
+against arbitrary concurrent filesystem replacement or guaranteed output when
+all storage/stderr sinks fail. Whole-process-tree cleanup remains unproven.

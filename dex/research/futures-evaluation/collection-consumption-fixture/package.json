@@ -1,0 +1,16 @@
+{
+  "name": "@lqc-flow/dex-core",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Isolated LOCAL collection consumption fixture; compile/test/runtime not executed",
+  "scripts": {},
+  "devDependencies": {
+    "@foundry-rs/anvil": "1.7.1",
+    "ethers": "^6.15.0",
+    "mocha": "^12.0.2",
+    "solc": "0.8.30"
+  },
+  "overrides": {
+    "tmp": "0.2.7"
+  }
+}
