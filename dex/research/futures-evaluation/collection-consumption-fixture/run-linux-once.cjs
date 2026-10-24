@@ -107,7 +107,7 @@ function execute(){
 }
 function collect(){
  const copied=[],missing=[],errors=[],required=new Set();let stagingReady=false;
- const executionStates={install:'UNVERIFIED',phases:Object.fromEntries(['compile','gate','mock','anvil'].map(x=>[x,'NOT_RUN'])),mockCases:{}};
+  const executionStates={install:'UNVERIFIED',phases:Object.fromEntries(['compile','gate','mock','anvil'].map(x=>[x,'NOT_RUN'])),mockCases:{},normalConsumption:'UNKNOWN'};
  try{
   // A link at results/ must not be followed, even when compilation never ran.
   outputDirectory('results',true);assert(!fs.existsSync(staging),'STAGING_ALREADY_EXISTS');outputDirectory('results/linux-artifact',true,true);stagingReady=true;
@@ -126,7 +126,7 @@ function collect(){
   const testPins=JSON.parse(testPinsText.slice(testPinsText.indexOf('{'),testPinsText.lastIndexOf('}')+1));
   for(const dir of collections){
    checkedDirectory('results/'+dir);
-   for(const file of ['runner-selfchecks.json','preflight.json','exit-code.json','stdout.log','stderr.log','mocha.json','raw-summary.json','failure-categories.json','validated-summary.json','failure.json','rejection-evidence.json'])selected.add('results/'+dir+'/'+file);
+   for(const file of ['runner-selfchecks.json','preflight.json','exit-code.json','stdout.log','stderr.log','mocha.json','raw-summary.json','failure-categories.json','validated-summary.json','failure.json','rejection-evidence.json',...plan.evidenceRequirements.normalConsumptionFiles])selected.add('results/'+dir+'/'+file);
    for(const file of [...Object.keys(testPins.sourceHashes),'test-plan.json','test-pins.cjs'])selected.add('results/'+dir+'/source-snapshot/'+file);
   }
   for(const relative of [...selected].sort()){
@@ -143,13 +143,17 @@ function collect(){
   const policy=plan.evidenceRequirements,need=files=>files.forEach(file=>required.add(file));
   need([...sources,...policy.always]);
   const exists=file=>copied.some(x=>x.path===file);
-  const recorded=file=>JSON.parse(fs.readFileSync(checkedFile(file)));
+  const recorded=file=>{
+   try{const value=JSON.parse(fs.readFileSync(checkedFile(file)));assert(value&&typeof value==='object'&&!Array.isArray(value),'EVIDENCE_RECORD_OBJECT_REQUIRED');return value;}
+   catch(error){errors.push({path:file,error:describe(error)});throw new Error('EVIDENCE_RECORD_UNREADABLE:'+file,{cause:error});}
+  };
   if(exists('results/linux-install/exit-code.json'))executionStates.install=recorded('results/linux-install/exit-code.json').exitCode===0?'PASS':'FAIL';
   const summaryFile='results/linux-once/summary.json';
   if(exists(summaryFile)){
    const summary=recorded(summaryFile);
    for(const id of ['compile','gate','mock','anvil']){
     const phase=summary.phases[id];assert(phase,'PHASE_STATE_MISSING:'+id);executionStates.phases[id]=phase.state;
+    assert(phase.calls===0||phase.calls===1,'PHASE_CALL_COUNT:'+id);if(phase.calls)assert(['PASS','FAIL'].includes(phase.state),'CALLED_PHASE_STATE:'+id);
     if(phase.calls)need(policy.phaseExecuted.map(suffix=>'results/linux-once/'+id+'.'+suffix));
     else assert.equal(phase.state,'NOT_RUN','UNEXECUTED_PHASE_STATE');
    }
@@ -173,16 +177,67 @@ function collect(){
     }
    }else for(const item of plan.mockCases)executionStates.mockCases[item.id]='NOT_RUN';
    if(summary.phases.anvil.calls){
+    executionStates.normalConsumption='UNKNOWN';
     assert.equal(collections.length,1,'EXECUTED_ANVIL_REQUIRES_ONE_RESULT_DIRECTORY');
     const prefix='results/'+collections[0]+'/';need(policy.anvilExecuted.map(file=>prefix+file));
     need([...Object.keys(testPins.sourceHashes),'test-plan.json','test-pins.cjs'].map(file=>prefix+'source-snapshot/'+file));
+    if(policy.normalConsumptionFiles.some(file=>exists(prefix+file)))need(policy.normalConsumptionAttempted.map(file=>prefix+file));
+    const report=exists(prefix+'mocha.json')?recorded(prefix+'mocha.json'):null;
+    if(report){
+     try{
+      assert.equal(report.reporter?.state,'COMPLETE');
+      for(const field of ['tests','passes','pending','failures']){assert(Array.isArray(report[field]));for(const item of report[field])assert(typeof item.title==='string'&&typeof item.fullTitle==='string');}
+      assert.equal(report.stats.tests,report.tests.length);assert.equal(report.stats.passes,report.passes.length);assert.equal(report.stats.pending,report.pending.length);assert.equal(report.stats.failures,report.failures.length);
+      const actual=report.tests.map(x=>x.fullTitle);assert.equal(new Set(actual).size,actual.length);
+      for(const item of [...report.passes,...report.pending])assert(actual.includes(item.fullTitle),'MOCHA_RESULT_WITHOUT_TEST');
+      for(const title of actual)assert.equal([...report.passes,...report.pending,...report.failures].filter(x=>x.fullTitle===title).length,1,'MOCHA_TEST_RESULT_CONFLICT');
+      const expected=recorded('test-plan.json').fullTitles;for(const title of actual)assert(expected.includes(title),'UNEXPECTED_MOCHA_TITLE');
+      if(summary.phases.anvil.state==='PASS'){assert.equal(actual.length,expected.length,'PASS_PHASE_INCOMPLETE_MOCHA');assert.equal(report.passes.length,expected.length);assert.equal(report.failures.length,0);assert.equal(report.pending.length,0);}
+     }catch(error){errors.push({path:prefix+'mocha.json',error:describe(error)});throw new Error('C05_MOCHA_RECORD_INVALID',{cause:error});}
+    }
+    const isC05=x=>x.title?.startsWith('[C05] ');
+    const passed=report?.passes?.filter(isC05)??[],failed=report?.failures?.filter(isC05)??[],pending=report?.pending?.filter(isC05)??[];
+    const ran=report?.tests?.some(isC05)&&pending.length===0;
+    const started=exists(prefix+'normal-consumption-started.json'),terminal=exists(prefix+'normal-consumption-state.json')?recorded(prefix+'normal-consumption-state.json'):null;
+    const anyEvidence=policy.normalConsumptionFiles.some(file=>exists(prefix+file));
+    if(anyEvidence||ran||passed.length||failed.length){
+     executionStates.normalConsumption='UNKNOWN';
+     need(policy.normalConsumptionAttempted.map(file=>prefix+file));need([prefix+'mocha.json']);
+     assert(started,'C05_EXECUTED_WITHOUT_START_RECORD');
+     const start=recorded(prefix+'normal-consumption-started.json');assert.equal(start.caseId,'C05','C05_START_ID');assert.equal(start.state,'STARTED','C05_START_STATE');
+     assert(terminal&&terminal.caseId==='C05','C05_TERMINAL_RECORD_REQUIRED');
+     assert(['SUCCESS','FAILURE'].includes(terminal.state),'C05_TERMINAL_STATE');
+     assert.equal(pending.length,0,'C05_PENDING_STATE_CONFLICT');
+     if(terminal.state==='SUCCESS'){
+      need(policy.normalConsumptionSuccess.map(file=>prefix+file));
+      assert.equal(passed.length,1,'C05_SUCCESS_MOCHA_CONFLICT');assert.equal(failed.length,0,'C05_SUCCESS_FAILURE_CONFLICT');
+      assert.equal(terminal.pendingUnderlying,0,'C05_SUCCESS_WITH_PENDING_OPERATIONS');
+     }else{
+      need(policy.normalConsumptionFailure.map(file=>prefix+file));
+      assert.equal(failed.length,1,'C05_FAILURE_MOCHA_CONFLICT');assert.equal(passed.length,0,'C05_FAILURE_PASS_CONFLICT');
+     }
+     executionStates.normalConsumption=terminal.state;
+    }else if(!report){
+     executionStates.normalConsumption='UNKNOWN_MISSING_MOCHA';need([prefix+'mocha.json']);
+     errors.push({path:prefix+'mocha.json',error:{message:'C05_EXECUTION_STATE_UNCONFIRMED'}});
+    }else executionStates.normalConsumption='NOT_RUN';
     if(summary.phases.anvil.state==='PASS')need(policy.anvilPass.map(file=>prefix+file));
+   }else{
+    assert.equal(summary.phases.anvil.state,'NOT_RUN','UNEXECUTED_ANVIL_STATE');
+    assert.equal(collections.length,0,'ANVIL_OUTPUT_WITH_NOT_RUN');
+    const initialFile='results/linux-once/initial.json';need([initialFile]);const initial=recorded(initialFile);
+    assert.equal(initial.phases?.anvil?.calls,0,'INITIAL_ANVIL_CALLS');assert.equal(initial.phases?.anvil?.state,'NOT_RUN','INITIAL_ANVIL_STATE');
+    executionStates.normalConsumption='NOT_RUN';
    }
   }
-  for(const file of required)if(!exists(file))errors.push({path:file,error:{message:'REQUIRED_EVIDENCE_MISSING'}});
-  for(const absent of missing){const caseId=plan.mockCases.find(x=>absent.path.startsWith('results/failure-evidence-mock/'+x.id+'/'))?.id;if(caseId&&executionStates.mockCases[caseId]==='NOT_RUN')absent.reason='NOT_RUN';}
+  for(const absent of missing){
+   const caseId=plan.mockCases.find(x=>absent.path.startsWith('results/failure-evidence-mock/'+x.id+'/'))?.id;
+   if(caseId&&executionStates.mockCases[caseId]==='NOT_RUN')absent.reason='NOT_RUN';
+   if(policy.normalConsumptionFiles.includes(path.posix.basename(absent.path))&&executionStates.normalConsumption==='NOT_RUN')absent.reason='NOT_RUN';
+  }
  }catch(error){errors.push({error:describe(error)});}
  finally{
+  for(const file of required)if(!copied.some(x=>x.path===file))errors.push({path:file,error:{message:'REQUIRED_EVIDENCE_MISSING'}});
   if(errors.length)process.exitCode=1;
   const inventory={state:errors.length?'FAIL':'COLLECTED_NOT_TEST_VERDICT',copied,missing,required:[...required].sort(),executionStates,errors,amount:null,authority:false,consumptionLink:'UNVERIFIED',rightsLink:'UNVERIFIED'};
   try{assert(stagingReady&&!outputPathFailure,'STAGING_OUTPUT_UNAVAILABLE');save(path.join(staging,'artifact-inventory.json'),inventory);}catch(error){process.exitCode=1;try{fs.writeSync(2,JSON.stringify({inventory,outputPathFailure:outputPathFailure?describe(outputPathFailure):null,recording:describe(error)})+'\n');}catch{}}

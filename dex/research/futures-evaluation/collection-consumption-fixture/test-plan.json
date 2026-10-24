@@ -453,5 +453,60 @@
     "implementationState": "IMPLEMENTED",
     "staticReviewState": "STATIC_REVIEWED",
     "executionState": "NOT_RUN"
+  },
+  "normalConsumptionEvidence": {
+    "caseId": "C05",
+    "transactionCount": "one existing execute; no new scenario",
+    "files": [
+      "normal-consumption-started.json",
+      "normal-consumption-queries.jsonl",
+      "normal-consumption.json",
+      "normal-consumption-validation.json",
+      "normal-consumption-failure.json",
+      "normal-consumption-state.json"
+    ],
+    "encoding": "existing typed graph; bigint decimal string",
+    "observation": "Explicit block number on every snapshot eth_call/balance/allowance/code request; recheck same block hash; no latest fallback",
+    "ordering": "C05 task + underlying RPC operations must settle before restore; 5s confirmation timeout poisons fixture and fails hook",
+    "implementationState": "IMPLEMENTED",
+    "staticReviewState": "STATIC_REVIEWED",
+    "executionState": "NOT_RUN",
+    "receiptMeaning": "ordinary EVM transaction receipt only; no dedicated consumption Receipt or terminal",
+    "keyLimitation": "Executor storage key is not asserted to equal a position diagnostic key",
+    "revision": "five-fix-01",
+    "semantics": "Fixed ABI output name/type/index tree, contract address, request arguments and balance/allowance owner/spender roles retained",
+    "partialEvidence": "Append-only typed request/result/error journal; immutable final files; UNKNOWN send outcome never retried",
+    "deadlines": {
+      "queryBudgetMs": 100000,
+      "overallEvidenceBudgetMs": 140000,
+      "mochaTestBudgetMs": 180000,
+      "terminationConfirmationMs": 5000,
+      "restoreHookMs": 20000,
+      "clock": "monotonic performance.now",
+      "transportCancellation": "NOT_EXPOSED; abort only ends waits; pending underlying operations remain tracked"
+    },
+    "states": [
+      "STARTED",
+      "SUCCESS",
+      "FAILURE",
+      "UNKNOWN_MISSING_MOCHA"
+    ],
+    "primary": "Original operation error is primary before fallible journal recording; sentinel preserves null/undefined throws; later errors never replace it",
+    "collectorClassification": "UNKNOWN before reads; path-labelled read/parse/schema failures fail collection; NOT_RUN only with valid consistent execution evidence",
+    "offlineVerification": {
+      "module": "test/verify-stored-consumption.mjs",
+      "entry": "verifyStoredConsumption(documentBytes, fixedABIBytes)",
+      "data": "normal-evidence-abi.json",
+      "dataSHA256": "ecfc8e576031d146b482cc1f7a7bd0c7bd83cf71a7fe2e63cdcf91465d121bf0",
+      "source": "Existing reviewed compiler-output.json; ABI plus runtime templates and immutable AST references",
+      "compilerOutputSHA256": "982211ef1cb30a28d9435f71df26f6d322611acf4057eccfe569cd7b9e389378",
+      "buildManifestSHA256": "d404389d65ef14c85d35b37720d6adb5bcec1b2070e14b620f35434063499e2e",
+      "requiresFixture": false,
+      "requiresProvider": false,
+      "requiresRPC": false,
+      "liveComparison": "Separate assertFixtureIdentity after offline verification",
+      "scope": "Stored local consistency; not RPC truth or complete history authentication",
+      "executionState": "NOT_RUN"
+    }
   }
 }

@@ -142,6 +142,7 @@ export class CollectionFixture {
   this.positionKey=ethers.keccak256(coder.encode(['address','address','address','address','bytes32'],[this.core.target,this.funding.target,this.partial.target,this.coord.target,this.seal.settlementId]));
   this.accountKey=ethers.keccak256(coder.encode(['bytes32','uint256'],[plan.accountKey,1]));const policy=await this.coord.mockPolicy(this.id);
   this.epochKey=ethers.keccak256(coder.encode(['address','uint256','uint256','uint256','bytes32'],[this.coord.target,this.id,1,1,policy.basisHash]));
+  this.collectionPolicyBasisHash=policy.basisHash; // Retain the already-read input for offline evidence; no extra query.
  }
  async specify(step=1,budget=LOSS){
   await this.send(this.coord,'specifyCumulativeBudget',[this.pid,this.seal.settlementId,step,budget],this.owner);
@@ -166,7 +167,28 @@ export class CollectionFixture {
   const p=this.partial,f=this.funding,c=this.coord,addresses=[this.G,this.O,await this.other.getAddress(),this.core.target,p.target,f.target];
   return {pool:plain(await p.partialPool(this.id)),held:await p.linkedHeld(this.id),basis:plain(await p.linkedBasis(this.pid)),exit:plain(await p.linkedExit(this.pid,2,true)),consumed:await p.linkedConsumed(this.pid),pending:await p.linkedPending(this.id),reserved:await p.linkedFinalReserved(this.id),shares:await p.lpShares(this.id,this.G),totalShares:await p.lpTotalShares(this.id),accounted:await p.tokenAccounted(this.token.target),releases:plain(await p.releases(this.pid)),returnAvailable:await p.releasedReturnAvailable(this.id,this.O),receiptState:plain(await p.repeatReceiptState(this.id,ethers.ZeroHash,ethers.ZeroHash)),fundingPayout:plain(await f.repeatPayoutState(this.id,ethers.ZeroHash,ethers.ZeroHash)),cash:await f.repeatCash(this.epochKey),collected:await f.repeatAccountCollected(this.accountKey),custody:await f.repeatCustody(this.token.target),balances:await Promise.all(addresses.map(x=>this.token.balanceOf(x))),allowances:await Promise.all(addresses.map(x=>this.token.allowance(x,f.target))),partialAllowance:await this.token.allowance(p.target,f.target),ownerAllowance:await this.token.allowance(this.O,p.target),executor:plain(await this.executor.executions(this.positionKey)),specifications:await Promise.all([...this.specs].sort().map(async x=>[x,await this.executor.consumedSpecifications(x),plain(await c.integerSpecification(x))])),sealed:plain(await c.sealedPlan(this.pid)),latest:await c.latestIntegerSpecification(this.pid),modeled:await c.modeledAccountFunding(this.plan.accountKey,1),partialAuth:await this.executor.partialAuthorization(),fundingAuth:await this.executor.fundingAuthorization(),exposure:plain(await this.core.coreExposureContext(this.pid)),epoch:plain(await f.fundingSeriesEpoch(this.id,1,1)),member:plain(await f.fundingSeriesMember(this.id,1,1,this.O)),attributed:plain(await this.attr.accountEpoch(this.id,this.O,1))};
  }
- async execute(){const before=await this.snapshot(),r=await this.send(this.executor,'execute',[this.pid,this.spec,1],this.owner),after=await this.snapshot();return {before,after,r};}
+ async execute(record,observe){
+  const before=record?await observe(this,record,'before'):await this.snapshot();
+  let r;
+  if(record){
+   const session=this.normalCollection;record.transactionState='UNKNOWN';session.txState='UNKNOWN';
+   let sent;
+   await session.observe({kind:'send-once',from:this.O,to:this.executor.target,input:this.executor.interface.encodeFunctionData('execute',[this.pid,this.spec,1]),retry:false},async()=>{
+    sent=await this.executor.connect(this.owner).getFunction('execute')(this.pid,this.spec,1,{gasLimit:8000000n});
+    record.transactionHash=sent.hash;record.transactionState='HASH_RETURNED';session.txState='HASH_RETURNED';
+    session.append({kind:'transaction-hash-before-receipt-wait',hash:sent.hash,state:'HASH_RETURNED'});
+    return {hash:sent.hash};
+   });
+   r=await session.wait(()=>receipt(this.provider,Promise.resolve(sent)));
+  }else r=await this.send(this.executor,'execute',[this.pid,this.spec,1],this.owner);
+  if(record){
+   record.transactionState='RECEIPT_RETURNED';this.normalCollection.txState='RECEIPT_RETURNED';
+   record.transaction=await this.rpc.request({method:'eth_getTransactionByHash',params:[r.hash]});
+   record.receipt=await this.rpc.request({method:'eth_getTransactionReceipt',params:[r.hash]});
+   record.block=await this.rpc.request({method:'eth_getBlockByHash',params:[r.blockHash,false]});
+  }
+  const after=record?await observe(this,record,'after'):await this.snapshot();return {before,after,r};
+ }
  async reject({contract,method,args,signer=this.owner,error,origin,label,precondition}){
   assert.equal(typeof precondition,'function','TARGET_PRECONDITION_REQUIRED');await precondition();await this.zeroAuth();
   const before=await this.snapshot(),to=contract.target,from=await signer.getAddress(),data=contract.interface.encodeFunctionData(method,args);
