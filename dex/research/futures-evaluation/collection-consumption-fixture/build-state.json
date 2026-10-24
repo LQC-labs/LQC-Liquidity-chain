@@ -1,0 +1,47 @@
+{
+  "state": "REVIEWED",
+  "preparedInputSHA256": "f667f2074a90a5c708853febf700341b6823d27e62330c14739d81488594839b",
+  "compilerOutputSHA256": "982211ef1cb30a28d9435f71df26f6d322611acf4057eccfe569cd7b9e389378",
+  "buildManifestSHA256": "d404389d65ef14c85d35b37720d6adb5bcec1b2070e14b620f35434063499e2e",
+  "compilerExecuted": true,
+  "runnerExecuted": true,
+  "testsExecuted": 0,
+  "anvilExecuted": false,
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED",
+  "reviewMeaning": "STATIC_REVIEW_OF_GENERATED_BUILD_BYTES_ONLY",
+  "compilerInputSHA256": "f667f2074a90a5c708853febf700341b6823d27e62330c14739d81488594839b",
+  "compilerExecutions": 1,
+  "compileExitCode": 0,
+  "runnerMeaning": "Previously completed compile.cjs build runner only; not a test runner",
+  "testRunnerExecuted": false,
+  "executionCompatibility": "UNVERIFIED",
+  "deployment": "NOT_PERFORMED",
+  "consumptionSuccess": "UNVERIFIED",
+  "testPlanState": {
+    "scope": "LOCAL_FIXTURE_ONLY",
+    "implementation": "IMPLEMENTED",
+    "staticReview": "STATIC_REVIEWED",
+    "execution": "NOT_RUN",
+    "count": 12,
+    "executableCases": 17
+  },
+  "metadataComparison": {
+    "coordinator": {
+      "preMetadataCreationExact": true,
+      "preMetadataRuntimeExact": true,
+      "wholeCreationExact": false,
+      "wholeRuntimeExact": false
+    },
+    "executor": {
+      "preMetadataCreationExact": true,
+      "preMetadataRuntimeExact": true,
+      "wholeCreationExact": false,
+      "wholeRuntimeExact": false
+    },
+    "newIPFSDigestPreimageReconstructed": false,
+    "arbitraryMaskingUsed": false
+  }
+}

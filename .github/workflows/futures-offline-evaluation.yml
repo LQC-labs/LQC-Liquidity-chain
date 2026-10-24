@@ -72,3 +72,45 @@ jobs:
           if-no-files-found: error
           include-hidden-files: false
           retention-days: 14
+
+  collection-consumption-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: dex/research/futures-evaluation/collection-consumption-fixture
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.23.3
+          cache: npm
+          cache-dependency-path: dex/research/futures-evaluation/collection-consumption-fixture/package-lock.json
+      - name: Install locked fixture dependencies once without lifecycle scripts
+        timeout-minutes: 3
+        shell: bash
+        run: |
+          mkdir -p results/linux-install
+          set +e
+          npm ci --ignore-scripts --no-audit --no-fund >results/linux-install/stdout.log 2>results/linux-install/stderr.log
+          status=$?
+          printf '{"exitCode":%s,"automaticRetry":false}\n' "$status" >results/linux-install/exit-code.json
+          exit "$status"
+      - name: Reproduce reviewed build and validate isolated mocks then 17 Anvil tests once
+        timeout-minutes: 24
+        run: node run-linux-once.cjs run
+      - name: Stage only explicitly approved evidence even after failure
+        if: always()
+        timeout-minutes: 2
+        run: node run-linux-once.cjs collect
+      - name: Preserve collection consumption evidence separately
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collection-consumption-research-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dex/research/futures-evaluation/collection-consumption-fixture/results/linux-artifact/
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 14

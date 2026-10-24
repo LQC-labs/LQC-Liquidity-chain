@@ -1,0 +1,694 @@
+{
+  "schema": "LQC_COLLECTION_DEPLOYMENT_PLAN_2",
+  "base": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a",
+  "writingNote": "승인된 계획을 실제 소스와 대조하여 새로 작성한 문서이며 실행 코드는 아니다.",
+  "scopeState": "PLAN_ONLY",
+  "implementationState": "NOT_IMPLEMENTED",
+  "executionState": "NOT_RUN",
+  "chainId": 31337,
+  "state": "NOT_DEPLOYED",
+  "actors": {
+    "G": "향후 로컬 테스트 governance/domain governor/LP 공급자",
+    "O": "향후 로컬 테스트 SHORT 소유자; 운영 지갑·비밀정보 사용 금지"
+  },
+  "symbols": {
+    "origin": "설정 시각+1000초; 사전 준비가 지연되면 거래 전 중단",
+    "openTime": "origin+10",
+    "exitTime": "origin+50",
+    "cutoff": "origin+100",
+    "sid": 1,
+    "epoch": 1,
+    "P": "keccak256(UTF8('COLLECTION_SINGLE_SHORT_POLICY'))"
+  },
+  "cfg": {
+    "minOrder": "1000000000000000000",
+    "maxOrder": "10000000000000000000",
+    "maxPosition": "10000000000000000000",
+    "maxOI": "100000000000000000000",
+    "bufferUsd": "1000000000000000000",
+    "liquidationCostUsd": "1000000000000000000",
+    "maxPositions": 10,
+    "maxBatch": 4,
+    "marketAge": 10000,
+    "collateralAge": 10000,
+    "maxSkew": 10000,
+    "initialMarginBps": 5000,
+    "maintenanceBps": 4000,
+    "stressBps": 3000,
+    "feeBps": 0,
+    "insuranceCoverageBps": 0,
+    "fundingDeltaLimit": "10000000000000000000000000",
+    "policyDigest": "P",
+    "observationPolicyReady": true,
+    "fundingPolicyReady": true
+  },
+  "peers": [
+    "LocalFuturesCore",
+    "LocalFuturesFundingV11",
+    "LocalFuturesPartialV11",
+    "LocalFuturesAttribution",
+    "LocalFuturesSettlementCoordinator",
+    "LocalFuturesCollectionExecutor",
+    "LocalFuturesReleaseVerifier",
+    "LocalFuturesLinkedExposureVerifier",
+    "LocalFuturesWithdrawalVerifier",
+    "LocalFuturesExposureLedger"
+  ],
+  "token": "LocalVNextToken decimals6",
+  "oracles": [
+    "LocalVNextOracle market",
+    "LocalVNextOracle collateral"
+  ],
+  "sequenceDomains": {
+    "exposure": "개설 1 → 완전 종료 2; 부분 종료 0회",
+    "calculationStep": "specifyCumulativeBudget 0 → 1",
+    "specificationSequence": "recordIntegerSpecification 0 → 1",
+    "executorSequence": "향후 최초 execute 1; 이번에는 미구현·미실행",
+    "epoch": "단일 Epoch 1",
+    "accountTarget": "modeledAccountFunding 초기 0 확인"
+  },
+  "steps": [
+    {
+      "id": "D01",
+      "phase": "로컬 배포",
+      "caller": "G",
+      "target": "Core / Token / Oracles",
+      "method": "constructors",
+      "args": {
+        "Core": [],
+        "Token": [
+          6
+        ],
+        "Market": [],
+        "Collateral": []
+      },
+      "preconditions": [
+        "향후 로컬 검증 전용 Chain ID 31337; G는 로컬 governance 계정"
+      ],
+      "verify": [
+        "Core.governance()==G; token.decimals()==6; 실제 runtime·immutable 대조"
+      ],
+      "source": "LocalFuturesCore.sol:86; LocalVNextFixtures.sol:12,25",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "D02",
+      "phase": "Funding 연결",
+      "caller": "G",
+      "target": "FundingV11 / Core",
+      "method": "constructor / bindFundingStudy",
+      "args": {
+        "constructor": [
+          "Core"
+        ],
+        "bindFundingStudy": [
+          "Funding"
+        ]
+      },
+      "preconditions": [
+        "Core 코드 존재; 아직 localFunding 미설정; domainRegistry==0"
+      ],
+      "verify": [
+        "Funding.core()==Core; Core.localFunding()==Funding; 내부 ExposureLedger runtime·주소 연결"
+      ],
+      "source": "LocalFuturesFundingV11.sol:17; LocalFuturesCore.sol:310,403",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "D03",
+      "phase": "Partial 선행 verifier 배포",
+      "caller": "G",
+      "target": "ReleaseVerifier / LinkedExposureVerifier",
+      "method": "constructors",
+      "args": {
+        "predictedPartial": "G의 pending/latest nonce가 N일 때 CREATE(G,N+2)",
+        "ReleaseVerifier": [
+          "Core",
+          "Funding",
+          "predictedPartial"
+        ],
+        "LinkedExposureVerifier": [
+          "Core",
+          "Funding",
+          "predictedPartial"
+        ]
+      },
+      "preconditions": [
+        "pending==latest==N; verifier는 N,N+1; 그 사이 G의 다른 거래 금지; predictedPartial.code.length==0"
+      ],
+      "verify": [
+        "각 receipt와 실제 주소; AST 기반 immutable 치환 runtime, keccak256 코드해시; Core/Funding/predictedPartial getter"
+      ],
+      "source": "LocalFuturesReleaseVerifier.sol:constructor; LocalFuturesLinkedExposureVerifier.sol:13",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "D04",
+      "phase": "Partial 배포·연결",
+      "caller": "G",
+      "target": "PartialV11 / Core",
+      "method": "constructor / bindPartialStudy",
+      "args": {
+        "constructor": [
+          "Core",
+          "Funding",
+          "ReleaseVerifier",
+          "releaseRuntimeHash",
+          "LinkedExposureVerifier",
+          "linkedRuntimeHash"
+        ],
+        "bindPartialStudy": [
+          "Partial"
+        ]
+      },
+      "preconditions": [
+        "G nonce==N+2; 두 verifier 검증 완료; Core.governance()==G"
+      ],
+      "verify": [
+        "Partial==predictedPartial; legacyDomainCutoff 기록; 내부 WithdrawalVerifier runtime·연결; Core.localPartial()==Partial"
+      ],
+      "source": "LocalFuturesPartialV11.sol:27-36; LocalFuturesCore.sol:327",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "D05",
+      "phase": "Attribution·Coordinator·Executor 연결",
+      "caller": "G",
+      "target": "Attribution / Partial / Coordinator / Executor / Funding",
+      "method": "constructors / bindAttribution / bindCollectionCoordinator",
+      "args": {
+        "Attribution": [
+          "Partial"
+        ],
+        "bindAttribution": [
+          "Attribution"
+        ],
+        "Coordinator": [
+          "Partial"
+        ],
+        "Executor": [
+          "Coordinator"
+        ],
+        "bindCollectionCoordinator": [
+          "Coordinator",
+          "Executor"
+        ]
+      },
+      "preconditions": [
+        "Partial 연결 완료; domainRegistry==0; 최초 1회 bind; 모든 역방향 주소 일치"
+      ],
+      "verify": [
+        "Partial.attribution; Funding.collectionCoordinator/collectionExecutor; Executor contextHash 및 core/funding/partial/coordinator; productionEnabled false"
+      ],
+      "source": "LocalFuturesAttribution.sol:50; LocalFuturesPartialV11.sol:141; LocalFuturesSettlementCoordinator.sol:45; LocalFuturesCollectionExecutor.sol:21; LocalFuturesFundingV11.sol:64",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "S01",
+      "phase": "새 Domain 설정",
+      "caller": "G",
+      "target": "Core",
+      "method": "createDomain",
+      "args": [
+        "Token",
+        "Market",
+        "Collateral",
+        "Token",
+        "G",
+        "G",
+        "cfg"
+      ],
+      "preconditions": [
+        "Partial 배포 후 생성하여 id>legacyDomainCutoff; 정상 정책 digest P!=0; market/collateral 관측값은 이후 open 전에 갱신"
+      ],
+      "verify": [
+        "반환 id를 기록; Domain Normal·decimals6; Core 원래 custody/accounted/oi/active==0"
+      ],
+      "source": "LocalFuturesCore.sol:91-99",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "S02",
+      "phase": "단일 Epoch 설정",
+      "caller": "G",
+      "target": "Core",
+      "method": "configureExposureResearch",
+      "args": [
+        "id",
+        1,
+        "origin",
+        100,
+        1,
+        4,
+        8,
+        0
+      ],
+      "preconditions": [
+        "origin은 현재 시각+1000초의 미래; 구성 완료가 origin보다 빨라야 함; fundingPolicyReady=true"
+      ],
+      "verify": [
+        "Funding seriesInputMode==2; origin,length100,epochs1,batch4,capacity8,rate0; exposureBindings policy==P"
+      ],
+      "source": "LocalFuturesCore.sol:341; LocalFuturesFundingV11.sol:30; LocalFuturesExposureLedger.sol:110",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "S03",
+      "phase": "정책 gap 설정",
+      "caller": "G",
+      "target": "Funding",
+      "method": "enablePolicyGapStudy",
+      "args": [
+        "id",
+        1
+      ],
+      "preconditions": [
+        "Domain governor==G; funding series 존재; 아직 exposure 없음"
+      ],
+      "verify": [
+        "policyGap 추적 준비; 최종 close 이후 closed/unresolved를 다시 확인"
+      ],
+      "source": "LocalFuturesFundingV11.sol:55",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "S04",
+      "phase": "연결 종료 기록 설정",
+      "caller": "G",
+      "target": "Partial",
+      "method": "configureLinkedResearch",
+      "args": [
+        "id",
+        2
+      ],
+      "preconditions": [
+        "id>cutoff; Normal; linkedCapacity0; researchTouched false; pool.cash==pool.lp; exposure OI0; origin 전"
+      ],
+      "verify": [
+        "linkedCapacity(id)==2"
+      ],
+      "source": "LocalFuturesPartialV11.sol:112; LocalFuturesLinkedExposureVerifier.sol:19",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "S05",
+      "phase": "Attribution 등록",
+      "caller": "G",
+      "target": "Attribution",
+      "method": "registerDomain",
+      "args": [
+        "id",
+        8,
+        4
+      ],
+      "preconditions": [
+        "origin 전; Partial.attribution 일치; linkedCapacity>0; exposure 없음; policy 일치; CoreInput 모드"
+      ],
+      "verify": [
+        "config의 sid1,origin,length100,epochs1,historyCap8,batch4"
+      ],
+      "source": "LocalFuturesAttribution.sol:57",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "S06",
+      "phase": "로컬 계산 정책 등록",
+      "caller": "G",
+      "target": "Coordinator",
+      "method": "registerMockPolicy",
+      "args": [
+        "id",
+        {
+          "fundingPrice18": "1000000000000000000",
+          "exitMarket18": "1200000000000000000",
+          "exitCollateral18": "1000000000000000000",
+          "exitTime": "origin+50",
+          "observationTag": "keccak256(UTF8('COLLECTION_SINGLE_SHORT_LOCAL'))",
+          "calculationPolicy": "Coordinator.CALCULATION_POLICY()"
+        }
+      ],
+      "preconditions": [
+        "origin 전; Normal; researchTouched false; config·series·policy 일치; exposure OI0"
+      ],
+      "verify": [
+        "mockPolicy 값과 basisHash 고정; 최신 quote를 직접 설정하는 함수로 대체 금지"
+      ],
+      "source": "LocalFuturesSettlementCoordinator.sol:51-60",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "S07",
+      "phase": "LP·소유자 담보 준비",
+      "caller": "G / O",
+      "target": "Token / Partial",
+      "method": "mint / approve / enableResearchLP / depositResearchLP",
+      "args": {
+        "mint": [
+          [
+            "G",
+            "1000000000"
+          ],
+          [
+            "O",
+            "100000000"
+          ]
+        ],
+        "approve": [
+          [
+            "G -> Partial",
+            "1000000000"
+          ],
+          [
+            "O -> Partial",
+            "100000000"
+          ]
+        ],
+        "enableResearchLP": [
+          "id"
+        ],
+        "depositResearchLP": [
+          "id",
+          "1000000000",
+          1
+        ]
+      },
+      "preconditions": [
+        "로컬 mock 토큰만 사용; G는 enableResearchLP 호출; G는 LP 예치; O는 SHORT 소유자; initialMarginBps5000에서 3USD의 최소증거금1.5USD 이상인 margin100USD 선택"
+      ],
+      "verify": [
+        "LP shares·pool·tokenAccounted·잔액·allowance snapshot; lpEnabled true; deposit은 origin 전 완료"
+      ],
+      "source": "LocalVNextFixtures.sol:13,17; LocalFuturesPartialV11.sol:63-85",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "S08",
+      "phase": "진입 관측값 준비",
+      "caller": "G",
+      "target": "Market / Collateral",
+      "method": "set",
+      "args": [
+        "price=1000000000000000000",
+        "updatedAt=openTime"
+      ],
+      "preconditions": [
+        "openTime=origin+10; 향후 로컬 harness가 실제 open block.timestamp와 관측 시각을 일치시킴; fresh/nonfuture 관측"
+      ],
+      "verify": [
+        "Core.observe(id): pm=pc=1e18; tm=tc=openTime"
+      ],
+      "source": "LocalVNextFixtures.sol:27; LocalFuturesCore.sol:130",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "T01",
+      "phase": "SHORT 개설",
+      "caller": "O",
+      "target": "Core",
+      "method": "openLinkedExposureResearch",
+      "args": [
+        "id",
+        "3000000000000000000",
+        false,
+        "100000000"
+      ],
+      "preconditions": [
+        "실제 open timestamp=openTime; Normal; cfg bounds·initial margin·LP risk 조건 만족; O의 Token->Partial allowance 충분"
+      ],
+      "verify": [
+        "pid=exposureAccountPosition(id,O); Core exposure sequence1; size3e18 SHORT; linkedBasis entry1e18,margin100000000,partials0; key/receipt 일치"
+      ],
+      "source": "LocalFuturesCore.sol:353-380; LocalFuturesLinkedExposureVerifier.sol:23-38",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "T02",
+      "phase": "종료 관측값 준비",
+      "caller": "G",
+      "target": "Market / Collateral",
+      "method": "set",
+      "args": {
+        "Market": [
+          "1200000000000000000",
+          "exitTime"
+        ],
+        "Collateral": [
+          "1000000000000000000",
+          "exitTime"
+        ]
+      },
+      "preconditions": [
+        "exitTime=origin+50; 향후 로컬 harness에서 관측값 설정 뒤 close 거래의 block.timestamp를 정확히 exitTime으로 맞춤; 같은 초의 자동 채굴을 가정하지 않음"
+      ],
+      "verify": [
+        "close 시 Core.observe의 pm1.2e18,pc1e18,tm==tc==exitTime"
+      ],
+      "source": "LocalVNextFixtures.sol:27; LocalFuturesSettlementCoordinator.sol:70",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "T03",
+      "phase": "완전 종료 1회",
+      "caller": "O",
+      "target": "Core",
+      "method": "reduceExposureResearch",
+      "args": [
+        "pid",
+        "3000000000000000000",
+        2
+      ],
+      "preconditions": [
+        "실제 block.timestamp==exitTime; O 소유; 부분 종료 호출 없음; quote/storage/bytecode 강제 조작 없음"
+      ],
+      "verify": [
+        "size0; Core sequence2; linkedBasis.closed==initialSize,sequence2,partials0,held==margin; final exit status2,time/market/collateral/cutoff=origin+100 일치; policyGap closed true/unresolved false"
+      ],
+      "source": "LocalFuturesCore.sol:365; LocalFuturesPartialV11.sol:116-136",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "E01",
+      "phase": "Epoch cutoff 고정",
+      "caller": "G (permissionless wrapper 선택)",
+      "target": "Funding",
+      "method": "advanceFundingSeries",
+      "args": [
+        "id",
+        1,
+        1
+      ],
+      "preconditions": [
+        "로컬 시각>=origin+100; Core short OI가0으로 종료됨; Registry 미사용"
+      ],
+      "verify": [
+        "fundingSeriesEpoch(...).v[10]==2 (CutoffFixed); epoch OI 적분·participants 확인"
+      ],
+      "source": "LocalFuturesFundingV11.sol:33; LocalFuturesExposureLedger.sol:143",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "E02",
+      "phase": "소유자 계정 checkpoint",
+      "caller": "G (permissionless wrapper 선택)",
+      "target": "Funding",
+      "method": "checkpointFundingAccount",
+      "args": [
+        "id",
+        1,
+        "O",
+        1
+      ],
+      "preconditions": [
+        "Epoch advance 완료; O는 이 단일 사례의 유일한 enrolled 계정"
+      ],
+      "verify": [
+        "account cursor가 epoch1을 통과; member의 le/se와 epoch 적분 대응"
+      ],
+      "source": "LocalFuturesFundingV11.sol:36; LocalFuturesExposureLedger.sol:149",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "E03",
+      "phase": "member USD 확정",
+      "caller": "G (permissionless wrapper 선택)",
+      "target": "Funding",
+      "method": "fixSeriesMemberUSD",
+      "args": [
+        "id",
+        1,
+        1,
+        "O"
+      ],
+      "preconditions": [
+        "CutoffFixed; member enrolled·미고정; cursor.epoch>1"
+      ],
+      "verify": [
+        "member[3]==1; debt/claim0이고 유효 분모; done==participants=1"
+      ],
+      "source": "LocalFuturesFundingV11.sol:39; LocalFuturesExposureLedger.sol:193",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "E04",
+      "phase": "Epoch 최종 확정",
+      "caller": "G (permissionless wrapper 선택)",
+      "target": "Funding",
+      "method": "finalizeSeriesUSD",
+      "args": [
+        "id",
+        1,
+        1
+      ],
+      "preconditions": [
+        "done==participants; materializedLE/SE==epoch LE/SE"
+      ],
+      "verify": [
+        "epoch.v[10]==3 (AwaitingConversion),v[6]==v[7]; convertSeriesEpoch 호출 금지"
+      ],
+      "source": "LocalFuturesFundingV11.sol:42; LocalFuturesExposureLedger.sol:207",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "E05",
+      "phase": "Attribution 완료",
+      "caller": "G (permissionless 선택)",
+      "target": "Attribution",
+      "method": "processAccount",
+      "args": [
+        "id",
+        "O",
+        4
+      ],
+      "preconditions": [
+        "설정 batch4; open/close transition2개; finalized epoch; 단일 Epoch 처리 예상이며 결과 확인 전 반복 실행하지 않음"
+      ],
+      "verify": [
+        "accountEpoch(id,O,1).done true; cursor.epoch>1; positionEpoch debt/claim0; 같은 Epoch의 적분·member 일치"
+      ],
+      "source": "LocalFuturesAttribution.sol:107-132",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "P01",
+      "phase": "계산 계획 기록",
+      "caller": "G (permissionless 선택)",
+      "target": "Coordinator",
+      "method": "recordPlan",
+      "args": [
+        "pid"
+      ],
+      "preconditions": [
+        "Normal·full close·sequence2·partials0·policy gap 종료·epoch3·member fixed·Attribution done; 계획 미기록"
+      ],
+      "verify": [
+        "plan firstEpoch==lastEpoch==1; pnlLossRaw600000/1,pnlGainRaw0,fundingDebtRaw0,fundingClaimRaw0,feesRaw0; 실제 값 불일치면 중단"
+      ],
+      "source": "LocalFuturesSettlementCoordinator.sol:82-110",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "P02",
+      "phase": "소유자 seal",
+      "caller": "O",
+      "target": "Coordinator",
+      "method": "sealPlan",
+      "args": [
+        "pid",
+        "Coordinator.plan(pid).id"
+      ],
+      "preconditions": [
+        "계획 hash와 live basis·sequence·held·margin 일치; 미seal"
+      ],
+      "verify": [
+        "sealedPlan settlementId,planHash,epochRoot,limit==100000000; step0,budget0"
+      ],
+      "source": "LocalFuturesSettlementCoordinator.sol:137",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "P03",
+      "phase": "누적 budget 명세",
+      "caller": "O",
+      "target": "Coordinator",
+      "method": "specifyCumulativeBudget",
+      "args": [
+        "pid",
+        "sealedPlan.settlementId",
+        1,
+        600000
+      ],
+      "preconditions": [
+        "calculationStep0->1; budget0->600000; held limit 이내"
+      ],
+      "verify": [
+        "cumulative plannedPnl600000,plannedFunding0,plannedFee0,reserve0,fractionsPending false"
+      ],
+      "source": "LocalFuturesSettlementCoordinator.sol:162",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "P04",
+      "phase": "정수 명세 기록",
+      "caller": "O",
+      "target": "Coordinator",
+      "method": "recordIntegerSpecification",
+      "args": [
+        "pid",
+        "sealedPlan.settlementId",
+        1,
+        0
+      ],
+      "preconditions": [
+        "specificationSequence0->1; expectedAccountTarget0은 modeledAccountFunding(plan.accountKey,1)의 실제 값0과 대조; 모든 _integerLimits 조건 충족"
+      ],
+      "verify": [
+        "latestIntegerSpecification nonzero; owner·pid·key·sealed 값 대응; expectedActualExecutionSequence0/actualReceiptConfirmed false는 소비 증명이 아님"
+      ],
+      "source": "LocalFuturesSettlementCoordinator.sol:182-214",
+      "executionState": "NOT_RUN"
+    },
+    {
+      "id": "P05",
+      "phase": "quote 읽기",
+      "caller": "읽기 전용 호출자",
+      "target": "Coordinator",
+      "method": "collectionQuote",
+      "args": [
+        "pid",
+        "latestIntegerSpecification(pid)"
+      ],
+      "preconditions": [
+        "Funding collectionCoordinator 연결 및 최신 명세 일치"
+      ],
+      "verify": [
+        "q.owner==O; q.budget600000;q.pnl600000;q.funding0;q.fee0; Funding 한도0 허용; 강제 quote 변경 금지"
+      ],
+      "source": "LocalFuturesSettlementCoordinator.sol:219",
+      "executionState": "NOT_RUN"
+    }
+  ],
+  "afterQuote": {
+    "executionState": "NOT_RUN",
+    "implementationState": "NOT_IMPLEMENTED",
+    "futureCaller": "O",
+    "futureMethod": "Executor.execute(pid,specification,1)",
+    "expected": [
+      "linkedConsumed +600000, linkedHeld -600000, pool.lp +600000",
+      "Funding 증가분 0, Collected.amount 0; 이를 전체 소비량으로 해석하지 않음",
+      "두 authorization 성공 후 0"
+    ],
+    "noDedicatedReceiptOrTerminal": true
+  },
+  "registry": "domainRegistry==0인 기존 LOCAL 연구 경로만 계획한다. Registry 연결·일반 원장 호환성을 주장하지 않는다.",
+  "stopConditions": [
+    "정상 함수와 초기 설정만으로 조건이 성립하지 않음",
+    "비정수 성분 또는 예상 밖 Funding·fee·quote",
+    "policy·owner·key·Sequence·runtime·immutable·잔액 불일치",
+    "지정 timestamp 보장 불가",
+    "nonce 불일치 또는 예상 밖 pending 거래"
+  ],
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED"
+}

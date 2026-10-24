@@ -1,0 +1,93 @@
+{
+  "schema": "LQC_COLLECTION_LINUX_ONCE_PLAN_1",
+  "implementationState": "IMPLEMENTED",
+  "staticReviewState": "STATIC_REVIEWED",
+  "executionState": "NOT_RUN",
+  "node": "22.23.3",
+  "automaticRetry": false,
+  "phases": [
+    {"id":"compile","timeoutMs":180000},
+    {"id":"gate","timeoutMs":30000},
+    {"id":"mock","timeoutMs":120000},
+    {"id":"anvil","timeoutMs":930000}
+  ],
+  "approvedBuildHashes": {
+    "build/compiler-input.json": "f667f2074a90a5c708853febf700341b6823d27e62330c14739d81488594839b",
+    "build/compiler-output.json": "982211ef1cb30a28d9435f71df26f6d322611acf4057eccfe569cd7b9e389378",
+    "build/manifest.json": "d404389d65ef14c85d35b37720d6adb5bcec1b2070e14b620f35434063499e2e"
+  },
+  "comparison": "ENTIRE_BYTES_SHA256_WITHOUT_NORMALIZATION_OR_PIN_UPDATE",
+  "mockCases": [
+    {"id":"bigint","expectedChildExitCode":1,"expectedClassification":"test","purpose":"actual/expected exact tagged BigInt; operator, message, stack, code, nested AggregateError cause"},
+    {"id":"nested","expectedChildExitCode":1,"expectedClassification":"test","purpose":"outer code, nested cause, root cause and two independent errors"},
+    {"id":"evidence","expectedChildExitCode":1,"expectedClassification":"hook+evidence","purpose":"first Error identity retained; cleanup called once"},
+    {"id":"cleanup","expectedChildExitCode":1,"expectedClassification":"hook+cleanup","purpose":"cleanup-only Error identity and record retained"},
+    {"id":"both","expectedChildExitCode":1,"expectedClassification":"hook+evidence+cleanup","purpose":"frozen first Error identity and both error codes retained"},
+    {"id":"reporter-write","expectedChildExitCode":0,"expectedClassification":"REPORTER_FAILURE_REJECTED_DESPITE_ZERO_CLI_STATUS","purpose":"Mocha 12 exit handler resets CLI status; missing readable report plus stderr ENOENT fallback is rejected independently"}
+  ],
+  "anvil": {"runner":"run-tests.cjs","expectedCases":17,"listAndPins":"test-plan.json + test-pins.cjs","mockResultsCountAsAnvilPass":false},
+  "evidenceRequirements": {
+    "always": [
+      "results/linux-install/stdout.log",
+      "results/linux-install/stderr.log",
+      "results/linux-install/exit-code.json",
+      "results/linux-once/summary.json"
+    ],
+    "allLinuxPinnedSourcesRequired": true,
+    "phaseExecuted": [
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json"
+    ],
+    "compilePass": [
+      "build/compiler-input.json",
+      "build/compiler-output.json",
+      "build/manifest.json",
+      "results/linux-once/build-comparison.json"
+    ],
+    "mockExecuted": [
+      "results/failure-evidence-mock/initial.json",
+      "results/failure-evidence-mock/summary.json"
+    ],
+    "mockCaseExecuted": [
+      "started.json",
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json",
+      "validated.json"
+    ],
+    "mockReportCases": [
+      "bigint",
+      "nested",
+      "evidence",
+      "cleanup",
+      "both"
+    ],
+    "mockIdentityCases": [
+      "evidence",
+      "cleanup",
+      "both"
+    ],
+    "anvilExecuted": [
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json"
+    ],
+    "anvilPass": [
+      "runner-selfchecks.json",
+      "preflight.json",
+      "mocha.json",
+      "raw-summary.json",
+      "failure-categories.json",
+      "validated-summary.json",
+      "rejection-evidence.json"
+    ],
+    "allAnvilPinnedSourceSnapshotsRequiredWhenCalled": true,
+    "unexecutedState": "NOT_RUN"
+  },
+  "limitations": ["No Linux execution yet", "Forced cancellation may interrupt evidence upload", "Entire process tree termination is not proven", "All output sinks failing prevents durable evidence"],
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED"
+}

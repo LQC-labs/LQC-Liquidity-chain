@@ -1,0 +1,150 @@
+{
+  "base": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a",
+  "baseTree": "bf2090d57ac091b88bdfc2bd6b5e13f4c72379ed",
+  "officialRequirementsBlob": "6c2964224e177f9fa02ec1c79a64d4f2f52696c3",
+  "sources": [
+    {
+      "path": "fixtures/local/contracts/futures/ILQCFuturesOracle.sol",
+      "sha256": "0cd57c281cdb344b47ea90cde470af3d664d0f18510a29de368c6946f68e351e",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/ILQCFuturesOracle.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesAttribution.sol",
+      "sha256": "62d694155a4fa9c63bcec001895550bbf71779990e6f54f4a4bd58e2b1ddb247",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesAttribution.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesCore.sol",
+      "sha256": "dd7ec515694f4d463e13076728322e5254163c7a50bf0413bdb982f2fe00b458",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesCore.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesExposureLedger.sol",
+      "sha256": "bf1711ccd3313bb91ac0799b9d2db67db68ad53429a3aad28d042f81283c397f",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesExposureLedger.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesFunding.sol",
+      "sha256": "1dea8a357bd0776a9f5a81357a1aaaa77a48698c29ed64ab22351d69ded28d68",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesFunding.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesFundingStudyCalculation.sol",
+      "sha256": "ea10770d7ad7f3f7797706b8c5e17f055d9dec2583e864c7daf364af71ec905c",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesFundingStudyCalculation.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesFundingV11.sol",
+      "sha256": "33adc930f297cd9a6e3e8374cb2c39cb039eb9af7dbd7983d19e519fb3c9804f",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesFundingV11.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesLinkedExposureVerifier.sol",
+      "sha256": "2d35877dfd86524e886e09462b3ac158387465e22acda9016b24e5b2220e561c",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesLinkedExposureVerifier.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialSettlement.sol",
+      "sha256": "a4353843dd43a0c38f3442f733d7058fcb392de9b3607b4401eb788ce0e44c57",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialSettlement.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialStudyLedger.sol",
+      "sha256": "14c899c107432a504ebe37d34e7f272fa1d7972680c2a14848b1d811958e300c",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialStudyLedger.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialV11.sol",
+      "sha256": "6abd93ac27d8283314fa960b5f0674b5489f271ac6732d609de0b07369d2dede",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialV11.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesPayoutExecutor.sol",
+      "sha256": "c316d6bb9eb6c0feea677735a23436eccf090e851e02da32be96045cef15d2f4",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesPayoutExecutor.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesPayoutSpecification.sol",
+      "sha256": "32aa726d41d1d3ad50acf9fbb621f840be237e48d44fef658bbd761a86f9f9fc",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesPayoutSpecification.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesReleaseVerifier.sol",
+      "sha256": "3284aeb991a51471f14ad0f7ad134dd12e175e195db3ea55951bf210fae3f071",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesReleaseVerifier.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesSettlementCompletionVerifier.sol",
+      "sha256": "6e817068ba2b8cd33fe08af6ce5686e915a3a8682c2822816f1075d5fc50ea3a",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesSettlementCompletionVerifier.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesSettlementCoordinator.sol",
+      "sha256": "08b1c67d7fa6210ae8ed26853665269173d9b29541ee54690972bd3d2e760c28",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesSettlementCoordinator.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesWithdrawalVerifier.sol",
+      "sha256": "e305ca8ad18bf0cfcff8e4e611d688fb18316a9a1eabee9fa8366bbcc17302e4",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/LocalFuturesWithdrawalVerifier.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/SettlementMath.sol",
+      "sha256": "c27913649293c1ee5e8c29c320bfee571926dd7508f4c4f0e9ef692a42f5a29a",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/local-vnext/SettlementMath.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/mocks/LocalVNextFixtures.sol",
+      "sha256": "140b8deac792727692ba21bc0413aeac4f500b0018f6ac7fa59537fa10b56036",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/fixtures/local/contracts/futures/mocks/LocalVNextFixtures.sol"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesCollectionExecutor.sol",
+      "sha256": "926bd0d2ebcb0802c678b876a2f89102e92bcb4a15b3ce7d01c3f77a676c1647",
+      "origin": "C:/Users/user/LQC-Integration/github-main-5d8be369-20261016/dex/contracts/futures/local-vnext/LocalFuturesCollectionExecutor.sol",
+      "gitCommit": "f6d086afad221972498f1c434c626b5597133d3b",
+      "gitBlob": "7fdba9e704d9af9d36b62eac705fcbc5f0a61831"
+    },
+    {
+      "path": "package.json",
+      "sha256": "f07411f39855c75d7542a2714661de58f3e583b0544ebb8af032383926591692",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/package.json",
+      "originalSHA256": "844b6999c9c8f9b3d95d6a9d58f29c30eebda756c93f40af65412aed71455e9f",
+      "byteExact": false,
+      "changes": [
+        "remove unrelated npm scripts",
+        "fixture-only description; dependency versions unchanged"
+      ]
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "8685aa64ce70fdfe0e69b0c16c95e88da1c0e01e00fe8fa21509e245266ac6e0",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/package-lock.json"
+    },
+    {
+      "path": "compile.cjs",
+      "sha256": "17a9bf9d6718dd885ec32fa7d8b03b9cb4610c76fcf8ff5f5eaa42127ebbb522",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/compile.cjs"
+    },
+    {
+      "path": "test/anvil-compat.mjs",
+      "sha256": "8a88683469cb13e998ebf24721aaa04de33e2cf4d6606152955830603701775c",
+      "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/test/anvil-compat.mjs",
+      "reuse": "byte-exact; not imported or executed"
+    }
+  ],
+  "buildGate": {
+    "origin": "f70afc21ac3b8e93c1d2e5f5c7774915e404df4a:dex/research/futures-evaluation/stored-exit-history/build-common.cjs",
+    "changes": [
+      "early NOT_GENERATED/REVIEWED block",
+      "explicit ABI/AST/immutable/runtime-link presence checks"
+    ],
+    "originalChecksRetained": true
+  },
+  "oldBuildArtifactSHA256": "73b449d2b82cbfe7f6ba3b42c0e1bd86ca1133f2f951e8bfa8b4d1f9667a186e",
+  "historicalBuildUsedAsNewPin": false,
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED"
+}
