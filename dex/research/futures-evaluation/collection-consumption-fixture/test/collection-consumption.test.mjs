@@ -1,4 +1,5 @@
 import evidence from './failure-evidence.cjs';
+import {preserveNormalConsumption} from './normal-consumption-evidence.mjs';
 import assert from 'node:assert/strict';
 import {ethers} from 'ethers';
 import fs from 'node:fs';
@@ -9,8 +10,14 @@ describe('Collection consumption fixture',function(){
  this.timeout(180000);
  let f,checkpoint;
  before(async()=>{f=new CollectionFixture();await f.start();});
- beforeEach(async()=>{checkpoint=await f.rpc.request({method:'evm_snapshot',params:[]});f.specs=new Set();f.spec=await f.specify();});
- afterEach(async()=>{if(checkpoint){assert.equal(await f.rpc.request({method:'evm_revert',params:[checkpoint]}),true,'RESTORE_TEST_ISOLATION');checkpoint=null;}});
+ beforeEach(async()=>{assert(!f.collectionPoisoned,'C05_TERMINATION_UNCONFIRMED_BLOCKS_FOLLOWING_TESTS');checkpoint=await f.rpc.request({method:'evm_snapshot',params:[]});f.specs=new Set();f.spec=await f.specify();});
+ afterEach(async function(){
+  const collection=f.normalCollection;
+  if(collection)this.timeout(20000);
+  if(collection){f.collectionPoisoned=true;await collection.beforeRestore();}
+  if(checkpoint){try{assert.equal(await f.rpc.request({method:'evm_revert',params:[checkpoint]}),true,'RESTORE_TEST_ISOLATION');checkpoint=null;}catch(error){f.collectionPoisoned=true;collection?.fail('cleanup-snapshot-restore',error);throw error;}}
+  if(collection){f.normalCollection=null;f.collectionPoisoned=false;}
+ });
  after(async()=>{
   await evidence.finalize(
    ()=>{if(process.env.LQC_COLLECTION_RESULT_DIR)fs.writeFileSync(process.env.LQC_COLLECTION_RESULT_DIR+'/rejection-evidence.json',evidence.stringify({outcomes,errors,amount:null,authority:false,consumptionLink:'UNVERIFIED',rightsLink:'UNVERIFIED'}),{flag:'wx'});},
@@ -48,7 +55,7 @@ describe('Collection consumption fixture',function(){
   assert.equal(seal.step,1n);assert.equal(seal.budget,LOSS);assert.equal(seal.cumulative.allocationReserve,0n);assert.equal(seal.cumulative.fractionsPending,false);
   assert.equal(spec.specificationSequence,1n);assert.equal(spec.expectedActualExecutionSequence,0n);assert.equal(spec.actualReceiptConfirmed,false);assert.equal(spec.pnlTarget,LOSS);assert.equal(spec.fundingTarget,0n);assert.equal(spec.feeTarget,0n);assert.equal(q.budget,LOSS);
  });
- it('[C05] consumes PnL while preserving token balances custody allowances and LP shares',async()=>{await f.ready();assertConsumption(f,await f.execute());});
+ it('[C05] consumes PnL while preserving token balances custody allowances and LP shares',async()=>{await preserveNormalConsumption(f);});
  it('[C06] rejects a nonowner at Executor Forbidden without consuming the specification',async()=>{
   await f.reject({contract:f.executor,method:'execute',args:[f.pid,f.spec,1],signer:f.other,error:'Forbidden',origin:f.executor.target,label:'C06 owner guard',precondition:async()=>{const q=await f.ready();assert.notEqual(await f.other.getAddress(),q.owner);}});
  });
