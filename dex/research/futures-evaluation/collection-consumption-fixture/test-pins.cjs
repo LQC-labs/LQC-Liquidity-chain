@@ -20,7 +20,7 @@ module.exports={
     "test/evidence-reporter.cjs": "fe50fe388b8dd1d6bfa3d79760935585853d64ca77722cea4b9b5e2b6adfceaa",
     "test/normal-consumption-evidence.mjs": "679b82327888526928ee1c12fe818ed2301845832bd8055e05c769ddaabd5b70",
     "test/normal-evidence-session.mjs": "4cabcb0db307aa575807742dbc578c1a1af5fd0ec69c2eadab1916a87313aacd",
-    "test/verify-stored-consumption.mjs": "0def91e4a6926614e9609a60becb24d5ec5788aef4f2625538a6234abee70071",
+    "test/verify-stored-consumption.mjs": "a70bb936368710fa7aa0ff0dce1266879b5d1f47ba41cb790020b8f25fce3afe",
     "normal-evidence-abi.json": "ecfc8e576031d146b482cc1f7a7bd0c7bd83cf71a7fe2e63cdcf91465d121bf0"
   },
   "review": "STATIC_REVIEWED_NOT_RUN"

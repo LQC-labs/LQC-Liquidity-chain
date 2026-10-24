@@ -64,11 +64,11 @@ function preflight(){
  const packageRoot=path.join(root,'node_modules/@foundry-rs',platformPackage);
  assert.equal(JSON.parse(fs.readFileSync(path.join(packageRoot,'package.json'))).version,'1.7.1','LINUX_ANVIL_PACKAGE_VERSION');
  assert(fs.lstatSync(path.join(packageRoot,'bin/anvil')).isFile(),'LINUX_ANVIL_BINARY_MISSING');
- const plan=read('linux-validation-plan.json');assert.deepEqual(plan.phases.map(x=>x.id),['compile','gate','mock','anvil'],'EXACT_PHASE_ORDER');
+ const plan=read('linux-validation-plan.json');assert.deepEqual(plan.phases.map(x=>x.id),['compile','gate','mock','anvil','stored-tamper'],'EXACT_PHASE_ORDER');
  return plan;
 }
 function execute(){
- let state={phases:Object.fromEntries(['compile','gate','mock','anvil'].map(id=>[id,{state:'NOT_RUN',calls:0}]))},primary,active,runReady=false;
+ let state={phases:Object.fromEntries(['compile','gate','mock','anvil','stored-tamper'].map(id=>[id,{state:'NOT_RUN',calls:0}]))},primary,active,runReady=false;
  try{
   const plan=preflight();outputDirectory('results',true);outputDirectory('results/linux-once',true,true);runReady=true;
   state={schema:'LQC_LINUX_ONCE_1',phases:Object.fromEntries(plan.phases.map(x=>[x.id,{state:'NOT_RUN',calls:0}])),automaticRetry:false,amount:null,authority:false,consumptionLink:'UNVERIFIED',rightsLink:'UNVERIFIED'};
@@ -80,6 +80,7 @@ function execute(){
    else if(phase.id==='gate')args=['-e',"require('./build-common.cjs').validateBuild(process.cwd())"];
    else if(phase.id==='mock')args=['run-failure-evidence-checks.cjs'];
    else if(phase.id==='anvil')args=['run-tests.cjs'];
+   else if(phase.id==='stored-tamper')args=['run-stored-consumption-tamper.cjs'];
    else throw Error('UNKNOWN_PHASE');
    const child=cp.spawnSync(process.execPath,args,{cwd:root,encoding:null,windowsHide:true,timeout:phase.timeoutMs,maxBuffer:32*1024*1024,env:{...process.env,NODE_OPTIONS:''}});
    record.exitCode=child.status;record.signal=child.signal;record.spawnError=child.error?describe(child.error):null;
@@ -107,13 +108,15 @@ function execute(){
 }
 function collect(){
  const copied=[],missing=[],errors=[],required=new Set();let stagingReady=false;
-  const executionStates={install:'UNVERIFIED',phases:Object.fromEntries(['compile','gate','mock','anvil'].map(x=>[x,'NOT_RUN'])),mockCases:{},normalConsumption:'UNKNOWN'};
+  const executionStates={install:'UNVERIFIED',phases:Object.fromEntries(['compile','gate','mock','anvil','stored-tamper'].map(x=>[x,'NOT_RUN'])),mockCases:{},normalConsumption:'UNKNOWN',storedTamper:'UNKNOWN'};
  try{
   // A link at results/ must not be followed, even when compilation never ran.
   outputDirectory('results',true);assert(!fs.existsSync(staging),'STAGING_ALREADY_EXISTS');outputDirectory('results/linux-artifact',true,true);stagingReady=true;
   const pins=read('linux-validation-pins.json'),plan=read('linux-validation-plan.json');
   const sources=[...Object.keys(pins.sourceHashes),'linux-validation-pins.json'];
   const selected=new Set([...Object.keys(plan.approvedBuildHashes),...sources]);
+  const tamperPlan=read('stored-tamper-plan.json');
+  for(const name of [...tamperPlan.artifacts.always,...tamperPlan.cases.flatMap(item=>[item.id+'.json',...(item.id==='T01'?[]:[item.id+'.mutation.json'])])])selected.add('results/stored-tamper/'+name);
   for(const name of ['stdout.log','stderr.log','exit-code.json'])selected.add('results/linux-install/'+name);
   for(const name of ['initial.json','summary.json','build-comparison.json',...plan.phases.flatMap(x=>[x.id+'.stdout.log',x.id+'.stderr.log',x.id+'.exit-code.json'])])selected.add('results/linux-once/'+name);
   for(const name of ['initial.json','summary.json','failure.json'])selected.add('results/failure-evidence-mock/'+name);
@@ -151,7 +154,7 @@ function collect(){
   const summaryFile='results/linux-once/summary.json';
   if(exists(summaryFile)){
    const summary=recorded(summaryFile);
-   for(const id of ['compile','gate','mock','anvil']){
+   for(const id of ['compile','gate','mock','anvil','stored-tamper']){
     const phase=summary.phases[id];assert(phase,'PHASE_STATE_MISSING:'+id);executionStates.phases[id]=phase.state;
     assert(phase.calls===0||phase.calls===1,'PHASE_CALL_COUNT:'+id);if(phase.calls)assert(['PASS','FAIL'].includes(phase.state),'CALLED_PHASE_STATE:'+id);
     if(phase.calls)need(policy.phaseExecuted.map(suffix=>'results/linux-once/'+id+'.'+suffix));
@@ -228,6 +231,24 @@ function collect(){
     const initialFile='results/linux-once/initial.json';need([initialFile]);const initial=recorded(initialFile);
     assert.equal(initial.phases?.anvil?.calls,0,'INITIAL_ANVIL_CALLS');assert.equal(initial.phases?.anvil?.state,'NOT_RUN','INITIAL_ANVIL_STATE');
     executionStates.normalConsumption='NOT_RUN';
+   }
+   const tamperPhase=summary.phases['stored-tamper'],tamperPrefix='results/stored-tamper/';
+   if(tamperPhase.calls){
+    executionStates.storedTamper='UNKNOWN';assert.equal(summary.phases.anvil.state,'PASS','TAMPER_REQUIRES_ANVIL_SUCCESS');
+    need(tamperPlan.artifacts.always.map(file=>tamperPrefix+file));
+    const result=recorded(tamperPrefix+'cases.json'),runner=recorded(tamperPrefix+'runner-summary.json'),ids=tamperPlan.cases.map(x=>x.id);
+    assert.deepEqual(result.required,ids,'TAMPER_REQUIRED_LIST');assert(Array.isArray(result.actual));assert(Array.isArray(result.cases));
+    assert.equal(new Set(result.actual).size,result.actual.length,'TAMPER_DUPLICATE_ACTUAL');assert.deepEqual(result.unique,[...new Set(result.actual)]);
+    assert.deepEqual(result.actual,ids.slice(0,result.actual.length),'TAMPER_EXECUTION_ORDER');assert.equal(result.cases.length,result.actual.length);assert.deepEqual(result.cases.map(x=>x.id),result.actual);
+    for(const item of result.cases){need([tamperPrefix+item.id+'.json']);if(item.id!=='T01'&&item.preparation==='READY')need([tamperPrefix+item.id+'.mutation.json']);}
+    if(tamperPhase.state==='PASS'){
+     assert.equal(runner.state,'PASS');assert.equal(runner.calls,1);assert.equal(runner.exitCode,0);assert.equal(runner.recordingErrors.length,0);
+     assert.equal(result.state,'PASS');assert.deepEqual(result.actual,ids);assert.equal(result.originalReplay,'PASS');assert(result.cases.every(x=>x.state==='PASS'&&x.preparation==='READY'));
+     need(tamperPlan.cases.flatMap(item=>[tamperPrefix+item.id+'.json',...(item.id==='T01'?[]:[tamperPrefix+item.id+'.mutation.json'])]));
+    }
+    executionStates.storedTamper=tamperPhase.state;
+   }else{
+    assert.equal(tamperPhase.state,'NOT_RUN');assert(!fs.existsSync(path.join(root,tamperPrefix)),'TAMPER_OUTPUT_WITH_NOT_RUN');executionStates.storedTamper='NOT_RUN';
    }
   }
   for(const absent of missing){

@@ -94,7 +94,7 @@ export function verifyStoredConsumption(documentBytes,fixedABIBytes){
   ['epoch','funding','fundingSeriesEpoch',[saved.domain,1n,1n]],['member','funding','fundingSeriesMember',[saved.domain,1n,1n,saved.account]],
   ['attributed','attr','accountEpoch',[saved.domain,saved.account,1n]]
  ];
- for(const side of [saved.before,saved.after]){
+ for(const [sideName,side]of [['before',saved.before],['after',saved.after]]){
   assert(side.startBlock.hash);assert.equal(side.startBlock.hash,side.endBlock.hash);assert.equal(side.startBlock.number,side.endBlock.number);
   const roles=[['governance',context.governance],['position-owner',saved.account],['other-wallet',context.other],['Core',addresses.core],['Partial',addresses.partial],['Funding',addresses.funding]];
   assert.equal(side.balanceItems.length,6);assert.equal(side.allowanceItems.length,6);assert.equal(side.snapshot.balances.length,6);assert.equal(side.snapshot.allowances.length,6);
@@ -106,20 +106,16 @@ export function verifyStoredConsumption(documentBytes,fixedABIBytes){
   assert.equal(side.snapshot.latest,saved.specification,'SPECIFICATION_LATEST');
   for(const id of specificationIds)expected.push(['specifications/'+id+'/used','executor','consumedSpecifications',[id]],['specifications/'+id+'/integer','coord','integerSpecification',[id]]);
   const labels=expected.map(x=>x[0]);assert.equal(new Set(labels).size,labels.length);
-  equalData(Object.keys(side.queries).sort(),[...labels].sort());
+  assert.deepEqual(Object.keys(side.queries).sort(),[...labels].sort(),'QUERY_REQUIRED_LABELS:'+sideName);
   const semantic=saved.queryObservations.filter(x=>x.request.kind==='contract'&&x.request.blockTag===side.startBlock.number);
-  equalData(semantic.filter(x=>x.state==='REQUESTED').map(x=>x.request.label).sort(),[...labels].sort());
-  equalData(semantic.filter(x=>x.state==='SUCCESS').map(x=>x.request.label).sort(),[...labels].sort());
-  assert.equal(semantic.length,labels.length*2,'QUERY_TERMINAL_ROSTER');
-  assert.equal(new Set(semantic.filter(x=>x.state==='REQUESTED').map(x=>x.id)).size,labels.length,'QUERY_ID_REUSE');
   for(const [label,role,method,args]of expected){
    const q=side.queries[label],i=iface(role),fragment=i.getFunction(method),input=i.encodeFunctionData(fragment,args);
    const checkRequest=request=>{
-    assert.equal(request.kind,'contract');assert.equal(request.label,label);same(request.address,addresses[role]);
-    assert.equal(request.method,fragment.format('sighash'));assert.equal(request.args.length,args.length);
+    assert.equal(request.kind,'contract');assert.equal(request.label,label);assert.equal(request.address.toLowerCase(),addresses[role].toLowerCase(),'QUERY_ROLE_ADDRESS:'+sideName+':'+label);
+    assert.equal(request.method,fragment.format('sighash'),'QUERY_METHOD:'+sideName+':'+label);assert.equal(request.args.length,args.length);
     // ABI round-trip accepts the capture's small numeric literals, but not a different argument value.
-    equalData(i.decodeFunctionData(fragment,i.encodeFunctionData(fragment,request.args)),i.decodeFunctionData(fragment,input));
-    assert.equal(request.blockTag,side.startBlock.number);assert.equal(request.blockHash,side.startBlock.hash);
+    assert.deepEqual(plain(i.decodeFunctionData(fragment,i.encodeFunctionData(fragment,request.args))),plain(i.decodeFunctionData(fragment,input)),'QUERY_ARGUMENTS:'+sideName+':'+label);
+    assert.equal(request.blockTag,side.startBlock.number,'QUERY_BLOCK_TAG:'+sideName+':'+label);assert.equal(request.blockHash,side.startBlock.hash);
     assert.equal(JSON.stringify(request.outputs),JSON.stringify(fragment.outputs.map(abiField)));
    };
    checkRequest(q);
@@ -127,16 +123,21 @@ export function verifyStoredConsumption(documentBytes,fixedABIBytes){
    if(parts[0]==='balances'||parts[0]==='allowances')value=side.snapshot[parts[0]][Number(parts[1])];
    if(parts[0]==='specifications'){const entry=side.snapshot.specifications.find(x=>x[0]===parts[1]);assert(entry);value=entry[parts[2]==='used'?1:2];}
    const events=semantic.filter(x=>x.request.label===label),started=events.find(x=>x.state==='REQUESTED'),completed=events.find(x=>x.state==='SUCCESS');
-   assert(started&&completed,'SEMANTIC_REPLY_REQUIRED:'+label);assert.equal(started.id,completed.id);checkRequest(started.request);checkRequest(completed.request);equalData(completed.value,value);
+   assert(started&&completed,'SEMANTIC_REPLY_REQUIRED:'+label);assert.equal(started.id,completed.id);checkRequest(started.request);checkRequest(completed.request);
    const begin=saved.queryObservations.indexOf(started),end=saved.queryObservations.indexOf(completed);assert(begin<end);
    // Bind the raw pair inside this call, rather than accepting an unrelated matching reply.
    const raw=saved.queryObservations.slice(begin+1,end).filter(x=>x.request.kind==='rpc'&&x.request.request.method==='eth_call');
    assert.equal(raw.length,2,'STORED_RAW_PAIR_REQUIRED:'+label);assert.equal(raw[0].state,'REQUESTED');assert.equal(raw[1].state,'SUCCESS');assert.equal(raw[0].id,raw[1].id);
    for(const reply of raw){const request=reply.request.request;assert.equal(request.params.length,2);assert.equal(request.params[1],side.startBlock.number);assert.equal(reply.request.blockTag,side.startBlock.number);same(request.params[0].to,addresses[role]);same(request.params[0].data,input);}
    const decoded=i.decodeFunctionResult(fragment,raw[1].value);
-   same(i.encodeFunctionResult(fragment,decoded),raw[1].value); // Reject non-canonical/trailing response bytes.
-   equalData(value,fragment.outputs.length===1?decoded[0]:decoded);
+   assert.equal(i.encodeFunctionResult(fragment,decoded).toLowerCase(),raw[1].value.toLowerCase(),'RAW_RESPONSE_CANONICAL:'+sideName+':'+label); // Reject trailing bytes.
+   assert.deepEqual(plain(value),plain(fragment.outputs.length===1?decoded[0]:decoded),'QUERY_STORED_VALUE:'+sideName+':'+label);
+   equalData(completed.value,value);
   }
+  equalData(semantic.filter(x=>x.state==='REQUESTED').map(x=>x.request.label).sort(),[...labels].sort());
+  equalData(semantic.filter(x=>x.state==='SUCCESS').map(x=>x.request.label).sort(),[...labels].sort());
+  assert.equal(semantic.length,labels.length*2,'QUERY_TERMINAL_ROSTER');
+  assert.equal(new Set(semantic.filter(x=>x.state==='REQUESTED').map(x=>x.id)).size,labels.length,'QUERY_ID_REUSE');
   for(const name of Object.keys(side.snapshot))if(!['balances','allowances','specifications'].includes(name))assert(side.queries[name],'QUERY_REQUIRED:'+name);
   for(const [name,owner,spender]of [['partialAllowance',addresses.partial,addresses.funding],['ownerAllowance',saved.account,addresses.partial]]){const x=side.specialAllowances[name];same(x.owner,owner);same(x.spender,spender);same(x.token,addresses.token);}
   assert.equal(side.contracts.length,13);assert.equal(new Set(side.contracts.map(x=>x.address.toLowerCase())).size,13);
