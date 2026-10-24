@@ -79,7 +79,7 @@
     "test/fixed-q-bridge.test.mjs": "a85f619bf9f5187a19820faf5fcd864c3022574f786543691930c2487e6df49e",
     "run-fixed-q-tests.cjs": "3a6661f1e0d7d03a154b80685e041a3fbe4b450715d6f77a10464d0779c8e234",
     "test/runtime-tools.mjs": "ef37735eeb00e21490e2b9e95b36b1bfc767b400b368452f026a72465b160d6a",
-    "test/anvil-compat.mjs": "11fabfeddad8ad85263500d8d80ad4bd24f18e8c2aa4de7f4822da2b17063cb5",
+    "test/anvil-compat.mjs": "8a88683469cb13e998ebf24721aaa04de33e2cf4d6606152955830603701775c",
     "build-common.cjs": "1f30f81c280fdd8af1413ae6ae4fc76516101be3f172d4ebcef698bfcc33b844",
     "build-pins.cjs": "e6eb246b6d465c405b8d6c063210cc97606059e2335ffd612fce3eef8a650c79",
     "build-requirements.json": "f300abaf209a7c01a5d24dafaad9b842189032c0654f2f3820aabf95edf613b1",

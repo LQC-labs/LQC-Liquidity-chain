@@ -17,10 +17,28 @@
     "synchronous exit during kill cannot be missed by cleanup",
     "startup failure and subsequent cleanup failure remain distinct",
     "disconnect cancels a hanging readiness RPC and confirms child termination",
-    "existing spawn arguments and RPC semantics are preserved with explicit mocks"
+    "existing spawn arguments and RPC semantics are preserved with explicit mocks",
+    "startup deadline aborts a hanging fetch at exactly 15000ms without another probe",
+    "startup deadline aborts a hanging JSON body at exactly 15000ms",
+    "startup deadline shares one budget across fetch JSON and retry delays",
+    "startup deadline interrupts a retry delay without starting another probe",
+    "startup success before deadline clears its timer",
+    "startup success at the deadline is rejected even before timer dispatch",
+    "startup budget starts before spawn and includes synchronous spawn elapsed time",
+    "child exit before deadline wins and cancels the active request",
+    "deadline before child exit preserves timeout and records later termination",
+    "same-time child exit before deadline preserves the child startup failure",
+    "same-time deadline before child exit preserves the timeout failure",
+    "disconnect before deadline cancels startup without creating a timeout failure",
+    "startup timeout and cleanup timeout stay distinct on repeated disconnect",
+    "late fetch completion after timeout cannot parse a body or become ready",
+    "late JSON completion after timeout cannot become ready or issue another probe",
+    "ordinary RPC after readiness has no startup deadline",
+    "concurrent startup callers share one budget and the first timeout error",
+    "all 100 failed probes can exhaust before the startup deadline"
   ],
   "sourceHashes": {
-    "test/anvil-compat.mjs": "11fabfeddad8ad85263500d8d80ad4bd24f18e8c2aa4de7f4822da2b17063cb5",
-    "test/anvil-compat.test.mjs": "6119fbd31c58833d7e07311b970a125bbb8c55ebd83cf7831f93cf1a353c4209"
+    "test/anvil-compat.mjs": "8a88683469cb13e998ebf24721aaa04de33e2cf4d6606152955830603701775c",
+    "test/anvil-compat.test.mjs": "a0a7a9c6046c85f9ec0175b64299fb975ab5d2784118a61d28d5c2106d36d1d2"
   }
 }
