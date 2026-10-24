@@ -1,0 +1,15 @@
+{
+  "schema": "LQC_NORMAL_SESSION_PINS_1",
+  "planSHA256": "61fe385f9a9fa45cf267792cd381dd922927648497fc91d4fe9e6583dccb69a4",
+  "sourceHashes": {
+    "run-normal-session-mocks.cjs": "56ffd6df97cb02a9049e831fbf3b23af882ddff1673b9571a1f948a244147a6f",
+    "test/normal-session-mocks.mjs": "2b5baf2d4071b789a4efe92ab47362cf68c822faf3a45fb44e1b3725e088216d",
+    "test/normal-evidence-session.mjs": "a6981fd96508799958c71a54fc6beca55479312631cce937e4e1de6785e1bccd",
+    "test/normal-consumption-evidence.mjs": "679b82327888526928ee1c12fe818ed2301845832bd8055e05c769ddaabd5b70",
+    "test/collection-consumption.test.mjs": "0ddfcd939ada69d97752cb9e96983cbc489f2a4d82e1cb8d4314d1454c5df75c",
+    "test/stored-tamper-io.cjs": "c7de9fb4e1375c9121f38f816cb73c8b7d9256b9042bbd2deb657bbd5396a43e",
+    "test/failure-evidence.cjs": "665be29238e14fdd8d43725465714976171fdb8aa239b74918fa899a69fe4184"
+  },
+  "automaticPinUpdate": false,
+  "buildPinChange": false
+}
