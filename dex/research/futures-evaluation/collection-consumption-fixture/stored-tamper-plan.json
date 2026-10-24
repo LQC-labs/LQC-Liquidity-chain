@@ -1,0 +1,165 @@
+{
+  "schema": "LQC_STORED_TAMPER_PLAN_1",
+  "implementationState": "IMPLEMENTED",
+  "staticReviewState": "STATIC_REVIEWED",
+  "executionState": "NOT_RUN",
+  "childTimeoutMs": 45000,
+  "phaseTimeoutMs": 60000,
+  "abiSHA256": "ecfc8e576031d146b482cc1f7a7bd0c7bd83cf71a7fe2e63cdcf91465d121bf0",
+  "referenceInput": {
+    "runId": 40101321706,
+    "attempt": 1,
+    "artifactId": 12563480067,
+    "artifactSHA256": "7917930f7564648bdd9b3b87330d2b0c9efe0beeb64273eff166d385b169d16c",
+    "path": "results/collection-1792851168827/normal-consumption.json",
+    "sha256": "c31a3ead1584c18709a6ca73f52e466ce2468e5a1d5df55e66c6ec77aaedebc7",
+    "purpose": "Historical reference provenance, not an expected hash for a future C05 transaction"
+  },
+  "cases": [
+    {
+      "id": "T01",
+      "title": "Original stored evidence verifies",
+      "mutation": {
+        "paths": [],
+        "target": "Original bytes accepted; independent original replay after all cases"
+      }
+    },
+    {
+      "id": "T02",
+      "title": "Missing used query and corresponding evidence is rejected",
+      "targetErrorName": "AssertionError",
+      "targetErrorCode": "ERR_ASSERTION",
+      "targetMessage": "QUERY_REQUIRED_LABELS:before",
+      "assertionLine": 109,
+      "mutation": {
+        "paths": [
+          "before.queries[specifications/<saved specification>/used]",
+          "queryObservations: matching before used semantic REQUESTED/SUCCESS and nested eth_call REQUESTED/SUCCESS"
+        ],
+        "target": "Exact mandatory query roster"
+      }
+    },
+    {
+      "id": "T03",
+      "title": "Missing integer query and corresponding evidence is rejected",
+      "targetErrorName": "AssertionError",
+      "targetErrorCode": "ERR_ASSERTION",
+      "targetMessage": "QUERY_REQUIRED_LABELS:before",
+      "assertionLine": 109,
+      "mutation": {
+        "paths": [
+          "before.queries[specifications/<saved specification>/integer]",
+          "queryObservations: matching before integer semantic REQUESTED/SUCCESS and nested eth_call REQUESTED/SUCCESS"
+        ],
+        "target": "Exact mandatory query roster"
+      }
+    },
+    {
+      "id": "T04",
+      "title": "Changed consumed getter is rejected",
+      "targetErrorName": "AssertionError",
+      "targetErrorCode": "ERR_ASSERTION",
+      "targetMessage": "QUERY_METHOD:before:consumed",
+      "assertionLine": 115,
+      "mutation": {
+        "paths": [
+          "before.queries.consumed.method"
+        ],
+        "target": "Fixed linkedConsumed(uint256) sighash"
+      }
+    },
+    {
+      "id": "T05",
+      "title": "Changed consumed contract address is rejected",
+      "targetErrorName": "AssertionError",
+      "targetErrorCode": "ERR_ASSERTION",
+      "targetMessage": "QUERY_ROLE_ADDRESS:before:consumed",
+      "assertionLine": 114,
+      "mutation": {
+        "paths": [
+          "before.queries.consumed.address"
+        ],
+        "target": "Fixed partial role address; substitute saved Funding address"
+      }
+    },
+    {
+      "id": "T06",
+      "title": "Changed consumed pid is rejected",
+      "targetErrorName": "AssertionError",
+      "targetErrorCode": "ERR_ASSERTION",
+      "targetMessage": "QUERY_ARGUMENTS:before:consumed",
+      "assertionLine": 117,
+      "mutation": {
+        "paths": [
+          "before.queries.consumed.args[0].decimal"
+        ],
+        "target": "Fixed saved pid argument; increment BigInt decimal by one"
+      }
+    },
+    {
+      "id": "T07",
+      "title": "Changed query blockTag is rejected",
+      "targetErrorName": "AssertionError",
+      "targetErrorCode": "ERR_ASSERTION",
+      "targetMessage": "QUERY_BLOCK_TAG:before:consumed",
+      "assertionLine": 118,
+      "mutation": {
+        "paths": [
+          "before.queries.consumed.blockTag"
+        ],
+        "target": "Exact before observation blockTag; increment block number by one"
+      }
+    },
+    {
+      "id": "T08",
+      "title": "Trailing raw ABI response bytes are rejected",
+      "targetErrorName": "AssertionError",
+      "targetErrorCode": "ERR_ASSERTION",
+      "targetMessage": "RAW_RESPONSE_CANONICAL:before:consumed",
+      "assertionLine": 133,
+      "mutation": {
+        "paths": [
+          "queryObservations: before consumed nested raw SUCCESS.value"
+        ],
+        "target": "Canonical ABI encoding; append 32 zero bytes"
+      }
+    },
+    {
+      "id": "T09",
+      "title": "Changed snapshot consumed value is rejected",
+      "targetErrorName": "AssertionError",
+      "targetErrorCode": "ERR_ASSERTION",
+      "targetMessage": "QUERY_STORED_VALUE:before:consumed",
+      "assertionLine": 134,
+      "mutation": {
+        "paths": [
+          "before.snapshot.consumed.decimal"
+        ],
+        "target": "Raw ABI decoded linkedConsumed value equals saved snapshot"
+      }
+    }
+  ],
+  "artifacts": {
+    "always": [
+      "preflight.json",
+      "input.json",
+      "cases.json",
+      "runner-summary.json",
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json"
+    ],
+    "executedCase": [
+      "Txx.json"
+    ],
+    "preparedNegative": [
+      "Txx.mutation.json"
+    ]
+  },
+  "scope": "STORED_LOCAL_CONSISTENCY_ONLY",
+  "automaticRetry": false,
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED"
+}

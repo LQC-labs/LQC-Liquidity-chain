@@ -1,0 +1,14 @@
+{
+  "schema": "LQC_STORED_TAMPER_PINS_1",
+  "planSHA256": "b3d7736d88a6914fa8a65c62153653bd1fdea41a54be0fdfc4ceb6b3e15dc294",
+  "sourceHashes": {
+    "run-stored-consumption-tamper.cjs": "fab5652f0b6b024c494e39d9fab4a8ca0fefe6cc8c833db41eebc1d929810188",
+    "test/stored-consumption-tamper.mjs": "a3603c975bad0b6afdfdc45792e15e3ebf75d01575d1a09fcdb8d7d38c21a7e9",
+    "test/stored-tamper-io.cjs": "c7de9fb4e1375c9121f38f816cb73c8b7d9256b9042bbd2deb657bbd5396a43e",
+    "test/verify-stored-consumption.mjs": "a70bb936368710fa7aa0ff0dce1266879b5d1f47ba41cb790020b8f25fce3afe",
+    "test/failure-evidence.cjs": "665be29238e14fdd8d43725465714976171fdb8aa239b74918fa899a69fe4184",
+    "normal-evidence-abi.json": "ecfc8e576031d146b482cc1f7a7bd0c7bd83cf71a7fe2e63cdcf91465d121bf0"
+  },
+  "buildPinChange": false,
+  "automaticPinUpdate": false
+}

@@ -22,6 +22,38 @@ Child limits: compile 180s, gate 30s, mocks 120s, real runner 930s (existing rea
 runner has its own 900s limit). No forceful process-tree cleanup is claimed.
 Cancellation/job timeout can interrupt recording and upload.
 
+The stored-data tamper phase follows a successful existing Anvil phase, once,
+with a 60s parent limit and a 45s stored-data child limit. It never starts another
+Anvil or creates a transaction. The phase ceilings total 1,320s within the
+unchanged 24-minute run step. Earlier failure leaves it NOT_RUN. Its fixed nine
+case IDs/titles, pins, raw logs, exit status, mutations and exact target assertion
+locations are separate from the existing 17 Anvil tests and six error mocks.
+No timeout or simultaneous-failure cases are added to those lists.
+
+Future authorized offline use may pass the path of an existing Linux C05
+normal-consumption.json to run-stored-consumption-tamper.cjs. With no argument,
+the runner requires exactly one successful existing 17-test result directory and
+reuses its C05 file. The historical run/file digest in stored-tamper-plan.json is
+provenance, not a pin automatically assigned to future transaction bytes. Input
+and fixed ABI bytes are hashed before/after, and the unchanged original is
+verified again after the mutations. Missing/corrupt input or ABI mismatch fails.
+
+Mutations edit a fresh encoded typed graph each time; no decode/re-encode clone
+changes graph IDs, references or BigInt decimal types. Missing used/integer
+cases remove only the before query plus its semantic and raw request/reply
+pairs; retained events are unchanged apart from array indexes. The patch log
+is replayed independently to reject undeclared changes. The trailing-response
+case appends one 32-byte zero word: ethers rejects a one-byte suffix during ABI
+decoding, which would not reach the required canonical re-encoding assertion.
+Only ERR_ASSERTION with the pinned message and verifier stack line is accepted.
+Preparation/parsing failures and any other rejection fail the case.
+
+The new paths are IMPLEMENTED / STATIC_REVIEWED / NOT_RUN. Source review does
+not establish their runtime success. Stored consistency does not authenticate
+RPC truth, a full consumption history, or a dedicated consumption Receipt or
+terminal. Concurrent file-replacement and entire process-tree termination are
+not proven. Amount null, authority false, consumption/rights links UNVERIFIED.
+
 ## Gates and failure boundaries
 
 The root Linux dependency directory must be real, not a Windows junction.

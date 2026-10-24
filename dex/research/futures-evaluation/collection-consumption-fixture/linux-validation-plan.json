@@ -21,6 +21,10 @@
     {
       "id": "anvil",
       "timeoutMs": 930000
+    },
+    {
+      "id": "stored-tamper",
+      "timeoutMs": 60000
     }
   ],
   "approvedBuildHashes": {
@@ -167,5 +171,14 @@
   "amount": null,
   "authority": false,
   "consumptionLink": "UNVERIFIED",
-  "rightsLink": "UNVERIFIED"
+  "rightsLink": "UNVERIFIED",
+  "storedTamper": {
+    "runner": "run-stored-consumption-tamper.cjs",
+    "plan": "stored-tamper-plan.json",
+    "pins": "stored-tamper-pins.json",
+    "normalControls": 1,
+    "negativeCases": 8,
+    "after": "anvil PASS only",
+    "additionalAnvilCalls": 0
+  }
 }
