@@ -24,7 +24,7 @@ Cancellation/job timeout can interrupt recording and upload.
 
 The stored-data tamper phase follows a successful existing Anvil phase, once,
 with a 60s parent limit and a 45s stored-data child limit. It never starts another
-Anvil or creates a transaction. The phase ceilings total 1,320s within the
+Anvil or creates a transaction. Including session mocks, phase ceilings total 1,380s within the
 unchanged 24-minute run step. Earlier failure leaves it NOT_RUN. Its fixed nine
 case IDs/titles, pins, raw logs, exit status, mutations and exact target assertion
 locations are separate from the existing 17 Anvil tests and six error mocks.
@@ -55,6 +55,28 @@ terminal. Concurrent file-replacement and entire process-tree termination are
 not proven. Amount null, authority false, consumption/rights links UNVERIFIED.
 
 ## Gates and failure boundaries
+
+An independent normal-session phase runs once after the original six error
+mocks and before the existing 17 Anvil tests. Eight unique cases import the
+actual NormalEvidenceSession and the follow-up guard shared with the real
+beforeEach hook. They use a per-instance fake monotonic clock, timers, RPC and
+memory IO. Default native clock/fs/result-directory behavior is unchanged.
+The 100s work, 140s write and 5s termination budgets are unchanged. When work
+is unconfirmed, the cancelled guard is reinstalled and collectionPoisoned stays
+true; only confirmed task/pending completion restores the original RPC.
+
+The fake clock drains 16 microtask turns between due callbacks; progress and
+pending/listener assertions detect insufficient progress rather than assuming
+settlement. Owned deferreds are released explicitly during harness disposal;
+that release is not transport cancellation by the session. Native globals are
+not replaced. A scoped unhandledRejection observer is removed after the final
+microtask/immediate checkpoint. Per-case checkpoints, post-cleanup states,
+required/actual/unique lists, raw logs and exit status are required artifacts.
+The new phase has a 60s limit, its child 45s, with no retry. Failure leaves later
+Anvil/tamper phases NOT_RUN. The existing six mocks, 17 tests and nine tamper
+cases remain separate. New session tests are IMPLEMENTED / STATIC_REVIEWED /
+NOT_RUN; no past PASS validates them. No full transport cancellation, arbitrary
+future promise behavior or entire process-tree termination is certified.
 
 The root Linux dependency directory must be real, not a Windows junction.
 The locked Linux Anvil 1.7.1 optional package/binary must exist; absent packages

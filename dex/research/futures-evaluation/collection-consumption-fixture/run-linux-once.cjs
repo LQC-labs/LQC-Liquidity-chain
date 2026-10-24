@@ -56,7 +56,7 @@ function preflight(){
  assert.equal(process.platform,'linux','LINUX_REQUIRED');assert.equal(process.version,'v22.23.3','NODE_VERSION');integrity();
  assert(!fs.existsSync(path.join(root,'build')),'BUILD_DIRECTORY_EXISTS');
  if(fs.existsSync(results))checkedDirectory('results');
- for(const f of ['results/linux-once','results/failure-evidence-mock','results/linux-artifact'])assert(!fs.existsSync(path.join(root,f)),'PRIOR_RUN_EXISTS:'+f);
+ for(const f of ['results/linux-once','results/failure-evidence-mock','results/normal-session-mocks','results/linux-artifact'])assert(!fs.existsSync(path.join(root,f)),'PRIOR_RUN_EXISTS:'+f);
  // No Windows dependency tree or root junction may be transplanted.
  assert(!fs.lstatSync(root).isSymbolicLink(),'FIXTURE_ROOT_LINK');assert(!fs.lstatSync(path.join(root,'node_modules')).isSymbolicLink(),'DEPENDENCY_ROOT_LINK');
  const platformPackage=process.arch==='x64'?'anvil-linux-amd64':process.arch==='arm64'?'anvil-linux-arm64':null;
@@ -64,11 +64,11 @@ function preflight(){
  const packageRoot=path.join(root,'node_modules/@foundry-rs',platformPackage);
  assert.equal(JSON.parse(fs.readFileSync(path.join(packageRoot,'package.json'))).version,'1.7.1','LINUX_ANVIL_PACKAGE_VERSION');
  assert(fs.lstatSync(path.join(packageRoot,'bin/anvil')).isFile(),'LINUX_ANVIL_BINARY_MISSING');
- const plan=read('linux-validation-plan.json');assert.deepEqual(plan.phases.map(x=>x.id),['compile','gate','mock','anvil','stored-tamper'],'EXACT_PHASE_ORDER');
+ const plan=read('linux-validation-plan.json');assert.deepEqual(plan.phases.map(x=>x.id),['compile','gate','mock','normal-session','anvil','stored-tamper'],'EXACT_PHASE_ORDER');
  return plan;
 }
 function execute(){
- let state={phases:Object.fromEntries(['compile','gate','mock','anvil','stored-tamper'].map(id=>[id,{state:'NOT_RUN',calls:0}]))},primary,active,runReady=false;
+ let state={phases:Object.fromEntries(['compile','gate','mock','normal-session','anvil','stored-tamper'].map(id=>[id,{state:'NOT_RUN',calls:0}]))},primary,active,runReady=false;
  try{
   const plan=preflight();outputDirectory('results',true);outputDirectory('results/linux-once',true,true);runReady=true;
   state={schema:'LQC_LINUX_ONCE_1',phases:Object.fromEntries(plan.phases.map(x=>[x.id,{state:'NOT_RUN',calls:0}])),automaticRetry:false,amount:null,authority:false,consumptionLink:'UNVERIFIED',rightsLink:'UNVERIFIED'};
@@ -79,6 +79,7 @@ function execute(){
    if(phase.id==='compile')args=['compile.cjs'];
    else if(phase.id==='gate')args=['-e',"require('./build-common.cjs').validateBuild(process.cwd())"];
    else if(phase.id==='mock')args=['run-failure-evidence-checks.cjs'];
+   else if(phase.id==='normal-session')args=['run-normal-session-mocks.cjs'];
    else if(phase.id==='anvil')args=['run-tests.cjs'];
    else if(phase.id==='stored-tamper')args=['run-stored-consumption-tamper.cjs'];
    else throw Error('UNKNOWN_PHASE');
@@ -108,13 +109,15 @@ function execute(){
 }
 function collect(){
  const copied=[],missing=[],errors=[],required=new Set();let stagingReady=false;
-  const executionStates={install:'UNVERIFIED',phases:Object.fromEntries(['compile','gate','mock','anvil','stored-tamper'].map(x=>[x,'NOT_RUN'])),mockCases:{},normalConsumption:'UNKNOWN',storedTamper:'UNKNOWN'};
+  const executionStates={install:'UNVERIFIED',phases:Object.fromEntries(['compile','gate','mock','normal-session','anvil','stored-tamper'].map(x=>[x,'NOT_RUN'])),mockCases:{},normalConsumption:'UNKNOWN',storedTamper:'UNKNOWN',normalSession:'UNKNOWN'};
  try{
   // A link at results/ must not be followed, even when compilation never ran.
   outputDirectory('results',true);assert(!fs.existsSync(staging),'STAGING_ALREADY_EXISTS');outputDirectory('results/linux-artifact',true,true);stagingReady=true;
   const pins=read('linux-validation-pins.json'),plan=read('linux-validation-plan.json');
   const sources=[...Object.keys(pins.sourceHashes),'linux-validation-pins.json'];
   const selected=new Set([...Object.keys(plan.approvedBuildHashes),...sources]);
+  const sessionPlan=read('normal-session-plan.json');
+  for(const name of [...sessionPlan.artifacts.always,...sessionPlan.cases.map(item=>item.id+'.json')])selected.add('results/normal-session-mocks/'+name);
   const tamperPlan=read('stored-tamper-plan.json');
   for(const name of [...tamperPlan.artifacts.always,...tamperPlan.cases.flatMap(item=>[item.id+'.json',...(item.id==='T01'?[]:[item.id+'.mutation.json'])])])selected.add('results/stored-tamper/'+name);
   for(const name of ['stdout.log','stderr.log','exit-code.json'])selected.add('results/linux-install/'+name);
@@ -154,7 +157,7 @@ function collect(){
   const summaryFile='results/linux-once/summary.json';
   if(exists(summaryFile)){
    const summary=recorded(summaryFile);
-   for(const id of ['compile','gate','mock','anvil','stored-tamper']){
+   for(const id of ['compile','gate','mock','normal-session','anvil','stored-tamper']){
     const phase=summary.phases[id];assert(phase,'PHASE_STATE_MISSING:'+id);executionStates.phases[id]=phase.state;
     assert(phase.calls===0||phase.calls===1,'PHASE_CALL_COUNT:'+id);if(phase.calls)assert(['PASS','FAIL'].includes(phase.state),'CALLED_PHASE_STATE:'+id);
     if(phase.calls)need(policy.phaseExecuted.map(suffix=>'results/linux-once/'+id+'.'+suffix));
@@ -232,6 +235,20 @@ function collect(){
     assert.equal(initial.phases?.anvil?.calls,0,'INITIAL_ANVIL_CALLS');assert.equal(initial.phases?.anvil?.state,'NOT_RUN','INITIAL_ANVIL_STATE');
     executionStates.normalConsumption='NOT_RUN';
    }
+   const sessionPhase=summary.phases['normal-session'],sessionPrefix='results/normal-session-mocks/';
+   if(sessionPhase.calls){
+    executionStates.normalSession='UNKNOWN';assert.equal(summary.phases.mock.state,'PASS','SESSION_REQUIRES_PRIOR_MOCK_SUCCESS');
+    need(sessionPlan.artifacts.always.map(file=>sessionPrefix+file));
+    const report=recorded(sessionPrefix+'cases.json'),runner=recorded(sessionPrefix+'runner-summary.json'),ids=sessionPlan.cases.map(x=>x.id);
+    assert.deepEqual(report.required,ids);assert(Array.isArray(report.actual));assert(Array.isArray(report.cases));assert.equal(new Set(report.actual).size,report.actual.length);
+    assert.deepEqual(report.unique,[...new Set(report.actual)]);assert.deepEqual(report.actual,ids.slice(0,report.actual.length));assert.deepEqual(report.cases.map(x=>x.id),report.actual);
+    for(const item of report.cases)need([sessionPrefix+item.id+'.json']);
+    if(sessionPhase.state==='PASS'){
+     assert.equal(runner.state,'PASS');assert.equal(runner.calls,1);assert.equal(runner.exitCode,0);assert.equal(runner.recordingErrors.length,0);assert.equal(report.state,'PASS');assert.deepEqual(report.actual,ids);assert.deepEqual(report.notRun,[]);assert.deepEqual(report.unhandled,[]);
+     assert(report.cases.every(x=>x.state==='PASS'&&x.cleanup==='COMPLETE'));need(ids.map(id=>sessionPrefix+id+'.json'));
+    }
+    executionStates.normalSession=sessionPhase.state;
+   }else{assert.equal(sessionPhase.state,'NOT_RUN');assert(!fs.existsSync(path.join(root,sessionPrefix)),'SESSION_OUTPUT_WITH_NOT_RUN');executionStates.normalSession='NOT_RUN';}
    const tamperPhase=summary.phases['stored-tamper'],tamperPrefix='results/stored-tamper/';
    if(tamperPhase.calls){
     executionStates.storedTamper='UNKNOWN';assert.equal(summary.phases.anvil.state,'PASS','TAMPER_REQUIRES_ANVIL_SUCCESS');

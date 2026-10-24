@@ -19,6 +19,10 @@
       "timeoutMs": 120000
     },
     {
+      "id": "normal-session",
+      "timeoutMs": 60000
+    },
+    {
       "id": "anvil",
       "timeoutMs": 930000
     },
@@ -180,5 +184,19 @@
     "negativeCases": 8,
     "after": "anvil PASS only",
     "additionalAnvilCalls": 0
+  },
+  "normalSessionMocks": {
+    "runner": "run-normal-session-mocks.cjs",
+    "plan": "normal-session-plan.json",
+    "pins": "normal-session-pins.json",
+    "cases": 8,
+    "after": "existing mock phase PASS",
+    "before": "existing anvil phase",
+    "additionalAnvilCalls": 0,
+    "existingCounts": {
+      "anvil": 17,
+      "errorMocks": 6,
+      "storedTamper": 9
+    }
   }
 }

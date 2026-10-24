@@ -1,4 +1,5 @@
 import evidence from './failure-evidence.cjs';
+import {assertNormalCollectionReady} from './normal-evidence-session.mjs';
 import {preserveNormalConsumption} from './normal-consumption-evidence.mjs';
 import assert from 'node:assert/strict';
 import {ethers} from 'ethers';
@@ -10,7 +11,7 @@ describe('Collection consumption fixture',function(){
  this.timeout(180000);
  let f,checkpoint;
  before(async()=>{f=new CollectionFixture();await f.start();});
- beforeEach(async()=>{assert(!f.collectionPoisoned,'C05_TERMINATION_UNCONFIRMED_BLOCKS_FOLLOWING_TESTS');checkpoint=await f.rpc.request({method:'evm_snapshot',params:[]});f.specs=new Set();f.spec=await f.specify();});
+ beforeEach(async()=>{assertNormalCollectionReady(f);checkpoint=await f.rpc.request({method:'evm_snapshot',params:[]});f.specs=new Set();f.spec=await f.specify();});
  afterEach(async function(){
   const collection=f.normalCollection;
   if(collection)this.timeout(20000);

@@ -1,0 +1,143 @@
+{
+  "schema": "LQC_NORMAL_SESSION_PLAN_1",
+  "implementationState": "IMPLEMENTED",
+  "staticReviewState": "STATIC_REVIEWED",
+  "executionState": "NOT_RUN",
+  "target": {
+    "module": "test/normal-evidence-session.mjs",
+    "exports": [
+      "NormalEvidenceSession",
+      "assertNormalCollectionReady"
+    ],
+    "actualHook": "test/collection-consumption.test.mjs beforeEach uses same exported guard",
+    "replicatedSession": false
+  },
+  "clockBudgets": {
+    "workMs": 100000,
+    "writeMs": 140000,
+    "terminationMs": 5000,
+    "pollMs": 20
+  },
+  "childTimeoutMs": 45000,
+  "phaseTimeoutMs": 60000,
+  "cases": [
+    {
+      "id": "N01",
+      "title": "Preserve RPC error identity when failure journal also fails",
+      "requirements": [
+        1
+      ],
+      "requiredCheckpoints": [
+        "RPC_ERROR_AND_JOURNAL_ERROR"
+      ]
+    },
+    {
+      "id": "N02",
+      "title": "Block work and writes at unchanged monotonic deadlines",
+      "requirements": [
+        2,
+        7
+      ],
+      "requiredCheckpoints": [
+        "BOTH_DEADLINE_BOUNDARIES"
+      ]
+    },
+    {
+      "id": "N03",
+      "title": "Track late operation until real settlement after abort",
+      "requirements": [
+        3
+      ],
+      "requiredCheckpoints": [
+        "WAIT_REJECTED_UNDERLYING_STILL_PENDING",
+        "UNDERLYING_FINALLY_SETTLED"
+      ]
+    },
+    {
+      "id": "N04",
+      "title": "Keep unknown send result and reject a second send",
+      "requirements": [
+        4
+      ],
+      "requiredCheckpoints": [
+        "SECOND_SEND_BLOCKED_WITH_FIRST_UNKNOWN",
+        "TRANSPORT_REJECTED_RESULT_REMAINS_UNKNOWN"
+      ]
+    },
+    {
+      "id": "N05",
+      "title": "Block restoration for unfinished task without pending RPC",
+      "requirements": [
+        5,
+        6
+      ],
+      "requiredCheckpoints": [
+        "TASK_UNCONFIRMED_GUARD_REINSTALLED",
+        "TASK_SETTLED_ORIGINAL_RPC_RESTORED"
+      ]
+    },
+    {
+      "id": "N06",
+      "title": "Block restoration for pending RPC and restore after late rejection",
+      "requirements": [
+        3,
+        5,
+        6
+      ],
+      "requiredCheckpoints": [
+        "PENDING_UNCONFIRMED_RESTORE_BLOCKED",
+        "LATE_REJECTION_HANDLED_ORIGINAL_RPC_WORKS"
+      ]
+    },
+    {
+      "id": "N07",
+      "title": "Clean timers listeners and journal on successful completion",
+      "requirements": [
+        6,
+        7
+      ],
+      "requiredCheckpoints": [
+        "SUCCESS_END_NO_TIMER_OR_LISTENER"
+      ]
+    },
+    {
+      "id": "N08",
+      "title": "Preserve first error across save close and cleanup failures",
+      "requirements": [
+        7,
+        8
+      ],
+      "requiredCheckpoints": [
+        "FIRST_ERROR_SURVIVES_SAVE_CLOSE_AND_CLEANUP"
+      ]
+    }
+  ],
+  "artifacts": {
+    "always": [
+      "preflight.json",
+      "cases.json",
+      "runner-summary.json",
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json"
+    ],
+    "executedCase": [
+      "Nxx.json"
+    ],
+    "allSourcePinsRequired": true
+  },
+  "fakeModel": {
+    "microtaskTurnsPerCheckpoint": 16,
+    "clock": "per-instance manual monotonic clock and scheduled callbacks; no global replacement",
+    "rpc": "owned fake promises only; no transport/provider",
+    "io": "memory-only fs-compatible adapter; no global fs replacement",
+    "cleanup": "owned deferreds are really settled during harness disposal; abort itself does not settle them",
+    "unhandled": "scoped native unhandledRejection observer with microtask and setImmediate checkpoints; removed finally"
+  },
+  "scope": "ACTUAL_SESSION_UNIT_MOCKS_ONLY",
+  "automaticRetry": false,
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED"
+}
