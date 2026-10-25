@@ -27,6 +27,10 @@
       "timeoutMs": 60000
     },
     {
+      "id": "funding-lifetime",
+      "timeoutMs": 60000
+    },
+    {
       "id": "anvil",
       "timeoutMs": 930000
     },
@@ -214,5 +218,15 @@
     "resultRoot": "results/positive-funding",
     "startBeforeElapsedMs": 1140000,
     "reason": "Start before 19 minutes; 210-second phase ends before 22.5 minutes, leaving 90 seconds within the unchanged 24-minute step"
+  },
+  "fundingLifetimeMocks": {
+    "runner": "run-funding-lifetime-mocks.cjs",
+    "plan": "funding-lifetime-plan.json",
+    "pins": "funding-lifetime-pins.json",
+    "cases": 12,
+    "after": "f01-artifact-mock PASS",
+    "before": "anvil",
+    "additionalAnvilCalls": 0,
+    "unexecuted": "NOT_RUN"
   }
 }

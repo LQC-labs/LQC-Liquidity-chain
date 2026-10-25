@@ -57,7 +57,7 @@ function preflight(){
  assert.equal(process.platform,'linux','LINUX_REQUIRED');assert.equal(process.version,'v22.23.3','NODE_VERSION');integrity();
  assert(!fs.existsSync(path.join(root,'build')),'BUILD_DIRECTORY_EXISTS');
  if(fs.existsSync(results))checkedDirectory('results');
- for(const f of ['results/linux-once','results/failure-evidence-mock','results/normal-session-mocks','results/f01-artifact-mocks','results/positive-funding','results/linux-artifact'])assert(!fs.existsSync(path.join(root,f)),'PRIOR_RUN_EXISTS:'+f);
+ for(const f of ['results/linux-once','results/failure-evidence-mock','results/normal-session-mocks','results/f01-artifact-mocks','results/funding-lifetime-mocks','results/positive-funding','results/linux-artifact'])assert(!fs.existsSync(path.join(root,f)),'PRIOR_RUN_EXISTS:'+f);
  // No Windows dependency tree or root junction may be transplanted.
  assert(!fs.lstatSync(root).isSymbolicLink(),'FIXTURE_ROOT_LINK');assert(!fs.lstatSync(path.join(root,'node_modules')).isSymbolicLink(),'DEPENDENCY_ROOT_LINK');
  const platformPackage=process.arch==='x64'?'anvil-linux-amd64':process.arch==='arm64'?'anvil-linux-arm64':null;
@@ -65,12 +65,12 @@ function preflight(){
  const packageRoot=path.join(root,'node_modules/@foundry-rs',platformPackage);
  assert.equal(JSON.parse(fs.readFileSync(path.join(packageRoot,'package.json'))).version,'1.7.1','LINUX_ANVIL_PACKAGE_VERSION');
  assert(fs.lstatSync(path.join(packageRoot,'bin/anvil')).isFile(),'LINUX_ANVIL_BINARY_MISSING');
- const plan=read('linux-validation-plan.json');assert.deepEqual(plan.phases.map(x=>x.id),['compile','gate','mock','normal-session','f01-artifact-mock','anvil','stored-tamper','positive-funding'],'EXACT_PHASE_ORDER');
+ const plan=read('linux-validation-plan.json');assert.deepEqual(plan.phases.map(x=>x.id),['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding'],'EXACT_PHASE_ORDER');
  return plan;
 }
 function execute(){
  const started=performance.now();
- let state={phases:Object.fromEntries(['compile','gate','mock','normal-session','f01-artifact-mock','anvil','stored-tamper','positive-funding'].map(id=>[id,{state:'NOT_RUN',calls:0}]))},primary,active,runReady=false;
+ let state={phases:Object.fromEntries(['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding'].map(id=>[id,{state:'NOT_RUN',calls:0}]))},primary,active,runReady=false;
  try{
   const plan=preflight();outputDirectory('results',true);outputDirectory('results/linux-once',true,true);runReady=true;
   state={schema:'LQC_LINUX_ONCE_1',phases:Object.fromEntries(plan.phases.map(x=>[x.id,{state:'NOT_RUN',calls:0}])),automaticRetry:false,amount:null,authority:false,consumptionLink:'UNVERIFIED',rightsLink:'UNVERIFIED'};
@@ -85,7 +85,8 @@ function execute(){
    else if(phase.id==='mock')args=['run-failure-evidence-checks.cjs'];
    else if(phase.id==='normal-session')args=['run-normal-session-mocks.cjs'];
    else if(phase.id==='f01-artifact-mock')args=['run-f01-artifact-mocks.cjs'];
-   else if(phase.id==='anvil')args=['run-tests.cjs'];
+   else if(phase.id==='funding-lifetime')args=['run-funding-lifetime-mocks.cjs'];
+    else if(phase.id==='anvil')args=['run-tests.cjs'];
    else if(phase.id==='stored-tamper')args=['run-stored-consumption-tamper.cjs'];
    else if(phase.id==='positive-funding')args=['run-positive-funding.cjs'];
    else throw Error('UNKNOWN_PHASE');
@@ -115,7 +116,7 @@ function execute(){
 }
 function collect(){
  const copied=[],missing=[],errors=[],required=new Set();let stagingReady=false;
-  const executionStates={install:'UNVERIFIED',phases:Object.fromEntries(['compile','gate','mock','normal-session','f01-artifact-mock','anvil','stored-tamper','positive-funding'].map(x=>[x,x==='positive-funding'?'UNKNOWN':'NOT_RUN'])),mockCases:{},normalConsumption:'UNKNOWN',storedTamper:'UNKNOWN',normalSession:'UNKNOWN',positiveFunding:'UNKNOWN',positiveObservation:'UNKNOWN',positiveValidation:'UNKNOWN',f01ArtifactMocks:'UNKNOWN'};
+  const executionStates={install:'UNVERIFIED',phases:Object.fromEntries(['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding'].map(x=>[x,x==='positive-funding'?'UNKNOWN':'NOT_RUN'])),mockCases:{},normalConsumption:'UNKNOWN',storedTamper:'UNKNOWN',normalSession:'UNKNOWN',positiveFunding:'UNKNOWN',positiveObservation:'UNKNOWN',positiveValidation:'UNKNOWN',f01ArtifactMocks:'UNKNOWN',fundingLifetime:'UNKNOWN'};
  try{
   // A link at results/ must not be followed, even when compilation never ran.
   outputDirectory('results',true);assert(!fs.existsSync(staging),'STAGING_ALREADY_EXISTS');outputDirectory('results/linux-artifact',true,true);stagingReady=true;
@@ -126,6 +127,8 @@ function collect(){
   for(const name of [...sessionPlan.artifacts.always,...sessionPlan.cases.map(item=>item.id+'.json')])selected.add('results/normal-session-mocks/'+name);
   const artifactMockPlan=read('f01-artifact-mock-plan.json'),artifactMockPrefix='results/f01-artifact-mocks/';
   for(const name of [...artifactMockPlan.artifacts.always,...artifactMockPlan.cases.map(x=>x.id+'.json')])selected.add(artifactMockPrefix+name);
+  const lifetimePlan=read('funding-lifetime-plan.json'),lifetimePrefix='results/funding-lifetime-mocks/';
+  for(const name of [...lifetimePlan.artifacts.always,...lifetimePlan.cases.map(x=>x.id+'.json')])selected.add(lifetimePrefix+name);
   const positivePlan=read('positive-funding-plan.json'),positivePrefix='results/positive-funding/';
   for(const name of [...new Set(Object.values(positivePlan.artifacts).flat())])selected.add(positivePrefix+name);
   const tamperPlan=read('stored-tamper-plan.json');
@@ -168,7 +171,7 @@ function collect(){
   need([summaryFile]); // Missing summary cannot establish positive Funding NOT_RUN.
   if(exists(summaryFile)){
    const summary=recorded(summaryFile);
-   for(const id of ['compile','gate','mock','normal-session','f01-artifact-mock','anvil','stored-tamper','positive-funding']){
+   for(const id of ['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding']){
     const phase=summary.phases[id];assert(phase,'PHASE_STATE_MISSING:'+id);if(id!=='positive-funding')executionStates.phases[id]=phase.state;
     assert(phase.calls===0||phase.calls===1,'PHASE_CALL_COUNT:'+id);if(phase.calls)assert(['PASS','FAIL'].includes(phase.state),'CALLED_PHASE_STATE:'+id);
     if(phase.calls)need(policy.phaseExecuted.map(suffix=>'results/linux-once/'+id+'.'+suffix));
@@ -288,6 +291,20 @@ function collect(){
     if(artifactMockPhase.state==='PASS'){assert.equal(runner.state,'PASS');assert.equal(runner.calls,1);assert.equal(runner.exitCode,0);assert.equal(runner.recordingErrors.length,0);assert.equal(report.state,'PASS');assert.equal(report.recordingErrors.length,0);assert.deepEqual(report.actual,ids);assert.deepEqual(report.notRun,[]);assert(report.cases.every(x=>x.state==='PASS'&&x.preparation==='READY'&&x.positiveControl==='PASS'&&x.originalReplay==='PASS'));need(ids.map(id=>artifactMockPrefix+id+'.json'));}
     executionStates.f01ArtifactMocks=artifactMockPhase.state;
    }else{assert.equal(artifactMockPhase.state,'NOT_RUN');assert(!fs.existsSync(path.join(root,artifactMockPrefix)));executionStates.f01ArtifactMocks='NOT_RUN';}
+   const lifetimePhase=summary.phases['funding-lifetime'];
+   if(lifetimePhase.calls){
+    executionStates.fundingLifetime='UNKNOWN';assert.equal(summary.phases['f01-artifact-mock'].state,'PASS');need(lifetimePlan.artifacts.always.map(file=>lifetimePrefix+file));
+    const report=recorded(lifetimePrefix+'cases.json'),runner=recorded(lifetimePrefix+'runner-summary.json'),ids=lifetimePlan.cases.map(x=>x.id);
+    assert.deepEqual(report.required,ids);assert(Array.isArray(report.actual));assert.equal(new Set(report.actual).size,report.actual.length);assert.deepEqual(report.unique,[...new Set(report.actual)]);assert.deepEqual(report.actual,ids.slice(0,report.actual.length));assert.deepEqual(report.cases.map(x=>x.id),report.actual);
+    for(const item of report.cases){need([lifetimePrefix+item.id+'.json']);assert.deepEqual(item,recorded(lifetimePrefix+item.id+'.json'));}
+    if(lifetimePhase.state==='PASS'){
+     assert.equal(runner.state,'PASS');assert.equal(runner.calls,1);assert.equal(runner.exitCode,0);assert.deepEqual(runner.recordingErrors,[]);assert.deepEqual(runner.required,ids);assert.deepEqual(runner.actual,ids);assert.deepEqual(runner.unique,ids);
+     assert.equal(report.state,'PASS');assert.deepEqual(report.recordingErrors,[]);assert.deepEqual(report.actual,ids);assert.deepEqual(report.notRun,[]);assert.deepEqual(report.unhandled,[]);
+     for(const spec of lifetimePlan.cases){const item=report.cases.find(x=>x.id===spec.id);assert.equal(item.state,'PASS');assert.equal(item.cleanup,'COMPLETE');assert.equal(item.title,spec.title);assert.deepEqual(item.checkpoints.map(x=>x.name),spec.requiredCheckpoints);assert.equal(item.afterCleanup.timers,0);assert.equal(item.afterCleanup.pending,0);assert.equal(item.afterCleanup.abortListeners,0);assert.equal(item.afterCleanup.originalRestored,true);}
+     need(ids.map(id=>lifetimePrefix+id+'.json'));
+    }
+    executionStates.fundingLifetime=lifetimePhase.state;
+   }else{assert.equal(lifetimePhase.state,'NOT_RUN');assert(!fs.existsSync(path.join(root,lifetimePrefix)),'LIFETIME_OUTPUT_WITH_NOT_RUN');executionStates.fundingLifetime='NOT_RUN';}
    const judgment=assessF01Artifacts({summary,plan:positivePlan,io:{exists:file=>fs.existsSync(path.join(root,file)),readBytes:file=>fs.readFileSync(checkedFile(file))}});
    need(judgment.required);Object.assign(executionStates,judgment.states);
    if(!judgment.ok){for(const item of judgment.errors)errors.push({path:item.file??item.error?.file,error:describe(item.error)});throw judgment.primary;}
