@@ -14,6 +14,20 @@ The first testnet-oriented AMM implementation is available in [`dex/`](dex/READM
 
 The Liquidity Chain base protocol is not itself a centralized exchange, broker, custodian, or investment product. LQC Flow DEX is a separate, non-custodial application in development on top of that infrastructure.
 
+## LQC Mainnet Development
+
+LQC is developing an independent blockchain architecture based on Cosmos EVM technology.
+
+The initial public development repository is available here:
+
+[LQC Mainnet Development](https://github.com/LQC-labs/LQC-Mainnet-Development)
+
+The project is currently in its early development stage. Network configuration examples, compatibility documentation, and adapter tests are available.
+
+The independent LQC blockchain, validator network, and production mainnet have not yet been completed or launched.
+
+LQC Mainnet development remains separate from the existing BSC-based LQC Flow infrastructure.
+
 ## Design Principle
 
 **Liquidity First → Utility Second → Revenue Third → Scale Last**
