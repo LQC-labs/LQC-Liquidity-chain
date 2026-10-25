@@ -1,0 +1,82 @@
+{
+  "schema": "LQC_REPEATED_TAMPER_PLAN_1",
+  "implementationState": "IMPLEMENTED",
+  "staticReviewState": "STATIC_REVIEWED",
+  "executionState": "NOT_RUN",
+  "target": "test/verify-repeated-consumption.mjs",
+  "abiSHA256": "ecfc8e576031d146b482cc1f7a7bd0c7bd83cf71a7fe2e63cdcf91465d121bf0",
+  "cases": [
+    {
+      "id": "V01",
+      "title": "Original ordered R01 evidence pair verifies"
+    },
+    {
+      "id": "V02",
+      "title": "Swapping the two valid R01 records is rejected",
+      "assertionLine": 211,
+      "targetOperator": "strictEqual",
+      "actualDecimal": "2",
+      "expectedDecimal": "1",
+      "operations": 1,
+      "targetErrorName": "AssertionError"
+    },
+    {
+      "id": "V03",
+      "title": "Missing previous specification used query in second before snapshot is rejected",
+      "assertionLine": 128,
+      "targetMessage": "QUERY_REQUIRED_LABELS:before",
+      "targetOperator": "deepStrictEqual",
+      "operations": 2,
+      "targetErrorName": "AssertionError"
+    },
+    {
+      "id": "V04",
+      "title": "Missing second intermediate Coordinator transaction is rejected",
+      "assertionLine": 218,
+      "targetOperator": "strictEqual",
+      "actualDecimal": "1",
+      "expectedDecimal": "2",
+      "operations": 1,
+      "targetErrorName": "AssertionError"
+    },
+    {
+      "id": "V05",
+      "title": "Second integer specification account target changed from 10 to 0 is rejected",
+      "assertionLine": 222,
+      "targetOperator": "strictEqual",
+      "targetOperand": "integer-calldata",
+      "operations": 1,
+      "targetErrorName": "AssertionError"
+    },
+    {
+      "id": "V06",
+      "title": "Intermediate parent hash changed away from first execution is rejected",
+      "assertionLine": 224,
+      "targetOperator": "strictEqual",
+      "targetOperand": "parentHash",
+      "operations": 1,
+      "targetErrorName": "AssertionError"
+    }
+  ],
+  "input": "same-run successful R01 step-1/step-2 only; no historical/CLI fallback",
+  "childTimeoutMs": 45000,
+  "phaseTimeoutMs": 60000,
+  "startBeforeElapsedMs": 1350000,
+  "artifacts": {
+    "always": [
+      "preflight.json",
+      "input.json",
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json",
+      "cases.json",
+      "runner-summary.json"
+    ]
+  },
+  "automaticRetry": false,
+  "additionalAnvilCalls": 0,
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED"
+}

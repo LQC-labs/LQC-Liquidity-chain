@@ -57,6 +57,10 @@
     {
       "id": "repeated-consumption",
       "timeoutMs": 210000
+    },
+    {
+      "id": "repeated-tamper",
+      "timeoutMs": 60000
     }
   ],
   "approvedBuildHashes": {
@@ -292,5 +296,16 @@
       57
     ],
     "automaticRetry": false
+  },
+  "repeatedTamper": {
+    "runner": "run-repeated-consumption-tamper.cjs",
+    "plan": "repeated-tamper-plan.json",
+    "pins": "repeated-tamper-pins.json",
+    "cases": 6,
+    "after": "same-run repeated-consumption PASS",
+    "additionalAnvilCalls": 0,
+    "historicalFallback": false,
+    "startBeforeElapsedMs": 1350000,
+    "reason": "Start before22.5min; maximum60s leaves30s before unchanged24min step. A late R01 may leave this phase blocked NOT_RUN; no rerun or workflow extension."
   }
 }
