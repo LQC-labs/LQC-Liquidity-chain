@@ -1,0 +1,109 @@
+{
+  "schema": "LQC_REPEATED_CONSUMPTION_PLAN_1",
+  "implementationState": "IMPLEMENTED",
+  "staticReviewState": "STATIC_REVIEWED",
+  "executionState": "NOT_RUN",
+  "chainId": 31337,
+  "node": "22.23.3",
+  "childTimeoutMs": 200000,
+  "phaseTimeoutMs": 210000,
+  "automaticRetry": false,
+  "cases": [
+    {
+      "id": "R01",
+      "fullTitle": "Repeated collection consumption [R01] executes two cumulative budgets with Funding 10 plus 10 and fee 0 then 300",
+      "targets": [
+        "same position, two fresh integer specifications and execution sequences 1/2",
+        "budgets 300010 then 600320, modeled Funding 0 -> 10 -> 20",
+        "stage deltas 300000/10/0 and 300000/10/300",
+        "55 then 57 fixed queries each before/after",
+        "stored-only cross-step verification, two intervening specification transaction receipts",
+        "one lifetime budget covers setup and both sessions; no timeout reset",
+        "per-step started/validation/failure artifact requirements, no downgrade after later failure"
+      ]
+    }
+  ],
+  "artifacts": {
+    "always": [
+      "preflight.json",
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json",
+      "runner-summary.json"
+    ],
+    "attempted": [
+      "case-started.json",
+      "setup.jsonl",
+      "case-state.json",
+      "mocha.json",
+      "case-partial.json"
+    ],
+    "success": [
+      "repeated-validation.json",
+      "case-state.json",
+      "mocha.json",
+      "step-1-positive-started.json",
+      "step-1-positive-queries.jsonl",
+      "step-1-positive-fee.json",
+      "step-1-positive-state.json",
+      "step-2-positive-started.json",
+      "step-2-positive-queries.jsonl",
+      "step-2-positive-fee.json",
+      "step-2-positive-state.json",
+      "step-1-positive-validation.json",
+      "step-2-positive-validation.json"
+    ],
+    "failure": [
+      "case-failure.json"
+    ],
+    "optional": [],
+    "observationAttempted": [
+      "step-1-positive-started.json",
+      "step-1-positive-queries.jsonl",
+      "step-1-positive-fee.json",
+      "step-1-positive-state.json",
+      "step-2-positive-started.json",
+      "step-2-positive-queries.jsonl",
+      "step-2-positive-fee.json",
+      "step-2-positive-state.json"
+    ],
+    "validationPassed": [
+      "step-1-positive-validation.json",
+      "step-2-positive-validation.json"
+    ],
+    "observationFailed": [
+      "step-1-positive-failure.json",
+      "step-2-positive-failure.json"
+    ]
+  },
+  "scope": "Two local research consumes only; not a complete consumption history, Receipt/terminal or rights proof",
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED",
+  "budgets": {
+    "scope": "R01 setup and both consumes share unchanged FundingLifetime budget",
+    "workMs": 120000,
+    "actualTerminationConfirmationMs": 5000,
+    "partialEvidenceMs": 15000,
+    "cleanupMs": 5000,
+    "terminalEvidenceMs": 5000,
+    "cooperativeTotalMs": 150000,
+    "mochaMs": 180000,
+    "childMs": 200000,
+    "linuxPhaseMs": 210000,
+    "sharedSessionDefaultsUnchanged": {
+      "workMs": 100000,
+      "writeMs": 140000,
+      "terminationMs": 5000
+    },
+    "sharedLifetime": "Unchanged FundingLifetime and F01_BUDGET; legacy F01_* lifetime diagnostic codes retained; case ID and result namespace are G01/positive-fee"
+  },
+  "artifactStates": {
+    "scope": "Per-step status and hashes are checked by assessRepeatedArtifacts; UNKNOWN on unreadable or inconsistent evidence. Overall failure never makes completed steps optional."
+  },
+  "queryCountPerSide": [
+    55,
+    57
+  ]
+}

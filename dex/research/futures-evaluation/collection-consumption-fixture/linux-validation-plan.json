@@ -53,6 +53,10 @@
     {
       "id": "fee-tamper",
       "timeoutMs": 60000
+    },
+    {
+      "id": "repeated-consumption",
+      "timeoutMs": 210000
     }
   ],
   "approvedBuildHashes": {
@@ -270,5 +274,23 @@
     "additionalAnvilCalls": 0,
     "historicalFallback": false,
     "budget": "G01 starts before 19min, maximum 210s plus fee-tamper60s ends before23.5min inside unchanged24min step"
+  },
+  "repeatedConsumption": {
+    "caseIds": [
+      "R01"
+    ],
+    "runner": "run-repeated-consumption.cjs",
+    "plan": "repeated-consumption-plan.json",
+    "pins": "repeated-consumption-pins.json",
+    "after": "fee-tamper PASS",
+    "startBeforeElapsedMs": 1200000,
+    "budget": "Refuse at/after 20min. Maximum210s leaves30s before unchanged24min execution step. No guarantee all previous phases leave enough time.",
+    "executions": 2,
+    "newLocalDeployments": 1,
+    "queryCountsPerSide": [
+      55,
+      57
+    ],
+    "automaticRetry": false
   }
 }
