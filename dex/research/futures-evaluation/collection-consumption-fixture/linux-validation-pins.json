@@ -29,11 +29,11 @@
     "fixtures/local/contracts/futures/local-vnext/LocalFuturesWithdrawalVerifier.sol": "e305ca8ad18bf0cfcff8e4e611d688fb18316a9a1eabee9fa8366bbcc17302e4",
     "fixtures/local/contracts/futures/local-vnext/SettlementMath.sol": "c27913649293c1ee5e8c29c320bfee571926dd7508f4c4f0e9ef692a42f5a29a",
     "fixtures/local/contracts/futures/mocks/LocalVNextFixtures.sol": "140b8deac792727692ba21bc0413aeac4f500b0018f6ac7fa59537fa10b56036",
-    "linux-validation-plan.json": "9ad9ba19f041d4247c2ecd68bb0120a84b4fd13279beccb97a5ec7cc99fae8d7",
+    "linux-validation-plan.json": "492a4339d2449775bfba2ee409351cd7f3e57a97b95b371648a9dacc3c1cb83e",
     "package-lock.json": "8685aa64ce70fdfe0e69b0c16c95e88da1c0e01e00fe8fa21509e245266ac6e0",
     "package.json": "f07411f39855c75d7542a2714661de58f3e583b0544ebb8af032383926591692",
     "run-failure-evidence-checks.cjs": "0e27286700ab21b13404005d3fb0803869938ba3b1d4a0b65afb8bd04140a857",
-    "run-linux-once.cjs": "bb398091b2108ad5a0b537900fe7cfdc0119a47a3ac1001c3141ee2a57210e72",
+    "run-linux-once.cjs": "132a8a96afdcbfe0737718c99327904e2c06e9a1b23d6a81fb4c965f59224cbe",
     "run-tests.cjs": "9426c42f07d9c0e0ae53f5c171a8169c77f26e160643cf1753c9a53a84fbb2ae",
     "runtime-gate.cjs": "e5ae8aba151a0b29dd6402490968201d72f7085cbad5f3334334a4752f5d207f",
     "test-pins.cjs": "2f156d356127ba29e7bba201469a9a3c23910f0df8fcdc6b19f7b2768ce650a7",
@@ -58,7 +58,16 @@
     "run-normal-session-mocks.cjs": "56ffd6df97cb02a9049e831fbf3b23af882ddff1673b9571a1f948a244147a6f",
     "test/normal-session-mocks.mjs": "2b5baf2d4071b789a4efe92ab47362cf68c822faf3a45fb44e1b3725e088216d",
     "normal-session-plan.json": "61fe385f9a9fa45cf267792cd381dd922927648497fc91d4fe9e6583dccb69a4",
-    "normal-session-pins.json": "c1d6db3cc0792b7c6e7c1a3aad3cd632672a29cb497328205b78b42d5b739b13"
+    "normal-session-pins.json": "c1d6db3cc0792b7c6e7c1a3aad3cd632672a29cb497328205b78b42d5b739b13",
+    "positive-funding-plan.json": "feba5c9e08aab16c393e29105dcddcdadadaa76e7739bf4b09d8b53c6ed73eb5",
+    "positive-funding-pins.json": "4d021fa39ec1cee6c47be52eff13f3bafa751df325fa8ab852dad615db579acc",
+    "POSITIVE-FUNDING.md": "341fe634f023f7b2477f24e6a5c358801c0e7593a8c938ea27b8e3468e69b98c",
+    "run-positive-funding.cjs": "b06146e080e5bd51e29a0f8f704ae4cc50a8126f08760d3332758b398b17d008",
+    "test/positive-funding.test.mjs": "2fa378d318ab34f99b947d2bc54a3f74ddf6f18c1e41877dd2d5c61e4a693c4b",
+    "test/positive-funding-harness.mjs": "1b366cf3063ff25bb276fee21375b35d6a9a85f0c941cf5e5a59e65ed1fa8da7",
+    "test/positive-funding-expectation.mjs": "36ea0ec34a9b77d4964b72bd70e6ebbd12e6bf547f398647f7873639a2591b7f",
+    "test/verify-positive-funding.mjs": "c8330a75dc67cbc938c046b3afb519bdea66a579e3728006902dd5f0373351a7",
+    "test/positive-funding-lifetime.mjs": "e22b2407d53ab40f26ad20bf5e3a747b044a84bd8460ca0dc0849336557990d5"
   },
   "workflowSHA256": "7750b6decc935a7ad4dcc4257a94ecb0e1b9bf256e7450b9519543fb8643e068"
 }
