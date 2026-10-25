@@ -1,0 +1,115 @@
+{
+  "schema": "LQC_POSITIVE_FEE_PLAN_1",
+  "implementationState": "IMPLEMENTED",
+  "staticReviewState": "STATIC_REVIEWED",
+  "executionState": "NOT_RUN",
+  "chainId": 31337,
+  "node": "22.23.3",
+  "childTimeoutMs": 200000,
+  "phaseTimeoutMs": 210000,
+  "automaticRetry": false,
+  "cases": [
+    {
+      "id": "G01",
+      "fullTitle": "Positive fee collection [G01] collects PnL 600000 Funding 20 and fee 300 through the linked research path",
+      "targets": [
+        "ordinary deployment/runtime/reverse bindings",
+        "exact origin+10 and origin+50 timestamps for both accounts",
+        "exposure sequences 1 to 2",
+        "LE 40e18 SE 120e18 matched 40e18",
+        "done=participants=2; materialized integrals equal",
+        "both checkpoint/member/Attribution fixed",
+        "independent rational Funding USD18=20000000000000/1; debt/claim=20/1 raw",
+        "SHORT plan/seal/budget/integer only; no LONG payment or withdrawal",
+        "one owner execute sequence 1",
+        "pnl600000 funding20 fee300; aggregate600320",
+        "Held -600320; LP +600000",
+        "Partial balance/cash/accounted -20; Funding balance/collected/cash/custody +20",
+        "Collected.amount20 is Funding only",
+        "fee bucket +300; other pool fields/balances/LP shares/allowances/LONG state unchanged; authorizations zero",
+        "fixed block raw query/canonical ABI/saved-value comparison",
+        "saved-data arithmetic plus transaction/Receipt/log/key linkage",
+        "partial evidence; original/recording/cleanup errors retained",
+        "fixed Domain query proves feeBps=1 and POSITIVE_FEE_TWO_ACCOUNTS policy digest",
+        "55 exact fixed queries per side including core.domain",
+        "research-linked exposure guards only; no claim of general openPosition fee/risk coverage"
+      ]
+    }
+  ],
+  "artifacts": {
+    "always": [
+      "preflight.json",
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json",
+      "runner-summary.json"
+    ],
+    "attempted": [
+      "case-started.json",
+      "setup.jsonl",
+      "case-state.json",
+      "mocha.json",
+      "case-partial.json"
+    ],
+    "success": [
+      "positive-started.json",
+      "positive-queries.jsonl",
+      "positive-fee.json",
+      "positive-validation.json",
+      "positive-state.json",
+      "case-state.json",
+      "mocha.json"
+    ],
+    "failure": [
+      "case-failure.json"
+    ],
+    "optional": [],
+    "observationAttempted": [
+      "positive-started.json",
+      "positive-queries.jsonl",
+      "positive-fee.json",
+      "positive-state.json"
+    ],
+    "validationPassed": [
+      "positive-validation.json"
+    ],
+    "observationFailed": [
+      "positive-failure.json"
+    ]
+  },
+  "scope": "one separate local research scenario; no payable rights, dedicated consumption Receipt, terminal or complete ledger claim",
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED",
+  "budgets": {
+    "scope": "G01 begins before setup",
+    "workMs": 120000,
+    "actualTerminationConfirmationMs": 5000,
+    "partialEvidenceMs": 15000,
+    "cleanupMs": 5000,
+    "terminalEvidenceMs": 5000,
+    "cooperativeTotalMs": 150000,
+    "mochaMs": 180000,
+    "childMs": 200000,
+    "linuxPhaseMs": 210000,
+    "sharedSessionDefaultsUnchanged": {
+      "workMs": 100000,
+      "writeMs": 140000,
+      "terminationMs": 5000
+    },
+    "sharedLifetime": "Unchanged FundingLifetime and F01_BUDGET; legacy F01_* lifetime diagnostic codes retained; case ID and result namespace are G01/positive-fee"
+  },
+  "artifactStates": {
+    "readInitial": "UNKNOWN",
+    "setupFailure": "Require attempted+failure records; valid matching terminal/partial/Mocha records must prove started=false; reject observation files",
+    "observationStarted": "started=true set before first file creation; require observationAttempted even on creation/write failure",
+    "observationFailure": "Require observationFailed in addition to attempted and observationAttempted; require case-failure when overall G01 fails",
+    "verificationNotRunOrFailed": "Do not demand a success validation artifact; reject an unexpected positive-validation.json",
+    "verificationPassed": "Require and parse positive-validation.json; state PASS and SHA-256 must match positive-fee.json even if cleanup fails",
+    "cleanupFailureAfterObservationSuccess": "Keep all observationAttempted and validationPassed evidence; overall case FAIL does not downgrade observation to NOT_RUN",
+    "unreadableOrConflicting": "UNKNOWN plus collection failure; missing/invalid records do not prove NOT_RUN",
+    "scope": "Evidence-state metadata only; no change to arithmetic/getters/lifetime or test counts"
+  },
+  "queryCountPerSide": 55
+}

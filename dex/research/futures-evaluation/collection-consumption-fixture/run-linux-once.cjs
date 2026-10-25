@@ -1,6 +1,7 @@
 // One-shot Linux orchestration and explicit artifact collection. No retry path.
 const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto'),assert=require('node:assert/strict');
 const {assessF01Artifacts}=require('./test/f01-artifact-state.cjs');
+const {assessG01Artifacts}=require('./test/g01-artifact-state.cjs');
 const root=__dirname,results=path.join(root,'results'),run=path.join(results,'linux-once'),staging=path.join(results,'linux-artifact');
 const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const read=f=>JSON.parse(fs.readFileSync(path.join(root,f)));
@@ -57,7 +58,7 @@ function preflight(){
  assert.equal(process.platform,'linux','LINUX_REQUIRED');assert.equal(process.version,'v22.23.3','NODE_VERSION');integrity();
  assert(!fs.existsSync(path.join(root,'build')),'BUILD_DIRECTORY_EXISTS');
  if(fs.existsSync(results))checkedDirectory('results');
- for(const f of ['results/linux-once','results/failure-evidence-mock','results/normal-session-mocks','results/f01-artifact-mocks','results/funding-lifetime-mocks','results/positive-funding','results/positive-tamper','results/linux-artifact'])assert(!fs.existsSync(path.join(root,f)),'PRIOR_RUN_EXISTS:'+f);
+ for(const f of ['results/linux-once','results/failure-evidence-mock','results/normal-session-mocks','results/f01-artifact-mocks','results/funding-lifetime-mocks','results/positive-funding','results/positive-tamper','results/positive-fee','results/linux-artifact'])assert(!fs.existsSync(path.join(root,f)),'PRIOR_RUN_EXISTS:'+f);
  // No Windows dependency tree or root junction may be transplanted.
  assert(!fs.lstatSync(root).isSymbolicLink(),'FIXTURE_ROOT_LINK');assert(!fs.lstatSync(path.join(root,'node_modules')).isSymbolicLink(),'DEPENDENCY_ROOT_LINK');
  const platformPackage=process.arch==='x64'?'anvil-linux-amd64':process.arch==='arm64'?'anvil-linux-arm64':null;
@@ -65,19 +66,19 @@ function preflight(){
  const packageRoot=path.join(root,'node_modules/@foundry-rs',platformPackage);
  assert.equal(JSON.parse(fs.readFileSync(path.join(packageRoot,'package.json'))).version,'1.7.1','LINUX_ANVIL_PACKAGE_VERSION');
  assert(fs.lstatSync(path.join(packageRoot,'bin/anvil')).isFile(),'LINUX_ANVIL_BINARY_MISSING');
- const plan=read('linux-validation-plan.json');assert.deepEqual(plan.phases.map(x=>x.id),['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding','positive-tamper'],'EXACT_PHASE_ORDER');
+ const plan=read('linux-validation-plan.json');assert.deepEqual(plan.phases.map(x=>x.id),['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding','positive-tamper','positive-fee'],'EXACT_PHASE_ORDER');
  return plan;
 }
 function execute(){
  const started=performance.now();
- let state={phases:Object.fromEntries(['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding','positive-tamper'].map(id=>[id,{state:'NOT_RUN',calls:0}]))},primary,active,runReady=false;
+ let state={phases:Object.fromEntries(['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding','positive-tamper','positive-fee'].map(id=>[id,{state:'NOT_RUN',calls:0}]))},primary,active,runReady=false;
  try{
   const plan=preflight();outputDirectory('results',true);outputDirectory('results/linux-once',true,true);runReady=true;
   state={schema:'LQC_LINUX_ONCE_1',phases:Object.fromEntries(plan.phases.map(x=>[x.id,{state:'NOT_RUN',calls:0}])),automaticRetry:false,amount:null,authority:false,consumptionLink:'UNVERIFIED',rightsLink:'UNVERIFIED'};
   save(path.join(run,'initial.json'),{...state,node:process.version,platform:process.platform,arch:process.arch});
   for(const phase of plan.phases){
    const record=state.phases[phase.id];
-   if(phase.id==='positive-funding'&&performance.now()-started>=1140000){record.blockedReason='INSUFFICIENT_WORKFLOW_TIME_BUDGET';throw Error('POSITIVE_INSUFFICIENT_WORKFLOW_TIME_BUDGET');}
+   if(['positive-funding','positive-fee'].includes(phase.id)&&performance.now()-started>=1140000){record.blockedReason='INSUFFICIENT_WORKFLOW_TIME_BUDGET';throw Error('POSITIVE_INSUFFICIENT_WORKFLOW_TIME_BUDGET');}
    active=record;record.calls++;
    let args;
    if(phase.id==='compile')args=['compile.cjs'];
@@ -90,6 +91,7 @@ function execute(){
    else if(phase.id==='stored-tamper')args=['run-stored-consumption-tamper.cjs'];
    else if(phase.id==='positive-funding')args=['run-positive-funding.cjs'];
    else if(phase.id==='positive-tamper')args=['run-positive-funding-tamper.cjs'];
+   else if(phase.id==='positive-fee')args=['run-positive-fee.cjs'];
    else throw Error('UNKNOWN_PHASE');
    const child=cp.spawnSync(process.execPath,args,{cwd:root,encoding:null,windowsHide:true,timeout:phase.timeoutMs,maxBuffer:32*1024*1024,env:{...process.env,NODE_OPTIONS:''}});
    record.exitCode=child.status;record.signal=child.signal;record.spawnError=child.error?describe(child.error):null;
@@ -117,7 +119,7 @@ function execute(){
 }
 function collect(){
  const copied=[],missing=[],errors=[],required=new Set();let stagingReady=false;
-  const executionStates={install:'UNVERIFIED',phases:Object.fromEntries(['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding','positive-tamper'].map(x=>[x,x==='positive-funding'?'UNKNOWN':'NOT_RUN'])),mockCases:{},normalConsumption:'UNKNOWN',storedTamper:'UNKNOWN',normalSession:'UNKNOWN',positiveFunding:'UNKNOWN',positiveObservation:'UNKNOWN',positiveValidation:'UNKNOWN',f01ArtifactMocks:'UNKNOWN',fundingLifetime:'UNKNOWN',positiveTamper:'UNKNOWN'};
+  const executionStates={install:'UNVERIFIED',phases:Object.fromEntries(['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding','positive-tamper','positive-fee'].map(x=>[x,x==='positive-funding'?'UNKNOWN':'NOT_RUN'])),mockCases:{},normalConsumption:'UNKNOWN',storedTamper:'UNKNOWN',normalSession:'UNKNOWN',positiveFunding:'UNKNOWN',positiveObservation:'UNKNOWN',positiveValidation:'UNKNOWN',f01ArtifactMocks:'UNKNOWN',fundingLifetime:'UNKNOWN',positiveTamper:'UNKNOWN',positiveFee:'UNKNOWN',feeObservation:'UNKNOWN',feeValidation:'UNKNOWN'};
  try{
   // A link at results/ must not be followed, even when compilation never ran.
   outputDirectory('results',true);assert(!fs.existsSync(staging),'STAGING_ALREADY_EXISTS');outputDirectory('results/linux-artifact',true,true);stagingReady=true;
@@ -132,6 +134,8 @@ function collect(){
   for(const name of [...lifetimePlan.artifacts.always,...lifetimePlan.cases.map(x=>x.id+'.json')])selected.add(lifetimePrefix+name);
   const positiveTamperPlan=read('positive-tamper-plan.json'),positiveTamperPrefix='results/positive-tamper/';
   for(const name of [...positiveTamperPlan.artifacts.always,...positiveTamperPlan.cases.flatMap(x=>[x.id+'.json',...(x.id==='P01'?[]:[x.id+'.mutation.json'])])])selected.add(positiveTamperPrefix+name);
+  const feePlan=read('positive-fee-plan.json'),feePrefix='results/positive-fee/';
+  for(const name of [...new Set(Object.values(feePlan.artifacts).flat())])selected.add(feePrefix+name);
   const positivePlan=read('positive-funding-plan.json'),positivePrefix='results/positive-funding/';
   for(const name of [...new Set(Object.values(positivePlan.artifacts).flat())])selected.add(positivePrefix+name);
   const tamperPlan=read('stored-tamper-plan.json');
@@ -174,7 +178,7 @@ function collect(){
   need([summaryFile]); // Missing summary cannot establish positive Funding NOT_RUN.
   if(exists(summaryFile)){
    const summary=recorded(summaryFile);
-   for(const id of ['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding','positive-tamper']){
+   for(const id of ['compile','gate','mock','normal-session','f01-artifact-mock','funding-lifetime','anvil','stored-tamper','positive-funding','positive-tamper','positive-fee']){
     const phase=summary.phases[id];assert(phase,'PHASE_STATE_MISSING:'+id);if(id!=='positive-funding')executionStates.phases[id]=phase.state;
     assert(phase.calls===0||phase.calls===1,'PHASE_CALL_COUNT:'+id);if(phase.calls)assert(['PASS','FAIL'].includes(phase.state),'CALLED_PHASE_STATE:'+id);
     if(phase.calls)need(policy.phaseExecuted.map(suffix=>'results/linux-once/'+id+'.'+suffix));
@@ -308,6 +312,9 @@ function collect(){
     }
     executionStates.fundingLifetime=lifetimePhase.state;
    }else{assert.equal(lifetimePhase.state,'NOT_RUN');assert(!fs.existsSync(path.join(root,lifetimePrefix)),'LIFETIME_OUTPUT_WITH_NOT_RUN');executionStates.fundingLifetime='NOT_RUN';}
+   const feeJudgment=assessG01Artifacts({summary,plan:feePlan,io:{exists:file=>fs.existsSync(path.join(root,file)),readBytes:file=>fs.readFileSync(checkedFile(file))}});
+   need(feeJudgment.required);Object.assign(executionStates,feeJudgment.states);
+   if(!feeJudgment.ok){for(const item of feeJudgment.errors)errors.push({path:item.file??item.error?.file,error:describe(item.error)});throw feeJudgment.primary;}
    const judgment=assessF01Artifacts({summary,plan:positivePlan,io:{exists:file=>fs.existsSync(path.join(root,file)),readBytes:file=>fs.readFileSync(checkedFile(file))}});
    need(judgment.required);Object.assign(executionStates,judgment.states);
    if(!judgment.ok){for(const item of judgment.errors)errors.push({path:item.file??item.error?.file,error:describe(item.error)});throw judgment.primary;}

@@ -1,0 +1,31 @@
+{
+  "schema": "LQC_POSITIVE_FEE_PINS_1",
+  "review": "STATIC_REVIEWED_NOT_RUN",
+  "planSHA256": "1d1b87ae1361b130bf55811bb152edc317ddfa62c848b9c07afb3032ad3dcef3",
+  "sourceHashes": {
+    "run-positive-fee.cjs": "350b67ab5f0980a16dbbb41fbc322e602d1ee6c7feb3482395eca4a551e47f91",
+    "test/positive-fee.test.mjs": "a2da7c079d36107d736ccd6b52b34525c62142bf6e5c1af3466b304853fb7b94",
+    "test/positive-fee-harness.mjs": "0cb0337a7322ecc7abf6e0212d415a764e82ffb7f0cc59d0d66b151c07b533e5",
+    "test/positive-fee-expectation.mjs": "76d3867b61a4b1a9973c396fadcdad07d0033fb6c0455c2b0129e3aa3d81fa62",
+    "test/verify-positive-fee.mjs": "8b8554a24d89121069484e643770ef6d371f7896516e6825834d4d278746de49",
+    "test/collection-harness.mjs": "758a416ffe17ad5debd4192106586736e26584bdcf81004af80debaf30e36021",
+    "test/normal-consumption-evidence.mjs": "679b82327888526928ee1c12fe818ed2301845832bd8055e05c769ddaabd5b70",
+    "test/normal-evidence-session.mjs": "a6981fd96508799958c71a54fc6beca55479312631cce937e4e1de6785e1bccd",
+    "test/verify-stored-consumption.mjs": "a70bb936368710fa7aa0ff0dce1266879b5d1f47ba41cb790020b8f25fce3afe",
+    "test/failure-evidence.cjs": "665be29238e14fdd8d43725465714976171fdb8aa239b74918fa899a69fe4184",
+    "test/evidence-reporter.cjs": "fe50fe388b8dd1d6bfa3d79760935585853d64ca77722cea4b9b5e2b6adfceaa",
+    "test/runtime-tools.mjs": "ef37735eeb00e21490e2b9e95b36b1bfc767b400b368452f026a72465b160d6a",
+    "test/anvil-compat.mjs": "8a88683469cb13e998ebf24721aaa04de33e2cf4d6606152955830603701775c",
+    "test/stored-tamper-io.cjs": "c7de9fb4e1375c9121f38f816cb73c8b7d9256b9042bbd2deb657bbd5396a43e",
+    "normal-evidence-abi.json": "ecfc8e576031d146b482cc1f7a7bd0c7bd83cf71a7fe2e63cdcf91465d121bf0",
+    "build-common.cjs": "b52dc86aedb619fb7b18f5114f95c517bbae46f6b540092922ab3a83d1fbe739",
+    "build-pins.cjs": "e3516f44e2a6833f27ebd039ecfe62d5fdacb12ebfc910418242f0fa34c11227",
+    "build-requirements.json": "92a9ae047349051a7647649830d42baec5ce976a9bee64ac95ad9948f70d72f4",
+    "runtime-gate.cjs": "e5ae8aba151a0b29dd6402490968201d72f7085cbad5f3334334a4752f5d207f",
+    "package.json": "f07411f39855c75d7542a2714661de58f3e583b0544ebb8af032383926591692",
+    "package-lock.json": "8685aa64ce70fdfe0e69b0c16c95e88da1c0e01e00fe8fa21509e245266ac6e0",
+    "test/positive-funding-lifetime.mjs": "cc24479a8506920f1fd8e233e7c740a88925c29d72c7807757774dc41dd07aa2",
+    "test/g01-artifact-state.cjs": "821247fd406b7d3939a76f9eed84e50d4d924535596b16ad2750dd564d690314"
+  },
+  "automaticPinUpdate": false
+}

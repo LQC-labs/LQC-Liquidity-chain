@@ -45,6 +45,10 @@
     {
       "id": "positive-tamper",
       "timeoutMs": 60000
+    },
+    {
+      "id": "positive-fee",
+      "timeoutMs": 210000
     }
   ],
   "approvedBuildHashes": {
@@ -241,5 +245,16 @@
     "after": "same-run positive-funding PASS only",
     "additionalAnvilCalls": 0,
     "historicalFallback": false
+  },
+  "positiveFee": {
+    "caseIds": [
+      "G01"
+    ],
+    "resultRoot": "results/positive-fee",
+    "after": "positive-tamper PASS",
+    "startBeforeElapsedMs": 1140000,
+    "reason": "Refuse to start G01 at/after 19 minutes; 210 seconds leaves 90 seconds within unchanged 24-minute execution step",
+    "queryCountPerSide": 55,
+    "scope": "linked exposure research consumption only; not ordinary openPosition fee charging"
   }
 }
