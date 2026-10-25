@@ -1,0 +1,13 @@
+{
+  "schema": "LQC_FUNDING_LIFETIME_PINS_1",
+  "planSHA256": "6c48a18657edeaab5696c6160cdb7243be093098af4f9cd8936c85c3ab33e929",
+  "sourceHashes": {
+    "run-funding-lifetime-mocks.cjs": "3eaf649c7105821eae74eb09c489343a6dee03183fd0093997751922a96f9c5e",
+    "test/funding-lifetime-mocks.mjs": "386c13fef3900e0b36448de289d014f3b0f248bc35fc48b7e2162b3eb237f2e0",
+    "test/positive-funding-lifetime.mjs": "cc24479a8506920f1fd8e233e7c740a88925c29d72c7807757774dc41dd07aa2",
+    "test/stored-tamper-io.cjs": "c7de9fb4e1375c9121f38f816cb73c8b7d9256b9042bbd2deb657bbd5396a43e",
+    "test/failure-evidence.cjs": "665be29238e14fdd8d43725465714976171fdb8aa239b74918fa899a69fe4184"
+  },
+  "automaticPinUpdate": false,
+  "buildPinChange": false
+}

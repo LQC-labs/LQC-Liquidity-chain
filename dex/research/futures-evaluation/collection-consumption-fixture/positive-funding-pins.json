@@ -24,6 +24,6 @@
     "runtime-gate.cjs": "e5ae8aba151a0b29dd6402490968201d72f7085cbad5f3334334a4752f5d207f",
     "package.json": "f07411f39855c75d7542a2714661de58f3e583b0544ebb8af032383926591692",
     "package-lock.json": "8685aa64ce70fdfe0e69b0c16c95e88da1c0e01e00fe8fa21509e245266ac6e0",
-    "test/positive-funding-lifetime.mjs": "e22b2407d53ab40f26ad20bf5e3a747b044a84bd8460ca0dc0849336557990d5"
+    "test/positive-funding-lifetime.mjs": "cc24479a8506920f1fd8e233e7c740a88925c29d72c7807757774dc41dd07aa2"
   }
 }

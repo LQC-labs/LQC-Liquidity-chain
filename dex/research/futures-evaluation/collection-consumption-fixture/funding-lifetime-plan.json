@@ -1,0 +1,148 @@
+{
+  "schema": "LQC_FUNDING_LIFETIME_PLAN_1",
+  "implementationState": "IMPLEMENTED",
+  "staticReviewState": "STATIC_REVIEWED",
+  "executionState": "NOT_RUN",
+  "target": {
+    "module": "test/positive-funding-lifetime.mjs",
+    "exports": [
+      "FundingLifetime",
+      "F01_BUDGET"
+    ],
+    "replicatedLifetime": false
+  },
+  "clockBudgets": {
+    "work": 120000,
+    "termination": 5000,
+    "evidence": 15000,
+    "cleanup": 5000,
+    "terminal": 5000,
+    "mocha": 180000,
+    "child": 200000,
+    "phase": 210000
+  },
+  "childTimeoutMs": 45000,
+  "phaseTimeoutMs": 60000,
+  "cases": [
+    {
+      "id": "L01",
+      "title": "Preserve budgets and hash-before-receipt order with normal cleanup",
+      "requiredCheckpoints": [
+        "NORMAL_HASH_AND_CLEANUP"
+      ]
+    },
+    {
+      "id": "L02",
+      "title": "Reject work at monotonic deadline before timer dispatch",
+      "requiredCheckpoints": [
+        "MONOTONIC_BOUNDARY_BLOCKS_LATE_WORK"
+      ]
+    },
+    {
+      "id": "L03",
+      "title": "Retain pending until real settlement after work timeout",
+      "requiredCheckpoints": [
+        "ABORT_REJECTS_WAIT_NOT_UNDERLYING",
+        "REAL_SETTLEMENT_DRAINS_PENDING"
+      ]
+    },
+    {
+      "id": "L04",
+      "title": "Retain late send hash without late writes or retransmission",
+      "requiredCheckpoints": [
+        "LATE_HASH_RETAINED_WITHOUT_LATE_WRITE_OR_RESEND"
+      ]
+    },
+    {
+      "id": "L05",
+      "title": "Keep RPC primary when failure journal also fails",
+      "requiredCheckpoints": [
+        "PRIMARY_SURVIVES_FAILURE_JOURNAL"
+      ]
+    },
+    {
+      "id": "L06",
+      "title": "Block restore for unfinished task and retain poison after confirmation",
+      "requiredCheckpoints": [
+        "TASK_ONLY_RESTORE_BLOCKED",
+        "CONFIRMED_RESTORE_RETAINS_POISON"
+      ]
+    },
+    {
+      "id": "L07",
+      "title": "Block restore for pending work and handle late rejection",
+      "requiredCheckpoints": [
+        "PENDING_ONLY_RESTORE_BLOCKED",
+        "LATE_REJECTION_OBSERVED"
+      ]
+    },
+    {
+      "id": "L08",
+      "title": "Track session-only pending and forward cancellation",
+      "requiredCheckpoints": [
+        "SESSION_PENDING_AND_CANCEL_FORWARDING"
+      ]
+    },
+    {
+      "id": "L09",
+      "title": "Keep original error when cleanup rejects",
+      "requiredCheckpoints": [
+        "CLEANUP_FAILURE_PRESERVES_PRIMARY"
+      ]
+    },
+    {
+      "id": "L10",
+      "title": "Keep cleanup timeout primary after late cleanup rejection",
+      "requiredCheckpoints": [
+        "CLEANUP_TIMEOUT_UNCONFIRMED",
+        "LATE_CLEANUP_FAILURE_PRESERVED"
+      ]
+    },
+    {
+      "id": "L11",
+      "title": "Reject evidence at record deadline and after sealing",
+      "requiredCheckpoints": [
+        "RECORD_BOUNDARY_AND_SEAL"
+      ]
+    },
+    {
+      "id": "L12",
+      "title": "Reject restoration when another guard owns RPC",
+      "requiredCheckpoints": [
+        "GUARD_OWNERSHIP_REQUIRED"
+      ]
+    }
+  ],
+  "artifacts": {
+    "always": [
+      "preflight.json",
+      "cases.json",
+      "runner-summary.json",
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json"
+    ],
+    "executedCase": [
+      "Lxx.json"
+    ],
+    "allSourcePinsRequired": true
+  },
+  "fakeModel": {
+    "clock": "per-instance monotonic clock and ordered manual timer callbacks; no global replacement",
+    "rpc": "owned in-memory deferred promises only; no provider or transport",
+    "journal": "instance callback; memory notes and injected failures",
+    "stderr": "instance callback; no global process stderr replacement",
+    "disposal": "owned deferreds actually settle; abort does not mean settlement; harness cleanup is separate from scenario checkpoints",
+    "unhandled": "scoped native unhandledRejection observer with setImmediate checkpoint; removed finally"
+  },
+  "limitations": [
+    "Does not execute the full F01 setup, receipt loop or final hook",
+    "Does not prove whole-process-tree termination or transport cancellation",
+    "Native default path and Linux artifact propagation remain unexecuted for this revision"
+  ],
+  "automaticRetry": false,
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED"
+}
