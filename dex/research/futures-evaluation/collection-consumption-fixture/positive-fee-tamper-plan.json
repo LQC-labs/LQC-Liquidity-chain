@@ -1,0 +1,87 @@
+{
+  "schema": "LQC_POSITIVE_FEE_TAMPER_PLAN_1",
+  "implementationState": "IMPLEMENTED",
+  "staticReviewState": "STATIC_REVIEWED",
+  "executionState": "NOT_RUN",
+  "target": "test/verify-positive-fee.mjs",
+  "abiSHA256": "ecfc8e576031d146b482cc1f7a7bd0c7bd83cf71a7fe2e63cdcf91465d121bf0",
+  "input": "same-run successful G01 only; no CLI or historical fallback",
+  "childTimeoutMs": 45000,
+  "phaseTimeoutMs": 60000,
+  "cases": [
+    {
+      "id": "S01",
+      "title": "Original G01 positive fee evidence verifies"
+    },
+    {
+      "id": "S02",
+      "title": "Missing Domain query and its four observations is rejected",
+      "assertionLine": 124,
+      "targetMessage": "QUERY_REQUIRED_LABELS:before",
+      "targetOperator": "deepStrictEqual",
+      "operations": 2,
+      "targetErrorName": "AssertionError"
+    },
+    {
+      "id": "S03",
+      "title": "Consistently changed feeBps across both snapshots is rejected",
+      "assertionLine": 167,
+      "targetMessage": "G01_POLICY_FEE_BPS",
+      "targetOperator": "strictEqual",
+      "actualDecimal": "2",
+      "expectedDecimal": "1",
+      "operations": 6,
+      "targetErrorName": "AssertionError"
+    },
+    {
+      "id": "S04",
+      "title": "Consistently changed policy digest across both snapshots is rejected",
+      "assertionLine": 167,
+      "targetMessage": "G01_POLICY_DIGEST",
+      "targetOperator": "strictEqual",
+      "operations": 6,
+      "targetErrorName": "AssertionError"
+    },
+    {
+      "id": "S05",
+      "title": "Consistently encoded fee bucket increase must equal 300 raw",
+      "assertionLine": 174,
+      "targetMessage": "G01_FEE_BUCKET_INCREASE",
+      "targetOperator": "strictEqual",
+      "actualDecimal": "301",
+      "expectedDecimal": "300",
+      "operations": 3,
+      "targetErrorName": "AssertionError"
+    },
+    {
+      "id": "S06",
+      "title": "Consistently encoded integer feeTarget must equal 300 raw",
+      "assertionLine": 171,
+      "targetOperator": "strictEqual",
+      "actualDecimal": "0",
+      "expectedDecimal": "300",
+      "operations": 6,
+      "targetErrorName": "AssertionError"
+    }
+  ],
+  "artifacts": {
+    "always": [
+      "preflight.json",
+      "input.json",
+      "cases.json",
+      "runner-summary.json",
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json"
+    ],
+    "allPinnedSourcesRequired": true
+  },
+  "normalControls": 1,
+  "negativeCases": 5,
+  "additionalAnvilCalls": 0,
+  "automaticRetry": false,
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED"
+}
