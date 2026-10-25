@@ -1,0 +1,103 @@
+{
+  "schema": "LQC_LINUX_PAYOUT_PLAN_1",
+  "implementation": "IMPLEMENTED_TOOLS_ONLY",
+  "staticReview": "STATIC_REVIEWED",
+  "execution": "NOT_RUN",
+  "base": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f",
+  "phases": [
+    {
+      "id": "install",
+      "childTimeoutMs": 160000,
+      "workflowMinutes": 3
+    },
+    {
+      "id": "compile",
+      "childTimeoutMs": 570000,
+      "workflowMinutes": 10
+    },
+    {
+      "id": "hash",
+      "childTimeoutMs": null,
+      "workflowMinutes": 1
+    },
+    {
+      "id": "gate",
+      "childTimeoutMs": 40000,
+      "workflowMinutes": 1
+    },
+    {
+      "id": "payout",
+      "childTimeoutMs": 2070000,
+      "workflowMinutes": 35
+    }
+  ],
+  "approvedBuildHashes": {
+    "build/compiler-input.json": "7f3944814e527bb5580895d4b4edb35c7ce5f31b055694f4fd9efb2f3e3b330a",
+    "build/compiler-output.json": "9a22c6a7b27d269c6e6338e43ff7a761ad7c129383ad13f344a495a5a7a34a1a",
+    "build/manifest.json": "1a4481e47eacc2dd1747ce26629d11b7a9bb5d82d72174585c2cd03927a300ea"
+  },
+  "dependencyVersions": {
+    "solc": "0.8.30",
+    "ethers": "6.17.0",
+    "mocha": "12.0.2",
+    "@foundry-rs/anvil": "1.7.1",
+    "serialize-javascript": "7.1.2"
+  },
+  "soljsonSHA256": "3bb491a777f76dff9b2fe73ce29ca20e21a971b59a2f2cf8f73415424f00be06",
+  "expectedIds": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "P07",
+    "P08",
+    "P09",
+    "P10"
+  ],
+  "expectedTitles": [
+    "LONG Funding protected receipt [P01] receives Funding 20 into protected Partial custody without user withdrawal",
+    "LONG Funding protected receipt [P02] rejects a different owner at PayoutExecutor Pending atomically",
+    "LONG Funding protected receipt [P03] rejects a forged preparation at PayoutExecutor Pending atomically",
+    "LONG Funding protected receipt [P04] rejects initial payment Sequence two at Funding Insufficient atomically",
+    "LONG Funding protected receipt [P05] rejects duplicate Sequence one between two legitimate 10 raw receipts atomically",
+    "LONG Funding protected receipt [P06] rejects payment above the 20 raw ceiling at Funding Insufficient atomically",
+    "LONG Funding protected receipt [P07] rejects unprepared creditor readiness at PayoutExecutor Pending atomically",
+    "LONG Funding protected receipt [P08] rejects direct Funding payment at the partial caller Forbidden guard",
+    "LONG Funding protected receipt [P09] rolls taxed token payment back at Funding TransferFailed atomically",
+    "LONG Funding protected receipt [P10] rejects reused source specification at PayoutExecutor Duplicate atomically"
+  ],
+  "budgets": {
+    "checkoutMinutes": 2,
+    "nodeSetupMinutes": 2,
+    "collectionMinutes": 3,
+    "uploadMinutes": 5,
+    "jobMinutes": 70,
+    "phaseStepsTotalMinutes": 62,
+    "case": {
+      "workMs": 120000,
+      "terminationMs": 5000,
+      "evidenceMs": 15000,
+      "cleanupMs": 5000,
+      "terminalMs": 5000,
+      "mochaMs": 180000
+    },
+    "mochaChildMs": 2000000,
+    "outerPayoutChildMs": 2070000
+  },
+  "results": {
+    "orchestration": "results/linux-payout-once",
+    "payout": "results/long-payout",
+    "stage": "results/linux-payout-artifact"
+  },
+  "retentionDays": 14,
+  "automaticRetry": false,
+  "automaticPinUpdate": false,
+  "normalization": false,
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED",
+  "workflowIntegration": "BLOCKED_EXISTING_FULL_WORKFLOW_PIN"
+}

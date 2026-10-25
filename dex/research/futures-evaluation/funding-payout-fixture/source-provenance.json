@@ -1,0 +1,208 @@
+{
+  "base": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f",
+  "copied": [
+    {
+      "path": "fixtures/local/contracts/futures/ILQCFuturesOracle.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/ILQCFuturesOracle.sol",
+      "sha256": "0cd57c281cdb344b47ea90cde470af3d664d0f18510a29de368c6946f68e351e",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesAttribution.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesAttribution.sol",
+      "sha256": "62d694155a4fa9c63bcec001895550bbf71779990e6f54f4a4bd58e2b1ddb247",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesCore.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesCore.sol",
+      "sha256": "dd7ec515694f4d463e13076728322e5254163c7a50bf0413bdb982f2fe00b458",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesExposureLedger.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesExposureLedger.sol",
+      "sha256": "bf1711ccd3313bb91ac0799b9d2db67db68ad53429a3aad28d042f81283c397f",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesFunding.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesFunding.sol",
+      "sha256": "1dea8a357bd0776a9f5a81357a1aaaa77a48698c29ed64ab22351d69ded28d68",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesFundingStudyCalculation.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesFundingStudyCalculation.sol",
+      "sha256": "ea10770d7ad7f3f7797706b8c5e17f055d9dec2583e864c7daf364af71ec905c",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesFundingV11.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesFundingV11.sol",
+      "sha256": "33adc930f297cd9a6e3e8374cb2c39cb039eb9af7dbd7983d19e519fb3c9804f",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesLinkedExposureVerifier.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesLinkedExposureVerifier.sol",
+      "sha256": "2d35877dfd86524e886e09462b3ac158387465e22acda9016b24e5b2220e561c",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialSettlement.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialSettlement.sol",
+      "sha256": "a4353843dd43a0c38f3442f733d7058fcb392de9b3607b4401eb788ce0e44c57",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialStudyLedger.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialStudyLedger.sol",
+      "sha256": "14c899c107432a504ebe37d34e7f272fa1d7972680c2a14848b1d811958e300c",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialV11.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesPartialV11.sol",
+      "sha256": "6abd93ac27d8283314fa960b5f0674b5489f271ac6732d609de0b07369d2dede",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesPayoutExecutor.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesPayoutExecutor.sol",
+      "sha256": "c316d6bb9eb6c0feea677735a23436eccf090e851e02da32be96045cef15d2f4",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesPayoutSpecification.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesPayoutSpecification.sol",
+      "sha256": "32aa726d41d1d3ad50acf9fbb621f840be237e48d44fef658bbd761a86f9f9fc",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesReleaseVerifier.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesReleaseVerifier.sol",
+      "sha256": "3284aeb991a51471f14ad0f7ad134dd12e175e195db3ea55951bf210fae3f071",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesSettlementCompletionVerifier.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesSettlementCompletionVerifier.sol",
+      "sha256": "6e817068ba2b8cd33fe08af6ce5686e915a3a8682c2822816f1075d5fc50ea3a",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesSettlementCoordinator.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesSettlementCoordinator.sol",
+      "sha256": "08b1c67d7fa6210ae8ed26853665269173d9b29541ee54690972bd3d2e760c28",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesWithdrawalVerifier.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesWithdrawalVerifier.sol",
+      "sha256": "e305ca8ad18bf0cfcff8e4e611d688fb18316a9a1eabee9fa8366bbcc17302e4",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/SettlementMath.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/SettlementMath.sol",
+      "sha256": "c27913649293c1ee5e8c29c320bfee571926dd7508f4c4f0e9ef692a42f5a29a",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/mocks/LocalVNextFixtures.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/mocks/LocalVNextFixtures.sol",
+      "sha256": "140b8deac792727692ba21bc0413aeac4f500b0018f6ac7fa59537fa10b56036",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "fixtures/local/contracts/futures/local-vnext/LocalFuturesCollectionExecutor.sol",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/fixtures/local/contracts/futures/local-vnext/LocalFuturesCollectionExecutor.sol",
+      "sha256": "926bd0d2ebcb0802c678b876a2f89102e92bcb4a15b3ce7d01c3f77a676c1647",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "package.json",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/package.json",
+      "sha256": "f07411f39855c75d7542a2714661de58f3e583b0544ebb8af032383926591692",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "package-lock.json",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/package-lock.json",
+      "sha256": "8685aa64ce70fdfe0e69b0c16c95e88da1c0e01e00fe8fa21509e245266ac6e0",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "build-common.cjs",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/build-common.cjs",
+      "sha256": "b52dc86aedb619fb7b18f5114f95c517bbae46f6b540092922ab3a83d1fbe739",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "compile.cjs",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/compile.cjs",
+      "sha256": "17a9bf9d6718dd885ec32fa7d8b03b9cb4610c76fcf8ff5f5eaa42127ebbb522",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "test/runtime-tools.mjs",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/test/runtime-tools.mjs",
+      "sha256": "ef37735eeb00e21490e2b9e95b36b1bfc767b400b368452f026a72465b160d6a",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "test/anvil-compat.mjs",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/test/anvil-compat.mjs",
+      "sha256": "8a88683469cb13e998ebf24721aaa04de33e2cf4d6606152955830603701775c",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "test/collection-harness.mjs",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/test/collection-harness.mjs",
+      "sha256": "758a416ffe17ad5debd4192106586736e26584bdcf81004af80debaf30e36021",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "test/positive-funding-harness.mjs",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/test/positive-funding-harness.mjs",
+      "sha256": "1b366cf3063ff25bb276fee21375b35d6a9a85f0c941cf5e5a59e65ed1fa8da7",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "test/positive-funding-expectation.mjs",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/test/positive-funding-expectation.mjs",
+      "sha256": "36ea0ec34a9b77d4964b72bd70e6ebbd12e6bf547f398647f7873639a2591b7f",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "test/positive-funding-lifetime.mjs",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/test/positive-funding-lifetime.mjs",
+      "sha256": "cc24479a8506920f1fd8e233e7c740a88925c29d72c7807757774dc41dd07aa2",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "test/failure-evidence.cjs",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/test/failure-evidence.cjs",
+      "sha256": "665be29238e14fdd8d43725465714976171fdb8aa239b74918fa899a69fe4184",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "test/evidence-reporter.cjs",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/test/evidence-reporter.cjs",
+      "sha256": "fe50fe388b8dd1d6bfa3d79760935585853d64ca77722cea4b9b5e2b6adfceaa",
+      "reuse": "BYTE_EXACT"
+    },
+    {
+      "path": "test/stored-tamper-io.cjs",
+      "origin": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f:dex/research/futures-evaluation/collection-consumption-fixture/test/stored-tamper-io.cjs",
+      "sha256": "c7de9fb4e1375c9121f38f816cb73c8b7d9256b9042bbd2deb657bbd5396a43e",
+      "reuse": "BYTE_EXACT"
+    }
+  ],
+  "buildChanges": "Only explicit outputSelection adds existing PayoutSpecification/PayoutExecutor. Solidity, compiler, optimizer, lock/dependency pins unchanged.",
+  "rights": "Hashes prove byte identity, not ownership or permission.",
+  "amount": null,
+  "authority": false,
+  "consumptionRights": "UNVERIFIED"
+}
