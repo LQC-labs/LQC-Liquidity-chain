@@ -49,6 +49,10 @@
     {
       "id": "positive-fee",
       "timeoutMs": 210000
+    },
+    {
+      "id": "fee-tamper",
+      "timeoutMs": 60000
     }
   ],
   "approvedBuildHashes": {
@@ -256,5 +260,15 @@
     "reason": "Refuse to start G01 at/after 19 minutes; 210 seconds leaves 90 seconds within unchanged 24-minute execution step",
     "queryCountPerSide": 55,
     "scope": "linked exposure research consumption only; not ordinary openPosition fee charging"
+  },
+  "positiveFeeTamper": {
+    "runner": "run-positive-fee-tamper.cjs",
+    "plan": "positive-fee-tamper-plan.json",
+    "pins": "positive-fee-tamper-pins.json",
+    "cases": 6,
+    "after": "same-run positive-fee G01 PASS only",
+    "additionalAnvilCalls": 0,
+    "historicalFallback": false,
+    "budget": "G01 starts before 19min, maximum 210s plus fee-tamper60s ends before23.5min inside unchanged24min step"
   }
 }
