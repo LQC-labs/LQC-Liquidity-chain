@@ -29,11 +29,11 @@
     "fixtures/local/contracts/futures/local-vnext/LocalFuturesWithdrawalVerifier.sol": "e305ca8ad18bf0cfcff8e4e611d688fb18316a9a1eabee9fa8366bbcc17302e4",
     "fixtures/local/contracts/futures/local-vnext/SettlementMath.sol": "c27913649293c1ee5e8c29c320bfee571926dd7508f4c4f0e9ef692a42f5a29a",
     "fixtures/local/contracts/futures/mocks/LocalVNextFixtures.sol": "140b8deac792727692ba21bc0413aeac4f500b0018f6ac7fa59537fa10b56036",
-    "linux-validation-plan.json": "ccf862c9129244d7f2464cd639fcc5ce8eae85c89d92827a11c2f420cc487ef1",
+    "linux-validation-plan.json": "01041b41ee99aa4668a0c83ea4e71c0052e8d3766cbfc11ba6b12599ed5f9eb0",
     "package-lock.json": "8685aa64ce70fdfe0e69b0c16c95e88da1c0e01e00fe8fa21509e245266ac6e0",
     "package.json": "f07411f39855c75d7542a2714661de58f3e583b0544ebb8af032383926591692",
     "run-failure-evidence-checks.cjs": "0e27286700ab21b13404005d3fb0803869938ba3b1d4a0b65afb8bd04140a857",
-    "run-linux-once.cjs": "bbc24e77d06f94e80cd1c792016832549a4db1481b84a141e6f61b362539209f",
+    "run-linux-once.cjs": "b384bf207351a18182cabe9cefb12566ed9be815886fc8244b1ecbd753e0905a",
     "run-tests.cjs": "9426c42f07d9c0e0ae53f5c171a8169c77f26e160643cf1753c9a53a84fbb2ae",
     "runtime-gate.cjs": "e5ae8aba151a0b29dd6402490968201d72f7085cbad5f3334334a4752f5d207f",
     "test-pins.cjs": "2f156d356127ba29e7bba201469a9a3c23910f0df8fcdc6b19f7b2768ce650a7",
@@ -83,7 +83,16 @@
     "test/positive-funding-tamper.mjs": "3924fd7991ce32dc547604c441dc8594a80b2a36c878e2609783abad7f4da931",
     "positive-tamper-plan.json": "450cc3cca39e17947daad6182579315b8d3854ec29193f431354b3099ade6256",
     "positive-tamper-pins.json": "c864980f7f5a334c3ba1b1cb53a2ace40fa8982ec930c11519c50fb756c6e997",
-    "POSITIVE-FUNDING-TAMPER.md": "231a094ffea7de0ba6b6d6bc0986763a3884df89149629d88008fbc2628de418"
+    "POSITIVE-FUNDING-TAMPER.md": "231a094ffea7de0ba6b6d6bc0986763a3884df89149629d88008fbc2628de418",
+    "POSITIVE-FEE.md": "07c897ee562389ce3f52400d2ab17d64143dffc20f729b7f04b4932aee36758e",
+    "run-positive-fee.cjs": "350b67ab5f0980a16dbbb41fbc322e602d1ee6c7feb3482395eca4a551e47f91",
+    "positive-fee-plan.json": "1d1b87ae1361b130bf55811bb152edc317ddfa62c848b9c07afb3032ad3dcef3",
+    "positive-fee-pins.json": "9e07df295279bad0a8e5684934c3d0c0e5647763ac164a31d71451cbe8acf824",
+    "test/positive-fee-harness.mjs": "0cb0337a7322ecc7abf6e0212d415a764e82ffb7f0cc59d0d66b151c07b533e5",
+    "test/positive-fee-expectation.mjs": "76d3867b61a4b1a9973c396fadcdad07d0033fb6c0455c2b0129e3aa3d81fa62",
+    "test/g01-artifact-state.cjs": "821247fd406b7d3939a76f9eed84e50d4d924535596b16ad2750dd564d690314",
+    "test/positive-fee.test.mjs": "a2da7c079d36107d736ccd6b52b34525c62142bf6e5c1af3466b304853fb7b94",
+    "test/verify-positive-fee.mjs": "8b8554a24d89121069484e643770ef6d371f7896516e6825834d4d278746de49"
   },
   "workflowSHA256": "7750b6decc935a7ad4dcc4257a94ecb0e1b9bf256e7450b9519543fb8643e068"
 }
