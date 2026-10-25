@@ -23,6 +23,10 @@
       "timeoutMs": 60000
     },
     {
+      "id": "f01-artifact-mock",
+      "timeoutMs": 60000
+    },
+    {
       "id": "anvil",
       "timeoutMs": 930000
     },

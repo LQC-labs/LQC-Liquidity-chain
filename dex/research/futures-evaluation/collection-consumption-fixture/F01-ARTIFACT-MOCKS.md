@@ -1,0 +1,17 @@
+# F01 artifact-state policy mocks
+
+IMPLEMENTED / STATIC_REVIEWED / NOT_RUN. The collector and the mock child both import test/f01-artifact-state.cjs. The policy accepts instance-local exists/readBytes functions only. The collector adapter still reads through checkedFile and stages through its existing lstat/realpath guards; memory mocks do not certify those filesystem defenses. No provider, Anvil, compiler, global fs/timer replacement or FundingLifetime race check is added.
+
+29 unique scenarios: A01 normal; A02 setup failure; A03 started observation failure; A04 unverified observation; A05 failed verification; A06 successful observation/verification then cleanup failure; A07 uncalled phase; A08 uncalled child; A09-A14 independent required-file deletions; A15-A18 independent malformed JSON/journal inputs; A19 partial/terminal conflict; A20 Mocha conflict; A21 missing initial no-call proof; A22 unexpected validation artifact; A23 validation hash; A24 one stage field across three representations; A25 duplicate Mocha title; A26 instance read error cause identity; A27 missing case terminal.
+
+Each negative uses its own copied memory map. A valid positive control must first satisfy a separately declared required-file list and expected states. Mutation paths are checked before policy evaluation; original bytes and summary are compared and replayed afterward. Exact Error class/code/message and pinned target source line are required, so preparation/parsing errors elsewhere cannot count as the intended rejection. Required lists are declared in the suite, not copied from policy results. Typed graph references and exact BigInt representations remain intact when editing raw JSON. The synthetic minimal records exercise artifact-state consistency, not economic or stored-consumption arithmetic.
+
+The shared function retains previous decision checks and explicit requirements, and returns UNKNOWN for every failed judgment. Required-file absence is checked inside the function as well as by collector staging. Original read/parse causes, primary judgment and additional missing-evidence errors are retained. Child test failures and evidence-write failures are separate; stdout/stderr/exit are independently recorded and no retry occurs.
+
+Linux order: compile -> full byte hashes -> gate -> error mocks6 -> session mocks8 -> artifact-state mocks29 -> Anvil17 -> tamper9 -> positive Funding F01. Mock child45s/phase60s. Prior phase limits and the F01 start-before19min guard remain; insufficient remaining budget fails closed. Workflow/lock/build pins/Solidity/F01 arithmetic+54 getters+parentHash+lifetime and existing suite meanings are unchanged.
+
+Explicit source and result allowlists add plan/pin/runner/shared policy/mock source plus aggregate and per-case evidence. Missing/duplicate/unexecuted cases, nonzero exit and recording errors fail the phase and leave following phases NOT_RUN. No past PASS is reused. All actual runtime, negative rejection, collector integration and error-recording behavior remain NOT_RUN. Whole process-tree termination, RPC truth, complete ledger history and payable rights are not certified.
+
+amount=null; authority=false; consumptionLink/rightsLink=UNVERIFIED.
+
+A28 separately reaches the final required-file presence check for an unparsed setup journal. A29 independently combines a primary EIO read failure with missing setup evidence and requires the original cause identity plus a distinct secondary required-evidence error. These are artifact-state faults, not FundingLifetime races.

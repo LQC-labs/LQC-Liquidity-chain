@@ -1,0 +1,13 @@
+{
+  "schema": "LQC_F01_ARTIFACT_MOCK_PINS_1",
+  "review": "STATIC_REVIEWED_NOT_RUN",
+  "planSHA256": "1a8e9ca3be3d7af452b601c79f7e8a90543e7e5d90a352571e4cdb442d42ac67",
+  "sourceHashes": {
+    "run-f01-artifact-mocks.cjs": "6672a96710e16d7c1050f5dee817c013b8a6b75335e861a677e810238e1019ed",
+    "test/f01-artifact-state.cjs": "f6292ba9af28c5706485c08c677bc97c93a89481eade7033516332f2b455b40b",
+    "test/f01-artifact-mocks.cjs": "7846c73ff687d4b672f625f60f769b767cfac8084dc5dff39a6e0611f8477a69",
+    "test/failure-evidence.cjs": "665be29238e14fdd8d43725465714976171fdb8aa239b74918fa899a69fe4184",
+    "test/stored-tamper-io.cjs": "c7de9fb4e1375c9121f38f816cb73c8b7d9256b9042bbd2deb657bbd5396a43e",
+    "positive-funding-plan.json": "feba5c9e08aab16c393e29105dcddcdadadaa76e7739bf4b09d8b53c6ed73eb5"
+  }
+}
