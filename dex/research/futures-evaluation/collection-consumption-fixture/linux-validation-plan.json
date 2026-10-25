@@ -41,6 +41,10 @@
     {
       "id": "positive-funding",
       "timeoutMs": 210000
+    },
+    {
+      "id": "positive-tamper",
+      "timeoutMs": 60000
     }
   ],
   "approvedBuildHashes": {
@@ -228,5 +232,14 @@
     "before": "anvil",
     "additionalAnvilCalls": 0,
     "unexecuted": "NOT_RUN"
+  },
+  "positiveFundingTamper": {
+    "runner": "run-positive-funding-tamper.cjs",
+    "plan": "positive-tamper-plan.json",
+    "pins": "positive-tamper-pins.json",
+    "cases": 14,
+    "after": "same-run positive-funding PASS only",
+    "additionalAnvilCalls": 0,
+    "historicalFallback": false
   }
 }
