@@ -29,11 +29,11 @@
     "fixtures/local/contracts/futures/local-vnext/LocalFuturesWithdrawalVerifier.sol": "e305ca8ad18bf0cfcff8e4e611d688fb18316a9a1eabee9fa8366bbcc17302e4",
     "fixtures/local/contracts/futures/local-vnext/SettlementMath.sol": "c27913649293c1ee5e8c29c320bfee571926dd7508f4c4f0e9ef692a42f5a29a",
     "fixtures/local/contracts/futures/mocks/LocalVNextFixtures.sol": "140b8deac792727692ba21bc0413aeac4f500b0018f6ac7fa59537fa10b56036",
-    "linux-validation-plan.json": "6152bec19c10677a88f8ac4d1a507876b4d811d1ded016f20cc26022131154ca",
+    "linux-validation-plan.json": "ccf862c9129244d7f2464cd639fcc5ce8eae85c89d92827a11c2f420cc487ef1",
     "package-lock.json": "8685aa64ce70fdfe0e69b0c16c95e88da1c0e01e00fe8fa21509e245266ac6e0",
     "package.json": "f07411f39855c75d7542a2714661de58f3e583b0544ebb8af032383926591692",
     "run-failure-evidence-checks.cjs": "0e27286700ab21b13404005d3fb0803869938ba3b1d4a0b65afb8bd04140a857",
-    "run-linux-once.cjs": "eaaa8ceaa09d48afafb997cbd0af16904b7f3bf7cbaf21ab7af4b9454328151f",
+    "run-linux-once.cjs": "bbc24e77d06f94e80cd1c792016832549a4db1481b84a141e6f61b362539209f",
     "run-tests.cjs": "9426c42f07d9c0e0ae53f5c171a8169c77f26e160643cf1753c9a53a84fbb2ae",
     "runtime-gate.cjs": "e5ae8aba151a0b29dd6402490968201d72f7085cbad5f3334334a4752f5d207f",
     "test-pins.cjs": "2f156d356127ba29e7bba201469a9a3c23910f0df8fcdc6b19f7b2768ce650a7",
@@ -78,7 +78,12 @@
     "test/funding-lifetime-mocks.mjs": "386c13fef3900e0b36448de289d014f3b0f248bc35fc48b7e2162b3eb237f2e0",
     "funding-lifetime-pins.json": "8911028557e440577fd03df4d70ad99eeb8e2cbf447302f1679d63435c74dc93",
     "funding-lifetime-plan.json": "6c48a18657edeaab5696c6160cdb7243be093098af4f9cd8936c85c3ab33e929",
-    "FUNDING-LIFETIME-MOCKS.md": "03e4f8ec5a6c073f519943d71406e1af00be5f0fe0511b9db96b2a18d48f1db8"
+    "FUNDING-LIFETIME-MOCKS.md": "03e4f8ec5a6c073f519943d71406e1af00be5f0fe0511b9db96b2a18d48f1db8",
+    "run-positive-funding-tamper.cjs": "d55b32a10ee95000bb66cc69eb8c0b44687cf99a4792d12a4e595b02b2927cea",
+    "test/positive-funding-tamper.mjs": "3924fd7991ce32dc547604c441dc8594a80b2a36c878e2609783abad7f4da931",
+    "positive-tamper-plan.json": "450cc3cca39e17947daad6182579315b8d3854ec29193f431354b3099ade6256",
+    "positive-tamper-pins.json": "c864980f7f5a334c3ba1b1cb53a2ace40fa8982ec930c11519c50fb756c6e997",
+    "POSITIVE-FUNDING-TAMPER.md": "231a094ffea7de0ba6b6d6bc0986763a3884df89149629d88008fbc2628de418"
   },
   "workflowSHA256": "7750b6decc935a7ad4dcc4257a94ecb0e1b9bf256e7450b9519543fb8643e068"
 }

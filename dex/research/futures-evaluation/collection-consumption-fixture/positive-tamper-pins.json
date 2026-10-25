@@ -1,0 +1,18 @@
+{
+  "schema": "LQC_POSITIVE_TAMPER_PINS_1",
+  "planSHA256": "450cc3cca39e17947daad6182579315b8d3854ec29193f431354b3099ade6256",
+  "sourceHashes": {
+    "run-positive-funding-tamper.cjs": "d55b32a10ee95000bb66cc69eb8c0b44687cf99a4792d12a4e595b02b2927cea",
+    "test/positive-funding-tamper.mjs": "3924fd7991ce32dc547604c441dc8594a80b2a36c878e2609783abad7f4da931",
+    "test/verify-positive-funding.mjs": "c8330a75dc67cbc938c046b3afb519bdea66a579e3728006902dd5f0373351a7",
+    "test/positive-funding-expectation.mjs": "36ea0ec34a9b77d4964b72bd70e6ebbd12e6bf547f398647f7873639a2591b7f",
+    "test/stored-tamper-io.cjs": "c7de9fb4e1375c9121f38f816cb73c8b7d9256b9042bbd2deb657bbd5396a43e",
+    "test/failure-evidence.cjs": "665be29238e14fdd8d43725465714976171fdb8aa239b74918fa899a69fe4184",
+    "normal-evidence-abi.json": "ecfc8e576031d146b482cc1f7a7bd0c7bd83cf71a7fe2e63cdcf91465d121bf0",
+    "positive-funding-plan.json": "feba5c9e08aab16c393e29105dcddcdadadaa76e7739bf4b09d8b53c6ed73eb5",
+    "package.json": "f07411f39855c75d7542a2714661de58f3e583b0544ebb8af032383926591692",
+    "package-lock.json": "8685aa64ce70fdfe0e69b0c16c95e88da1c0e01e00fe8fa21509e245266ac6e0"
+  },
+  "automaticPinUpdate": false,
+  "buildPinChange": false
+}
