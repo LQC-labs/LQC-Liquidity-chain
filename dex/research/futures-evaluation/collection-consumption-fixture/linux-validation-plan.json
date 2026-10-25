@@ -29,6 +29,10 @@
     {
       "id": "stored-tamper",
       "timeoutMs": 60000
+    },
+    {
+      "id": "positive-funding",
+      "timeoutMs": 210000
     }
   ],
   "approvedBuildHashes": {
@@ -198,5 +202,13 @@
       "errorMocks": 6,
       "storedTamper": 9
     }
+  },
+  "positiveFunding": {
+    "caseIds": [
+      "F01"
+    ],
+    "resultRoot": "results/positive-funding",
+    "startBeforeElapsedMs": 1140000,
+    "reason": "Start before 19 minutes; 210-second phase ends before 22.5 minutes, leaving 90 seconds within the unchanged 24-minute step"
   }
 }
