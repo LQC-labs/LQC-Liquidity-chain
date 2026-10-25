@@ -8,6 +8,12 @@ const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
 const read=f=>JSON.parse(fs.readFileSync(path.join(root,f)));
 const save=(f,v)=>writeOutput(f,JSON.stringify(v,null,2)+'\n');
 const describe=e=>({message:e.message,stack:e.stack,code:e.code??null,cause:e.cause?describe(e.cause):null});
+// Accept only safe integer numbers or canonical tagged BigInt assertion values.
+function storedAssertionDecimal(value){
+ if(typeof value==='number'){assert(Number.isSafeInteger(value),'ASSERTION_NUMBER_NOT_SAFE_INTEGER');return String(value);}
+ assert(value&&value.$type==='bigint'&&typeof value.decimal==='string'&&value.decimal!=='-0'&&/^-?(0|[1-9]\d*)$/.test(value.decimal),'ASSERTION_DECIMAL_TYPE');
+ return value.decimal;
+}
 let outputPathFailure;
 const blockedOutputFiles=new Map();
 function outputDirectory(relative,create=false,exclusive=false){
@@ -373,7 +379,7 @@ function collect(){
     if(repeatedTamperPhase.state==='PASS'){
      assert.equal(runner.state,'PASS');assert.equal(runner.calls,1);assert.equal(runner.exitCode,0);assert.deepEqual(runner.recordingErrors,[]);for(const key of ['required','actual','unique'])assert.deepEqual(runner[key],ids);
      assert.equal(report.state,'PASS');assert.deepEqual(report.actual,ids);assert.deepEqual(report.notRun,[]);assert.equal(report.originalReplay,'PASS');assert.deepEqual(report.finalInputIntegrity,{first:'UNCHANGED',second:'UNCHANGED',abi:'UNCHANGED'});
-     for(const spec of repeatedTamperPlan.cases){const item=report.cases.find(x=>x.id===spec.id);assert.equal(item.title,spec.title);assert.equal(item.state,'PASS');assert.equal(item.preparation,'READY');if(spec.id!=='V01'){assert.equal(item.observed.code,'ERR_ASSERTION');if(spec.id!=='V03')assert.equal(item.individualSteps,'PASS');if(spec.targetOperand)for(const k of ['actual','expected'])assert.equal(item.observed[k],item.targetOperands[k+'Hex']);assert.equal(item.observed.assertionLocation,'verify-repeated-consumption.mjs:'+spec.assertionLine+':');if(spec.targetMessage)assert.equal(item.observed.message.split('\n')[0],spec.targetMessage);if(spec.targetOperator)assert.equal(item.observed.operator,spec.targetOperator);if(spec.actualDecimal)assert.equal(item.observed.actual?.decimal,spec.actualDecimal);if(spec.expectedDecimal)assert.equal(item.observed.expected?.decimal,spec.expectedDecimal);}}
+     for(const spec of repeatedTamperPlan.cases){const item=report.cases.find(x=>x.id===spec.id);assert.equal(item.title,spec.title);assert.equal(item.state,'PASS');assert.equal(item.preparation,'READY');if(spec.id!=='V01'){assert.equal(item.observed.code,'ERR_ASSERTION');if(spec.id!=='V03')assert.equal(item.individualSteps,'PASS');if(spec.targetOperand)for(const k of ['actual','expected'])assert.equal(item.observed[k],item.targetOperands[k+'Hex']);assert.equal(item.observed.assertionLocation,'verify-repeated-consumption.mjs:'+spec.assertionLine+':');if(spec.targetMessage)assert.equal(item.observed.message.split('\n')[0],spec.targetMessage);if(spec.targetOperator)assert.equal(item.observed.operator,spec.targetOperator);if(spec.actualDecimal)assert.equal(storedAssertionDecimal(item.observed.actual),spec.actualDecimal);if(spec.expectedDecimal)assert.equal(storedAssertionDecimal(item.observed.expected),spec.expectedDecimal);}}
      need(repeatedTamperPlan.cases.flatMap(x=>[repeatedTamperPrefix+x.id+'.json',...(x.id==='V01'?[]:[repeatedTamperPrefix+x.id+'.mutation.json'])]));
     }
     executionStates.repeatedTamper=repeatedTamperPhase.state;
