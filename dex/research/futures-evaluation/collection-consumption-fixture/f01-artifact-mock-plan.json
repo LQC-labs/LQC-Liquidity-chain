@@ -1,0 +1,537 @@
+{
+  "schema": "LQC_F01_ARTIFACT_MOCK_PLAN_1",
+  "implementation": "IMPLEMENTED",
+  "staticReview": "STATIC_REVIEWED",
+  "execution": "NOT_RUN",
+  "target": "test/f01-artifact-state.cjs#assessF01Artifacts",
+  "cases": [
+    {
+      "id": "A01",
+      "title": "normal observation validation and completion",
+      "kind": "normal"
+    },
+    {
+      "id": "A02",
+      "title": "setup failure proves observation not run",
+      "kind": "setup"
+    },
+    {
+      "id": "A03",
+      "title": "started observation failure requires partial terminal and failure evidence",
+      "kind": "started-fail"
+    },
+    {
+      "id": "A04",
+      "title": "observed data without verification requires no success validation",
+      "kind": "observed-notrun"
+    },
+    {
+      "id": "A05",
+      "title": "verification failure requires no success validation",
+      "kind": "observed-fail"
+    },
+    {
+      "id": "A06",
+      "title": "cleanup failure retains successful observation and verification",
+      "kind": "cleanup"
+    },
+    {
+      "id": "A07",
+      "title": "uncalled phase requires matching initial state and no output",
+      "kind": "notrun"
+    },
+    {
+      "id": "A08",
+      "title": "preflight failure proves child not run without case evidence",
+      "kind": "preflight"
+    },
+    {
+      "id": "A09",
+      "title": "missing positive-started.json fails collection",
+      "kind": "normal",
+      "mutation": "missing",
+      "file": "positive-started.json",
+      "paths": [
+        "results/positive-funding/positive-started.json"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_REQUIRED_MISSING",
+        "message": "F01_REQUIRED_MISSING: results/positive-funding/positive-started.json",
+        "line": 10
+      }
+    },
+    {
+      "id": "A10",
+      "title": "missing positive-queries.jsonl fails collection",
+      "kind": "normal",
+      "mutation": "missing",
+      "file": "positive-queries.jsonl",
+      "paths": [
+        "results/positive-funding/positive-queries.jsonl"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_JOURNAL_INVALID",
+        "message": "F01_JOURNAL_INVALID: results/positive-funding/positive-queries.jsonl",
+        "line": 67
+      }
+    },
+    {
+      "id": "A11",
+      "title": "missing case-partial.json fails collection",
+      "kind": "normal",
+      "mutation": "missing",
+      "file": "case-partial.json",
+      "paths": [
+        "results/positive-funding/case-partial.json"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_REQUIRED_MISSING",
+        "message": "F01_REQUIRED_MISSING: results/positive-funding/case-partial.json",
+        "line": 10
+      }
+    },
+    {
+      "id": "A12",
+      "title": "missing positive-state.json fails collection",
+      "kind": "normal",
+      "mutation": "missing",
+      "file": "positive-state.json",
+      "paths": [
+        "results/positive-funding/positive-state.json"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_REQUIRED_MISSING",
+        "message": "F01_REQUIRED_MISSING: results/positive-funding/positive-state.json",
+        "line": 10
+      }
+    },
+    {
+      "id": "A13",
+      "title": "missing positive-failure.json fails collection",
+      "kind": "started-fail",
+      "mutation": "missing",
+      "file": "positive-failure.json",
+      "paths": [
+        "results/positive-funding/positive-failure.json"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_REQUIRED_MISSING",
+        "message": "F01_REQUIRED_MISSING: results/positive-funding/positive-failure.json",
+        "line": 10
+      }
+    },
+    {
+      "id": "A14",
+      "title": "missing positive-validation.json fails collection",
+      "kind": "cleanup",
+      "mutation": "missing",
+      "file": "positive-validation.json",
+      "paths": [
+        "results/positive-funding/positive-validation.json"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_REQUIRED_MISSING",
+        "message": "F01_REQUIRED_MISSING: results/positive-funding/positive-validation.json",
+        "line": 10
+      }
+    },
+    {
+      "id": "A15",
+      "title": "malformed case-state.json fails at artifact parser",
+      "kind": "normal",
+      "mutation": "json",
+      "file": "case-state.json",
+      "paths": [
+        "results/positive-funding/case-state.json"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_JSON_INVALID",
+        "message": "F01_JSON_INVALID: results/positive-funding/case-state.json",
+        "line": 11
+      },
+      "requiredWithoutValidation": true
+    },
+    {
+      "id": "A16",
+      "title": "malformed positive-state.json fails at artifact parser",
+      "kind": "normal",
+      "mutation": "json",
+      "file": "positive-state.json",
+      "paths": [
+        "results/positive-funding/positive-state.json"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_JSON_INVALID",
+        "message": "F01_JSON_INVALID: results/positive-funding/positive-state.json",
+        "line": 11
+      }
+    },
+    {
+      "id": "A17",
+      "title": "malformed journal fails at journal parser",
+      "kind": "normal",
+      "mutation": "journal",
+      "file": "positive-queries.jsonl",
+      "paths": [
+        "results/positive-funding/positive-queries.jsonl"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_JOURNAL_INVALID",
+        "message": "F01_JOURNAL_INVALID: results/positive-funding/positive-queries.jsonl",
+        "line": 67
+      }
+    },
+    {
+      "id": "A18",
+      "title": "malformed positive-validation.json fails at artifact parser",
+      "kind": "normal",
+      "mutation": "json",
+      "file": "positive-validation.json",
+      "paths": [
+        "results/positive-funding/positive-validation.json"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_JSON_INVALID",
+        "message": "F01_JSON_INVALID: results/positive-funding/positive-validation.json",
+        "line": 11
+      }
+    },
+    {
+      "id": "A19",
+      "title": "partial and terminal observation conflict is rejected",
+      "kind": "normal",
+      "mutation": "partial-conflict",
+      "file": "case-partial.json",
+      "paths": [
+        "results/positive-funding/case-partial.json"
+      ],
+      "target": {
+        "type": "AssertionError",
+        "code": "ERR_ASSERTION",
+        "message": "POSITIVE_PARTIAL_TERMINAL_CONFLICT",
+        "line": 50
+      }
+    },
+    {
+      "id": "A20",
+      "title": "Mocha and case terminal conflict is rejected",
+      "kind": "normal",
+      "mutation": "mocha-conflict",
+      "file": "mocha.json",
+      "paths": [
+        "results/positive-funding/mocha.json"
+      ],
+      "target": {
+        "type": "AssertionError",
+        "code": "ERR_ASSERTION",
+        "message": "POSITIVE_MOCHA_TERMINAL_CONFLICT",
+        "line": 56
+      },
+      "logicalPaths": [
+        "mocha.json#/passes",
+        "mocha.json#/failures",
+        "mocha.json#/stats/passes",
+        "mocha.json#/stats/failures"
+      ]
+    },
+    {
+      "id": "A21",
+      "title": "missing initial record cannot prove phase not run",
+      "kind": "notrun",
+      "mutation": "missing",
+      "file": "initial.json",
+      "paths": [
+        "results/linux-once/initial.json"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_REQUIRED_MISSING",
+        "message": "F01_REQUIRED_MISSING: results/linux-once/initial.json",
+        "line": 10
+      }
+    },
+    {
+      "id": "A22",
+      "title": "failed verification rejects an unexpected success artifact",
+      "kind": "observed-fail",
+      "mutation": "unexpected-validation",
+      "file": "positive-validation.json",
+      "paths": [
+        "results/positive-funding/positive-validation.json"
+      ],
+      "target": {
+        "type": "AssertionError",
+        "code": "ERR_ASSERTION",
+        "message": "POSITIVE_UNCONFIRMED_VALIDATION_ARTIFACT",
+        "line": 70
+      }
+    },
+    {
+      "id": "A23",
+      "title": "validation hash must match preserved observation bytes",
+      "kind": "normal",
+      "mutation": "hash",
+      "file": "positive-validation.json",
+      "paths": [
+        "results/positive-funding/positive-validation.json"
+      ],
+      "target": {
+        "type": "AssertionError",
+        "code": "ERR_ASSERTION",
+        "message": "POSITIVE_VALIDATION_BYTES_CONFLICT",
+        "line": 69
+      }
+    },
+    {
+      "id": "A24",
+      "title": "invalid observation stage across all representations is rejected",
+      "kind": "normal",
+      "mutation": "stage",
+      "file": "case-state.json",
+      "paths": [
+        "results/positive-funding/case-state.json",
+        "results/positive-funding/case-partial.json",
+        "results/positive-funding/positive-state.json"
+      ],
+      "target": {
+        "type": "AssertionError",
+        "code": "ERR_ASSERTION",
+        "message": "The expression evaluated to a falsy value",
+        "line": 60
+      },
+      "logicalPaths": [
+        "case-state.json#/observation/stage",
+        "case-partial.json#/properties/observation/properties/stage",
+        "positive-state.json#/observation/stage"
+      ]
+    },
+    {
+      "id": "A25",
+      "title": "duplicate Mocha title cannot satisfy one F01 result",
+      "kind": "normal",
+      "mutation": "duplicate",
+      "file": "mocha.json",
+      "paths": [
+        "results/positive-funding/mocha.json"
+      ],
+      "target": {
+        "type": "AssertionError",
+        "code": "ERR_ASSERTION",
+        "message": "POSITIVE_MOCHA_TEST_LIST",
+        "line": 53
+      },
+      "logicalPaths": [
+        "mocha.json#/tests/1",
+        "mocha.json#/stats/tests"
+      ]
+    },
+    {
+      "id": "A26",
+      "title": "instance read error retains its original cause identity",
+      "kind": "normal",
+      "mutation": "read-error",
+      "file": "positive-state.json",
+      "paths": [
+        "io.readErrors/results/positive-funding/positive-state.json"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_READ_FAILED",
+        "message": "F01_READ_FAILED: results/positive-funding/positive-state.json",
+        "line": 10
+      }
+    },
+    {
+      "id": "A27",
+      "title": "missing case-state.json fails collection",
+      "kind": "normal",
+      "mutation": "missing",
+      "file": "case-state.json",
+      "paths": [
+        "results/positive-funding/case-state.json"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_REQUIRED_MISSING",
+        "message": "F01_REQUIRED_MISSING: results/positive-funding/case-state.json",
+        "line": 10
+      },
+      "requiredWithoutValidation": true
+    },
+    {
+      "id": "A28",
+      "title": "missing unparsed setup journal fails the required evidence loop",
+      "kind": "normal",
+      "mutation": "missing",
+      "file": "setup.jsonl",
+      "paths": [
+        "results/positive-funding/setup.jsonl"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_REQUIRED_MISSING",
+        "message": "F01_REQUIRED_MISSING: results/positive-funding/setup.jsonl",
+        "line": 98
+      }
+    },
+    {
+      "id": "A29",
+      "title": "primary read error and secondary missing evidence are both preserved",
+      "kind": "normal",
+      "mutation": "read-error-and-missing",
+      "file": "positive-state.json",
+      "paths": [
+        "io.readErrors/results/positive-funding/positive-state.json",
+        "results/positive-funding/setup.jsonl"
+      ],
+      "logicalPaths": [
+        "io.readErrors/results/positive-funding/positive-state.json",
+        "results/positive-funding/setup.jsonl (absent)"
+      ],
+      "target": {
+        "type": "F01ArtifactError",
+        "code": "F01_READ_FAILED",
+        "message": "F01_READ_FAILED: results/positive-funding/positive-state.json",
+        "line": 10
+      }
+    }
+  ],
+  "childTimeoutMs": 45000,
+  "phaseTimeoutMs": 60000,
+  "automaticRetry": false,
+  "fixturePlan": {
+    "schema": "LQC_POSITIVE_FUNDING_PLAN_1",
+    "implementationState": "IMPLEMENTED",
+    "staticReviewState": "STATIC_REVIEWED",
+    "executionState": "NOT_RUN",
+    "chainId": 31337,
+    "node": "22.23.3",
+    "childTimeoutMs": 200000,
+    "phaseTimeoutMs": 210000,
+    "automaticRetry": false,
+    "cases": [
+      {
+        "id": "F01",
+        "fullTitle": "Positive Funding collection [F01] collects SHORT PnL 600000 and Funding 20 with a fixed two-account epoch",
+        "targets": [
+          "ordinary deployment/runtime/reverse bindings",
+          "exact origin+10 and origin+50 timestamps for both accounts",
+          "exposure sequences 1 to 2",
+          "LE 40e18 SE 120e18 matched 40e18",
+          "done=participants=2; materialized integrals equal",
+          "both checkpoint/member/Attribution fixed",
+          "independent rational Funding USD18=20000000000000/1; debt/claim=20/1 raw",
+          "SHORT plan/seal/budget/integer only; no LONG payment or withdrawal",
+          "one owner execute sequence 1",
+          "pnl600000 funding20 fee0; aggregate600020",
+          "Held -600020; LP +600000",
+          "Partial balance/cash/accounted -20; Funding balance/collected/cash/custody +20",
+          "Collected.amount20 is Funding only",
+          "balances/LP shares/allowances/LONG state unchanged; authorizations zero",
+          "fixed block raw query/canonical ABI/saved-value comparison",
+          "saved-data arithmetic plus transaction/Receipt/log/key linkage",
+          "partial evidence; original/recording/cleanup errors retained"
+        ]
+      }
+    ],
+    "artifacts": {
+      "always": [
+        "preflight.json",
+        "stdout.log",
+        "stderr.log",
+        "exit-code.json",
+        "runner-summary.json"
+      ],
+      "attempted": [
+        "case-started.json",
+        "setup.jsonl",
+        "case-state.json",
+        "mocha.json",
+        "case-partial.json"
+      ],
+      "success": [
+        "positive-started.json",
+        "positive-queries.jsonl",
+        "positive-funding.json",
+        "positive-validation.json",
+        "positive-state.json",
+        "case-state.json",
+        "mocha.json"
+      ],
+      "failure": [
+        "case-failure.json"
+      ],
+      "optional": [],
+      "observationAttempted": [
+        "positive-started.json",
+        "positive-queries.jsonl",
+        "positive-funding.json",
+        "positive-state.json"
+      ],
+      "validationPassed": [
+        "positive-validation.json"
+      ],
+      "observationFailed": [
+        "positive-failure.json"
+      ]
+    },
+    "scope": "one separate local research scenario; no payable rights, dedicated consumption Receipt, terminal or complete ledger claim",
+    "amount": null,
+    "authority": false,
+    "consumptionLink": "UNVERIFIED",
+    "rightsLink": "UNVERIFIED",
+    "budgets": {
+      "scope": "F01 begins before setup",
+      "workMs": 120000,
+      "actualTerminationConfirmationMs": 5000,
+      "partialEvidenceMs": 15000,
+      "cleanupMs": 5000,
+      "terminalEvidenceMs": 5000,
+      "cooperativeTotalMs": 150000,
+      "mochaMs": 180000,
+      "childMs": 200000,
+      "linuxPhaseMs": 210000,
+      "sharedSessionDefaultsUnchanged": {
+        "workMs": 100000,
+        "writeMs": 140000,
+        "terminationMs": 5000
+      }
+    },
+    "artifactStates": {
+      "readInitial": "UNKNOWN",
+      "setupFailure": "Require attempted+failure records; valid matching terminal/partial/Mocha records must prove started=false; reject observation files",
+      "observationStarted": "started=true set before first file creation; require observationAttempted even on creation/write failure",
+      "observationFailure": "Require observationFailed in addition to attempted and observationAttempted; require case-failure when overall F01 fails",
+      "verificationNotRunOrFailed": "Do not demand a success validation artifact; reject an unexpected positive-validation.json",
+      "verificationPassed": "Require and parse positive-validation.json; state PASS and SHA-256 must match positive-funding.json even if cleanup fails",
+      "cleanupFailureAfterObservationSuccess": "Keep all observationAttempted and validationPassed evidence; overall case FAIL does not downgrade observation to NOT_RUN",
+      "unreadableOrConflicting": "UNKNOWN plus collection failure; missing/invalid records do not prove NOT_RUN",
+      "scope": "Evidence-state metadata only; no change to arithmetic/getters/lifetime or test counts"
+    }
+  },
+  "artifacts": {
+    "always": [
+      "preflight.json",
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json",
+      "runner-summary.json",
+      "cases.json"
+    ]
+  },
+  "scope": "Per-instance memory artifact policy only; no provider, chain, filesystem substitution or lifetime race tests",
+  "amount": null,
+  "authority": false,
+  "consumptionLink": "UNVERIFIED",
+  "rightsLink": "UNVERIFIED"
+}
