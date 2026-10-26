@@ -1,0 +1,12 @@
+const fs=require('node:fs'),path=require('node:path'),{sha,requirements,tools,makeInput}=require('./build-common.cjs');
+const root=__dirname,{req}=requirements(root),{solc}=tools(root,req),input=makeInput(root,req),dir=path.join(root,'build');
+if(fs.existsSync(dir))throw Error('BUILD_DIRECTORY_EXISTS');fs.mkdirSync(dir);
+const inputBytes=Buffer.from(JSON.stringify(input));fs.writeFileSync(path.join(dir,'compiler-input.json'),inputBytes,{flag:'wx'});
+const began=performance.now(),outputBytes=Buffer.from(solc.compile(inputBytes.toString())),output=JSON.parse(outputBytes);
+fs.writeFileSync(path.join(dir,'compiler-output.json'),outputBytes,{flag:'wx'});
+const errors=(output.errors??[]).filter(e=>e.severity==='error');
+const manifest={schema:'LQC_LOCAL_REPRODUCIBLE_BUILD_1',compiler:req.compiler,requirementsSHA256:sha(fs.readFileSync(path.join(root,'build-requirements.json'))),inputSHA256:sha(inputBytes),outputSHA256:sha(outputBytes),sourceHashes:req.sources,settings:req.settings};
+fs.writeFileSync(path.join(dir,'manifest.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx'});
+const result={elapsedMs:performance.now()-began,compiler:req.compiler.version,inputSHA256:manifest.inputSHA256,outputSHA256:manifest.outputSHA256,errors};
+fs.mkdirSync(path.join(root,'results'),{recursive:true});fs.writeFileSync(path.join(root,'results','compile-result-'+Date.now()+'.json'),JSON.stringify(result,null,2),{flag:'wx'});
+if(errors.length){console.error(errors.map(e=>e.formattedMessage).join('\n'));process.exitCode=1;}else console.log(JSON.stringify({...result,errors:0,buildManifestSHA256:sha(fs.readFileSync(path.join(dir,'manifest.json')))}));

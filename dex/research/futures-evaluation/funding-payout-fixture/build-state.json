@@ -1,0 +1,11 @@
+{
+  "buildState": "REVIEWED",
+  "manifestSHA256": "1a4481e47eacc2dd1747ce26629d11b7a9bb5d82d72174585c2cd03927a300ea",
+  "execution": "NOT_RUN",
+  "meaning": "Static review of generated build bytes only; not deployment, payout success or execution compatibility approval.",
+  "compilation": "GENERATED_ONCE",
+  "staticReview": "COMPLETED",
+  "deployment": "NOT_RUN",
+  "payout": "NOT_RUN",
+  "executionCompatibility": "UNVERIFIED"
+}

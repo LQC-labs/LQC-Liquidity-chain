@@ -114,3 +114,50 @@ jobs:
           if-no-files-found: error
           include-hidden-files: false
           retention-days: 14
+
+  funding-payout-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: dex/research/futures-evaluation/funding-payout-fixture
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 2
+      - uses: actions/setup-node@v4
+        timeout-minutes: 2
+        with:
+          node-version: 22.23.3
+          cache: npm
+          cache-dependency-path: dex/research/futures-evaluation/funding-payout-fixture/package-lock.json
+      - name: Install locked payout dependencies once and preserve raw logs
+        timeout-minutes: 3
+        run: node run-linux-payout-once.cjs install
+      - name: Generate the Linux payout build exactly once
+        timeout-minutes: 10
+        run: node run-linux-payout-once.cjs compile
+      - name: Compare all three approved build files without normalization
+        timeout-minutes: 1
+        run: node run-linux-payout-once.cjs hash
+      - name: Validate the unchanged reviewed build gate
+        timeout-minutes: 1
+        run: node run-linux-payout-once.cjs gate
+      - name: Run P01-P10 once with independent payout evidence
+        timeout-minutes: 35
+        run: node run-linux-payout-once.cjs payout
+      - name: Preserve allowlisted partial evidence after success or failure
+        if: always()
+        timeout-minutes: 3
+        run: node run-linux-payout-once.cjs collect
+      - name: Upload separate payout evidence without hiding collection failure
+        if: always()
+        timeout-minutes: 5
+        uses: actions/upload-artifact@v4
+        with:
+          name: funding-payout-research-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dex/research/futures-evaluation/funding-payout-fixture/results/linux-payout-artifact/
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 14

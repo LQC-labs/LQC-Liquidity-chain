@@ -1,0 +1,252 @@
+{
+  "schema": "LQC_LONG_PROTECTED_RECEIPT_PLAN_1",
+  "base": "b98a9ff408c8f3bb4cf3fb3ae576e511faf7235f",
+  "cases": [
+    {
+      "id": "P01",
+      "title": "[P01] receives Funding 20 into protected Partial custody without user withdrawal",
+      "fullTitle": "LONG Funding protected receipt [P01] receives Funding 20 into protected Partial custody without user withdrawal",
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN",
+      "target": {
+        "kind": "NORMAL",
+        "claim": 20,
+        "protectedReceived": 20,
+        "userTokenDelta": 0
+      }
+    },
+    {
+      "id": "P02",
+      "title": "[P02] rejects a different owner at PayoutExecutor Pending atomically",
+      "fullTitle": "LONG Funding protected receipt [P02] rejects a different owner at PayoutExecutor Pending atomically",
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN",
+      "target": {
+        "contract": "LocalFuturesPayoutExecutor",
+        "function": "payoutQuote",
+        "error": "Pending",
+        "sourceLine": 130
+      }
+    },
+    {
+      "id": "P03",
+      "title": "[P03] rejects a forged preparation at PayoutExecutor Pending atomically",
+      "fullTitle": "LONG Funding protected receipt [P03] rejects a forged preparation at PayoutExecutor Pending atomically",
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN",
+      "target": {
+        "contract": "LocalFuturesPayoutExecutor",
+        "function": "payoutQuote",
+        "error": "Pending",
+        "sourceLine": 130
+      }
+    },
+    {
+      "id": "P04",
+      "title": "[P04] rejects initial payment Sequence two at Funding Insufficient atomically",
+      "fullTitle": "LONG Funding protected receipt [P04] rejects initial payment Sequence two at Funding Insufficient atomically",
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN",
+      "target": {
+        "contract": "LocalFuturesFundingV11",
+        "function": "payRepeat",
+        "error": "Insufficient",
+        "sourceLine": 104
+      }
+    },
+    {
+      "id": "P05",
+      "title": "[P05] rejects duplicate Sequence one between two legitimate 10 raw receipts atomically",
+      "fullTitle": "LONG Funding protected receipt [P05] rejects duplicate Sequence one between two legitimate 10 raw receipts atomically",
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN",
+      "target": {
+        "contract": "LocalFuturesFundingV11",
+        "function": "payRepeat",
+        "error": "Insufficient",
+        "sourceLine": 104,
+        "sequence": [
+          {
+            "sequence": 1,
+            "amount": 10,
+            "result": "NORMAL"
+          },
+          {
+            "sequence": 1,
+            "amount": 10,
+            "result": "Insufficient at Funding; account and epoch limits still permit 10"
+          },
+          {
+            "sequence": 2,
+            "amount": 10,
+            "result": "NORMAL"
+          }
+        ]
+      }
+    },
+    {
+      "id": "P06",
+      "title": "[P06] rejects payment above the 20 raw ceiling at Funding Insufficient atomically",
+      "fullTitle": "LONG Funding protected receipt [P06] rejects payment above the 20 raw ceiling at Funding Insufficient atomically",
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN",
+      "target": {
+        "contract": "LocalFuturesFundingV11",
+        "function": "payRepeat",
+        "error": "Insufficient",
+        "sourceLine": 104
+      }
+    },
+    {
+      "id": "P07",
+      "title": "[P07] rejects unprepared creditor readiness at PayoutExecutor Pending atomically",
+      "fullTitle": "LONG Funding protected receipt [P07] rejects unprepared creditor readiness at PayoutExecutor Pending atomically",
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN",
+      "target": {
+        "contract": "LocalFuturesPayoutExecutor",
+        "function": "authorizePayout",
+        "error": "Pending",
+        "sourceLine": 139
+      }
+    },
+    {
+      "id": "P08",
+      "title": "[P08] rejects direct Funding payment at the partial caller Forbidden guard",
+      "fullTitle": "LONG Funding protected receipt [P08] rejects direct Funding payment at the partial caller Forbidden guard",
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN",
+      "target": {
+        "contract": "LocalFuturesFundingV11",
+        "function": "_partialCaller",
+        "error": "Forbidden",
+        "sourceLine": 25
+      }
+    },
+    {
+      "id": "P09",
+      "title": "[P09] rolls taxed token payment back at Funding TransferFailed atomically",
+      "fullTitle": "LONG Funding protected receipt [P09] rolls taxed token payment back at Funding TransferFailed atomically",
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN",
+      "target": {
+        "contract": "LocalFuturesFundingV11",
+        "function": "payRepeat",
+        "error": "TransferFailed",
+        "sourceLine": 111
+      }
+    },
+    {
+      "id": "P10",
+      "title": "[P10] rejects reused source specification at PayoutExecutor Duplicate atomically",
+      "fullTitle": "LONG Funding protected receipt [P10] rejects reused source specification at PayoutExecutor Duplicate atomically",
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN",
+      "target": {
+        "contract": "LocalFuturesPayoutExecutor",
+        "function": "prepare",
+        "error": "Duplicate",
+        "sourceLine": 120
+      }
+    }
+  ],
+  "expectedIds": [
+    "P01",
+    "P02",
+    "P03",
+    "P04",
+    "P05",
+    "P06",
+    "P07",
+    "P08",
+    "P09",
+    "P10"
+  ],
+  "budgets": {
+    "workPerCaseMs": 120000,
+    "terminationPerCaseMs": 5000,
+    "evidencePerCaseMs": 15000,
+    "cleanupPerCaseMs": 5000,
+    "terminalPerCaseMs": 5000,
+    "mochaPerCaseMs": 180000
+  },
+  "childTimeoutMs": 2000000,
+  "proposedStandaloneLinuxPhaseMs": 2100000,
+  "automaticRetry": false,
+  "existingLinuxWorkflowConnected": false,
+  "build": {
+    "state": "NOT_GENERATED",
+    "manifestSHA256": null,
+    "outputContracts": 14,
+    "meaning": "Original approved collection build/pins unchanged. Separate compilation/review/approval required before execution."
+  },
+  "artifacts": {
+    "runner": [
+      "preflight.json",
+      "runner-summary.json"
+    ],
+    "child": [
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json",
+      "mocha.json"
+    ],
+    "attempted": [
+      "started.json",
+      "queries.jsonl",
+      "partial.json",
+      "state.json"
+    ],
+    "validationPassed": [
+      "validation.json"
+    ],
+    "failed": [
+      "failure.json"
+    ],
+    "build": [
+      "build/compiler-input.json",
+      "build/compiler-output.json",
+      "build/manifest.json"
+    ]
+  },
+  "invariants": {
+    "repeatCashBefore": 20,
+    "repeatCashAfter": 20,
+    "fundingTokenDelta": -20,
+    "repeatCustodyDelta": -20,
+    "partialTokenDelta": 20,
+    "partialCashDelta": 20,
+    "partialFundingDelta": 20,
+    "tokenAccountedDelta": 20,
+    "receivedDelta": 20,
+    "protectedAmountDelta": 20,
+    "userTokenDelta": 0,
+    "consumptionDelta": 0,
+    "heldDelta": 0,
+    "lpDelta": 0,
+    "allowance": 0,
+    "authorization": 0
+  },
+  "receiptMeaning": "Existing Funding payout receipt key and EVM transaction Receipt only. No consumption Receipt/terminal, user withdrawal, Held release or PnL profit payout.",
+  "targetPrecision": "Pinned custom error selector and deepest reverting contract via existing debug_traceCall/debug_traceTransaction. Source lines document static branch analysis, not a claimed runtime program-counter/source-map proof.",
+  "amount": null,
+  "authority": false,
+  "consumptionRights": "UNVERIFIED",
+  "snapshotLinkage": {
+    "gettersPerSnapshot": 48,
+    "codeQueriesPerSnapshot": 9,
+    "blockTag": "Every eth_call and eth_getCode uses the observation block number; block hash rechecked",
+    "transaction": "Adjacent execution block, parentHash equals before hash, exactly one transaction, from/to/input/status/Receipt/raw log linkage, after block equals execution block",
+    "rejection": "Inherited static and mined rollback assertions retained; both receipt keys and authorization included"
+  }
+}
