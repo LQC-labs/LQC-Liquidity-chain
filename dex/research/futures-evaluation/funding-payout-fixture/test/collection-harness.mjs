@@ -18,6 +18,13 @@ export async function receipt(provider,tx,status=1){
  }
  assert.fail('RECEIPT_QUERY_LIMIT');
 }
+function traceAddress(word){
+ assert.equal(typeof word,'string','TRACE_STACK_WORD_TYPE');
+ assert(/^(?:0[xX])?[0-9a-fA-F]{1,64}$/.test(word),'TRACE_STACK_WORD_HEX256');
+ const value=BigInt('0x'+word.replace(/^0[xX]/,''));
+ assert(value>=0n&&value<(1n<<256n),'TRACE_STACK_WORD_RANGE');
+ return ethers.getAddress('0x'+(value&((1n<<160n)-1n)).toString(16).padStart(40,'0'));
+}
 function traceOrigin(trace,to,error){
  assert.equal(trace.failed,true,'TRACE_MUST_HAVE_FAILED');
  const data='0x'+String(trace.returnValue).replace(/^0x/,'');
@@ -28,7 +35,7 @@ function traceOrigin(trace,to,error){
   const log=trace.structLogs[i],next=trace.structLogs[i+1];
   if(['CALL','STATICCALL','DELEGATECALL','CALLCODE'].includes(log.op)&&next?.depth===log.depth+1){
    assert(log.stack?.length>=2,'TRACE_STACK_REQUIRED');
-   frames.set(next.depth,lower(ethers.getAddress('0x'+log.stack.at(-2).replace(/^0x/,'').slice(-40))));
+   frames.set(next.depth,lower(traceAddress(log.stack.at(-2))));
   }
   if(log.op==='REVERT')reverts.push({depth:log.depth,address:frames.get(log.depth)});
  }
@@ -192,10 +199,15 @@ export class CollectionFixture {
  async reject({contract,method,args,signer=this.owner,error,origin,label,precondition}){
   assert.equal(typeof precondition,'function','TARGET_PRECONDITION_REQUIRED');await precondition();await this.zeroAuth();
   const before=await this.snapshot(),to=contract.target,from=await signer.getAddress(),data=contract.interface.encodeFunctionData(method,args);
-  await rejects(contract,contract.connect(signer).getFunction(method).staticCall(...args),error,label);
-  assert.deepEqual(await this.snapshot(),before,'STATIC_REJECTION_ATOMIC');
-  const tx={from,to,data,gas:'0x7a1200'},trace=await this.rpc.request({method:'debug_traceCall',params:[tx,'latest',{disableStorage:true,disableMemory:true,disableStack:false}]}),callOrigin=traceOrigin(trace,to,error);
-  assert.equal(callOrigin.address,lower(origin),'CALL_REVERT_ORIGIN:'+label);
+  const rejectedCall=()=>rejects(contract,contract.connect(signer).getFunction(method).staticCall(...args),error,label);
+  const validateCall=async()=>{
+   assert.deepEqual(await this.snapshot(),before,'STATIC_REJECTION_ATOMIC');
+   const tx={from,to,data,gas:'0x7a1200'},trace=await this.rpc.request({method:'debug_traceCall',params:[tx,'latest',{disableStorage:true,disableMemory:true,disableStack:false}]}),callOrigin=traceOrigin(trace,to,error);
+   assert.equal(callOrigin.address,lower(origin),'CALL_REVERT_ORIGIN:'+label);return callOrigin;
+  };
+  let callOrigin;
+  if(this.lifetime)callOrigin=await this.lifetime.expectRpcRevert({from,to,data,selector:ethers.id(error+'()').slice(0,10)},rejectedCall,validateCall);
+  else{await rejectedCall();callOrigin=await validateCall();}
   const sent=await signer.sendTransaction({to,data,gasLimit:8000000n}),r=await receipt(this.provider,sent,0);assert.equal(r.logs.length,0,'FAILED_TRANSACTION_LOGS');
   const minedTrace=await this.rpc.request({method:'debug_traceTransaction',params:[r.hash,{disableStorage:true,disableMemory:true,disableStack:false}]}),minedOrigin=traceOrigin(minedTrace,to,error);
   assert.equal(minedOrigin.address,lower(origin),'MINED_REVERT_ORIGIN:'+label);
@@ -204,7 +216,7 @@ export class CollectionFixture {
  }
  async traceZeroFunding(r){
   const trace=await this.rpc.request({method:'debug_traceTransaction',params:[r.hash,{disableMemory:true,disableStorage:true,disableStack:false}]});assert.equal(trace.failed,false);assert(trace.structLogs.length);
-  const calls=trace.structLogs.filter(x=>['CALL','CALLCODE','DELEGATECALL'].includes(x.op));assert.equal(calls.length,1,'ONLY_EXECUTOR_TO_PARTIAL_MUTATING_CALL');assert.equal(calls[0].op,'CALL');assert.equal(calls[0].depth,1);assert.equal(lower('0x'+calls[0].stack.at(-2).replace(/^0x/,'').slice(-40)),lower(this.partial.target));await this.zeroAuth();
+  const calls=trace.structLogs.filter(x=>['CALL','CALLCODE','DELEGATECALL'].includes(x.op));assert.equal(calls.length,1,'ONLY_EXECUTOR_TO_PARTIAL_MUTATING_CALL');assert.equal(calls[0].op,'CALL');assert.equal(calls[0].depth,1);assert.equal(lower(traceAddress(calls[0].stack.at(-2))),lower(this.partial.target));await this.zeroAuth();
   // Fixed by the preserved Executor declaration order: entered slot0,
   // partialAuthorization slot1, fundingAuthorization slot2 (immutables use no slots).
   const writes=trace.structLogs.filter(x=>x.depth===1&&x.op==='SSTORE').map(x=>({slot:BigInt('0x'+x.stack.at(-1).replace(/^0x/,'')),value:BigInt('0x'+x.stack.at(-2).replace(/^0x/,''))}));

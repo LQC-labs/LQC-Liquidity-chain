@@ -35,14 +35,14 @@
     "run-payout.cjs": "2fffa090bc9daa52d81a3e6dc915c0fd25bd591280a834dff687a2e75fa13148",
     "source-provenance.json": "ed677589a8b70608903f36e4ea621b61800b1876ff9066e03431a0f440a0cb0a",
     "test/anvil-compat.mjs": "8a88683469cb13e998ebf24721aaa04de33e2cf4d6606152955830603701775c",
-    "test/collection-harness.mjs": "758a416ffe17ad5debd4192106586736e26584bdcf81004af80debaf30e36021",
+    "test/collection-harness.mjs": "94b2adcf6f87008730926b465308ab3accfa183945d7804c09ff08ef331eefed",
     "test/evidence-reporter.cjs": "fe50fe388b8dd1d6bfa3d79760935585853d64ca77722cea4b9b5e2b6adfceaa",
     "test/failure-evidence.cjs": "665be29238e14fdd8d43725465714976171fdb8aa239b74918fa899a69fe4184",
     "test/long-payout-harness.mjs": "f278191e8e1fe9a21ba7d80e85cfee13ec155dc5f93709b5073aecb8257967a9",
     "test/long-payout.test.mjs": "f2a3af4a73e36360d1c05ec7a154e0c414269ed475cb54244152244e43ab6f18",
     "test/positive-funding-expectation.mjs": "36ea0ec34a9b77d4964b72bd70e6ebbd12e6bf547f398647f7873639a2591b7f",
     "test/positive-funding-harness.mjs": "1b366cf3063ff25bb276fee21375b35d6a9a85f0c941cf5e5a59e65ed1fa8da7",
-    "test/positive-funding-lifetime.mjs": "cc24479a8506920f1fd8e233e7c740a88925c29d72c7807757774dc41dd07aa2",
+    "test/positive-funding-lifetime.mjs": "d5078cc13f74bd8a500ad6728c1fe83fcf920cfc304a0e846ca712228f37bd0d",
     "test/runtime-tools.mjs": "ef37735eeb00e21490e2b9e95b36b1bfc767b400b368452f026a72465b160d6a",
     "test/stored-tamper-io.cjs": "c7de9fb4e1375c9121f38f816cb73c8b7d9256b9042bbd2deb657bbd5396a43e"
   }
