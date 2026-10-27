@@ -1,0 +1,162 @@
+{
+  "schema": "LQC_PROTECTED_WITHDRAWAL_PLAN_1",
+  "base": "1d5ac21ff23cf08c82bc89e5d3f955ec8d2745e4",
+  "cases": [
+    {
+      "id": "W01",
+      "title": "[W01] withdraws the received 20 raw to the LONG owner with stored verification",
+      "fullTitle": "LONG protected Funding user withdrawal [W01] withdraws the received 20 raw to the LONG owner with stored verification",
+      "expectedDocuments": 1,
+      "targetError": null,
+      "origin": "Partial",
+      "sourceLine": 212,
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN"
+    },
+    {
+      "id": "W02",
+      "title": "[W02] rejects another owner at WithdrawalVerifier Forbidden atomically",
+      "fullTitle": "LONG protected Funding user withdrawal [W02] rejects another owner at WithdrawalVerifier Forbidden atomically",
+      "expectedDocuments": 0,
+      "targetError": "Forbidden",
+      "origin": "WithdrawalVerifier",
+      "sourceLine": 65,
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN"
+    },
+    {
+      "id": "W03",
+      "title": "[W03] rejects a forged key at WithdrawalVerifier Forbidden atomically",
+      "fullTitle": "LONG protected Funding user withdrawal [W03] rejects a forged key at WithdrawalVerifier Forbidden atomically",
+      "expectedDocuments": 0,
+      "targetError": "Forbidden",
+      "origin": "WithdrawalVerifier",
+      "sourceLine": 65,
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN"
+    },
+    {
+      "id": "W04",
+      "title": "[W04] rejects an unconfigured policy at Partial SettlementPending atomically",
+      "fullTitle": "LONG protected Funding user withdrawal [W04] rejects an unconfigured policy at Partial SettlementPending atomically",
+      "expectedDocuments": 0,
+      "targetError": "SettlementPending",
+      "origin": "Partial",
+      "sourceLine": 213,
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN"
+    },
+    {
+      "id": "W05",
+      "title": "[W05] rejects zero amount at Partial SettlementPending atomically",
+      "fullTitle": "LONG protected Funding user withdrawal [W05] rejects zero amount at Partial SettlementPending atomically",
+      "expectedDocuments": 0,
+      "targetError": "SettlementPending",
+      "origin": "Partial",
+      "sourceLine": 213,
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN"
+    },
+    {
+      "id": "W06",
+      "title": "[W06] rejects initial Sequence two at Partial Insufficient atomically",
+      "fullTitle": "LONG protected Funding user withdrawal [W06] rejects initial Sequence two at Partial Insufficient atomically",
+      "expectedDocuments": 0,
+      "targetError": "Insufficient",
+      "origin": "Partial",
+      "sourceLine": 218,
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN"
+    },
+    {
+      "id": "W07",
+      "title": "[W07] rejects 21 raw above protection at Partial Insufficient atomically",
+      "fullTitle": "LONG protected Funding user withdrawal [W07] rejects 21 raw above protection at Partial Insufficient atomically",
+      "expectedDocuments": 0,
+      "targetError": "Insufficient",
+      "origin": "Partial",
+      "sourceLine": 218,
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN"
+    },
+    {
+      "id": "W08",
+      "title": "[W08] rolls taxed token withdrawal back at Partial TransferFailed atomically",
+      "fullTitle": "LONG protected Funding user withdrawal [W08] rolls taxed token withdrawal back at Partial TransferFailed atomically",
+      "expectedDocuments": 0,
+      "targetError": "TransferFailed",
+      "origin": "Partial",
+      "sourceLine": 230,
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN"
+    },
+    {
+      "id": "W09",
+      "title": "[W09] rejects duplicate Sequence one between legitimate 10 raw withdrawals",
+      "fullTitle": "LONG protected Funding user withdrawal [W09] rejects duplicate Sequence one between legitimate 10 raw withdrawals",
+      "expectedDocuments": 2,
+      "targetError": "Insufficient",
+      "origin": "Partial",
+      "sourceLine": 218,
+      "implementation": "IMPLEMENTED",
+      "staticReview": "STATIC_REVIEWED",
+      "execution": "NOT_RUN"
+    }
+  ],
+  "expectedIds": [
+    "W01",
+    "W02",
+    "W03",
+    "W04",
+    "W05",
+    "W06",
+    "W07",
+    "W08",
+    "W09"
+  ],
+  "childTimeoutMs": 1800000,
+  "mochaTimeoutMs": 180000,
+  "caseBudgetsMs": {
+    "work": 120000,
+    "termination": 5000,
+    "evidence": 15000,
+    "cleanup": 5000,
+    "terminal": 5000
+  },
+  "requiredQueriesPerSide": 73,
+  "codeRoles": 13,
+  "artifacts": {
+    "runner": [
+      "preflight.json",
+      "runner-summary.json"
+    ],
+    "child": [
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json",
+      "mocha.json"
+    ],
+    "attempted": [
+      "started.json",
+      "queries.jsonl",
+      "partial.json",
+      "state.json"
+    ],
+    "build": [
+      "build/compiler-input.json",
+      "build/compiler-output.json",
+      "build/manifest.json"
+    ]
+  },
+  "amount": null,
+  "authority": false,
+  "link": "UNVERIFIED"
+}

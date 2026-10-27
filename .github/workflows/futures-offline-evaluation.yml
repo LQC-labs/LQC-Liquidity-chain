@@ -161,3 +161,34 @@ jobs:
           if-no-files-found: error
           include-hidden-files: false
           retention-days: 14
+
+  funding-protected-withdrawal-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: dex/research/futures-evaluation/funding-payout-fixture
+    steps:
+      - uses: actions/checkout@v4
+        timeout-minutes: 2
+      - uses: actions/setup-node@v4
+        timeout-minutes: 2
+        with:
+          node-version: 22.23.3
+          cache: npm
+          cache-dependency-path: dex/research/futures-evaluation/funding-payout-fixture/package-lock.json
+      - name: Install compile validate and run protected withdrawals exactly once
+        timeout-minutes: 55
+        run: node run-linux-withdrawal-once.cjs
+      - name: Upload allowlisted withdrawal evidence after success or failure
+        if: always()
+        timeout-minutes: 5
+        uses: actions/upload-artifact@v4
+        with:
+          name: funding-protected-withdrawal-research-${{ github.run_id }}-${{ github.run_attempt }}
+          path: dex/research/futures-evaluation/funding-payout-fixture/results/linux-withdrawal-artifact/
+          if-no-files-found: error
+          include-hidden-files: false
+          retention-days: 14
