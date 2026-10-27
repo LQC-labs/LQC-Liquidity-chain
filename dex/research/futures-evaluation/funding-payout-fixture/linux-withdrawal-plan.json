@@ -1,0 +1,88 @@
+{
+  "schema": "LQC_LINUX_WITHDRAWAL_PLAN_1",
+  "base": "1d5ac21ff23cf08c82bc89e5d3f955ec8d2745e4",
+  "phases": [
+    {
+      "id": "install",
+      "timeoutMs": 170000
+    },
+    {
+      "id": "compile",
+      "timeoutMs": 590000
+    },
+    {
+      "id": "hash",
+      "timeoutMs": 50000
+    },
+    {
+      "id": "gate",
+      "timeoutMs": 50000
+    },
+    {
+      "id": "withdrawal",
+      "timeoutMs": 1870000
+    }
+  ],
+  "expectedIds": [
+    "W01",
+    "W02",
+    "W03",
+    "W04",
+    "W05",
+    "W06",
+    "W07",
+    "W08",
+    "W09"
+  ],
+  "approvedBuildHashes": {
+    "build/compiler-input.json": "7f3944814e527bb5580895d4b4edb35c7ce5f31b055694f4fd9efb2f3e3b330a",
+    "build/compiler-output.json": "9a22c6a7b27d269c6e6338e43ff7a761ad7c129383ad13f344a495a5a7a34a1a",
+    "build/manifest.json": "1a4481e47eacc2dd1747ce26629d11b7a9bb5d82d72174585c2cd03927a300ea"
+  },
+  "dependencyVersions": {
+    "solc": "0.8.30",
+    "ethers": "6.17.0",
+    "mocha": "12.0.2",
+    "@foundry-rs/anvil": "1.7.1",
+    "serialize-javascript": "7.1.2"
+  },
+  "soljsonSHA256": "3bb491a777f76dff9b2fe73ce29ca20e21a971b59a2f2cf8f73415424f00be06",
+  "workflowConnection": "NOT_APPLIED_REQUIRES_EXPLICIT_FULL_WORKFLOW_PIN_SCOPE",
+  "automaticRetry": false,
+  "amount": null,
+  "authority": false,
+  "link": "UNVERIFIED",
+  "compilerVersion": "0.8.30+commit.73712a01.Emscripten.clang",
+  "delegatedArtifacts": {
+    "phaseIds": [
+      "install",
+      "compile",
+      "hash",
+      "gate"
+    ],
+    "recordFiles": [
+      "started.json",
+      "invocation.json",
+      "stdout.log",
+      "stderr.log",
+      "exit-code.json",
+      "result.json"
+    ],
+    "buildFiles": [
+      "build/compiler-input.json",
+      "build/compiler-output.json",
+      "build/manifest.json"
+    ],
+    "compileResultPattern": "^compile-result-[0-9]+\\.json$",
+    "rules": [
+      "NOT_RUN requires prior blocked execution and no delegated files",
+      "Started/unknown or missing terminal records never imply success; retain existing partial files",
+      "Child called: invocation and both raw logs required; PASS also requires valid terminal records and matching exit",
+      "Successful compile/hash/gate requires all three valid build files and exactly one valid compile result",
+      "Existing partial JSON retained before parsing; malformed JSON fails collection",
+      "Initial build and compile results excluded as unowned; no retry or legacy payout collector call",
+      "Internal PASS is retained independently of outer wrapper recording FAIL; verified internal compile success keeps build and compile-result mandatory",
+      "Outer summary/started/invocation/exit: copy original bytes first, then validate required fields/types/phase order/call counts/exit consistency; unknown or damaged evidence cannot prove NOT_RUN"
+    ]
+  }
+}
