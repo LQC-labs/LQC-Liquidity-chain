@@ -68,7 +68,7 @@ function mutation(bytes,item,abiBytes){
 }
 function target(error,item,operands){
  assert(error instanceof assert.AssertionError,'TARGET_NOT_ASSERTION');assert.equal(error.code,'ERR_ASSERTION');assert.equal(error.operator,item.operator,'TARGET_OPERATOR');
- assert.equal(error.generatedMessage,!item.targetMessage,'TARGET_MESSAGE_KIND');assert.equal(error.message,item.targetMessage??new assert.AssertionError({actual:operands.actual,expected:operands.expected,operator:item.operator}).message,'TARGET_MESSAGE');
+ assert.equal(error.generatedMessage,!item.targetMessage,'TARGET_MESSAGE_KIND');assert.equal(item.targetMessage?error.message.split('\n')[0]:error.message,item.targetMessage??new assert.AssertionError({actual:operands.actual,expected:operands.expected,operator:item.operator}).message,'TARGET_MESSAGE');
  assert.deepEqual(error.actual,operands.actual,'TARGET_ACTUAL');assert.deepEqual(error.expected,operands.expected,'TARGET_EXPECTED');
  assert.equal(typeof error.stack,'string','TARGET_STACK');const location=new RegExp('verify-protected-withdrawal\\.mjs:(\\d+):(\\d+)').exec(error.stack);assert(location,'TARGET_LOCATION_MISSING');assert.equal(Number(location[1]),item.line,'TARGET_LINE');assert.equal(Number(location[2]),item.column,'TARGET_COLUMN');
  return {name:error.name,code:error.code,message:error.message,operator:error.operator,actual:evidence.encode(error.actual),expected:evidence.encode(error.expected),line:Number(location[1]),column:Number(location[2]),error:io.errorRecord(error)};
