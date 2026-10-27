@@ -1,6 +1,6 @@
 {
   "schema": "LQC_LINUX_WITHDRAWAL_PINS_1",
-  "planSHA256": "6be814ccf4102b2819777c90b2dc31101b942e2760c293a3db1baefe161d8041",
+  "planSHA256": "5043c0c926a2aa5956cae4c73c55c41bde9b65311cffef2169b2b01a340515a2",
   "sourceHashes": {
     ".gitignore": "b82af61a0869e159fbfcf9b6b65f229604e4d19d3467ab0063ca15b617bcc7cf",
     "LINUX-PAYOUT.txt": "b5bd54a0f620190c16db9569459ce65fedc7982dff219c81426e248efbe241b8",
@@ -35,13 +35,13 @@
     "fixtures/local/contracts/futures/mocks/LocalVNextFixtures.sol": "140b8deac792727692ba21bc0413aeac4f500b0018f6ac7fa59537fa10b56036",
     "linux-payout-pins.json": "74e449c6e06e4f9bbac331958a1a1eff02090f865f5fe20d10b1e4ae12a27826",
     "linux-payout-plan.json": "1cb7f692c8f070796ff8c7caa7a243a6a6215ed5ee5e259815f81e2195dc85ca",
-    "linux-withdrawal-plan.json": "6be814ccf4102b2819777c90b2dc31101b942e2760c293a3db1baefe161d8041",
+    "linux-withdrawal-plan.json": "5043c0c926a2aa5956cae4c73c55c41bde9b65311cffef2169b2b01a340515a2",
     "package-lock.json": "8685aa64ce70fdfe0e69b0c16c95e88da1c0e01e00fe8fa21509e245266ac6e0",
     "package.json": "f07411f39855c75d7542a2714661de58f3e583b0544ebb8af032383926591692",
     "payout-pins.json": "6781406b22faa2fbf2381c88b63b5e4fdf44129c543265a836c42009c7eedc01",
     "payout-plan.json": "e81cfb3b2f0294343fb87af949a92545c16ea2e6e70070432ef6b55cd0451fee",
     "run-linux-payout-once.cjs": "a01c74e13a1004c00c90b3d779e04a9e49fd088d0df20f9572750d62dc51616e",
-    "run-linux-withdrawal-once.cjs": "c07ebc22cd124e74c47764d38e9c2a2e8f34791805a36658f53065cacb993f07",
+    "run-linux-withdrawal-once.cjs": "9e136cb0c01d74fbd911dc9ed718324603b080a0b62e1c928c244668f37bbc62",
     "run-payout.cjs": "2fffa090bc9daa52d81a3e6dc915c0fd25bd591280a834dff687a2e75fa13148",
     "run-withdrawal.cjs": "2637cf47c45797701cc6f956daf0fc51f33d5c7ac340256ce0e1ddee24a79ff4",
     "source-provenance.json": "ed677589a8b70608903f36e4ea621b61800b1876ff9066e03431a0f440a0cb0a",
@@ -61,7 +61,11 @@
     "test/verify-protected-withdrawal.mjs": "585967579b3f8c03c1bb1523c50670d3f33d81ce654b34c42326bdf0e6b70e9a",
     "withdrawal-abi.json": "62c53d528dd34202b60bf83c8311597353f947a8e340e6e97168e96d3f40e0c6",
     "withdrawal-pins.json": "d42e34f401dbc8f2a0b9335e0da39ef3568dcac3b9f45ae6656df97e8c254009",
-    "withdrawal-plan.json": "63839eabdfe4f40ff07e0dccfd0230712accf6660660993f5ff7eecb38eabb9d"
+    "withdrawal-plan.json": "63839eabdfe4f40ff07e0dccfd0230712accf6660660993f5ff7eecb38eabb9d",
+    "run-withdrawal-tamper.cjs": "2a584728b04df4a497730fde87989d82464617859f135b7906bb48d69a9ebd58",
+    "test/protected-withdrawal-tamper.mjs": "8184bf284d97c53f2e83e51639d3b2af25e6c64fa7b0e735f6df866074a95530",
+    "withdrawal-tamper-plan.json": "f74b68843d67728d6a6e67702d35dec2ea8557934825544d56b97b66a616b7b3",
+    "withdrawal-tamper-pins.json": "cb3f18a4b112a166bc1840b52290d708e7ff2b8dcef90baae5b00f9d076a021c"
   },
   "workflowSHA256": "6a68a5e2f7aba3530da98d0c4ddb38eca08011c2f27be8d6219998d33e86f3ac",
   "workflowConnection": "NOT_APPLIED",

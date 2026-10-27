@@ -6,13 +6,13 @@ function write(name,value){try{io.record(root,out,name,value);}catch(error){fail
 function sources(){for(const [file,h]of Object.entries(pins.sourceHashes))assert.equal(sha(fs.readFileSync(io.checkedFile(root,file))),h,'LINUX_WITHDRAWAL_SOURCE:'+file);assert.equal(sha(fs.readFileSync(io.checkedFile(root,'linux-withdrawal-plan.json'))),pins.planSHA256);}
 try{
  assert.equal(process.argv.length,2);assert.equal(process.platform,'linux');assert.equal(process.version,'v22.23.3');assert(!fs.existsSync(p.join(root,out)),'PRIOR_LINUX_WITHDRAWAL');io.createOutput(root,out);ready=true;
- pins=read('linux-withdrawal-pins.json');plan=read('linux-withdrawal-plan.json');sources();assert.deepEqual(plan.phases.map(x=>x.id),['install','compile','hash','gate','withdrawal']);assert.equal(sha(fs.readFileSync(io.checkedFile(p.resolve(root,'../../../..'),'.github/workflows/futures-offline-evaluation.yml'))),pins.workflowSHA256,'UNCHANGED_WORKFLOW_PIN');
+ pins=read('linux-withdrawal-pins.json');plan=read('linux-withdrawal-plan.json');sources();assert.deepEqual(plan.phases.map(x=>x.id),['install','compile','hash','gate','withdrawal','withdrawal-tamper']);assert.equal(sha(fs.readFileSync(io.checkedFile(p.resolve(root,'../../../..'),'.github/workflows/futures-offline-evaluation.yml'))),pins.workflowSHA256,'UNCHANGED_WORKFLOW_PIN');
  // Establish run ownership before invoking any delegated phase; never publish prior build files.
  initialBuildPresent=fs.existsSync(p.join(root,'build'));
  if(fs.existsSync(p.join(root,'results')))initialCompileResults=new Set(fs.readdirSync(io.checkedDirectory(root,'results')).filter(n=>/^compile-result-[0-9]+\.json$/.test(n)));
  for(const phase of plan.phases){const item={id:phase.id,calls:0,state:'NOT_RUN'};phases.push(item);}
  for(const phase of plan.phases){if(primary!==undefined)break;const item=phases.find(x=>x.id===phase.id);item.calls=1;item.state='STARTED';write(phase.id+'-started.json',item);if(primary!==undefined)break;
-  const args=phase.id==='withdrawal'?['run-withdrawal.cjs']:['run-linux-payout-once.cjs',phase.id];write(phase.id+'-invocation.json',{executable:process.execPath,args,timeoutMs:phase.timeoutMs,automaticRetry:false});if(primary!==undefined)break;
+  const args=phase.id==='withdrawal'?['run-withdrawal.cjs']:phase.id==='withdrawal-tamper'?['run-withdrawal-tamper.cjs']:['run-linux-payout-once.cjs',phase.id];write(phase.id+'-invocation.json',{executable:process.execPath,args,timeoutMs:phase.timeoutMs,automaticRetry:false});if(primary!==undefined)break;
   const child=cp.spawnSync(process.execPath,args,{cwd:root,encoding:null,timeout:phase.timeoutMs,maxBuffer:32e6,env:{...process.env,NODE_OPTIONS:''},windowsHide:true});item.exitCode=child.status;item.signal=child.signal;item.spawnError=io.errorRecord(child.error);
   if(child.status!==0||child.signal||child.error)fail('execution:'+phase.id,child.error??Object.assign(Error('LINUX_WITHDRAWAL_PHASE_FAILED'),{phase:phase.id,exitCode:child.status,signal:child.signal}));
   for(const [name,bytes]of [['stdout',child.stdout??Buffer.alloc(0)],['stderr',child.stderr??Buffer.alloc(0)]])try{io.checkedDirectory(root,out);fs.writeFileSync(p.join(root,out,phase.id+'.'+name+'.log'),bytes,{flag:'wx'});}catch(error){fail('raw-log:'+phase.id+':'+name,error);}
@@ -66,7 +66,7 @@ finally{
    });outerSummaryValid=summary!==undefined;
    for(const item of phases){wrapperStates[item.id]='UNKNOWN';if(item.calls!==1)continue;
     const started=outerJson(item.id+'-started.json',value=>{object(value);assert.equal(value.id,item.id);assert.equal(value.calls,1);assert.equal(value.state,'STARTED');});
-    const invocation=outerJson(item.id+'-invocation.json',value=>{object(value);assert.equal(typeof value.executable,'string');assert.equal(value.executable,process.execPath);assert.deepEqual(value.args,item.id==='withdrawal'?['run-withdrawal.cjs']:['run-linux-payout-once.cjs',item.id]);assert.equal(value.timeoutMs,plan.phases.find(x=>x.id===item.id).timeoutMs);assert.equal(value.automaticRetry,false);});
+    const invocation=outerJson(item.id+'-invocation.json',value=>{object(value);assert.equal(typeof value.executable,'string');assert.equal(value.executable,process.execPath);assert.deepEqual(value.args,item.id==='withdrawal'?['run-withdrawal.cjs']:item.id==='withdrawal-tamper'?['run-withdrawal-tamper.cjs']:['run-linux-payout-once.cjs',item.id]);assert.equal(value.timeoutMs,plan.phases.find(x=>x.id===item.id).timeoutMs);assert.equal(value.automaticRetry,false);});
     const exit=outerJson(item.id+'-exit.json',value=>{terminalFields(value);assert.equal(value.id,item.id);assert.deepEqual(value,evidenceJson(item),'OUTER_EXIT_SUMMARY_CONFLICT');});
     if(outerSummaryValid&&started&&invocation&&exit){outerValid.add(item.id);wrapperStates[item.id]=exit.state;}
    }
@@ -138,6 +138,56 @@ finally{
     // Their availability cannot turn internal failure into collection or execution PASS.
     for(const name of rawAllowed){const source='results/protected-withdrawal/'+name;if(fs.existsSync(p.join(root,source)))copy(source,'raw-runner/'+name);}
    }
+   // Stored-data-only phase: preserve partial child evidence, never invoke Anvil here.
+   const tamperPhase=phases.find(x=>x.id==='withdrawal-tamper');
+   if(tamperPhase?.calls===1){
+    const base='results/withdrawal-tamper',tp=read('withdrawal-tamper-plan.json'),available=new Map();
+    const fixed=['runner-summary.json','preflight.json','invocation.json','stdout.log','stderr.log','exit-code.json','cases.json','original-replay.json'];
+    for(const c of tp.cases){fixed.push(c.id+'.json');if(c.input===undefined)fixed.push(c.id+'.mutation.json');}
+    const take=name=>{const source=base+'/'+name;if(present(source)){const b=copy(source,'tamper/'+name);if(b!==undefined)available.set(name,b);}};
+    for(const name of fixed)try{take(name);}catch(error){collectError(base+'/'+name,error);}
+    const requireFile=name=>{requiredUploadPaths.add('tamper/'+name);assert(available.has(name),'TAMPER_REQUIRED_FILE:'+name);};
+    let t;try{
+     requireFile('runner-summary.json');t=JSON.parse(available.get('runner-summary.json'));assert(['PASS','FAIL'].includes(t.state));assert([0,1].includes(t.calls));assert(Array.isArray(t.recordingErrors));
+      if(t.calls===1){
+       // Validate terminal evidence independently of verdict and later case-file errors.
+       try{
+        requireFile('exit-code.json');const exit=JSON.parse(available.get('exit-code.json'));
+        const terminal=value=>{
+         assert(value!==null&&typeof value==='object'&&!Array.isArray(value),'TAMPER_EXIT_OBJECT');
+         for(const key of ['calls','exitCode','signal','spawnError'])assert(Object.hasOwn(value,key),'TAMPER_EXIT_FIELD:'+key);
+         assert.equal(value.calls,1,'TAMPER_EXIT_CALLS');
+         assert(value.exitCode===null||(Number.isSafeInteger(value.exitCode)&&value.exitCode>=0),'TAMPER_EXIT_CODE_TYPE');
+         assert(value.signal===null||(typeof value.signal==='string'&&value.signal.length>0),'TAMPER_EXIT_SIGNAL_TYPE');
+         const error=value.spawnError;
+         assert(error===null||(typeof error==='object'&&!Array.isArray(error)&&error.$type==='error'&&Number.isSafeInteger(error.$id)&&error.$id>0&&error.properties!==null&&typeof error.properties==='object'&&!Array.isArray(error.properties)),'TAMPER_EXIT_SPAWN_ERROR_TYPE');
+         if(value.signal!==null)assert.equal(value.exitCode,null,'TAMPER_SIGNAL_EXIT_CONFLICT');
+         if(value.exitCode===null)assert(value.signal!==null||error!==null,'TAMPER_NULL_EXIT_WITHOUT_CAUSE');
+        };
+        terminal(exit);terminal(t);assert(Object.hasOwn(exit,'automaticRetry'),'TAMPER_EXIT_RETRY_FIELD');assert.equal(exit.automaticRetry,false,'TAMPER_EXIT_RETRY');
+        for(const key of ['calls','exitCode','signal','spawnError'])assert.deepEqual(exit[key],t[key],'TAMPER_EXIT_RUNNER_CONFLICT:'+key);
+        // Nonzero/null child status is execution evidence, not a collection error.
+       }catch(error){collectError(base+'/exit-code.json',error);}
+       for(const name of ['preflight.json','invocation.json','stdout.log','stderr.log'])requireFile(name);
+       if(t.state==='PASS'){assert.equal(t.exitCode,0);assert.equal(t.signal,null);assert.equal(t.spawnError,null);assert.deepEqual(t.recordingErrors,[]);}
+     }
+     else{assert.equal(t.state,'FAIL');assert.equal(t.execution,'NOT_RUN');assert(t.error||t.recordingErrors.length,'TAMPER_NOT_RUN_UNPROVEN');}
+     if(tamperPhase.state==='PASS')assert.equal(t.state,'PASS','TAMPER_OUTER_STATE_CONFLICT');
+    }catch(error){collectError(base,error);}
+    // This independent pass still runs after runner/exit/preflight evidence errors.
+    if(t?.calls===1||available.has('exit-code.json')||available.has('cases.json')||available.has('original-replay.json')||tp.cases.some(x=>available.has(x.id+'.json')||available.has(x.id+'.mutation.json'))){
+     try{
+      const {assessTamperEvidence}=require('./run-withdrawal-tamper.cjs'),inputHashes=tp.inputs.map(input=>{try{return sha(fs.readFileSync(io.checkedFile(root,input.path)));}catch(error){collectError(input.path,error);return null;}});
+      try{assert.equal(sha(fs.readFileSync(io.checkedFile(root,'withdrawal-abi.json'))),tp.abiSHA256,'TAMPER_CURRENT_ABI_PIN');}catch(error){collectError('withdrawal-abi.json',error);}
+      const assessed=assessTamperEvidence({plan:tp,inputHashes,abiSHA256:tp.abiSHA256,exists:name=>available.has(name),readBytes:name=>available.get(name)});
+      for(const name of assessed.required)requiredUploadPaths.add('tamper/'+name);
+      for(const error of assessed.errors)errors.push({file:base+'/'+error.file,error:error.error});
+      try{assert.equal(t?.calls,1,'TAMPER_EVIDENCE_WITHOUT_CHILD');assert(['PASS','FAIL'].includes(t.collection),'TAMPER_COLLECTION_STATE_MISSING');assert.equal(t.collection,assessed.state,'TAMPER_COLLECTION_STATE_CONFLICT');if(t.state==='PASS'){assert.equal(assessed.report?.state,'PASS');assert.equal(assessed.state,'PASS');for(const key of ['required','actual','unique'])assert.deepEqual(t[key],tp.cases.map(x=>x.id));}}
+      catch(error){collectError(base+'/runner-summary.json',error);}
+     }catch(error){collectError(base+'/evidence-assessment',error);}
+    }
+    for(const [name,b]of available)if(name.endsWith('.json'))try{JSON.parse(b);}catch(error){collectError(base+'/'+name,error);}
+   }else if(tamperPhase){if(!outerSummaryValid||wrapperStates['withdrawal-tamper']!=='NOT_RUN')collectError('withdrawal-tamper',Error('TAMPER_NOT_RUN_UNPROVEN'));else omissions.push({path:'results/withdrawal-tamper',state:'NOT_RUN',reason:'Earlier phase blocked execution'});}
    const sourceSelections=new Map();
    const addSourceSelection=(src,requested,mandatory)=>{try{
     assert.equal(typeof mandatory,'boolean');const destination=uploadDestination(requested);if(mandatory)requiredUploadPaths.add(destination);

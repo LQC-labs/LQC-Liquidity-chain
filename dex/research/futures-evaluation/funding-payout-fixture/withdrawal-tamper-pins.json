@@ -1,0 +1,21 @@
+{
+    "schema":  "LQC_WITHDRAWAL_TAMPER_PINS_1",
+    "base":  "6efc7cad28bcc705dc603a41f05493216cdf5109",
+    "planSHA256":  "f74b68843d67728d6a6e67702d35dec2ea8557934825544d56b97b66a616b7b3",
+    "sourceHashes":  {
+                         "run-withdrawal-tamper.cjs":  "2a584728b04df4a497730fde87989d82464617859f135b7906bb48d69a9ebd58",
+                         "test/protected-withdrawal-tamper.mjs":  "8184bf284d97c53f2e83e51639d3b2af25e6c64fa7b0e735f6df866074a95530",
+                         "test/verify-protected-withdrawal.mjs":  "585967579b3f8c03c1bb1523c50670d3f33d81ce654b34c42326bdf0e6b70e9a",
+                         "withdrawal-abi.json":  "62c53d528dd34202b60bf83c8311597353f947a8e340e6e97168e96d3f40e0c6",
+                         "withdrawal-plan.json":  "63839eabdfe4f40ff07e0dccfd0230712accf6660660993f5ff7eecb38eabb9d",
+                         "withdrawal-pins.json":  "d42e34f401dbc8f2a0b9335e0da39ef3568dcac3b9f45ae6656df97e8c254009",
+                         "test/failure-evidence.cjs":  "665be29238e14fdd8d43725465714976171fdb8aa239b74918fa899a69fe4184",
+                         "test/stored-tamper-io.cjs":  "c7de9fb4e1375c9121f38f816cb73c8b7d9256b9042bbd2deb657bbd5396a43e",
+                         "withdrawal-tamper-plan.json":  "f74b68843d67728d6a6e67702d35dec2ea8557934825544d56b97b66a616b7b3"
+                     },
+    "status":  "NOT_RUN",
+    "amount":  null,
+    "authority":  false,
+    "consumptionLink":  "UNVERIFIED",
+    "rightsLink":  "UNVERIFIED"
+}

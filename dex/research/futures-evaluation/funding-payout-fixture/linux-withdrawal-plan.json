@@ -21,6 +21,10 @@
     {
       "id": "withdrawal",
       "timeoutMs": 1870000
+    },
+    {
+      "id": "withdrawal-tamper",
+      "timeoutMs": 120000
     }
   ],
   "expectedIds": [
