@@ -1,0 +1,285 @@
+{
+    "schema":  "LQC_WITHDRAWAL_TAMPER_PLAN_1",
+    "base":  "6efc7cad28bcc705dc603a41f05493216cdf5109",
+    "abiSHA256":  "62c53d528dd34202b60bf83c8311597353f947a8e340e6e97168e96d3f40e0c6",
+    "inputs":  [
+                   {
+                       "amount":  "20",
+                       "path":  "results/protected-withdrawal/W01/withdrawal-1.json",
+                       "sequence":  "1"
+                   },
+                   {
+                       "amount":  "10",
+                       "path":  "results/protected-withdrawal/W09/withdrawal-1.json",
+                       "sequence":  "1"
+                   },
+                   {
+                       "amount":  "10",
+                       "path":  "results/protected-withdrawal/W09/withdrawal-2.json",
+                       "sequence":  "2"
+                   }
+               ],
+    "cases":  [
+                  {
+                      "input":  0,
+                      "title":  "W01 original 20 raw",
+                      "id":  "T01",
+                      "execution":  "NOT_RUN"
+                  },
+                  {
+                      "input":  1,
+                      "title":  "W09 original first 10 raw",
+                      "id":  "T02",
+                      "execution":  "NOT_RUN"
+                  },
+                  {
+                      "input":  2,
+                      "title":  "W09 original second 10 raw",
+                      "id":  "T03",
+                      "execution":  "NOT_RUN"
+                  },
+                  {
+                      "line":  32,
+                      "column":  152,
+                      "id":  "T04",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.equal(side.queries.length,73,\u0027REQUIRED_QUERY_COUNT\u0027);",
+                      "operator":  "strictEqual",
+                      "title":  "required query deletion",
+                      "targetMessage":  "REQUIRED_QUERY_COUNT"
+                  },
+                  {
+                      "line":  33,
+                      "column":  114,
+                      "id":  "T05",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.deepEqual({role:q.role,address:q.address,method:q.method,args:q.args,blockTag:q.blockTag},{role:def.role,address:s.addresses[def.role],method:def.method,args:def.args,blockTag:side.block.number},\u0027QUERY_SEMANTICS:\u0027+def.label);",
+                      "operator":  "deepStrictEqual",
+                      "title":  "consumed getter replacement",
+                      "targetMessage":  "QUERY_SEMANTICS:consumed"
+                  },
+                  {
+                      "line":  33,
+                      "column":  114,
+                      "id":  "T06",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.deepEqual({role:q.role,address:q.address,method:q.method,args:q.args,blockTag:q.blockTag},{role:def.role,address:s.addresses[def.role],method:def.method,args:def.args,blockTag:side.block.number},\u0027QUERY_SEMANTICS:\u0027+def.label);",
+                      "operator":  "deepStrictEqual",
+                      "title":  "consumed address replacement",
+                      "targetMessage":  "QUERY_SEMANTICS:consumed"
+                  },
+                  {
+                      "line":  33,
+                      "column":  114,
+                      "id":  "T07",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.deepEqual({role:q.role,address:q.address,method:q.method,args:q.args,blockTag:q.blockTag},{role:def.role,address:s.addresses[def.role],method:def.method,args:def.args,blockTag:side.block.number},\u0027QUERY_SEMANTICS:\u0027+def.label);",
+                      "operator":  "deepStrictEqual",
+                      "title":  "consumed pid replacement",
+                      "targetMessage":  "QUERY_SEMANTICS:consumed"
+                  },
+                  {
+                      "line":  33,
+                      "column":  114,
+                      "id":  "T08",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.deepEqual({role:q.role,address:q.address,method:q.method,args:q.args,blockTag:q.blockTag},{role:def.role,address:s.addresses[def.role],method:def.method,args:def.args,blockTag:side.block.number},\u0027QUERY_SEMANTICS:\u0027+def.label);",
+                      "operator":  "deepStrictEqual",
+                      "title":  "query blockTag replacement",
+                      "targetMessage":  "QUERY_SEMANTICS:consumed"
+                  },
+                  {
+                      "line":  33,
+                      "column":  578,
+                      "id":  "T09",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.equal(iface.encodeFunctionResult(def.method,decoded).toLowerCase(),q.raw.toLowerCase(),\u0027CANONICAL_ABI_RESPONSE\u0027);",
+                      "operator":  "strictEqual",
+                      "title":  "noncanonical trailing ABI word",
+                      "targetMessage":  "CANONICAL_ABI_RESPONSE"
+                  },
+                  {
+                      "line":  33,
+                      "column":  801,
+                      "id":  "T10",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.deepEqual(side.values[def.label],value,\u0027SNAPSHOT_RAW_VALUE\u0027);",
+                      "operator":  "deepStrictEqual",
+                      "title":  "stored consumed replacement",
+                      "targetMessage":  "SNAPSHOT_RAW_VALUE"
+                  },
+                  {
+                      "line":  36,
+                      "column":  310,
+                      "id":  "T11",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.equal(tx.input,interfaces.partial.encodeFunctionData(\u0027withdrawProtected\u0027,[s.id,s.rights,d.sequence,d.amount]));",
+                      "operator":  "strictEqual",
+                      "title":  "document amount binding",
+                      "targetMessage":  null
+                  },
+                  {
+                      "line":  36,
+                      "column":  188,
+                      "id":  "T12",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.equal(tx.from.toLowerCase(),s.L.toLowerCase());",
+                      "operator":  "strictEqual",
+                      "title":  "transaction owner binding",
+                      "targetMessage":  null
+                  },
+                  {
+                      "line":  36,
+                      "column":  310,
+                      "id":  "T13",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.equal(tx.input,interfaces.partial.encodeFunctionData(\u0027withdrawProtected\u0027,[s.id,s.rights,d.sequence,d.amount]));",
+                      "operator":  "strictEqual",
+                      "title":  "transaction rightsKey binding",
+                      "targetMessage":  null
+                  },
+                  {
+                      "line":  36,
+                      "column":  310,
+                      "id":  "T14",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.equal(tx.input,interfaces.partial.encodeFunctionData(\u0027withdrawProtected\u0027,[s.id,s.rights,d.sequence,d.amount]));",
+                      "operator":  "strictEqual",
+                      "title":  "document Sequence binding",
+                      "targetMessage":  null
+                  },
+                  {
+                      "line":  36,
+                      "column":  114,
+                      "id":  "T15",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.equal(link.hash,tx.hash);",
+                      "operator":  "strictEqual",
+                      "title":  "transaction hash linkage",
+                      "targetMessage":  null
+                  },
+                  {
+                      "line":  36,
+                      "column":  146,
+                      "id":  "T16",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.equal(link.hash,r.transactionHash);",
+                      "operator":  "strictEqual",
+                      "title":  "Receipt hash linkage",
+                      "targetMessage":  null
+                  },
+                  {
+                      "line":  47,
+                      "column":  578,
+                      "id":  "T17",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.deepEqual(plain(events[0].args),[receipt,s.id,s.L,s.rights,d.sequence,d.amount,v.withdrawal[0]]);",
+                      "operator":  "deepStrictEqual",
+                      "title":  "ProtectedWithdrawn amount binding",
+                      "targetMessage":  null
+                  },
+                  {
+                      "line":  36,
+                      "column":  607,
+                      "id":  "T18",
+                      "execution":  "NOT_RUN",
+                      "operations":  1,
+                      "assertion":  "assert.equal(block.parentHash,d.before.endBlock.hash);",
+                      "operator":  "strictEqual",
+                      "title":  "execution parent hash linkage",
+                      "targetMessage":  null
+                  },
+                  {
+                      "line":  45,
+                      "column":  308,
+                      "id":  "T19",
+                      "execution":  "NOT_RUN",
+                      "operations":  3,
+                      "assertion":  "assert.equal(v[active],commitment);",
+                      "operator":  "strictEqual",
+                      "title":  "consistent stored commitment replacement",
+                      "targetMessage":  null
+                  }
+              ],
+    "workBudgetMs":  60000,
+    "childTimeoutMs":  90000,
+    "phaseTimeoutMs":  120000,
+    "automaticRetry":  false,
+    "limitations":  [
+                        "No checks of documentary submission/transactionHash or query state; link fields are checked instead",
+                        "No combined W09 document continuity proof",
+                        "No new chain execution, RPC truth, full-history or whole-process-tree proof",
+                        "60s budget checked between synchronous operations; 90s child and120s phase are outer bounds"
+                    ],
+    "artifacts":  {
+                      "runner":  [
+                                     "runner-summary.json"
+                                 ],
+                      "caseIds":  [
+                                      "T01",
+                                      "T02",
+                                      "T03",
+                                      "T04",
+                                      "T05",
+                                      "T06",
+                                      "T07",
+                                      "T08",
+                                      "T09",
+                                      "T10",
+                                      "T11",
+                                      "T12",
+                                      "T13",
+                                      "T14",
+                                      "T15",
+                                      "T16",
+                                      "T17",
+                                      "T18",
+                                      "T19"
+                                  ],
+                      "mutationIds":  [
+                                          "T04",
+                                          "T05",
+                                          "T06",
+                                          "T07",
+                                          "T08",
+                                          "T09",
+                                          "T10",
+                                          "T11",
+                                          "T12",
+                                          "T13",
+                                          "T14",
+                                          "T15",
+                                          "T16",
+                                          "T17",
+                                          "T18",
+                                          "T19"
+                                      ],
+                      "child":  [
+                                    "preflight.json",
+                                    "invocation.json",
+                                    "stdout.log",
+                                    "stderr.log",
+                                    "exit-code.json",
+                                    "cases.json",
+                                    "original-replay.json"
+                                ]
+                  },
+    "amount":  null,
+    "authority":  false,
+    "consumptionLink":  "UNVERIFIED",
+    "rightsLink":  "UNVERIFIED"
+}
