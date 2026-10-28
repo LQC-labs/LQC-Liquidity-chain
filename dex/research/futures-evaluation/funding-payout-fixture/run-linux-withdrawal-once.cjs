@@ -6,13 +6,13 @@ function write(name,value){try{io.record(root,out,name,value);}catch(error){fail
 function sources(){for(const [file,h]of Object.entries(pins.sourceHashes))assert.equal(sha(fs.readFileSync(io.checkedFile(root,file))),h,'LINUX_WITHDRAWAL_SOURCE:'+file);assert.equal(sha(fs.readFileSync(io.checkedFile(root,'linux-withdrawal-plan.json'))),pins.planSHA256);}
 try{
  assert.equal(process.argv.length,2);assert.equal(process.platform,'linux');assert.equal(process.version,'v22.23.3');assert(!fs.existsSync(p.join(root,out)),'PRIOR_LINUX_WITHDRAWAL');io.createOutput(root,out);ready=true;
- pins=read('linux-withdrawal-pins.json');plan=read('linux-withdrawal-plan.json');sources();assert.deepEqual(plan.phases.map(x=>x.id),['install','compile','hash','gate','withdrawal','withdrawal-tamper']);assert.equal(sha(fs.readFileSync(io.checkedFile(p.resolve(root,'../../../..'),'.github/workflows/futures-offline-evaluation.yml'))),pins.workflowSHA256,'UNCHANGED_WORKFLOW_PIN');
+ pins=read('linux-withdrawal-pins.json');plan=read('linux-withdrawal-plan.json');sources();assert.deepEqual(plan.phases.map(x=>x.id),['install','compile','hash','gate','withdrawal','withdrawal-tamper','w09-link']);assert.equal(sha(fs.readFileSync(io.checkedFile(p.resolve(root,'../../../..'),'.github/workflows/futures-offline-evaluation.yml'))),pins.workflowSHA256,'UNCHANGED_WORKFLOW_PIN');
  // Establish run ownership before invoking any delegated phase; never publish prior build files.
  initialBuildPresent=fs.existsSync(p.join(root,'build'));
  if(fs.existsSync(p.join(root,'results')))initialCompileResults=new Set(fs.readdirSync(io.checkedDirectory(root,'results')).filter(n=>/^compile-result-[0-9]+\.json$/.test(n)));
  for(const phase of plan.phases){const item={id:phase.id,calls:0,state:'NOT_RUN'};phases.push(item);}
  for(const phase of plan.phases){if(primary!==undefined)break;const item=phases.find(x=>x.id===phase.id);item.calls=1;item.state='STARTED';write(phase.id+'-started.json',item);if(primary!==undefined)break;
-  const args=phase.id==='withdrawal'?['run-withdrawal.cjs']:phase.id==='withdrawal-tamper'?['run-withdrawal-tamper.cjs']:['run-linux-payout-once.cjs',phase.id];write(phase.id+'-invocation.json',{executable:process.execPath,args,timeoutMs:phase.timeoutMs,automaticRetry:false});if(primary!==undefined)break;
+  const args=phase.id==='withdrawal'?['run-withdrawal.cjs']:phase.id==='withdrawal-tamper'?['run-withdrawal-tamper.cjs']:phase.id==='w09-link'?['run-w09-link.cjs']:['run-linux-payout-once.cjs',phase.id];write(phase.id+'-invocation.json',{executable:process.execPath,args,timeoutMs:phase.timeoutMs,automaticRetry:false});if(primary!==undefined)break;
   const child=cp.spawnSync(process.execPath,args,{cwd:root,encoding:null,timeout:phase.timeoutMs,maxBuffer:32e6,env:{...process.env,NODE_OPTIONS:''},windowsHide:true});item.exitCode=child.status;item.signal=child.signal;item.spawnError=io.errorRecord(child.error);
   if(child.status!==0||child.signal||child.error)fail('execution:'+phase.id,child.error??Object.assign(Error('LINUX_WITHDRAWAL_PHASE_FAILED'),{phase:phase.id,exitCode:child.status,signal:child.signal}));
   for(const [name,bytes]of [['stdout',child.stdout??Buffer.alloc(0)],['stderr',child.stderr??Buffer.alloc(0)]])try{io.checkedDirectory(root,out);fs.writeFileSync(p.join(root,out,phase.id+'.'+name+'.log'),bytes,{flag:'wx'});}catch(error){fail('raw-log:'+phase.id+':'+name,error);}
@@ -66,7 +66,7 @@ finally{
    });outerSummaryValid=summary!==undefined;
    for(const item of phases){wrapperStates[item.id]='UNKNOWN';if(item.calls!==1)continue;
     const started=outerJson(item.id+'-started.json',value=>{object(value);assert.equal(value.id,item.id);assert.equal(value.calls,1);assert.equal(value.state,'STARTED');});
-    const invocation=outerJson(item.id+'-invocation.json',value=>{object(value);assert.equal(typeof value.executable,'string');assert.equal(value.executable,process.execPath);assert.deepEqual(value.args,item.id==='withdrawal'?['run-withdrawal.cjs']:item.id==='withdrawal-tamper'?['run-withdrawal-tamper.cjs']:['run-linux-payout-once.cjs',item.id]);assert.equal(value.timeoutMs,plan.phases.find(x=>x.id===item.id).timeoutMs);assert.equal(value.automaticRetry,false);});
+    const invocation=outerJson(item.id+'-invocation.json',value=>{object(value);assert.equal(typeof value.executable,'string');assert.equal(value.executable,process.execPath);assert.deepEqual(value.args,item.id==='withdrawal'?['run-withdrawal.cjs']:item.id==='withdrawal-tamper'?['run-withdrawal-tamper.cjs']:item.id==='w09-link'?['run-w09-link.cjs']:['run-linux-payout-once.cjs',item.id]);assert.equal(value.timeoutMs,plan.phases.find(x=>x.id===item.id).timeoutMs);assert.equal(value.automaticRetry,false);});
     const exit=outerJson(item.id+'-exit.json',value=>{terminalFields(value);assert.equal(value.id,item.id);assert.deepEqual(value,evidenceJson(item),'OUTER_EXIT_SUMMARY_CONFLICT');});
     if(outerSummaryValid&&started&&invocation&&exit){outerValid.add(item.id);wrapperStates[item.id]=exit.state;}
    }
@@ -188,6 +188,22 @@ finally{
     }
     for(const [name,b]of available)if(name.endsWith('.json'))try{JSON.parse(b);}catch(error){collectError(base+'/'+name,error);}
    }else if(tamperPhase){if(!outerSummaryValid||wrapperStates['withdrawal-tamper']!=='NOT_RUN')collectError('withdrawal-tamper',Error('TAMPER_NOT_RUN_UNPROVEN'));else omissions.push({path:'results/withdrawal-tamper',state:'NOT_RUN',reason:'Earlier phase blocked execution'});}
+   // W09 pair linkage is a separate stored-data-only child; never call a harness here.
+   const linkPhase=phases.find(x=>x.id==='w09-link');
+   if(linkPhase?.calls===1){
+    const base='results/w09-link',lp=read('w09-link-plan.json'),available=new Map(),fixed=['runner-summary.json','invocation.json','stdout.log','stderr.log','exit-code.json','preflight.json','cases.json','original-replay.json',...lp.cases.flatMap(x=>[x.id+'.json',x.id+'.mutation.json'])];
+    for(const name of fixed)try{const src=base+'/'+name;if(present(src)){const bytes=copy(src,'w09-link/'+name);if(bytes!==undefined)available.set(name,bytes);}}catch(error){collectError(base+'/'+name,error);}
+    let summary;try{assert(available.has('runner-summary.json'),'W09_LINK_RUNNER_MISSING');summary=JSON.parse(available.get('runner-summary.json'));assert([0,1].includes(summary.calls),'W09_LINK_CHILD_CALLS');if(linkPhase.state==='PASS')assert.equal(summary.state,'PASS','W09_LINK_OUTER_CONFLICT');}catch(error){collectError(base+'/runner-summary.json',error);}
+    try{
+     const {assessW09Link}=require('./run-w09-link.cjs'),inputHashes=lp.inputs.map(file=>{try{return sha(fs.readFileSync(io.checkedFile(root,file)));}catch(error){collectError(file,error);return null;}});
+     try{assert.equal(sha(fs.readFileSync(io.checkedFile(root,'withdrawal-abi.json'))),lp.abiSHA256);}catch(error){collectError('withdrawal-abi.json',error);}
+     const inputBytes=lp.inputs.map(file=>{try{return fs.readFileSync(io.checkedFile(root,file));}catch(error){collectError(file,error);return null;}});let abiBytes;try{abiBytes=fs.readFileSync(io.checkedFile(root,'withdrawal-abi.json'));}catch(error){collectError('withdrawal-abi.json',error);}
+     const assessed=assessW09Link({plan:lp,inputHashes,abiSHA256:lp.abiSHA256,inputBytes,abiBytes,exists:name=>available.has(name),readBytes:name=>available.get(name)});
+     for(const name of assessed.required)requiredUploadPaths.add('w09-link/'+name);
+     for(const error of assessed.errors)errors.push({file:base+'/'+error.file,error:error.error});
+     if(summary?.calls===1)try{assert.equal(summary.collection,assessed.state,'W09_LINK_COLLECTION_CONFLICT');}catch(error){collectError(base+'/runner-summary.json',error);}
+    }catch(error){collectError(base+'/assessment',error);}
+   }else if(linkPhase){if(!outerSummaryValid||wrapperStates['w09-link']!=='NOT_RUN')collectError('w09-link',Error('W09_LINK_NOT_RUN_UNPROVEN'));else omissions.push({path:'results/w09-link',state:'NOT_RUN',reason:'Earlier phase blocked execution'});}
    const sourceSelections=new Map();
    const addSourceSelection=(src,requested,mandatory)=>{try{
     assert.equal(typeof mandatory,'boolean');const destination=uploadDestination(requested);if(mandatory)requiredUploadPaths.add(destination);
