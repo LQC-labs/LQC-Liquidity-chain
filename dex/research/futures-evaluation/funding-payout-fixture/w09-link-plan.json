@@ -1,0 +1,315 @@
+{
+    "schema":  "LQC_W09_LINK_PLAN_1",
+    "base":  "b6c9f2de35a66bae23ad8c7427b96e7ee475f0b4",
+    "inputs":  [
+                   "results/protected-withdrawal/W09/withdrawal-1.json",
+                   "results/protected-withdrawal/W09/withdrawal-2.json"
+               ],
+    "abiSHA256":  "62c53d528dd34202b60bf83c8311597353f947a8e340e6e97168e96d3f40e0c6",
+    "resultRoot":  "results/w09-link",
+    "childTimeoutMs":  90000,
+    "cases":  [
+                  {
+                      "column":  null,
+                      "id":  "L01",
+                      "kind":  "normal",
+                      "operations":  0,
+                      "requiredIndividualPasses":  2,
+                      "line":  null,
+                      "status":  "IMPLEMENTED / STATIC_REVIEWED / NOT_RUN",
+                      "operator":  null,
+                      "title":  "W09 original pair",
+                      "targetMessage":  null,
+                      "paths":  [
+
+                                ]
+                  },
+                  {
+                      "column":  9,
+                      "id":  "L02",
+                      "kind":  "reverse",
+                      "operations":  1,
+                      "requiredIndividualPasses":  2,
+                      "line":  18,
+                      "status":  "IMPLEMENTED / STATIC_REVIEWED / NOT_RUN",
+                      "operator":  "strictEqual",
+                      "title":  "Reversed individually valid documents",
+                      "targetMessage":  "LINK_FIRST_SEQUENCE",
+                      "paths":  [
+                                    [
+                                        "pair"
+                                    ]
+                                ]
+                  },
+                  {
+                      "column":  9,
+                      "id":  "L03",
+                      "kind":  "duplicate",
+                      "operations":  1,
+                      "requiredIndividualPasses":  2,
+                      "line":  17,
+                      "status":  "IMPLEMENTED / STATIC_REVIEWED / NOT_RUN",
+                      "operator":  "notStrictEqual",
+                      "title":  "Repeated individually valid first document",
+                      "targetMessage":  "LINK_DISTINCT_TRANSACTION",
+                      "paths":  [
+                                    [
+                                        "pair",
+                                        1
+                                    ]
+                                ]
+                  },
+                  {
+                      "column":  9,
+                      "id":  "L04",
+                      "kind":  "boundary",
+                      "operations":  6,
+                      "requiredIndividualPasses":  2,
+                      "line":  26,
+                      "status":  "IMPLEMENTED / STATIC_REVIEWED / NOT_RUN",
+                      "operator":  "deepStrictEqual",
+                      "title":  "Individually consistent governance balance discontinuity",
+                      "targetMessage":  "LINK_BOUNDARY_VALUES",
+                      "paths":  [
+                                    [
+                                        1,
+                                        "before",
+                                        "values",
+                                        "governanceToken"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "governanceToken",
+                                        "value"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "governanceToken",
+                                        "raw"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "values",
+                                        "governanceToken"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "governanceToken",
+                                        "value"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "governanceToken",
+                                        "raw"
+                                    ]
+                                ]
+                  },
+                  {
+                      "column":  9,
+                      "id":  "L05",
+                      "kind":  "scope",
+                      "operations":  25,
+                      "requiredIndividualPasses":  2,
+                      "line":  22,
+                      "status":  "IMPLEMENTED / STATIC_REVIEWED / NOT_RUN",
+                      "operator":  "deepStrictEqual",
+                      "title":  "Individually consistent SHORT identity discontinuity",
+                      "targetMessage":  "LINK_SCOPE",
+                      "paths":  [
+                                    [
+                                        1,
+                                        "scope",
+                                        "O"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortLpShares",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortLpShares",
+                                        "input"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortReturn",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortReturn",
+                                        "input"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortReturnWithdrawal",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortReturnWithdrawal",
+                                        "input"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortToken",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortToken",
+                                        "input"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortAllowance",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortAllowance",
+                                        "input"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortMember",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "before",
+                                        "queries",
+                                        "shortMember",
+                                        "input"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortLpShares",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortLpShares",
+                                        "input"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortReturn",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortReturn",
+                                        "input"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortReturnWithdrawal",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortReturnWithdrawal",
+                                        "input"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortToken",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortToken",
+                                        "input"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortAllowance",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortAllowance",
+                                        "input"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortMember",
+                                        "args"
+                                    ],
+                                    [
+                                        1,
+                                        "after",
+                                        "queries",
+                                        "shortMember",
+                                        "input"
+                                    ]
+                                ]
+                  }
+              ],
+    "limits":  [
+                   "No inter-success adjacency or absence of intervening transactions asserted",
+                   "No complete intermediate history or RPC truth",
+                   "No claim of cross-run identity from equal addresses alone; current run manifest and input hashes bind provenance",
+                   "Owner/rights/commitment linkage is implemented; not every distinct link assertion has an isolated negative case",
+                   "Existing individual verifier unchanged; a preliminary refusal fails the link-negative case"
+               ],
+    "amount":  null,
+    "authority":  false,
+    "consumptionLink":  "UNVERIFIED",
+    "rightsLink":  "UNVERIFIED"
+}

@@ -25,6 +25,10 @@
     {
       "id": "withdrawal-tamper",
       "timeoutMs": 120000
+    },
+    {
+      "id": "w09-link",
+      "timeoutMs": 120000
     }
   ],
   "expectedIds": [
