@@ -146,31 +146,34 @@ Approved utility direction includes Lending loan-origination and repayment fee s
 
 Additional utility includes the separately accounted LQC Staking Vault. The same canonical staking state may later support reviewed ecosystem functions such as Launchpad tier/allocation eligibility and governance utility through versioned interfaces, without creating duplicate staking custody or duplicate reward accounting.
 
-## 14. Canonical Tokenomics — V1.4 approved design
+## 14. Canonical Tokenomics — V1.5 issuance recorded
 
-This is the project-owner-approved **2026-10-21 design**, pending independent contract/legal review and on-chain issuance; approval of a design is not a claim of a live token. The intended total initial/maximum supply is **1,000,000,000 LQC** on BSC first, with no discretionary mint function, and holder-authorized burn. The target is **up to 143,800,000 LQC (14.38%) freely transferable at TGE**, versus the former 150M/15% historical Architecture Freeze plan.
+BSC mainnet (chain ID 56) initial issuance is recorded as confirmed on **2026-10-24** in [Canonical Tokenomics V1.5](CANONICAL_TOKENOMICS.md). The token contract is `0x6d6e197376195c7369C3c5F65e3685629F59025a`; issuance transaction `0x0172ef5f6855bf6f80fd19a7f9539f7a745088d7dec253f6d388ff65d4b89ce3`, block **129416178**. Exactly **1,000,000,000 LQC** was initially allocated to nine management Safe wallets. This records preserved verification evidence, not a new RPC check or a claim about current balances.
 
-| Allocation | Designated wallet name | Share | Total LQC | TGE maximum | Post-TGE plan |
+Fixed initial and maximum issuance is **1,000,000,000 LQC**, with no post-deployment discretionary mint capability on BSC. Holder-authorized burning may reduce supply. Token name and decimals require deployed-getter evidence before public metadata is finalized.
+
+The **planned TGE public-release budget** is **up to 143,800,000 LQC (14.38% of initial supply)**: Community 80M + Existing Investors 3.8M + Liquidity 60M. It is **not confirmed circulating supply or measured transferable inventory**. The TGE reference time is **2027-02-01 09:00 KST**. Beneficiary distributions, Community 320M registration/funding, actual circulating supply, audit, CEX listing and native-mainnet migration are separate and are not claimed complete.
+
+| Allocation | Designated wallet name | Share | Total LQC | Planned TGE release cap | Post-TGE plan |
 |---|---|---:|---:|---:|---|
 | Community | LQC Community Wallet | 40% | 400,000,000 | 80,000,000 | 320M capped monthly over 120 months; initial 80M subject to actual recipient distribution |
 | Team & contributors | LQC Team Wallet | 20% | 200,000,000 | 0 | 12-month lock, 36 monthly vesting releases in months 13–48 |
 | Existing investors | LQC Investor Wallet | 3.8% | 38,000,000 | 3,800,000 | 3-month lock, 24 monthly releases in months 4–27; existing contracts subject to legal validation |
 | Liquidity & market making | LQC Liquidity Wallet | 8% | 80,000,000 | 60,000,000 | Remaining 20M subject to approved venue/liquidity mandates |
 | Treasury & operations | LQC Treasury Wallet | 8.2% | 82,000,000 | 0 | Approved and disclosed operating budgets |
-| Validators & staking | LQC Validator Wallet | 10% | 100,000,000 | 0 | Pre-allocated supply only; reward target up to 96 months after native mainnet launch |
+| Validators & staking | LQC Validator Wallet | 10% | 100,000,000 | 0 | Locked pending native-mainnet activation/settlement evidence; manual Safe-approved payouts for 10 years, capped at 10M per year, 2.5M per quarter, 100M lifetime |
 | Ecosystem development | LQC Ecosystem Wallet | 5% | 50,000,000 | 0 | Milestone-driven ecosystem grants |
 | Security & risk reserve | LQC Security Wallet | 3% | 30,000,000 | 0 | Multisig-approved security use; not LQUSD backing |
 | Mainnet activation | LQC Mainnet Wallet | 2% | 20,000,000 | 0 | Stage-based use after mainnet launch; indicative 24 months |
 | **TOTAL** | **9 allocation wallets** | **100%** | **1,000,000,000** | **143,800,000** | |
 
-The planned TGE inventory ceiling is 80M Community, 3.8M Existing Investors and 60M Liquidity. **Actual circulating supply** must be separately demonstrated, excluding undistributed, locked or non-transferable inventory. After TGE, Community's remaining 320M is assigned to 120 monthly capped programs (10 years); Team 200M has a 12-month lock and then 36 monthly installments (months 13–48); Investor remaining 34.2M has a 3-month lock and then 24 installments of 1.425M (months 4–27), subject to verified existing contracts.
+Community remaining 320M: 120 monthly capped programs; registration and exact funding must precede TGE and were not verified complete at issuance. Team 200M: 12-month lock, then 36 monthly releases in months 13–48. Investor remaining 34.2M: 3-month lock, then 24 monthly releases of 1.425M in months 4–27, subject to legal validation. Validator 100M remains locked pending native-mainnet activation and validated supply/settlement rules: manual 2-of-3 Safe-approved payments to registered operators, over 10 years, capped at 10M/year, 2.5M/quarter and 100M lifetime; activation/calendar/carryover/native-settlement rules remain unresolved.
 
-**Native mainnet portability:** LQC intends to support a future Cosmos SDK / CometBFT / Cosmos EVM / IBC-based native network, but mainnet is not claimed to exist. Native fees, PoS validators and staking can be funded from pre-allocated token budget (Validators & Staking 10% / 100M), without increasing the global 1B maximum supply. Future 1:1 BSC-to-native migration requires a **separately approved and audited** lock/burn-and-claim mechanism that rules out unbacked duplicates or simultaneous double circulation across chains. The Security reserve (3%) is not the separately reserved backing for LQUSD.
+**Native-mainnet portability:** the global issuance cap must be conserved across BSC and any future native representation. Migration requires provable burn or irrevocable custody/lock and audited 1:1 destination accounting; it is not an implemented bridge or finalized redemption policy. Validator rewards use pre-allocated budget without inflation. The Security reserve is not LQUSD backing.
 
-All nine management wallets, role-separated signing controls, escrow/vesting schedules, contract source, source-of-supply accounting and CEX evidence must be reproducibly disclosed before public launch. Actual token deployment, audit conclusion, listing and regulatory authorization remain unclaimed.
+The nine Safe allocations establish management inventory at the recorded verification block, not beneficial ownership, independent signer control, completed operational vesting or circulation. Current source/ABI, wallet permissions, beneficiary rights and circulation must be verified separately.
 
-**Supersession history:** prior six-category allocation, 150M/15% TGE, and prior exclusion of the 3.8% investor bucket were valid historical records but are replaced by this newer approved design **only after repository review/merge**. Preserve the original historical freeze evidence.
-
+**Supersession history:** the former six-category/150M/15% plan and V1.4 pre-issuance statements are historical. Current disclosure follows merged Canonical Tokenomics V1.5; preserve historical evidence.
 
 ## 15. Development and Evidence Status
 
@@ -219,4 +222,4 @@ Technical artifacts are pinned to commits; on-chain artifacts are pinned to netw
 
 The project does not claim production readiness, completed independent audit, CEX listing, regulator approval, or a launched LQC Mainnet merely because repository code or testnet evidence exists.
 
-The official released PDF will be regenerated only after this canonical source is reconciled against the Architecture Freeze Implementation Matrix and Conflict Register.
+The November 1, 2026 PDF update reconciles tokenomics and recorded issuance with Canonical Tokenomics V1.5 while preserving the September v5.3 technical baseline. It does not certify other architecture/status sections as newly validated; broader reconciliation against the Architecture Freeze Implementation Matrix and Conflict Register remains separate.
