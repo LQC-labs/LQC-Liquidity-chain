@@ -1,5 +1,6 @@
 from pathlib import Path
 import re
+import hashlib
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.colors import HexColor, white
 from reportlab.lib.styles import ParagraphStyle
@@ -12,7 +13,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from pypdf import PdfReader, PdfWriter
 
 ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "output/pdf/LQC_Whitepaper_v5.3_Review_Edition.pdf"
+OUT = ROOT / "LQC_Whitepaper.pdf"
 NAVY = HexColor("#102235")
 TEAL = HexColor("#0b8790")
 MINT = HexColor("#31c7ad")
@@ -85,7 +86,7 @@ pages = [
     ("Executive summary", "1. Executive Summary", [
         "Liquidity Chain (LQC) is a modular infrastructure project for connecting fragmented liquidity across decentralized exchanges and, in later phases, across blockchain ecosystems. The initial engineering focus is an EVM routing stack and LQC Flow automated market maker for controlled BNB Smart Chain testnet validation.",
         "The public repository includes protocol-neutral adapter registration, failure-isolated quotes, gas-aware route comparison, one-to-four-route split optimization, atomic protected execution, native BNB handling, risk limits, emergency controls and testnet deployment validation.",
-        ("callout", "Current status: unaudited testnet MVP. No production deployment, live liquidity, exchange listing, audit approval or guaranteed commercial outcome is claimed."),
+        ("callout", "Current status: unaudited testnet MVP. No DeFi production readiness, live liquidity, exchange listing, audit approval or guaranteed commercial outcome is claimed. BSC token issuance is recorded separately."),
         ("bullets", ["Liquidity first - utility second - revenue third - scale last.", "Security gates precede unrestricted deployment.", "Every material claim should be independently verifiable."]),
     ]),
     ("Project overview", "2. The Liquidity Fragmentation Problem", [
@@ -190,19 +191,9 @@ pages = [
         "Routing and AMM development does not by itself activate staking, governance, fee benefits, gas support, treasury distributions or other proposed utilities.",
         ("callout", "Utility activates only after contract completion, audit, parameters, legal review, formal approval and on-chain disclosure."),
     ]),
-    ("Tokenomics", "23. Approved Tokenomics Overview", [
-        "The current approved project design uses a fixed maximum supply of 1,000,000,000 LQC and planned TGE circulation of 150,000,000 LQC (15%). Earlier draft figures are superseded.",
-        ("table", [["Allocation", "Share", "LQC"], ["Future ecosystem rewards", "35%", "350,000,000"], ["Community initial", "20%", "200,000,000"], ["Team and core contributors", "20%", "200,000,000"], ["Protocol treasury", "10%", "100,000,000"], ["Liquidity and market making", "10%", "100,000,000"], ["Grants and strategic ecosystem", "5%", "50,000,000"]], [260,80,164]),
-    ]),
-    ("Tokenomics", "24. TGE and Release Framework", [
-        ("table", [["Allocation", "TGE / release framework"], ["Ecosystem rewards", "0 at TGE; 7+ years, up to 50M annually"], ["Community initial", "80M at TGE; remaining 120M activity-based over 24 months"], ["Team / contributors", "0 at TGE; 12-month cliff, then 36-month monthly vesting"], ["Protocol treasury", "10M at TGE; remaining 90M under 5-year budget framework"], ["Liquidity / MM", "50M at TGE; remaining 50M linked to exchange and pool growth"], ["Grants / strategic", "10M at TGE; remaining 40M milestone-based"]], [150,354]),
-        "The planned 150M TGE circulation is Community 80M, Liquidity/MM 50M, Treasury 10M and Grants 10M. Contract and wallet evidence will be published after implementation and verification.",
-    ]),
-    ("Tokenomics", "25. Supply and Vesting Verification", [
-        "Before launch, the token contract cap, total supply, decimals and mint/burn powers must reconcile to the approved disclosure. Every allocation wallet and vesting contract should be labeled and independently verifiable.",
-        ("bullets", ["Canonical network and token address", "Deployment and ownership transactions", "Explorer-verified source and ABI", "Mint, pause, blacklist, upgrade and recovery powers", "Beneficiaries, cliffs and vesting schedules", "Circulating-supply methodology and excluded wallets"]),
-        "No on-chain production token evidence is claimed in this edition.",
-    ]),
+    ('Tokenomics', '23. Tokenomics and Release Framework', ['LQC has a fixed initial and maximum issuance of 1,000,000,000 tokens. The planned TGE public-release budget is up to 143,800,000 LQC (14.38% of initial supply). This is a distribution ceiling, not confirmed circulating supply. No post-deployment discretionary mint capability exists on BSC; holder-authorized burning may reduce supply.', ('table', [['Allocation', 'Share', 'Total LQC', 'TGE cap'], ['Community', '40%', '400,000,000', '80,000,000'], ['Team &amp; contributors', '20%', '200,000,000', '0'], ['Existing investors', '3.8%', '38,000,000', '3,800,000'], ['Liquidity &amp; market making', '8%', '80,000,000', '60,000,000'], ['Treasury &amp; operations', '8.2%', '82,000,000', '0'], ['Validators &amp; staking', '10%', '100,000,000', '0'], ['Ecosystem development', '5%', '50,000,000', '0'], ['Security &amp; risk reserve', '3%', '30,000,000', '0'], ['Mainnet activation', '2%', '20,000,000', '0'], ['TOTAL', '100%', '1,000,000,000', '143,800,000']], [210, 50, 122, 122]), ('callout', 'Planned TGE cap: Community 80M + Investors 3.8M + Liquidity 60M = 143.8M. Undistributed, locked or restricted balances are not automatically circulating.'), 'TGE reference: 1 February 2027, 09:00 KST. Supply, transferable inventory, release budgets and actual circulation must be disclosed separately, with timestamped evidence. Global BSC/native supply conservation is required; migration is not implemented or finalized.']),
+    ('Tokenomics', '24. TGE Reference', []),
+    ('Tokenomics', '25. Vesting and Recorded BSC Issuance', [('table', [['Allocation', 'Post-TGE plan / conditions'], ['Community', 'Remaining 320M: 120 monthly capped programs (10 years). Registration and exact funding must precede TGE; completion was not verified at issuance.'], ['Team', '200M: 12-month lock, then 36 monthly releases in months 13-48; zero at TGE.'], ['Existing investors', 'Up to 3.8M at TGE. Remaining 34.2M: 3-month lock, then 1.425M monthly in months 4-27 (24 releases), subject to legal validation.'], ['Validators &amp; staking', '100M locked pending native-mainnet activation and validated supply/settlement rules. Manual 2-of-3 Safe-approved payouts to registered operators: 10 years, at most 10M/year, 2.5M/quarter and 100M lifetime. Activation/calendar/carryover/settlement rules remain unresolved.'], ['Other budgets', 'Liquidity residual 20M: approved mandates. Treasury 82M: approved operating budgets. Ecosystem 50M: milestone grants. Security 30M: multisig-approved use, not LQUSD backing. Mainnet 20M: phased after launch; indicative 24 months.']], [105, 399]), 'The canonical tokenomics records BSC mainnet (chain ID 56) initial issuance as confirmed on 24 October 2026: receipt status 0x1, issuance block 129416178; initial 1B supply and nine management Safe balances checked at block 129417644. This update reflects that recorded evidence; no new RPC verification is represented.', ('table', [['BSC issuance reference', 'Recorded identifier'], ['Token contract', '0x6d6e197376195c7369C3c5F65e3685629F59025a'], ['Issuance transaction', '0x0172ef5f6855bf6f80fd19a7f9539f7a745088d7dec253f6d388ff65d4b89ce3']], [110, 394]), 'Initial minting to nine management Safes does not establish beneficiary payouts, completed Community 320M registration/funding, TGE, actual circulating supply, independent audit, exchange listing or native-mainnet launch. Safe signer independence and subsequent configuration changes require separate verification.']),
     ("Economics", "26. Fees, Treasury and Burn", [
         "Potential revenue sources include routing and swap fees, future lending and repayment fees, liquidation fees, cross-chain services and Liquidity-as-a-Service arrangements. Actual revenue depends on deployed products and usage.",
         "Fee rates, settlement, conversion, burn addresses, treasury allocation and distributions are not final. A future burn must be verifiable on-chain and permanently remove the relevant LQC from circulation.",
@@ -288,7 +279,7 @@ compact_pages = [
         "Final sponsorship funding, stablecoin settlement, smart-account or relay architecture, oracle thresholds and abuse controls require implementation, testing, economic review, legal review, governance approval and independent security audit.",
     ]),
     ("Token utility", "15. Utility, Fees, Treasury and Burn", pages[21][2] + pages[25][2]),
-    ("Tokenomics", "16. Tokenomics and Release Framework", pages[22][2] + pages[23][2]),
+    ("Tokenomics", "16. Tokenomics and Release Framework", pages[22][2]),
     pages[24],
     ("Roadmap", "18. Development Status and Delivery Plan", [
         ("table", [["Workstream", "Current status / next gate"], ["LQC Flow AMM", "Implemented testnet MVP"], ["Router 2.0 and adapters", "Implemented; production integration review required"], ["Risk / governance", "Implemented foundation; finalize production roles"], ["BSC testnet tooling", "Implemented; publish real deployment evidence"], ["Independent review", "Audit, remediation and retest required"], ["Future modules", "Separate design, implementation, testing and audits"]], [190,314]),
@@ -329,15 +320,15 @@ def build():
     c.drawString(58, 498, "Connecting Fragmented Web3 Liquidity")
     c.setFillColor(MINT); c.roundRect(58, 394, 496, 66, 7, fill=1, stroke=0)
     c.setFillColor(NAVY); c.setFont("LQCSans-Bold", 11)
-    c.drawString(76, 430, "Version 5.3  ·  September 2026  ·  29 pages")
+    c.drawString(76, 430, "Version 5.3  ·  Tokenomics updated 1 Nov 2026  ·  29 pages")
     c.setFont("LQCSans", 9); c.drawString(76, 409, "Issued by MMXlabs&LQC LLC | Wyoming, United States")
     c.setFillColor(HexColor("#c8d7e1")); c.setFont("LQCSans", 8)
-    c.drawString(58, 72, "Unaudited testnet MVP · No production or listing claim")
+    c.drawString(58, 72, "Unaudited DeFi testnet MVP · BSC token issued · No listing claim")
     c.showPage()
 
     # Contents
     y = draw_header(c, 2, "Review edition", "Contents and Status Legend")
-    toc = [["Pages", "Section"], ["3-8", "Executive summary, purpose, strategic differentiation and architecture"], ["9-13", "DEX adapters, routing, execution and risk"], ["14-18", "Compatibility, testing, deployment and future lending"], ["19-22", "Cross-chain, Gasless design, utility and tokenomics"], ["23-28", "Supply, roadmap, audit, CEX evidence, team and compliance"], ["29", "Immediate priorities and conclusion"]]
+    toc = [["Pages", "Section"], ["3-8", "Executive summary, purpose, strategic differentiation and architecture"], ["9-13", "DEX adapters, routing, execution and risk"], ["14-18", "Compatibility, testing, deployment and future lending"], ["19-22", "Cross-chain, Gasless design and token utility"], ["23-24", "Tokenomics, vesting and recorded BSC issuance"], ["25-28", "Roadmap, audit, CEX evidence and team"], ["29", "Immediate priorities and conclusion"]]
     draw_blocks(c, y, [("table", toc, [80,424]), ("callout", "Status legend: Implemented means public repository code/test evidence. In development means active implementation or configuration work. Subject to review means independent, legal, governance or deployment verification is required. Planned means no completed production module is claimed.")])
     draw_footer(c, 2); c.showPage()
 
@@ -349,6 +340,20 @@ def build():
         draw_footer(c, pdf_number); c.showPage()
 
     c.save()
+    # Preserve all original technical/design pages byte-for-byte at content-stream level.
+    baseline_path = ROOT / "docs/whitepaper/baselines/LQC_Whitepaper_v5.3_September_2026.pdf"
+    if hashlib.sha256(baseline_path.read_bytes()).hexdigest() != "53ee8197a13e6c0dbe274fa092c9383a5ed78140abe81c07b3c889a2d858c390":
+        raise RuntimeError("Baseline PDF hash differs from the reviewed source; review before rebuilding")
+    base = PdfReader(str(baseline_path))
+    generated = PdfReader(str(OUT))
+    if len(base.pages) != 29:
+        raise RuntimeError("Expected the reviewed 29-page v5.3 baseline")
+    merged = PdfWriter()
+    for i in range(29):
+        merged.add_page(generated.pages[i] if i in (0, 1, 2, 22, 23) else base.pages[i])
+    merged.add_metadata({"/Title": "LQC Whitepaper v5.3 - Tokenomics Update 2026-11-01", "/Author": "MMXlabs&LQC LLC", "/Subject": "Canonical Tokenomics V1.5; technical baseline preserved"})
+    with OUT.open("wb") as f:
+        merged.write(f)
     reader = PdfReader(str(OUT))
     if len(reader.pages) != 29:
         raise RuntimeError(f"Expected 29 pages, created {len(reader.pages)}")

@@ -87,11 +87,16 @@ def cover_page():
     c.save(); packet.seek(0)
     return PdfReader(packet).pages[0]
 
+baseline = PdfReader(str(SOURCE))
+baseline_text = "\n".join(page.extract_text() or "" for page in baseline.pages)
+if "143,800,000" not in baseline_text or "150,000,000" in baseline_text or "No on-chain production token evidence is claimed" in baseline_text:
+    raise RuntimeError("Stale whitepaper source: build the corrected v5.3 tokenomics edition first")
+
 story = [
     P("TECHNICAL DEVELOPMENT UPDATE", "Kicker"),
     P("Router 2.0, LQC Flow DEX and BSC Testnet Readiness", "TitleX"),
     P("Version 4.7 - English Working Draft - September 2026", "Callout"),
-    P("This update forms part of the LQC Whitepaper and records repository-verified implementation progress completed after the August 2026 working draft. It does not represent an audit, mainnet launch, production integration, exchange listing, or guarantee of future performance."),
+    P("This update forms part of the LQC Whitepaper and records repository-verified implementation progress completed after the August 2026 working draft. It does not represent an audit, LQC native-mainnet launch, DeFi production integration, exchange listing, or guarantee of future performance. BSC token issuance is recorded separately in the tokenomics disclosure."),
     P("Update classification", "H1X"),
     table([
         ["Classification", "Meaning in this update"],
@@ -176,7 +181,7 @@ story = [
         ["Build and tests", "Repository verified", "Pin the exact commit, locked dependencies, compiler settings, command output and CI run."],
         ["Explorer package", "Generator implemented", "Validate the real chain-97 deployment and publish matching verified source, addresses and transactions."],
         ["Independent audit", "Pending", "Named auditor, pinned scope/commit, final report, remediation commits and retest of every Critical/High finding."],
-        ["Token on-chain proof", "Pending", "Canonical address, decimals, supply controls, holders, deployment transaction, vesting and privileged-role evidence."],
+        ["Token on-chain proof", "Initial issuance recorded", "BSC issuance and nine management Safe allocations recorded; beneficiary distributions, operational vesting, current balances and circulation require separate evidence."],
         ["Governance operations", "Pending production proof", "Final multisig threshold, role assignments, timelock, emergency procedure and drill evidence."],
         ["Market evidence", "Not claimed", "Timestamped liquidity, TVL, volume, holders and active-wallet methodology; no unsupported metrics."],
         ["Legal/compliance", "Pending external evidence", "Entity/KYB package, legal analysis, sanctions/AML and market-integrity controls."],
@@ -201,7 +206,12 @@ story = [
     P("6.1 Token utility boundary", "H1X"),
     P("Router and AMM development does not by itself activate LQC fee conversion, lending-fee burning, staking rewards, governance rights or production Treasury flows. Those utilities remain subject to contract completion, audit, parameter approval and on-chain disclosure."),
     P("6.2 Current tokenomics disclosure", "H1X"),
-    P("The current approved project design uses a fixed maximum supply of 1,000,000,000 LQC and planned TGE circulation of 150,000,000 LQC (15%). Contract enforcement, canonical token address, allocation wallets, vesting contracts and circulating-supply evidence remain pending and must be reconciled before launch."),
+    P('LQC has a fixed initial and maximum issuance of 1,000,000,000 tokens. The planned TGE public-release budget is up to 143,800,000 LQC (14.38% of initial supply). This is a distribution ceiling, not confirmed circulating supply. No post-deployment discretionary mint capability exists on BSC; holder-authorized burning may reduce supply.'),
+    table([['Allocation', 'Share', 'Total LQC', 'TGE cap'], ['Community', '40%', '400,000,000', '80,000,000'], ['Team &amp; contributors', '20%', '200,000,000', '0'], ['Existing investors', '3.8%', '38,000,000', '3,800,000'], ['Liquidity &amp; market making', '8%', '80,000,000', '60,000,000'], ['Treasury &amp; operations', '8.2%', '82,000,000', '0'], ['Validators &amp; staking', '10%', '100,000,000', '0'], ['Ecosystem development', '5%', '50,000,000', '0'], ['Security &amp; risk reserve', '3%', '30,000,000', '0'], ['Mainnet activation', '2%', '20,000,000', '0'], ['TOTAL', '100%', '1,000,000,000', '143,800,000']], [210,50,122,122]),
+    table([['Allocation', 'Post-TGE plan / conditions'], ['Community', 'Remaining 320M: 120 monthly capped programs (10 years). Registration and exact funding must precede TGE; completion was not verified at issuance.'], ['Team', '200M: 12-month lock, then 36 monthly releases in months 13-48; zero at TGE.'], ['Existing investors', 'Up to 3.8M at TGE. Remaining 34.2M: 3-month lock, then 1.425M monthly in months 4-27 (24 releases), subject to legal validation.'], ['Validators &amp; staking', '100M locked pending native-mainnet activation and validated supply/settlement rules. Manual 2-of-3 Safe-approved payouts to registered operators: 10 years, at most 10M/year, 2.5M/quarter and 100M lifetime. Activation/calendar/carryover/settlement rules remain unresolved.'], ['Other budgets', 'Liquidity residual 20M: approved mandates. Treasury 82M: approved operating budgets. Ecosystem 50M: milestone grants. Security 30M: multisig-approved use, not LQUSD backing. Mainnet 20M: phased after launch; indicative 24 months.']], [105,399]),
+    P('The canonical tokenomics records BSC mainnet (chain ID 56) initial issuance as confirmed on 24 October 2026: receipt status 0x1, issuance block 129416178; initial 1B supply and nine management Safe balances checked at block 129417644. This update reflects that recorded evidence; no new RPC verification is represented.'),
+    P('BSC token: 0x6d6e197376195c7369C3c5F65e3685629F59025a; issuance transaction: 0x0172ef5f6855bf6f80fd19a7f9539f7a745088d7dec253f6d388ff65d4b89ce3'),
+    P('Initial minting to nine management Safes does not establish beneficiary payouts, completed Community 320M registration/funding, TGE, actual circulating supply, independent audit, exchange listing or native-mainnet launch. Safe signer independence and subsequent configuration changes require separate verification.'),
     P("6.3 Legal entity and public documentation", "H1X"),
     P("The project's disclosed legal entity is MMXlabs&amp;LQC LLC, a Wyoming limited liability company. Current formation, good-standing, ownership, signatory, KYB and legal-opinion evidence must be delivered through each reviewer's approved process."),
     Spacer(1, 8),

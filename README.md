@@ -215,26 +215,26 @@ Potential future revenue sources may include:
 
 Treasury allocation, staking rewards, revenue distribution, additional buyback, and burn mechanisms remain subject to governance, realized protocol revenue, legal review, and published limits.
 
-## Approved Tokenomics Design — V1.4
+## Canonical Tokenomics — V1.5 issuance recorded
 
-**Project-owner-approved design (2026-10-21), pending reviewed repository merge, security/legal release gates and on-chain deployment.** The fixed intended supply is **1,000,000,000 LQC**. The targeted **maximum initial freely transferable allocation** is **143,800,000 LQC (14.38%)**, not a statement of actual circulation.
+BSC mainnet (chain ID 56) initial issuance is recorded as confirmed on **2026-10-24** in [Canonical Tokenomics V1.5](docs/CANONICAL_TOKENOMICS.md). The token contract is `0x6d6e197376195c7369C3c5F65e3685629F59025a`; issuance transaction `0x0172ef5f6855bf6f80fd19a7f9539f7a745088d7dec253f6d388ff65d4b89ce3`, block **129416178**. Exactly **1,000,000,000 LQC** was initially allocated to nine management Safe wallets. This records preserved verification evidence, not a new RPC check or a claim about current balances.
 
-| Allocation | Designated wallet name | Share | Total LQC | TGE maximum | Post-TGE plan |
+The **planned TGE public-release budget** is **up to 143,800,000 LQC (14.38% of initial supply)**: Community 80M + Existing Investors 3.8M + Liquidity 60M. It is **not confirmed circulating supply or measured transferable inventory**. The TGE reference time is **2027-02-01 09:00 KST**. Beneficiary distributions, Community 320M registration/funding, actual circulating supply, audit, CEX listing and native-mainnet migration are separate and are not claimed complete.
+
+| Allocation | Designated wallet name | Share | Total LQC | Planned TGE release cap | Post-TGE plan |
 |---|---|---:|---:|---:|---|
 | Community | LQC Community Wallet | 40% | 400,000,000 | 80,000,000 | 320M capped monthly over 120 months; initial 80M subject to actual recipient distribution |
 | Team & contributors | LQC Team Wallet | 20% | 200,000,000 | 0 | 12-month lock, 36 monthly vesting releases in months 13–48 |
 | Existing investors | LQC Investor Wallet | 3.8% | 38,000,000 | 3,800,000 | 3-month lock, 24 monthly releases in months 4–27; existing contracts subject to legal validation |
 | Liquidity & market making | LQC Liquidity Wallet | 8% | 80,000,000 | 60,000,000 | Remaining 20M subject to approved venue/liquidity mandates |
 | Treasury & operations | LQC Treasury Wallet | 8.2% | 82,000,000 | 0 | Approved and disclosed operating budgets |
-| Validators & staking | LQC Validator Wallet | 10% | 100,000,000 | 0 | Pre-allocated supply only; reward target up to 96 months after native mainnet launch |
+| Validators & staking | LQC Validator Wallet | 10% | 100,000,000 | 0 | Locked pending native-mainnet activation/settlement evidence; manual Safe-approved payouts for 10 years, capped at 10M per year, 2.5M per quarter, 100M lifetime |
 | Ecosystem development | LQC Ecosystem Wallet | 5% | 50,000,000 | 0 | Milestone-driven ecosystem grants |
 | Security & risk reserve | LQC Security Wallet | 3% | 30,000,000 | 0 | Multisig-approved security use; not LQUSD backing |
 | Mainnet activation | LQC Mainnet Wallet | 2% | 20,000,000 | 0 | Stage-based use after mainnet launch; indicative 24 months |
 | **TOTAL** | **9 allocation wallets** | **100%** | **1,000,000,000** | **143,800,000** | |
 
-At TGE, planned maximum transferability is Community 80M + Investors 3.8M + Liquidity 60M = **143.8M**; any undistributed, locked or restricted inventory must be excluded from actually reported circulating supply. Community remaining 320M: 120 monthly program limits (10 years); Team 200M: 12-month lock plus 36 monthly releases (months 13–48); Investor remaining 34.2M: 3-month lock plus 24 monthly releases (months 4–27). All actual beneficiary rights remain subject to verified vesting contracts and legal agreement reconciliation.
-
-Nine wallet labels identify management responsibility rather than confirming custody balances. Token allocation and vesting restrictions must be enforced by audited contracts where appropriate. See [canonical tokenomics](docs/CANONICAL_TOKENOMICS.md).
+Community remaining 320M: 120 monthly capped programs; registration and exact funding must precede TGE and were not verified complete at issuance. Team 200M: 12-month lock, then 36 monthly releases in months 13–48. Investor remaining 34.2M: 3-month lock, then 24 monthly releases of 1.425M in months 4–27, subject to legal validation. Validator 100M remains locked pending native-mainnet activation and validated supply/settlement rules: manual 2-of-3 Safe-approved payments to registered operators, over 10 years, capped at 10M/year, 2.5M/quarter and 100M lifetime; activation/calendar/carryover/native-settlement rules remain unresolved.
 
 ### Staking rewards, no inflation, and future mainnet
 
@@ -242,7 +242,7 @@ Nine wallet labels identify management responsibility rather than confirming cus
 - Validator/staking token-denominated incentives may use only an approved portion of the existing **Validators & Staking 10% / 100M LQC** allocation, not new token minting.
 - Protocol-revenue rewards, if activated, require distinct accounting, funded realized revenue and no guaranteed yield. User principal or protected reserves are never reward sources.
 - On any later native-mainnet migration, provable burn or custody-backed lock and controlled 1:1 destination claims must prevent duplicate circulating supply across BSC and the future chain. Exact migration mechanism is **not yet approved or implemented**.
-- Legacy **6-category / 15% TGE** tokenomics was an earlier architecture baseline, preserved in historical commits. CEX submission, official PDF and public website must be reconciled before describing V1.4 as live. No token deployment/audit/listing is claimed.
+- Legacy **6-category / 15% TGE** tokenomics was an earlier architecture baseline, preserved in historical commits. Current disclosure follows Canonical Tokenomics V1.5 and records BSC initial issuance separately from DeFi production readiness, audit, listing, beneficiary distributions and actual circulation.
 
 
 ## Roadmap
