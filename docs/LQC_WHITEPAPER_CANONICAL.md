@@ -218,7 +218,15 @@ Technical artifacts are pinned to commits; on-chain artifacts are pinned to netw
 14. Token / CEX Readiness
 15. Capped Public Pilot / LQC Mainnet Path
 
-## 19. Current scope boundary
+## 19. Future Launchpad and Creator Network — Technical Design (Planned)
+
+The future LQC Launchpad is a separately gated application module for reviewed project configuration, isolated contribution escrow, deterministic allocation, mutually exclusive settlement/refund outcomes, vesting/claim and bounded liquidity-bootstrap adapters. Project-specific accounting, access controls, pause behavior, refund rights and external interface authorization require independent test and review evidence before any activation.
+
+The future Creator Network is a separate off-chain workspace for creator profiles, technical project research, content indexing, revision and moderation decisions, and verified collaboration records. It does not inherit Launchpad custody or protocol administrative privileges. Account data, private evidence and authentication secrets must remain outside public repositories and public site artifacts.
+
+The proposed interfaces and security invariants are described in [Whitepaper v5.4 Launchpad Technical Review Annex](whitepaper/LQC_WHITEPAPER_V54_LAUNCHPAD_CREATOR_REVIEW.md). That annex is a technical design proposal, not a deployed contract, active service or completed audit. Existing LQC Master Development Sequence 1–15 retains priority. No new LQC token issuance or change to Canonical Tokenomics V1.5 is authorized by this proposal.
+
+## 20. Current scope boundary
 
 The project does not claim production readiness, completed independent audit, CEX listing, regulator approval, or a launched LQC Mainnet merely because repository code or testnet evidence exists.
 
