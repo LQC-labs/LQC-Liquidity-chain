@@ -63,13 +63,32 @@
     @keyframes fundPos{0%,42%{opacity:1}48%,92%{opacity:0}98%,100%{opacity:1}}@keyframes fundNeg{0%,42%{opacity:0}48%,92%{opacity:1}98%,100%{opacity:0}}@keyframes fundToShort{0%{left:0;opacity:0}7%{opacity:1}40%{left:100%;opacity:1}46%,100%{left:100%;opacity:0}}@keyframes fundToLong{0%,48%{right:0;opacity:0}55%{opacity:1}88%{right:100%;opacity:1}94%,100%{right:100%;opacity:0}}@keyframes stateUp{0%,42%{opacity:1}48%,92%{opacity:0}98%,100%{opacity:1}}@keyframes stateDown{0%,42%{opacity:0}48%,92%{opacity:1}98%,100%{opacity:0}}
     @keyframes perpFlow{to{stroke-dashoffset:-64}}@keyframes perpPulse{50%{opacity:.35;transform:scale(.75)}}@keyframes perpRing{0%{transform:scale(.86);opacity:.8}100%{transform:scale(1.42);opacity:0}}@keyframes fundingSpin{to{transform:translate(-50%,-50%) rotate(348deg)}}@keyframes perpLong{0%,42%,100%{transform:translateY(-5px) scale(1.06);opacity:1;box-shadow:0 0 28px rgba(121,242,202,.22)}48%,92%{transform:translateY(4px) scale(.96);opacity:.52;box-shadow:0 0 8px rgba(121,242,202,.04)}}@keyframes perpShort{0%,42%,100%{transform:translateY(4px) scale(.96);opacity:.52;box-shadow:0 0 8px rgba(255,113,139,.04)}48%,92%{transform:translateY(-5px) scale(1.06);opacity:1;box-shadow:0 0 28px rgba(255,113,139,.22)}}@keyframes riskMove{0%,100%{width:34%}50%{width:78%}}@media(max-width:920px){.perp-layout{grid-template-columns:1fr}.perp-flow{grid-template-columns:repeat(3,1fr)}}@media(max-width:560px){.perp-copy{padding:26px}.perp-stage{min-height:390px}.perp-price{width:96px;height:96px}.perp-price strong{font-size:17px}.position{width:78px;padding:9px 7px}.position.long{left:3%}.position.short{right:3%}.funding-orbit{width:70%;height:56%}.perp-flow{grid-template-columns:1fr 1fr}}@media(prefers-reduced-motion:reduce){.module-tag:before,.price-line,.perp-price:before,.perp-price:after,.position,.funding-orbit,.risk-fill{animation:none!important}}
 
+    /* Future Launchpad: explanatory animation, not a live transaction interface. */
+    #launchpad{position:relative;overflow:hidden;background:radial-gradient(circle at 74% 10%,rgba(105,220,255,.08),transparent 44%)}
+    .lp-steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;list-style:none;padding:0;margin:30px 0 20px}
+    .lp-step{min-width:0;min-height:168px;padding:20px 17px;display:flex;flex-direction:column;gap:9px;border:1px solid rgba(105,220,255,.17);border-radius:20px;background:linear-gradient(150deg,rgba(105,220,255,.065),rgba(255,255,255,.015));animation:lpHighlight 10s ease-in-out infinite;animation-delay:var(--lp-delay)}
+    .lp-step .lp-number{color:var(--mint);font-size:12px;font-weight:900;letter-spacing:.18em}
+    .lp-step strong{font-size:16px;line-height:1.28;color:var(--ice)}
+    .lp-step>span:last-child{font-size:12px;line-height:1.55;color:var(--muted)}
+    @keyframes lpHighlight{0%,17%,100%{transform:translateY(0);border-color:rgba(105,220,255,.17);box-shadow:none}6%,10%{transform:translateY(-5px);border-color:rgba(121,242,202,.68);box-shadow:0 14px 35px rgba(33,176,198,.16)}}
+    .lp-creator-panel{display:grid;grid-template-columns:1.2fr .8fr;gap:30px;align-items:center;margin-top:20px;padding:30px;border:1px solid rgba(121,242,202,.22);border-radius:24px;background:rgba(121,242,202,.035)}
+    .lp-creator-panel h3{font-size:clamp(21px,2.5vw,30px);line-height:1.2;letter-spacing:-.025em;margin:11px 0 10px}
+    .lp-creator-panel p{margin:0;color:var(--muted);max-width:600px;font-size:14px}
+    .lp-creator-features{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .lp-creator-features span{padding:15px 12px;text-align:center;border-radius:14px;border:1px solid rgba(255,255,255,.085);background:rgba(255,255,255,.035);font-size:12px;font-weight:700;color:var(--ice)}
+    .lp-footer{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-top:18px;font-size:12px;color:var(--muted)}
+    .lp-footer a{color:var(--cyan);font-weight:800;white-space:nowrap}
+    @media(max-width:920px){.lp-steps{grid-template-columns:repeat(2,minmax(0,1fr))}.lp-step{min-height:136px}.lp-creator-panel{grid-template-columns:1fr}.lp-footer{flex-direction:column;align-items:flex-start}}
+    @media(max-width:480px){.lp-steps{grid-template-columns:1fr}.lp-step{min-height:auto}.lp-creator-features{grid-template-columns:1fr 1fr}}
+    @media(prefers-reduced-motion:reduce){.lp-step{animation:none}}
+
   </style>
 </head>
 <body>
 <nav>
   <div class="wrap nav-inner">
     <a class="brand" href="#top"><span class="mark"><img src="lqc-token-symbol.png" alt="LQC symbol"></span><span>LIQUIDITY CHAIN</span></a>
-    <div class="nav-links"><a href="#network">Network</a><a href="#routing">Optimal Path</a><a href="#protocol">Protocol</a><a href="#perpetual">Perpetual</a><a href="#token">LQC Token</a><a href="dex/app/">LQC Flow DEX</a><a href="dex/app/local-demo.html">Local Demo</a><a href="#team">Team</a></div>
+    <div class="nav-links"><a href="#network">Network</a><a href="#routing">Optimal Path</a><a href="#protocol">Protocol</a><a href="#perpetual">Perpetual</a><a href="#launchpad">Launchpad</a><a href="#token">LQC Token</a><a href="dex/app/">LQC Flow DEX</a><a href="dex/app/local-demo.html">Local Demo</a><a href="#team">Team</a></div>
     <a class="btn" href="https://github.com/LQC-labs/LQC-Liquidity-chain" target="_blank" rel="noreferrer">GitHub ↗</a>
   </div>
 </nav>
@@ -238,6 +257,26 @@
   </div>
 </div></section>
 
+<section id="launchpad" aria-labelledby="launchpad-heading"><div class="wrap">
+  <div class="section-head">
+    <div class="eyebrow">Future architecture · Planned / Not Live</div>
+    <h2 id="launchpad-heading">A reviewed path from project onboarding to liquidity.</h2>
+    <p>LQC Launchpad is a proposed independent module for project review, controlled distribution mechanics, isolated asset accounting and bounded integration with LQC Flow. The diagram shows engineering targets, not an operating token sale.</p>
+  </div>
+  <ol class="lp-steps" aria-label="Proposed Launchpad technical workflow">
+    <li class="lp-step" style="--lp-delay:0s"><span class="lp-number">01</span><strong>Project Review</strong><span>Identity, configuration and evidence checks</span></li>
+    <li class="lp-step" style="--lp-delay:2s"><span class="lp-number">02</span><strong>Sale Configuration</strong><span>Versioned limits, schedule and permissions</span></li>
+    <li class="lp-step" style="--lp-delay:4s"><span class="lp-number">03</span><strong>Isolated Escrow</strong><span>Project-specific contribution accounting</span></li>
+    <li class="lp-step" style="--lp-delay:6s"><span class="lp-number">04</span><strong>Claim or Refund</strong><span>Verified, mutually exclusive outcomes</span></li>
+    <li class="lp-step" style="--lp-delay:8s"><span class="lp-number">05</span><strong>LQC Flow Adapter</strong><span>Separate approval for liquidity handoff</span></li>
+  </ol>
+  <div class="lp-creator-panel">
+    <div><div class="eyebrow">Creator Network · Proposed workspace</div><h3>Tools for technical content and community collaboration.</h3><p>Planned creator profiles, research and educational content, review workflows and project collaboration records — with independent permissions and moderation history.</p></div>
+    <div class="lp-creator-features"><span>Creator profiles</span><span>Content review</span><span>Project workspaces</span><span>Activity records</span></div>
+  </div>
+  <div class="lp-footer"><span>Design stage only. No live Launchpad, token sale, platform registration or service activation is offered here.</span><a href="https://github.com/LQC-labs/LQC-Liquidity-chain/blob/main/docs/whitepaper/LQC_WHITEPAPER_V54_LAUNCHPAD_CREATOR_REVIEW.md" target="_blank" rel="noopener noreferrer">Read technical design ↗</a></div>
+</div></section>
+
 <section id="team"><div class="wrap">
   <div class="section-head"><div class="eyebrow">Organization</div><h2>Built around a focused technical structure.</h2><p>LQC is organized through MMXlabs&amp;LQC, a Wyoming LLC, with a compact engineering and advisory structure focused on liquidity infrastructure.</p></div>
   <div class="team-grid"><div class="team-card"><span style="display:block;font-size:16px;font-weight:400;line-height:1.75;color:var(--muted)">Co-Founder · ALI ISIK<br>Co-Founder · CHEONHO KIM</span></div><div class="team-card"><strong>4</strong><span>Engineers</span></div><div class="team-card"><span style="display:block;font-size:16px;font-weight:400;line-height:1.75;color:var(--muted)">CMO · AHMET DIZLEK</span></div><div class="team-card"><span style="display:block;font-size:16px;font-weight:400;line-height:1.75;color:var(--muted)">Advisor · JEONG JAE-WON</span></div><div class="team-card"><strong>WY</strong><span>MMXlabs&amp;LQC · Wyoming LLC</span></div></div>
@@ -258,7 +297,7 @@
   </div>
 </div></section>
 
-<div class="cta"><div class="wrap"><div class="cta-box"><div><div class="eyebrow">Liquidity Chain</div><h3>One infrastructure layer.<br>Many liquidity paths.</h3></div><div class="cta-actions"><a class="btn primary" href="#top">Back to top</a><a class="btn" href="https://github.com/LQC-labs/LQC-Liquidity-chain" target="_blank" rel="noreferrer">View GitHub ↗</a></div></div></div></div>
+<div class="cta"><div class="wrap"><div class="cta-box"><div><div class="eyebrow">Liquidity Chain</div><h3>One infrastructure layer.<br>Many liquidity paths.</h3></div><div class="cta-actions"><a class="btn primary" href="#top">Back to top</a><a class="btn" href="https://github.com/LQC-labs/LQC-Liquidity-chain" target="_blank" rel="noreferrer">View GitHub ↗</a><a class="btn" href="https://gitlab.com/LQC-Labs/lqc-public" target="_blank" rel="noreferrer">View GitLab ↗</a></div></div></div></div>
 </main>
 
 <footer><div class="wrap"><div class="footer-grid"><div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="brand"><span class="mark"><img src="lqc-token-symbol.png" alt="LQC symbol"></span><span>LIQUIDITY CHAIN</span></div><a class="btn primary" href="LQC_Whitepaper.pdf" title="Open the LQC English whitepaper — tokenomics updated 1 November 2026">Whitepaper ↗</a></div><div>© 2026 MMXlabs&amp;LQC LLC</div></div><p class="legal">This website describes the LQC project vision, architecture concepts and intended protocol scope. Features, parameters, integrations and availability may change as specifications are finalized. Nothing on this website constitutes financial, investment, legal or trading advice.</p></div></footer>
