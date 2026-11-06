@@ -1,0 +1,958 @@
+{
+  "policy": "MIT for project self-authored portions, per explicit responsible-user approval I28",
+  "approvalDate": "2026-11-07 Asia/Seoul",
+  "basis": "MMXlabs/LQC LLC project authority and no external developer participation confirmed; not independent title/third-party clearance",
+  "licenseFile": "LICENSE",
+  "copyrightNotice": "Copyright (c) 2026 MMXlabs and LQC LLC",
+  "noticeYearMeaning": "Package licensing notice year; not a certified creation year for every file",
+  "originalFileCount": 104,
+  "existingMITSPDX": 69,
+  "nonSPDXCovered": 35,
+  "files": [
+    {
+      "path": ".gitattributes",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "7d97862c64d16eb506eb400fb219b9ab515353ef494f43bcdaf9cb7ed5d0e721",
+      "packagedSHA256": "7d97862c64d16eb506eb400fb219b9ab515353ef494f43bcdaf9cb7ed5d0e721",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": ".gitignore",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "348e986fc64efd1d9ceed623d212ce1a58c0605ee0300c8dada6dfe4ceab8ce1",
+      "packagedSHA256": "348e986fc64efd1d9ceed623d212ce1a58c0605ee0300c8dada6dfe4ceab8ce1",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "baseline/OriginalRegistry.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "43e57efedb390e01746a899cd48d7a29a76b32a1676cab41178815a8f640c17c",
+      "packagedSHA256": "43e57efedb390e01746a899cd48d7a29a76b32a1676cab41178815a8f640c17c",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "browser-i22.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "a10643fd561efc07aa9239ea9bb98dbb3c017f63aa12ebb34f35996f50f34fe6",
+      "packagedSHA256": "a10643fd561efc07aa9239ea9bb98dbb3c017f63aa12ebb34f35996f50f34fe6",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "dex/app/futures/mobile-testnet-close-position.js",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "5d025092b3cd84facdd1e4dc1b7f8503565a9dd7734af5e92318ca4352b6840d",
+      "packagedSHA256": "5d025092b3cd84facdd1e4dc1b7f8503565a9dd7734af5e92318ca4352b6840d",
+      "sourceRole": "review-only-ui",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "dex/app/futures/mobile-testnet-governance-market.js",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "851c04dbc144223575d0473e99708f9628a2f2ef65b03eccba541dd89e6f6d50",
+      "packagedSHA256": "851c04dbc144223575d0473e99708f9628a2f2ef65b03eccba541dd89e6f6d50",
+      "sourceRole": "review-only-ui",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "dex/app/futures/mobile-testnet-market-page.js",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "bd6ea23a56cb5fce253858f6d6d181ee1b968ba297c1e34924f9299782736b66",
+      "packagedSHA256": "bd6ea23a56cb5fce253858f6d6d181ee1b968ba297c1e34924f9299782736b66",
+      "sourceRole": "review-only-ui",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "dex/app/futures/mobile-testnet-open-position.js",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "0e9e451ecef2010049f08a6abcc43ec0ed3adb7606e686c3bc69dccb86b0a9b9",
+      "packagedSHA256": "0e9e451ecef2010049f08a6abcc43ec0ed3adb7606e686c3bc69dccb86b0a9b9",
+      "sourceRole": "review-only-ui",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "dex/app/futures/mobile-testnet-position-config.js",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "b6890563a06a294066891139adabf0c85f1711cfde34b95370fd2873bbe0cf7f",
+      "packagedSHA256": "b6890563a06a294066891139adabf0c85f1711cfde34b95370fd2873bbe0cf7f",
+      "sourceRole": "review-only-ui",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "dex/app/futures/mobile-testnet-position-page.js",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "261e87c31bde7e75dd14b95c40b4f2f36b19def747176ab56c14c0bde39676ef",
+      "packagedSHA256": "261e87c31bde7e75dd14b95c40b4f2f36b19def747176ab56c14c0bde39676ef",
+      "sourceRole": "review-only-ui",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "dex/app/futures/mobile-testnet-position-policy.js",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "b06749268a4266676700058d57c69037599b1b1620ff5b919a53767986c923b1",
+      "packagedSHA256": "b06749268a4266676700058d57c69037599b1b1620ff5b919a53767986c923b1",
+      "sourceRole": "review-only-ui",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "dex/app/futures-mobile-testnet-close-position.html",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "91277d7031074426e03c4297717024b295e4f16a64d9f842796284fa55766241",
+      "packagedSHA256": "91277d7031074426e03c4297717024b295e4f16a64d9f842796284fa55766241",
+      "sourceRole": "review-only-ui",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "dex/app/futures-mobile-testnet-market.html",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "75b7738d08adda396c9af78af6e1bae989c481006a2a10479548692a0895519b",
+      "packagedSHA256": "75b7738d08adda396c9af78af6e1bae989c481006a2a10479548692a0895519b",
+      "sourceRole": "review-only-ui",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "dex/app/futures-mobile-testnet-open-position.html",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "c844524835dfdeaa271eb01f8f59f434709df8f64e7e2f6acd4fa3b897bcf868",
+      "packagedSHA256": "c844524835dfdeaa271eb01f8f59f434709df8f64e7e2f6acd4fa3b897bcf868",
+      "sourceRole": "review-only-ui",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "ENGINE-POLICY-TRUTH.json",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "76cf24bf84f51556c317207b339b2b31e77e455c7c60ec1a00392bf9cf63463e",
+      "packagedSHA256": "76cf24bf84f51556c317207b339b2b31e77e455c7c60ec1a00392bf9cf63463e",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "EVIDENCE-SUMMARY.json",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "fc281127f20bd8bef9f3487ce99057e0d8b58764d59aaf854d945f8ad698e9ae",
+      "packagedSHA256": "006ee0acb3364ac0b09c2bcd225a62b6e7bfdc58df64920709c8be720989f42d",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "foundry.toml",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "3e6798c3ad00097e75d21fe87cc36a8ede0a11bb7ecdac4763fed3cdfdfb9fb0",
+      "packagedSHA256": "3e6798c3ad00097e75d21fe87cc36a8ede0a11bb7ecdac4763fed3cdfdfb9fb0",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "harness/browser-init.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "f4386d11f0e98cf8e2b20d9a2e322ada2b2160b6634b2f8cb6f1994f46a380ba",
+      "packagedSHA256": "f4386d11f0e98cf8e2b20d9a2e322ada2b2160b6634b2f8cb6f1994f46a380ba",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "harness/browser-market-init.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "c2ddbcefd7ea3853a13b2cd213bbd82b1ea384d642adcfba716468ea6435093c",
+      "packagedSHA256": "c2ddbcefd7ea3853a13b2cd213bbd82b1ea384d642adcfba716468ea6435093c",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "harness/fake-ethereum.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "cf820a177314fe7f7b21ad82f08e611082bffeca53d200411466e90024c60aaf",
+      "packagedSHA256": "cf820a177314fe7f7b21ad82f08e611082bffeca53d200411466e90024c60aaf",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "harness/market-fixture.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "9728ccef5ad7763812448bb85dc9a6708cf5bfaa835d189f4be7353fd2066297",
+      "packagedSHA256": "9728ccef5ad7763812448bb85dc9a6708cf5bfaa835d189f4be7353fd2066297",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "harness/market-ui.test.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "35706f82eb8791fd4c6735b60e2b32483783e77c2d7e4993d5084aba1b2dc8af",
+      "packagedSHA256": "35706f82eb8791fd4c6735b60e2b32483783e77c2d7e4993d5084aba1b2dc8af",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "harness/mocha-globals.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "7a3e80cc6b7285376fcaa7a61db2c14f981f752aca2e248b9908fb531b1966fa",
+      "packagedSHA256": "7a3e80cc6b7285376fcaa7a61db2c14f981f752aca2e248b9908fb531b1966fa",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "harness/public-gate.test.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "482b12797a1d099b294761b1442b47eed875b9bd1a98ce34dccffb7d0329e9b6",
+      "packagedSHA256": "482b12797a1d099b294761b1442b47eed875b9bd1a98ce34dccffb7d0329e9b6",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "harness/ui-policy.test.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "5c4f5b807e56aa06a0c2b289b68813538b5aaa1ee2bcd3c2a29bd1428e16a12e",
+      "packagedSHA256": "5c4f5b807e56aa06a0c2b289b68813538b5aaa1ee2bcd3c2a29bd1428e16a12e",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "interfaces/IERC20.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "7d1fa868fedcbf3a81515d8a223fce97947457897083fc3318c591d94062baa1",
+      "packagedSHA256": "7d1fa868fedcbf3a81515d8a223fce97947457897083fc3318c591d94062baa1",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "UNRESOLVED_ORIGIN_NOT_A_COPYING_FINDING"
+    },
+    {
+      "path": "legacy-ui/dex/app/futures/mobile-testnet-deployment.js",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "6d54391093e67f7fd6f20847749c95ec6fd58a83005636f1ae9b2f8782e081ef",
+      "packagedSHA256": "6d54391093e67f7fd6f20847749c95ec6fd58a83005636f1ae9b2f8782e081ef",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "legacy-ui/dex/test/futures-mobile-testnet-deployment.test.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "33f9f62f3733cca02dcb46b1f6d9a0569befd1a3126d989362eb63d03506a2e3",
+      "packagedSHA256": "33f9f62f3733cca02dcb46b1f6d9a0569befd1a3126d989362eb63d03506a2e3",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "libraries/SafeTransferLib.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "7ceaef5d4af5e15c8d70e555c2baa3b2a5f878f2567691492c6a00afff4dd464",
+      "packagedSHA256": "7ceaef5d4af5e15c8d70e555c2baa3b2a5f878f2567691492c6a00afff4dd464",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "UNRESOLVED_ORIGIN_NOT_A_COPYING_FINDING"
+    },
+    {
+      "path": "ORACLE-POLICY-REVIEW.md",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "a546f70e721210b7351fc3118f3d5f2495bac4eefc474a65ba9de796b75acd26",
+      "packagedSHA256": "50cebdfebf2b03643feb926d798f59291f51a751482320fd55a26efe746ed049",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "package.json",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "a3e820bf1715afda0b535dd848a22362dbdc28296fbbbe6ffd6b7712d06194b6",
+      "packagedSHA256": "a3e820bf1715afda0b535dd848a22362dbdc28296fbbbe6ffd6b7712d06194b6",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "README.md",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "e1207b762bbcb4c156b196738bbf38c25171b563a769bd1d7466c0020ef7e1c6",
+      "packagedSHA256": "a2c2a2971b08ea9db0534668d12bee13ab44f9d08e1192b9ec2a6b5b281fd7fe",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "REPRODUCING.md",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "806afa93166945419c74a8fbf09defd47552df1de663c417a4a49fae50b5b42c",
+      "packagedSHA256": "06b5f024a6f2f926fa34faedf2c363792fd459f39aa91b7c97040641d555ad1c",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "RIGHTS-REVIEW.md",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "217250371114eac3e393f6f4d0ae63cb744e585330f2030edf02506945651135",
+      "packagedSHA256": "9aa97b94426f08ae34ec96b312533ddb854e6312b7ac349542e275c0cd44ec91",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "run-contract-i22.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "155111ffa4e5fbfb181f46c61c9da1e456f9d494521c5c7c4de185b57a0b3e1c",
+      "packagedSHA256": "155111ffa4e5fbfb181f46c61c9da1e456f9d494521c5c7c4de185b57a0b3e1c",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "run-ui-i22.mjs",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "1522006eb469e527df35268249f089891ec512c9efbb3d7a8c2b1ee0da1613ff",
+      "packagedSHA256": "1522006eb469e527df35268249f089891ec512c9efbb3d7a8c2b1ee0da1613ff",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "SECURITY-LIMITS.md",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "6698c9ee8b78885d74990f13a8b792f07f7079515f9541282acedab6a846bd49",
+      "packagedSHA256": "cf829497a8f5d1f14d5a8ca4fe0920e531626d65f0650f33be4f733a718790bc",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/baseline/ILQCFuturesOracle.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "0cd57c281cdb344b47ea90cde470af3d664d0f18510a29de368c6946f68e351e",
+      "packagedSHA256": "0cd57c281cdb344b47ea90cde470af3d664d0f18510a29de368c6946f68e351e",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/baseline/interfaces/IAggregatorV3.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "1aaeacadba094b6574ee73cf3d8d7bae3418138618f3187822a6ec56d4e0c941",
+      "packagedSHA256": "1aaeacadba094b6574ee73cf3d8d7bae3418138618f3187822a6ec56d4e0c941",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "UNRESOLVED_ORIGIN_NOT_A_COPYING_FINDING"
+    },
+    {
+      "path": "src/baseline/LQCAggregatorOracleAdapter.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "6a987047ee86c843ff29efdc558e019d88c97bf5bfa12469d09bdd70395bea1c",
+      "packagedSHA256": "6a987047ee86c843ff29efdc558e019d88c97bf5bfa12469d09bdd70395bea1c",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/funding/FundingLedger.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "e335815aa89b2ec64ae68db5126fd2c9c53d6949affd53ce27caeee483990e4b",
+      "packagedSHA256": "e335815aa89b2ec64ae68db5126fd2c9c53d6949affd53ce27caeee483990e4b",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/funding/FundingLedgerFactory.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "98105851b13fe99af521ef78f8797750b86c025d6df94921aa3dadedbd6a437f",
+      "packagedSHA256": "98105851b13fe99af521ef78f8797750b86c025d6df94921aa3dadedbd6a437f",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/funding/FundingWithdrawalVerifier.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "4eb40383c12277ab2ce101dda38370db7517d1897f36958cbbafd24ceaf19fc1",
+      "packagedSHA256": "4eb40383c12277ab2ce101dda38370db7517d1897f36958cbbafd24ceaf19fc1",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/funding/IFundingLedgerIntegration.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "8fe968abbcd81ab552f541922fc3ab5dca250156b17833fe2fb01c681d522568",
+      "packagedSHA256": "8fe968abbcd81ab552f541922fc3ab5dca250156b17833fe2fb01c681d522568",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/funding/IFundingWithdrawalView.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "845523f47fa93726ab2b81f8c8682675c78398defeb2deff6805b91af0ead006",
+      "packagedSHA256": "845523f47fa93726ab2b81f8c8682675c78398defeb2deff6805b91af0ead006",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/funding/LedgerMath.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "c88b2fe83ba5df677c93e541b3a909573601342b05b98c3ffc10945f958ea834",
+      "packagedSHA256": "c88b2fe83ba5df677c93e541b3a909573601342b05b98c3ffc10945f958ea834",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/ILQCFuturesOracle.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "0cd57c281cdb344b47ea90cde470af3d664d0f18510a29de368c6946f68e351e",
+      "packagedSHA256": "0cd57c281cdb344b47ea90cde470af3d664d0f18510a29de368c6946f68e351e",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/LQCFuturesApprovedOracle.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "e31e3448e4e36044b9bf093aaebf6bac13bf387594abcde5f820771a2a701faa",
+      "packagedSHA256": "e31e3448e4e36044b9bf093aaebf6bac13bf387594abcde5f820771a2a701faa",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/LQCFuturesMarketRegistry.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "1015511658b4221dd1c7eebe68689e5e8d2db20d7b9171417b069a194956a1a1",
+      "packagedSHA256": "1015511658b4221dd1c7eebe68689e5e8d2db20d7b9171417b069a194956a1a1",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/LQCFuturesOracleController.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "0e896e3f41e621f8d7b82cad2af20339f21664481fea916c3cf930aaf2793670",
+      "packagedSHA256": "0e896e3f41e621f8d7b82cad2af20339f21664481fea916c3cf930aaf2793670",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/LQCFuturesOracleFactory.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "f5cd5e4b8163084c3da4ed532437429da0b29fed89045e40a3d7e6aa18c87be0",
+      "packagedSHA256": "f5cd5e4b8163084c3da4ed532437429da0b29fed89045e40a3d7e6aa18c87be0",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/LQCFuturesRiskChecks.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "b3803bbbd79e3651ba5b1c356bf3a9af84c15e188b6085a4dc77e17085d32e5d",
+      "packagedSHA256": "b3803bbbd79e3651ba5b1c356bf3a9af84c15e188b6085a4dc77e17085d32e5d",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/LQCFuturesVault.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "1a44df8e6b3b687501755f5db38ba0672f3a6362b69fe1d8600f8896651800f9",
+      "packagedSHA256": "1a44df8e6b3b687501755f5db38ba0672f3a6362b69fe1d8600f8896651800f9",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/LQCPerpEngine.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "9631c92636175e189891af77a71d7c2a879637ef8be9ec920c83f145c56e2e8b",
+      "packagedSHA256": "9631c92636175e189891af77a71d7c2a879637ef8be9ec920c83f145c56e2e8b",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/modules/AdlCalculator.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "f464d9c0520ecd9f70922ed7201116cfcd3ba0d446c4c82f9b8f684b257110c4",
+      "packagedSHA256": "f464d9c0520ecd9f70922ed7201116cfcd3ba0d446c4c82f9b8f684b257110c4",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/modules/FuturesMathModule.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "1b8873e35020e27391806878b1ab23f6a7ad135fc07059817ad154cdc9a22368",
+      "packagedSHA256": "1b8873e35020e27391806878b1ab23f6a7ad135fc07059817ad154cdc9a22368",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "src/modules/LiquidationCalculator.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "b659b359457fadc14757d6d654044e036455aab3603d0f1871de260845d6a2d6",
+      "packagedSHA256": "b659b359457fadc14757d6d654044e036455aab3603d0f1871de260845d6a2d6",
+      "sourceRole": "operational-source-candidate",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/AdlFundingFix.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "5d0135f78f87e154e6bf47fb2bde6412dd617790f6095ff08baf858f5290c71a",
+      "packagedSHA256": "5d0135f78f87e154e6bf47fb2bde6412dd617790f6095ff08baf858f5290c71a",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/compat/LegacyRegistry.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "68410ea3aa9f3bf12fcf0d287beec3541857d32ba54f7278f9ab658fdbfad276",
+      "packagedSHA256": "68410ea3aa9f3bf12fcf0d287beec3541857d32ba54f7278f9ab658fdbfad276",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/compat/LegacyRiskChecks.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "ae66a1c6fbcaab7b49cd20400d85607ad3a4e79eb6de2679e69ecf4baa532e2b",
+      "packagedSHA256": "ae66a1c6fbcaab7b49cd20400d85607ad3a4e79eb6de2679e69ecf4baa532e2b",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/CompoundFinance.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "e33e91360a412bea29eaca52ea6220b24514d5bacc2f23039200ddc6111825c7",
+      "packagedSHA256": "e33e91360a412bea29eaca52ea6220b24514d5bacc2f23039200ddc6111825c7",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/ConditionalAdl.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "5c8845934ca717dbd51f647cf17caa13eb0500c07f0516daac6f66a63d592e9a",
+      "packagedSHA256": "5c8845934ca717dbd51f647cf17caa13eb0500c07f0516daac6f66a63d592e9a",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/ConditionalAdlInvariant.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "6fef0cf9ab23c601435ab48c95aa0121b48129da626dfd6e7322c58b55095280",
+      "packagedSHA256": "6fef0cf9ab23c601435ab48c95aa0121b48129da626dfd6e7322c58b55095280",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/CurrentAdmissionPins.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "2408b858c4c3d956f623074802ad80ff3894714ba9d56aa7c1362251107d2890",
+      "packagedSHA256": "2408b858c4c3d956f623074802ad80ff3894714ba9d56aa7c1362251107d2890",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/CurrentEnginePin.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "7c1e54b5ab5361dcca399ece534c0daa2f201faaa9dc010b9ac04a16959b2f29",
+      "packagedSHA256": "7c1e54b5ab5361dcca399ece534c0daa2f201faaa9dc010b9ac04a16959b2f29",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/CurrentLedgerPins.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "f444b7ea4df850209dd12db2a58032a935fc89d2b8e2adb5391e416831ec78c6",
+      "packagedSHA256": "f444b7ea4df850209dd12db2a58032a935fc89d2b8e2adb5391e416831ec78c6",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/CurrentWithdrawalPins.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "5ac359fb657f97508195cf36c9c5f1c41ce072feb188e0f7d8d9cff9cc7ea083",
+      "packagedSHA256": "5ac359fb657f97508195cf36c9c5f1c41ce072feb188e0f7d8d9cff9cc7ea083",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/EngineLedgerIntegration.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "86f2adcf7c875324b114e85c84c8e1e36e94ab39f464cd34aa51c2bbc6881f52",
+      "packagedSHA256": "86f2adcf7c875324b114e85c84c8e1e36e94ab39f464cd34aa51c2bbc6881f52",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/EnginePinG.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "ef5571f77d490d9f59b6f112e17f2c144c7f6867679c6fb4065e9eec1f022597",
+      "packagedSHA256": "ef5571f77d490d9f59b6f112e17f2c144c7f6867679c6fb4065e9eec1f022597",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/EngineRegistryIntegration.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "7a6d3525a90de5f358f748471f4a04f1066a51d463a9789fa712dc48331d3c77",
+      "packagedSHA256": "7a6d3525a90de5f358f748471f4a04f1066a51d463a9789fa712dc48331d3c77",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/FinanceAdl.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "2e8eee7f46d45b5414ba2714c33b8f84fa4f46cbdcb2af6ff605a553bf624380",
+      "packagedSHA256": "2e8eee7f46d45b5414ba2714c33b8f84fa4f46cbdcb2af6ff605a553bf624380",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/FinanceAtomicity.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "e53a53d0ab115085770085750ed125a926acd93b365ff6c85394f4e1ed45d23d",
+      "packagedSHA256": "e53a53d0ab115085770085750ed125a926acd93b365ff6c85394f4e1ed45d23d",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/FinanceFees.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "68482a9ab72ede37611108a6fa8f4395baefd3ded61ce1c3071c01e8d3643c3b",
+      "packagedSHA256": "68482a9ab72ede37611108a6fa8f4395baefd3ded61ce1c3071c01e8d3643c3b",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/FinanceFixture.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "8df7ffe61c92ef74c381b466418defa2e5edd415834068205d786f42a62fbfbb",
+      "packagedSHA256": "8df7ffe61c92ef74c381b466418defa2e5edd415834068205d786f42a62fbfbb",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/FinanceFunding.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "62719e81df95530442a5236097552c04e4fc312f86137ca059e24cb6186e6b1e",
+      "packagedSHA256": "62719e81df95530442a5236097552c04e4fc312f86137ca059e24cb6186e6b1e",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/FinanceInsurance.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "53421af757fb24fcb2e2eda28ffa1f4c8b6ed64c4acb7741ab666927a166c86c",
+      "packagedSHA256": "53421af757fb24fcb2e2eda28ffa1f4c8b6ed64c4acb7741ab666927a166c86c",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/FinanceLiquidation.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "85318db7dad857d862dc7a2b181db41ae322631d4594cfd686ec8557285f7ad3",
+      "packagedSHA256": "85318db7dad857d862dc7a2b181db41ae322631d4594cfd686ec8557285f7ad3",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/FinanceMarkets.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "b3de24f4ee4163974da7882f3950cc8c360855fbab3d5bf58b00aa41e03d059d",
+      "packagedSHA256": "b3de24f4ee4163974da7882f3950cc8c360855fbab3d5bf58b00aa41e03d059d",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/FinancePositions.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "c47e6c9975574e7b218fe7c94adf57008897c9a07641d81bc5685ae4d30b7000",
+      "packagedSHA256": "c47e6c9975574e7b218fe7c94adf57008897c9a07641d81bc5685ae4d30b7000",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/FundingLedger.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "24d16286a535a581336c6c14fc9ff7dea3985034348b132676be690577350fb9",
+      "packagedSHA256": "24d16286a535a581336c6c14fc9ff7dea3985034348b132676be690577350fb9",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/FundingRemainder.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "1e31287d9a9f1458fc585001f2efaa20ef5c69af99ddf18a5289cc6848e41cb6",
+      "packagedSHA256": "1e31287d9a9f1458fc585001f2efaa20ef5c69af99ddf18a5289cc6848e41cb6",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/GeneratedModulePins.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "4f7a3f4282bb35b07af8bac595d66f100288eb61c83f8cbfab795ae3f26f954c",
+      "packagedSHA256": "4f7a3f4282bb35b07af8bac595d66f100288eb61c83f8cbfab795ae3f26f954c",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/I15CCompound.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "3380c684439d52f4b295a0a394166cfa1a197b5b47add8381753b0d4bfb1647c",
+      "packagedSHA256": "3380c684439d52f4b295a0a394166cfa1a197b5b47add8381753b0d4bfb1647c",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/I15CFundingInvariant.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "e552842c84e945018a6e7061b57757f48feffd0aa14ff1534c0947184ca85dec",
+      "packagedSHA256": "e552842c84e945018a6e7061b57757f48feffd0aa14ff1534c0947184ca85dec",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/I15CGuidedInvariant.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "30576626f044adde0f6304e1e588f46ed5beb8c445f649fd441dff6b1762e591",
+      "packagedSHA256": "30576626f044adde0f6304e1e588f46ed5beb8c445f649fd441dff6b1762e591",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/I17MarketStress.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "c30be9e7e572bef8b03120007df53b4ee7d206ccc8be217b24753c2aa471afc5",
+      "packagedSHA256": "c30be9e7e572bef8b03120007df53b4ee7d206ccc8be217b24753c2aa471afc5",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/I19LiquidationReadiness.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "8ff494086eef428976e76cc3ca02d4ead71a10cb9476df84bbc396307bdddc7c",
+      "packagedSHA256": "8ff494086eef428976e76cc3ca02d4ead71a10cb9476df84bbc396307bdddc7c",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/I21Deposit.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "804468cb6e7dba10f119fb460f9a55dc22bb3ed4e871997738d80a425c3dd4ca",
+      "packagedSHA256": "804468cb6e7dba10f119fb460f9a55dc22bb3ed4e871997738d80a425c3dd4ca",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/I21Gas.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "2af10fd71db1c9c5eaeb5f365941a13de856bcfecacf72bbc1dff78a1f966181",
+      "packagedSHA256": "2af10fd71db1c9c5eaeb5f365941a13de856bcfecacf72bbc1dff78a1f966181",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/I21Historical.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "abe399e131b0a918d797a90571fd167f967e97eb3640eff5e3157a071e6fb05c",
+      "packagedSHA256": "abe399e131b0a918d797a90571fd167f967e97eb3640eff5e3157a071e6fb05c",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/I21PriorVault.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "6a0d0db6ae76308ca682df5f507a05b024c4d6d4a885c1019479f17cc04f48bf",
+      "packagedSHA256": "6a0d0db6ae76308ca682df5f507a05b024c4d6d4a885c1019479f17cc04f48bf",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/I21ProtectedDeposit.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "a0e7d09992b2b08c7215285541f7eac157a4897197c0be3cbcddcb7cf73acab0",
+      "packagedSHA256": "a0e7d09992b2b08c7215285541f7eac157a4897197c0be3cbcddcb7cf73acab0",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/I22RegistryUi.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "d99504c11628dcb09b3dd2ba0b755d2c4e13c55ee00a31c6afaec1e065c7ce0c",
+      "packagedSHA256": "d99504c11628dcb09b3dd2ba0b755d2c4e13c55ee00a31c6afaec1e065c7ce0c",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/InventorySlots.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "9a7b397622d3b9b51bb64522c097d60206b236928d54b8c8d0bb631710db3cc5",
+      "packagedSHA256": "9a7b397622d3b9b51bb64522c097d60206b236928d54b8c8d0bb631710db3cc5",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/LedgerWideVectors.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "fc44f6709b27aa0eff06773fa01361b77a9ab4519b2e8a1ab33096430ec63db1",
+      "packagedSHA256": "fc44f6709b27aa0eff06773fa01361b77a9ab4519b2e8a1ab33096430ec63db1",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/LiquidationSlots.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "34ad6cabc71732c23690d65246c85fce2847e06444966e2cc35112577a3a8aa2",
+      "packagedSHA256": "34ad6cabc71732c23690d65246c85fce2847e06444966e2cc35112577a3a8aa2",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/ModuleSeparation.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "b7b2bd3d641a8ffb9e8ff6d83863cc2a70b94b3e2380142bfc1e2f26b3046e0d",
+      "packagedSHA256": "b7b2bd3d641a8ffb9e8ff6d83863cc2a70b94b3e2380142bfc1e2f26b3046e0d",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/ProtectedAdmission.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "aa1fa073840232a4d39889e86f997ce7cff32c3619a9bbc5d72e2c0a346e5c2b",
+      "packagedSHA256": "aa1fa073840232a4d39889e86f997ce7cff32c3619a9bbc5d72e2c0a346e5c2b",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/ProtectedFixture.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "8027fea92b0ff274051a0521136cfda2476c0c3f1d0ce005a67ab9d1b98710a2",
+      "packagedSHA256": "8027fea92b0ff274051a0521136cfda2476c0c3f1d0ce005a67ab9d1b98710a2",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/ProtectedLiquidation.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "2db7ad3c01bd89667cf379b6be578c70e649c8963e064c307091f9b9e7c8dc7e",
+      "packagedSHA256": "2db7ad3c01bd89667cf379b6be578c70e649c8963e064c307091f9b9e7c8dc7e",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/ProtectedWithdrawalRegression.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "cef2a71e73a8905c8422af5d3f667d52d17a56c686d07d3c09553365c7d4fa41",
+      "packagedSHA256": "cef2a71e73a8905c8422af5d3f667d52d17a56c686d07d3c09553365c7d4fa41",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/RegistrySecurity.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "e4396ed54e962f4e5c70fb68fb069c0080c19b17d82b0329087932d63773f3ab",
+      "packagedSHA256": "e4396ed54e962f4e5c70fb68fb069c0080c19b17d82b0329087932d63773f3ab",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "test/VaultFundingProtection.t.sol",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "6c38b462bf6894248beec8d1cfe39c6122a434c1f37c0dc1fb9d1577592e9f03",
+      "packagedSHA256": "6c38b462bf6894248beec8d1cfe39c6122a434c1f37c0dc1fb9d1577592e9f03",
+      "sourceRole": "test-only",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    },
+    {
+      "path": "THIRD-PARTY-NOTICES.md",
+      "license": "MIT",
+      "appliesTo": "Project self-authored portions only",
+      "baselineI24SHA256": "cb93e4af5415399ffb5ae30e8acff7ab6fb73cf2a8328b18ddb6136941dd595f",
+      "packagedSHA256": "40f1dfa0b6a6eaf0f683aad6c904eb4fe0815e6bc056e9b17cd57e323cdf6e41",
+      "sourceRole": "config-doc-or-runner",
+      "upstreamReview": "No specific external implementation identified in static scope; no blanket provenance guarantee"
+    }
+  ],
+  "additionalPolicyPackagingFiles": [
+    "LICENSE",
+    "LICENSE-SCOPE.json"
+  ],
+  "additionalFilesPolicy": "Project-authored scope/notice metadata uses the same MIT policy. The standard MIT license text remains canonical.",
+  "externalMaterial": "Do not relicense actual third-party material by this scope. Preserve/verify its own applicable license and notices before distribution.",
+  "PythSDK": "Excluded, unapproved, no code copied/installed",
+  "JSON": "No comments injected; historical data remain identified as historical",
+  "finalUploadApproval": false
+}

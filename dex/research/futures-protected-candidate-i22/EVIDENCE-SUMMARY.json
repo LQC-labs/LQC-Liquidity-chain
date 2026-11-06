@@ -1,0 +1,222 @@
+{
+  "task": "M07-7-04-E-06-I-24",
+  "status": "LOCAL_REPLAY_PASS_PUBLICATION_BLOCKED",
+  "actualNewExecutionCounts": {
+    "financialSecurity": 544,
+    "policy": 19,
+    "position": 58,
+    "market": 44,
+    "legacy": 6,
+    "browser": 10,
+    "newPublicGate": 7
+  },
+  "allFinalExitCodes": 0,
+  "scope": "Package-only local replay; mocked browser/providers, no chain transaction",
+  "SolidityFilesUnchanged": 69,
+  "artifacts": [
+    {
+      "name": "LQCFuturesApprovedOracle",
+      "runtime": 2662,
+      "creation": 4389,
+      "initcode": 4517,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "LQCFuturesMarketRegistry",
+      "runtime": 19589,
+      "creation": 27294,
+      "initcode": 27326,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "LQCFuturesOracleController",
+      "runtime": 2151,
+      "creation": 2397,
+      "initcode": 2461,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "LQCFuturesOracleFactory",
+      "runtime": 7376,
+      "creation": 7427,
+      "initcode": 7427,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "LQCFuturesRiskChecks",
+      "runtime": 16,
+      "creation": 44,
+      "initcode": 44,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "LQCFuturesVault",
+      "runtime": 9803,
+      "creation": 10000,
+      "initcode": 10032,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "LQCPerpEngine",
+      "runtime": 19803,
+      "creation": 48020,
+      "initcode": 48084,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "LQCAggregatorOracleAdapter",
+      "runtime": 2717,
+      "creation": 2909,
+      "initcode": 2941,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "FundingLedger",
+      "runtime": 9759,
+      "creation": 10292,
+      "initcode": 10516,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "FundingLedgerFactory",
+      "runtime": 17987,
+      "creation": 18126,
+      "initcode": 18158,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "FundingWithdrawalVerifier",
+      "runtime": 5996,
+      "creation": 6779,
+      "initcode": 6811,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "LedgerMath",
+      "runtime": 16,
+      "creation": 44,
+      "initcode": 44,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "AdlCalculator",
+      "runtime": 2654,
+      "creation": 2680,
+      "initcode": 2680,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "FuturesMathModule",
+      "runtime": 952,
+      "creation": 978,
+      "initcode": 978,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    },
+    {
+      "name": "LiquidationCalculator",
+      "runtime": 5732,
+      "creation": 5758,
+      "initcode": 5758,
+      "bytecodeABIStorageImmutable": "PASS_IDENTICAL_TO_I21",
+      "EIP170": "PASS",
+      "EIP3860": "PASS"
+    }
+  ],
+  "fingerprints": {
+    "method": "I21 exact code bytes and immutable offsets identical; fixed RiskChecks source unchanged; runtime binding/mutation tests rerun",
+    "expectedI21": [
+      {
+        "name": "LQCPerpEngine",
+        "hash": "0xe747a6e164cdc6d9956c52e8f378d9f7e29f43ef3f2b1830b4cf72438acedd81",
+        "immutableWords": 32,
+        "status": "PASS"
+      },
+      {
+        "name": "FundingLedgerFactory",
+        "hash": "0xdb9073cf006a668fa0d5d9305363a6296c0beb562ca886c76154078604825931",
+        "immutableWords": 3,
+        "status": "PASS"
+      },
+      {
+        "name": "LQCFuturesVault",
+        "hash": "0xb97549273502e5b25841122fd8eb8967d2381ce1ed0706cc7a6a1c0195755d5b",
+        "immutableWords": 0,
+        "status": "PASS"
+      },
+      {
+        "name": "FundingLedger",
+        "hash": "0x1eea75a91c1e35f6fb89d387be754c79fc95ee322b47f7f8854be9d2cda38c67",
+        "immutableWords": 27,
+        "status": "PASS"
+      },
+      {
+        "name": "FundingWithdrawalVerifier",
+        "hash": "0xe37bb8387400b9cbe5d98012dffbe9b140fabae56af7275ec7ae5aea0ffe10a8",
+        "immutableWords": 32,
+        "status": "PASS"
+      }
+    ]
+  },
+  "NOT_RUN": [
+    "Long invariant campaigns",
+    "Real ethers/provider/wallet/Oracle/token/Proxy/finality verification",
+    "GitHub event dispatch",
+    "Deployment/onchain transactions"
+  ],
+  "BLOCKED": [
+    "MMXlabs/LQC LLC/contributor publication-rights evidence",
+    "Oracle policy reconciliation approval",
+    "Automation/Pages/global settings assurance",
+    "D05",
+    "D06",
+    "Pyth SDK",
+    "testnet/operational activation"
+  ],
+  "historicalAsOf": "Original fields and BLOCKED list describe I24 only. They are preserved and not current I28 approval decisions.",
+  "supersedingPolicyI28": {
+    "task": "M07-7-04-E-06-I-28",
+    "clientDate": "2026-11-07",
+    "internalAuthority": "Accepted on I26 responsible-user confirmation",
+    "selfAuthoredLicense": "MIT approved for104 originals; existing69 SPDX retained,35 originals covered by scope",
+    "OracleWording": "I27 minimum approved and applied in this isolated package only",
+    "historicalExecutionCountsUnchanged": true,
+    "currentRemaining": [
+      "Upstream origin/notices not fully cleared",
+      "Automation/Pages/protection assurance incomplete",
+      "Separate final source upload approval",
+      "D05",
+      "D06",
+      "Pyth SDK",
+      "Testnet/operational activation"
+    ],
+    "GitHubMutationAuthorized": false
+  }
+}

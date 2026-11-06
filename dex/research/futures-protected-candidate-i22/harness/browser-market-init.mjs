@@ -1,0 +1,2 @@
+import{fixture,profile}from'./market-fixture.mjs';import{createMarketPage}from'../dex/app/futures/mobile-testnet-market-page.js';
+const p={...profile,reviewOnly:new URL(location.href).searchParams.get('review')==='1',pollDelay:60000},f=fixture(p);window.__fixture=f;window.__page=createMarketPage({document,io:f.io,profile:p});window.__page.mount();document.querySelector('h1').textContent='모의 공급자 · 시장 등록·복구';window.__READY=true;

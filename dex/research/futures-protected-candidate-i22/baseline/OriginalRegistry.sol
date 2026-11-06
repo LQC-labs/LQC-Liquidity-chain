@@ -1,0 +1,189 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
+/// @notice Registry for LQC Flow perpetual/futures markets.
+/// @dev Stores market configuration only. Position, margin and settlement logic live in separate contracts.
+contract LQCFuturesMarketRegistry {
+    enum MarketMode { ACTIVE, REDUCE_ONLY, HALTED }
+    struct Market {
+        bytes32 symbol;
+        address indexToken;
+        address collateralToken;
+        address oracle;
+        uint32 maxLeverageBps;
+        uint32 maintenanceMarginBps;
+        bool active;
+    }
+
+    address public owner;
+    address public pendingOwner;
+    address public guardian;
+    uint256 public marketCount;
+
+    mapping(uint256 => Market) public markets;
+    mapping(bytes32 => uint256) public marketIdBySymbol;
+    mapping(uint256 => MarketMode) public marketMode;
+    mapping(uint256 => bool) public recoveryApproved;
+
+    event MarketAdded(uint256 indexed marketId, bytes32 indexed symbol, address indexToken, address collateralToken, address oracle);
+    event MarketStatusChanged(uint256 indexed marketId, bool active);
+    event MarketModeChanged(uint256 indexed marketId, MarketMode previousMode, MarketMode newMode);
+    event GuardianChanged(address indexed previousGuardian, address indexed newGuardian);
+    event EmergencyTriggerApplied(uint256 indexed marketId, bool oracleHealthy, bool circuitBreakerAllowed, bool residualBadDebt, MarketMode resultingMode);
+    event RecoveryApprovalChanged(uint256 indexed marketId, bool approved);
+    event MarketRiskUpdated(uint256 indexed marketId, uint32 maxLeverageBps, uint32 maintenanceMarginBps);
+    event MarketOracleUpdated(uint256 indexed marketId, address indexed oracle);
+    event OwnershipTransferStarted(address indexed currentOwner, address indexed pendingOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    error Forbidden();
+    error ZeroAddress();
+    error InvalidSymbol();
+    error MarketExists();
+    error MarketNotFound();
+    error InvalidRiskParameters();
+
+    modifier onlyOwner() {
+        if (msg.sender != owner) revert Forbidden();
+        _;
+    }
+
+    modifier onlyOwnerOrGuardian() {
+        if (msg.sender != owner && msg.sender != guardian) revert Forbidden();
+        _;
+    }
+
+    constructor(address owner_) {
+        if (owner_ == address(0)) revert ZeroAddress();
+        owner = owner_;
+        emit OwnershipTransferred(address(0), owner_);
+    }
+
+    function addMarket(
+        bytes32 symbol,
+        address indexToken,
+        address collateralToken,
+        address oracle,
+        uint32 maxLeverageBps,
+        uint32 maintenanceMarginBps
+    ) external onlyOwner returns (uint256 marketId) {
+        if (symbol == bytes32(0)) revert InvalidSymbol();
+        if (indexToken == address(0) || collateralToken == address(0) || oracle == address(0)) revert ZeroAddress();
+        if (marketIdBySymbol[symbol] != 0) revert MarketExists();
+        if (maxLeverageBps < 10_000 || maintenanceMarginBps == 0 || maintenanceMarginBps >= 10_000) {
+            revert InvalidRiskParameters();
+        }
+
+        marketId = ++marketCount;
+        markets[marketId] = Market({
+            symbol: symbol,
+            indexToken: indexToken,
+            collateralToken: collateralToken,
+            oracle: oracle,
+            maxLeverageBps: maxLeverageBps,
+            maintenanceMarginBps: maintenanceMarginBps,
+            active: true
+        });
+        marketIdBySymbol[symbol] = marketId;
+        marketMode[marketId] = MarketMode.ACTIVE;
+        emit MarketAdded(marketId, symbol, indexToken, collateralToken, oracle);
+    }
+
+    function setGuardian(address newGuardian) external onlyOwner {
+        if (newGuardian == address(0)) revert ZeroAddress();
+        address previous = guardian;
+        guardian = newGuardian;
+        emit GuardianChanged(previous, newGuardian);
+    }
+
+    /// @notice Guardian may only escalate restrictions; only Governance may restore ACTIVE or loosen HALTED.
+    function setEmergencyMarketMode(uint256 marketId, MarketMode newMode) external onlyOwnerOrGuardian {
+        _requireMarket(marketId);
+        MarketMode previous = marketMode[marketId];
+        if (msg.sender == guardian) {
+            if (newMode == MarketMode.ACTIVE || uint8(newMode) < uint8(previous)) revert Forbidden();
+        }
+        marketMode[marketId] = newMode;
+        markets[marketId].active = newMode != MarketMode.HALTED;
+        emit MarketModeChanged(marketId, previous, newMode);
+        emit MarketStatusChanged(marketId, markets[marketId].active);
+    }
+
+    /// @notice Applies fail-closed emergency signals supplied by an authorized Guardian/Governance monitor.
+    /// @dev This function may only tighten restrictions. Recovery remains a separate Governance action.
+    function applyEmergencyTriggers(uint256 marketId, bool oracleHealthy, bool circuitBreakerAllowed, bool hasResidualBadDebt) external onlyOwnerOrGuardian {
+        _requireMarket(marketId);
+        MarketMode current = marketMode[marketId];
+        MarketMode target = current;
+        if (!oracleHealthy || !circuitBreakerAllowed) target = MarketMode.HALTED;
+        else if (hasResidualBadDebt && current == MarketMode.ACTIVE) target = MarketMode.REDUCE_ONLY;
+        if (uint8(target) < uint8(current)) revert Forbidden();
+        if (target != current) {
+            marketMode[marketId] = target;
+            markets[marketId].active = target != MarketMode.HALTED;
+            emit MarketModeChanged(marketId, current, target);
+            emit MarketStatusChanged(marketId, markets[marketId].active);
+        }
+        emit EmergencyTriggerApplied(marketId, oracleHealthy, circuitBreakerAllowed, hasResidualBadDebt, target);
+    }
+
+    function setRecoveryApproved(uint256 marketId, bool approved) external onlyOwner {
+        _requireMarket(marketId);
+        recoveryApproved[marketId] = approved;
+        emit RecoveryApprovalChanged(marketId, approved);
+    }
+
+    function setMarketMode(uint256 marketId, MarketMode newMode) external onlyOwner {
+        _requireMarket(marketId);
+        MarketMode previous = marketMode[marketId];
+        if (previous == MarketMode.HALTED && newMode == MarketMode.ACTIVE) revert Forbidden();
+        if (previous == MarketMode.REDUCE_ONLY && newMode == MarketMode.ACTIVE && !recoveryApproved[marketId]) revert Forbidden();
+        if (newMode == MarketMode.ACTIVE) recoveryApproved[marketId] = false;
+        marketMode[marketId] = newMode;
+        markets[marketId].active = newMode != MarketMode.HALTED;
+        emit MarketModeChanged(marketId, previous, newMode);
+        emit MarketStatusChanged(marketId, markets[marketId].active);
+    }
+
+    function setMarketActive(uint256 marketId, bool active) external onlyOwner {
+        _requireMarket(marketId);
+        markets[marketId].active = active;
+        emit MarketStatusChanged(marketId, active);
+    }
+
+    function setRiskParameters(uint256 marketId, uint32 maxLeverageBps, uint32 maintenanceMarginBps) external onlyOwner {
+        _requireMarket(marketId);
+        if (maxLeverageBps < 10_000 || maintenanceMarginBps == 0 || maintenanceMarginBps >= 10_000) {
+            revert InvalidRiskParameters();
+        }
+        Market storage market = markets[marketId];
+        market.maxLeverageBps = maxLeverageBps;
+        market.maintenanceMarginBps = maintenanceMarginBps;
+        emit MarketRiskUpdated(marketId, maxLeverageBps, maintenanceMarginBps);
+    }
+
+    function setOracle(uint256 marketId, address oracle) external onlyOwner {
+        _requireMarket(marketId);
+        if (oracle == address(0)) revert ZeroAddress();
+        markets[marketId].oracle = oracle;
+        emit MarketOracleUpdated(marketId, oracle);
+    }
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        if (newOwner == address(0)) revert ZeroAddress();
+        pendingOwner = newOwner;
+        emit OwnershipTransferStarted(owner, newOwner);
+    }
+
+    function acceptOwnership() external {
+        if (msg.sender != pendingOwner) revert Forbidden();
+        address previousOwner = owner;
+        owner = msg.sender;
+        pendingOwner = address(0);
+        emit OwnershipTransferred(previousOwner, msg.sender);
+    }
+
+    function _requireMarket(uint256 marketId) private view {
+        if (marketId == 0 || marketId > marketCount) revert MarketNotFound();
+    }
+}

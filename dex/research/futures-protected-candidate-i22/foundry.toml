@@ -1,0 +1,19 @@
+[profile.default]
+src = "src"
+test = "test"
+out = "out"
+cache_path = "cache"
+libs = []
+auto_detect_remappings = false
+auto_detect_solc = false
+offline = true
+solc = "0.8.30"
+optimizer = true
+optimizer_runs = 1
+via_ir = true
+evm_version = "shanghai"
+ffi = false
+fs_permissions = []
+gas_reports = ["LQCPerpEngine","LQCFuturesVault","FundingWithdrawalVerifier","FundingLedgerFactory","FuturesMathModule","LiquidationCalculator","AdlCalculator"]
+
+bytecode_hash = "none"

@@ -1,0 +1,11 @@
+.local-evidence/
+out/
+cache/
+browser-*/
+node_modules/
+tools/
+.env*
+market-[0-9]*/
+position-[0-9]*/
+legacy-[0-9]*/
+LATEST-UI-*.json
