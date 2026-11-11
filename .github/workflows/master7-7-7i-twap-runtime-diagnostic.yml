@@ -1,0 +1,30 @@
+name: Master 7/7-7I TWAP Runtime Diagnostic
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "dex/scripts/diagnose-master7-7-7i-twap-runtime.mjs"
+      - "dex/test/master7-7-7i-twap-runtime-diagnostic.test.mjs"
+      - ".github/workflows/master7-7-7i-twap-runtime-diagnostic.yml"
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dex
+    env:
+      BSC_TESTNET_RPC_URL: https://data-seed-prebsc-1-s1.bnbchain.org:8545
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npx mocha --timeout 30000 "test/master7-7-7i-twap-runtime-diagnostic.test.mjs"
+      - name: Run live read-only diagnostic
+        run: node scripts/diagnose-master7-7-7i-twap-runtime.mjs || true
