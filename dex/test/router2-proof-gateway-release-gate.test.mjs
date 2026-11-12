@@ -7,6 +7,7 @@ import {
   GATE_TESTS,PAGE_SCRIPTS,REVIEWED_PACKAGE_LOCK_BLOB,assertArtifactHashes,
   assertPackageLockBuffer,gitBlobSha,inspectArtifactHashes,
   assertHistoricalPackageLock,inspectDevelopmentDependencies,assertDevelopmentDependenciesApproved,runProofGatewayGate,
+  assertRouterProductionReleaseAuthorized,
   HISTORICAL_PACKAGE_LOCK_SHA256,
 } from "../scripts/run-router2-proof-gateway-gate.mjs";
 
@@ -44,6 +45,10 @@ describe("Router 2.0 Proof Gateway release safety gate",function(){
     assert.throws(()=>runProofGatewayGate(dir),/approval PENDING/);
     assert.equal(fs.existsSync(path.join(dir,"artifacts")),false);
   });});
+  it("does not interpret development approval as production release authorization",function(){
+    assert.throws(()=>assertRouterProductionReleaseAuthorized(),/independent production authorization is not approved/);
+    assert.equal(inspectDevelopmentDependencies(root).approvalStatus,"PENDING");
+  });
   it("rejects a missing development approval record",function(){isolated(dir=>{
     fs.unlinkSync(path.join(dir,record));assert.throws(()=>inspectDevelopmentDependencies(dir),/record missing/);
   });});
