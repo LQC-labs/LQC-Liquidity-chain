@@ -3,6 +3,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import crypto from "node:crypto";
+import { compileFunction } from "node:vm";
 import {
   GATE_TESTS,PAGE_SCRIPTS,REVIEWED_PACKAGE_LOCK_BLOB,assertArtifactHashes,
   assertPackageLockBuffer,gitBlobSha,inspectArtifactHashes,
@@ -55,15 +56,30 @@ describe("Router 2.0 Proof Gateway release safety gate",function(){
       /independent production authorization is not approved/
     );
   });
-  it("checks independent production authorization before any compile execution",function(){
+  it("blocks the executed gate path after mocked development approval and before downstream work",function(){isolated(dir=>{
     const source=fs.readFileSync(new URL("../scripts/run-router2-proof-gateway-gate.mjs",import.meta.url),"utf8");
-    const gate=source.slice(source.indexOf("export function runProofGatewayGate("));
-    const development=gate.indexOf("assertDevelopmentDependenciesApproved(root)");
-    const production=gate.indexOf("assertRouterProductionReleaseAuthorized()");
-    const compile=gate.indexOf('execFileSync(process.execPath,["scripts/compile.mjs"]');
-    assert.ok(development>=0 && production>development && compile>production,
-      "production authorization must run after development integrity and before compilation");
-  });
+    const match=source.match(/export function runProofGatewayGate\(.*\)\{([\s\S]*?)\n\}/);
+    assert.ok(match,"the original release gate body must be available for isolated execution");
+    // Execute the unmodified production body with controlled lexical dependencies.
+    // Only development approval is simulated; no manifest or approval pin is edited.
+    const calls=[];
+    const approved={integrity:"pass",approvalStatus:"APPROVED",releaseReady:true};
+    const bindings={
+      assertHistoricalPackageLock:base=>{calls.push("historical");return assertHistoricalPackageLock(base);},
+      assertDevelopmentDependenciesApproved:base=>{assert.equal(base,dir);calls.push("development");return approved;},
+      assertRouterProductionReleaseAuthorized:()=>{calls.push("production");return assertRouterProductionReleaseAuthorized();},
+      execFileSync:()=>{calls.push("subprocess");throw new Error("unexpected compile or subprocess execution");},
+      assertArtifactHashes:()=>{calls.push("artifacts");throw new Error("unexpected artifact inspection");},
+      process,path,PAGE_SCRIPTS,GATE_TESTS,
+    };
+    const gate=compileFunction(match[1],["root",...Object.keys(bindings)]);
+    assert.throws(()=>gate(dir,...Object.values(bindings)),{
+      message:"Router production release BLOCKED: independent production authorization is not approved"
+    });
+    assert.deepEqual(calls,["historical","development","production"]);
+    assert.equal(fs.existsSync(path.join(dir,"artifacts")),false);
+    assert.equal(inspectDevelopmentDependencies(dir).approvalStatus,"PENDING");
+  });});
   it("rejects a missing development approval record",function(){isolated(dir=>{
     fs.unlinkSync(path.join(dir,record));assert.throws(()=>inspectDevelopmentDependencies(dir),/record missing/);
   });});
