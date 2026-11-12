@@ -79,6 +79,12 @@ export function assertDevelopmentDependenciesApproved(root){
   }
   return state;
 }
+// Development dependency approval must never imply Router release authorization.
+// This explicit production gate stays fail-closed until separately approved.
+// Do not use environment variables or a self-declared manifest as authorization.
+export function assertRouterProductionReleaseAuthorized(){
+  throw new Error("Router production release BLOCKED: independent production authorization is not approved");
+}
 export function inspectArtifactHashes(root){
   const read=relative=>JSON.parse(fs.readFileSync(path.join(root,relative),"utf8")),bundle=read("deployments/router2-proof-bound-gateway-stage1-bsc-testnet-97.json"),proof=read("artifacts/contracts/router-v2/LQCBestExecutionProof.sol/LQCBestExecutionProof.json"),gateway=read("artifacts/contracts/router-v2/LQCProofBoundExecutionGateway.sol/LQCProofBoundExecutionGateway.json");
   const candidate={proofCreation:ethers.keccak256(proof.bytecode),proofRuntime:ethers.keccak256(proof.deployedBytecode),gatewayCreation:ethers.keccak256(gateway.bytecode),gatewayRuntime:ethers.keccak256(gateway.deployedBytecode)};
@@ -96,6 +102,7 @@ export function assertArtifactHashes(root){
 export function runProofGatewayGate(root=path.resolve(import.meta.dirname,"..")){
   const historicalDependencies=assertHistoricalPackageLock(root);
   const developmentDependencies=assertDevelopmentDependenciesApproved(root);
+  assertRouterProductionReleaseAuthorized();
   execFileSync(process.execPath,["scripts/compile.mjs"],{cwd:root,stdio:"inherit"});
   const hashes=assertArtifactHashes(root);
   for(const page of PAGE_SCRIPTS)execFileSync(process.execPath,["--check",path.join("app",page)],{cwd:root,stdio:"inherit"});
