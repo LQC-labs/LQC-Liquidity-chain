@@ -35,7 +35,7 @@ export function gitBlobSha(content){return crypto.createHash("sha1").update(Buff
 export function assertPackageLockBuffer(content){const actual=gitBlobSha(content);if(actual!==REVIEWED_PACKAGE_LOCK_BLOB)throw new Error("dex/package-lock.json changed: expected reviewed blob "+REVIEWED_PACKAGE_LOCK_BLOB+", received "+actual);return actual;}
 // This pin authenticates the reviewed candidate record, not approval. Changing it
 // or transitioning PENDING requires a separately reviewed source change.
-export const DEVELOPMENT_RECORD_SHA256="7266cd558a75eb16212d19b342e1bfc9e182961e9aac06dbb834da600cfcc8be";
+export const DEVELOPMENT_RECORD_SHA256="09ea78611fe59ab46c33df937a88e591ac0d349ade4187d3c27cade049fe32c1";
 export const HISTORICAL_PACKAGE_LOCK_SHA256="485ab89063da2ddc822e84c9a29ca0328c0f1b6a5f7bde8134669a32f3f0a71c";
 const historicalLockPath="test/fixtures/router2-proof-gateway/historical-package-lock.json";
 const developmentRecordPath="config/router2-proof-gateway-development-dependencies.json";
