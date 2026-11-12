@@ -49,6 +49,21 @@ describe("Router 2.0 Proof Gateway release safety gate",function(){
     assert.throws(()=>assertRouterProductionReleaseAuthorized(),/independent production authorization is not approved/);
     assert.equal(inspectDevelopmentDependencies(root).approvalStatus,"PENDING");
   });
+  it("rejects release authorization even when passed a development-approved-looking input",function(){
+    assert.throws(
+      ()=>assertRouterProductionReleaseAuthorized({approvalStatus:"APPROVED",releaseReady:true}),
+      /independent production authorization is not approved/
+    );
+  });
+  it("checks independent production authorization before any compile execution",function(){
+    const source=fs.readFileSync(new URL("../scripts/run-router2-proof-gateway-gate.mjs",import.meta.url),"utf8");
+    const gate=source.slice(source.indexOf("export function runProofGatewayGate("));
+    const development=gate.indexOf("assertDevelopmentDependenciesApproved(root)");
+    const production=gate.indexOf("assertRouterProductionReleaseAuthorized()");
+    const compile=gate.indexOf('execFileSync(process.execPath,["scripts/compile.mjs"]');
+    assert.ok(development>=0 && production>development && compile>production,
+      "production authorization must run after development integrity and before compilation");
+  });
   it("rejects a missing development approval record",function(){isolated(dir=>{
     fs.unlinkSync(path.join(dir,record));assert.throws(()=>inspectDevelopmentDependencies(dir),/record missing/);
   });});
