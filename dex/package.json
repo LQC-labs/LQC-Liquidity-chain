@@ -10,7 +10,7 @@
     "verify:router2-risk-finalization": "node scripts/verify-router2-risk-finalization.mjs",
     "verify:router2-lqc-flow-finalization": "node scripts/verify-router2-lqc-flow-finalization.mjs",
     "check:scripts": "node scripts/check-all-scripts.mjs",
-    "test:contracts": "npm run compile && mocha --timeout 30000 test/**/*.test.mjs",
+    "test:contracts": "npm run compile && node scripts/build-master7-7-7y-pyth-reference-deployment-packet.mjs && mocha --timeout 30000 test/**/*.test.mjs",
     "gate:stage1": "node scripts/run-stage1-gate.mjs",
     "gate:router2-proof-gateway": "node scripts/run-router2-proof-gateway-gate.mjs",
     "coverage:router-sdk": "node scripts/check-router-sdk-coverage.mjs",
