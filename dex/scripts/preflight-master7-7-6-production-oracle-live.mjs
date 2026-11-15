@@ -9,7 +9,8 @@ const POOL_ABI = [
   "function token0() view returns (address)",
   "function token1() view returns (address)",
   "function liquidity() view returns (uint128)",
-  "function slot0() view returns (uint160,int24,uint16,uint16,uint16,uint8,bool)"
+  "function slot0() view returns (uint160,int24,uint16,uint16,uint16,uint8,bool)",
+  "function observe(uint32[] secondsAgos) view returns (int56[],uint160[])"
 ];
 
 export async function preflightProductionOracleDeployment(env, provider = new ethers.JsonRpcProvider(env.BSC_TESTNET_RPC_URL)) {
@@ -55,7 +56,16 @@ export async function preflightProductionOracleDeployment(env, provider = new et
   const observationCardinality = Number(slot0[3]);
   const unlocked = slot0[6];
   if (sqrtPriceX96 === 0n || !unlocked) throw new Error("TWAP pool is not ready.");
-  if (observationCardinality < 2) throw new Error("TWAP pool observation cardinality is insufficient.");
+  // Cardinality alone cannot establish that the full requested history exists.
+  let observations;
+  try {
+    observations = await pool.observe([config.observationWindow, 0]);
+  } catch {
+    throw new Error("TWAP pool cannot provide the requested observation window.");
+  }
+  if (observations[0].length !== 2 || observations[1].length !== 2) {
+    throw new Error("TWAP pool returned incomplete observations.");
+  }
 
   return {
     status: "READ_ONLY_LIVE_PREFLIGHT_PASS",
@@ -85,6 +95,7 @@ export async function preflightProductionOracleDeployment(env, provider = new et
       token1: t1,
       liquidity: liquidity.toString(),
       observationCardinality,
+      observationWindowVerified: true,
       unlocked
     }
   };
