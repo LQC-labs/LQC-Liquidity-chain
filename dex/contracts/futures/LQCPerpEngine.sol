@@ -30,6 +30,15 @@ contract LQCPerpEngine {
         bool configured;
     }
 
+    struct FundingLedger {
+        // Integer accrual already recognized, including explicit liquidation bad debt.
+        // This is not a cash-paid counter. Reset only after archiving a full exit.
+        int256 recognizedNetUnits;
+        int256 activeRemainderRay;
+        uint256 closedCreditRay;
+        uint256 closedDebtRay;
+    }
+
     LQCFuturesMarketRegistry public immutable registry;
     LQCFuturesVault public immutable vault;
 
@@ -47,6 +56,10 @@ contract LQCPerpEngine {
     mapping(uint256 => uint256) public maxOrderNotionalUsd;
     mapping(uint256 => uint256) public maxOpenInterestUsd;
     mapping(uint256 => uint256) public openInterestUsd;
+    mapping(address => mapping(uint256 => FundingLedger)) public fundingLedgers;
+
+    event FundingCheckpointRecorded(address indexed account, uint256 indexed marketId, int256 recognizedDelta, int256 fundedPayment, uint256 unpaid, int256 recognizedNetUnits, int256 remainderRay);
+    event ClosedFundingRecorded(address indexed account, uint256 indexed marketId, address indexed collateralToken, int256 recognizedNetUnits, int256 remainderRay);
 
     event PositionOpened(
         address indexed account,
@@ -143,6 +156,8 @@ contract LQCPerpEngine {
     error InvalidFundingDelta();
     error FundingDeltaTooLarge();
     error FundingOverflow();
+    error ClosedFundingSettlementBlocked();
+    error FundingClosureBlocked();
     error InvalidFeeConfiguration();
     error InvalidInsuranceConfiguration();
     error InvalidLiquidationConfiguration();
@@ -235,6 +250,7 @@ contract LQCPerpEngine {
         uint256 releasedMargin = stored.margin * reduceSizeUsd / stored.sizeUsd;
         if (releasedMargin == 0) revert InvalidReduction();
 
+        _settleFundingCheckpoint(account, marketId, collateralToken, stored);
         stored.sizeUsd -= reduceSizeUsd;
         openInterestUsd[marketId] -= reduceSizeUsd;
         stored.margin -= releasedMargin;
@@ -242,6 +258,7 @@ contract LQCPerpEngine {
         vault.absorbAdlBadDebt(collateralToken, absorbed);
 
         if (stored.sizeUsd == 0) {
+            _archiveFunding(account, marketId, collateralToken);
             delete positions[account][marketId];
             delete positionFundingEntryRay[account][marketId];
         }
@@ -318,6 +335,8 @@ contract LQCPerpEngine {
         if (oiLimit != 0 && openInterestUsd[marketId] + sizeUsd > oiLimit) revert MaxOpenInterestExceeded();
         Position storage existing = positions[msg.sender][marketId];
         if (existing.open) revert PositionExists();
+        FundingLedger storage ledger = fundingLedgers[msg.sender][marketId];
+        if (ledger.recognizedNetUnits != 0 || ledger.activeRemainderRay != 0) revert FundingClosureBlocked();
 
         (
             ,
@@ -356,22 +375,77 @@ contract LQCPerpEngine {
     function previewFundingPayment(address account, uint256 marketId) public view returns (int256 payment) {
         Position memory position = positions[account][marketId];
         if (!position.open) revert PositionNotFound();
+        (payment,,) = _quoteFunding(account, marketId, position);
+    }
 
+    function _quoteFunding(address account, uint256 marketId, Position memory position)
+        private view returns (int256 payment, int256 recognized, int256 remainder)
+    {
+        FundingLedger memory ledger = fundingLedgers[account][marketId];
+        recognized = ledger.recognizedNetUnits;
+        remainder = ledger.activeRemainderRay;
+        if (recognized == type(int256).min || remainder <= -int256(FUNDING_RAY) || remainder >= int256(FUNDING_RAY)) revert FundingOverflow();
         FundingState memory state = fundingStates[marketId];
-        if (!state.configured) return 0;
+        if (!state.configured) return (0, recognized, remainder);
 
-        int256 deltaRay = state.cumulativeFundingPerUsdRay - positionFundingEntryRay[account][marketId];
-        if (deltaRay == 0) return 0;
+        int256 entry = positionFundingEntryRay[account][marketId];
+        if (entry == type(int256).min) revert FundingOverflow();
+        int256 deltaRay = _addFunding(state.cumulativeFundingPerUsdRay, -entry);
+        if (deltaRay == 0) return (0, recognized, remainder);
         if (deltaRay == type(int256).min) revert FundingOverflow();
 
         uint256 absDelta = uint256(deltaRay < 0 ? -deltaRay : deltaRay);
         if (position.sizeUsd != 0 && absDelta > type(uint256).max / position.sizeUsd) revert FundingOverflow();
 
-        uint256 magnitude = position.sizeUsd * absDelta / FUNDING_RAY;
+        uint256 numerator = position.sizeUsd * absDelta;
+        uint256 magnitude = numerator / FUNDING_RAY;
         if (magnitude > uint256(type(int256).max)) revert FundingOverflow();
 
         bool receives = (deltaRay > 0 && !position.isLong) || (deltaRay < 0 && position.isLong);
-        payment = receives ? int256(magnitude) : -int256(magnitude);
+        int256 fraction = int256(numerator % FUNDING_RAY);
+        remainder += receives ? fraction : -fraction;
+        recognized = _addFunding(recognized, receives ? int256(magnitude) : -int256(magnitude));
+        recognized = _addFunding(recognized, remainder / int256(FUNDING_RAY));
+        remainder %= int256(FUNDING_RAY);
+        // Normalize against lifetime accrual for this position, not just this call.
+        if (recognized > 0 && remainder < 0) {
+            recognized -= 1;
+            remainder += int256(FUNDING_RAY);
+        } else if (recognized < 0 && remainder > 0) {
+            recognized += 1;
+            remainder -= int256(FUNDING_RAY);
+        }
+        if (recognized == type(int256).min) revert FundingOverflow();
+        payment = _addFunding(recognized, -ledger.recognizedNetUnits);
+        if (payment == type(int256).min) revert FundingOverflow();
+    }
+
+    function _addFunding(int256 a, int256 b) private pure returns (int256) {
+        if ((b > 0 && a > type(int256).max - b) || (b < 0 && a < type(int256).min - b)) revert FundingOverflow();
+        return a + b;
+    }
+
+    /// @notice Closed claims and debts are recorded only; final disposition is unapproved.
+    function finalizeClosedFunding(uint256) external pure {
+        revert ClosedFundingSettlementBlocked();
+    }
+
+    function _archiveFunding(address account, uint256 marketId, address collateralToken) private {
+        FundingLedger storage ledger = fundingLedgers[account][marketId];
+        int256 remainder = ledger.activeRemainderRay;
+        if (remainder <= -int256(FUNDING_RAY) || remainder >= int256(FUNDING_RAY)) revert FundingClosureBlocked();
+        if (remainder > 0) {
+            uint256 credit = uint256(remainder);
+            if (ledger.closedCreditRay > type(uint256).max - credit) revert FundingClosureBlocked();
+            ledger.closedCreditRay += credit;
+        } else if (remainder < 0) {
+            uint256 debt = uint256(-remainder);
+            if (ledger.closedDebtRay > type(uint256).max - debt) revert FundingClosureBlocked();
+            ledger.closedDebtRay += debt;
+        }
+        emit ClosedFundingRecorded(account, marketId, collateralToken, ledger.recognizedNetUnits, remainder);
+        ledger.recognizedNetUnits = 0;
+        ledger.activeRemainderRay = 0;
     }
 
     /// @notice Reduces part or all of the caller's position at the current Oracle price.
@@ -442,6 +516,7 @@ contract LQCPerpEngine {
         }
 
         if (fullLiquidation) {
+            _archiveFunding(account, marketId, collateralToken);
             openInterestUsd[marketId] -= position.sizeUsd;
             delete positions[account][marketId];
             delete positionFundingEntryRay[account][marketId];
@@ -555,6 +630,7 @@ contract LQCPerpEngine {
             return (releasedMargin, realizedPnl, exitPrice, remainingSizeUsd);
         }
 
+        _archiveFunding(account, marketId, collateralToken);
         openInterestUsd[marketId] -= reduceSizeUsd;
         delete positions[account][marketId];
         delete positionFundingEntryRay[account][marketId];
@@ -605,10 +681,13 @@ contract LQCPerpEngine {
             return adjustedMargin;
         }
 
-        int256 payment = previewFundingPayment(account, marketId);
+        (int256 payment, int256 recognized, int256 remainder) = _quoteFunding(account, marketId, position);
         if (payment == 0) {
+            fundingLedgers[account][marketId].recognizedNetUnits = recognized;
+            fundingLedgers[account][marketId].activeRemainderRay = remainder;
             positionFundingEntryRay[account][marketId] = state.cumulativeFundingPerUsdRay;
             emit FundingSettled(account, marketId, 0, state.cumulativeFundingPerUsdRay);
+            emit FundingCheckpointRecorded(account, marketId, 0, 0, 0, recognized, remainder);
             return adjustedMargin;
         }
 
@@ -640,9 +719,13 @@ contract LQCPerpEngine {
         );
 
         adjustedMargin = position.margin + marginCredit - marginDebit;
+        fundingLedgers[account][marketId].recognizedNetUnits = recognized;
+        fundingLedgers[account][marketId].activeRemainderRay = remainder;
         positionFundingEntryRay[account][marketId] = state.cumulativeFundingPerUsdRay;
 
+        int256 fundedPayment = _addFunding(payment, int256(residual));
         emit FundingSettled(account, marketId, payment, state.cumulativeFundingPerUsdRay);
+        emit FundingCheckpointRecorded(account, marketId, payment, fundedPayment, residual, recognized, remainder);
         emit LiquidationFundingApplied(
             account,
             marketId,
@@ -677,11 +760,16 @@ contract LQCPerpEngine {
             return 0;
         }
 
-        payment = previewFundingPayment(account, marketId);
+        int256 recognized;
+        int256 remainder;
+        (payment, recognized, remainder) = _quoteFunding(account, marketId, position);
         if (payment != 0) vault.settleFunding(account, collateralToken, payment);
 
+        fundingLedgers[account][marketId].recognizedNetUnits = recognized;
+        fundingLedgers[account][marketId].activeRemainderRay = remainder;
         positionFundingEntryRay[account][marketId] = state.cumulativeFundingPerUsdRay;
         emit FundingSettled(account, marketId, payment, state.cumulativeFundingPerUsdRay);
+        emit FundingCheckpointRecorded(account, marketId, payment, payment, 0, recognized, remainder);
     }
 
     function _settle(address account, uint256 marketId, address collateralToken, uint256 margin, int256 pnl) private {

@@ -38,7 +38,8 @@ describe("Master 7/5-2 Futures funding checkpoint accounting",function(){
   }
 
   beforeEach(async function(){
-    provider=new ethers.BrowserProvider(ganache.provider({logging:{quiet:true},wallet:{totalAccounts:6}}));
+    // A checkpoint can change gas needs between identical calls in one cache window.
+    provider=new ethers.BrowserProvider(ganache.provider({logging:{quiet:true},wallet:{totalAccounts:6}}),undefined,{cacheTimeout:-1});
     owner=await provider.getSigner(0);
     longTrader=await provider.getSigner(1);
     shortTrader=await provider.getSigner(2);
@@ -198,5 +199,203 @@ describe("Master 7/5-2 Futures funding checkpoint accounting",function(){
     assert.ok(!vaultSource.includes("LQCLendingCore"));
     assert.ok(!engineSource.includes("LQCStaking"));
     assert.ok(!vaultSource.includes("LQCStaking"));
+  });
+  it("FUT-06 preserves subunit funding across repeated checkpoints",async function(){
+    const longAddr=await longTrader.getAddress(),shortAddr=await shortTrader.getAddress(),token=await collateral.getAddress();
+    const beforeLong=await vault.availableBalance(longAddr,token),beforeShort=await vault.availableBalance(shortAddr,token);
+    // 5000e18 * 100000 / 1e27 = half of one raw settlement unit.
+    for(let i=0;i<2;i++){
+      await(await engine.updateFundingIndex(1,100000n)).wait();
+      await(await engine.connect(longTrader).settleFunding(1)).wait();
+      await(await engine.connect(shortTrader).settleFunding(1)).wait();
+    }
+    assert.equal(beforeLong-await vault.availableBalance(longAddr,token),1n);
+    assert.equal((await vault.availableBalance(shortAddr,token))-beforeShort,1n);
+    assert.equal(await vault.fundingPoolBalance(token),0n);
+  });
+  it("FUT-06 matches exact signed accrual, preview, and duplicate-settlement invariants",async function(){
+    const a=await longTrader.getAddress(),b=await shortTrader.getAddress(),token=await collateral.getAddress();
+    const initial=await vault.availableBalance(a,token),opposite=await vault.availableBalance(b,token),accounted=await vault.totalAccounted(token);
+    let numerator=0n;
+    for(const delta of [100001n,100001n,-150001n,250001n,-400002n,100000n,900007n,-700003n]){
+      numerator-=usd("5000")*delta;
+      await(await engine.updateFundingIndex(1,delta)).wait();
+      const preview=await engine.previewFundingPayment(a,1);
+      const before=await vault.availableBalance(a,token);
+      for(const signer of preview>0n?[shortTrader,longTrader]:[longTrader,shortTrader])await(await engine.connect(signer).settleFunding(1)).wait();
+      assert.equal((await vault.availableBalance(a,token))-before,preview);
+      const ledger=await engine.fundingLedgers(a,1);
+      assert.equal(ledger.recognizedNetUnits,numerator/RAY);
+      assert.equal(ledger.activeRemainderRay,numerator%RAY);
+      assert.equal(numerator,((await vault.availableBalance(a,token))-initial)*RAY+ledger.activeRemainderRay);
+      assert.equal((await vault.availableBalance(b,token))-opposite,-((await vault.availableBalance(a,token))-initial));
+      assert.equal(await vault.totalAccounted(token),accounted);
+      assert.equal(await vault.fundingPoolBalance(token),0n);
+      assert.equal(await vault.isFullyBacked(token),true);
+      const beforeDuplicate=await vault.availableBalance(a,token);
+      await(await engine.connect(longTrader).settleFunding(1)).wait();
+      assert.equal(await vault.availableBalance(a,token),beforeDuplicate);
+      assert.deepEqual(Array.from(await engine.fundingLedgers(a,1)),Array.from(ledger));
+    }
+  });
+
+  it("FUT-06 makes net settlement frequency independent even across a sign reversal",async function(){
+    await open(third,true);
+    const token=await collateral.getAddress(),a=await longTrader.getAddress(),b=await third.getAddress();
+    const first=await vault.availableBalance(a,token),second=await vault.availableBalance(b,token);
+    for(const delta of [300000n,-200000n]){
+      await(await engine.updateFundingIndex(1,delta)).wait();
+      const payment=await engine.previewFundingPayment(a,1);
+      for(const signer of payment>0n?[shortTrader,longTrader]:[longTrader,shortTrader])await(await engine.connect(signer).settleFunding(1)).wait();
+    }
+    await(await engine.connect(third).settleFunding(1)).wait();
+    assert.equal(first-await vault.availableBalance(a,token),second-await vault.availableBalance(b,token));
+    assert.equal((await engine.fundingLedgers(a,1)).activeRemainderRay,-RAY/2n);
+    assert.equal((await engine.fundingLedgers(b,1)).activeRemainderRay,-RAY/2n);
+  });
+
+  it("FUT-06 isolates accounts and markets and settles original size before partial reduction",async function(){
+    const a=await longTrader.getAddress();
+    await(await registry.addMarket(ethers.encodeBytes32String("BTC2/USDT"),await indexToken.getAddress(),await collateral.getAddress(),await oracle.getAddress(),100000,500)).wait();
+    await(await engine.configureFunding(2,MAX_DELTA)).wait();
+    await(await engine.connect(longTrader).openPosition(2,usd("1000"),usd("5000"),true)).wait();
+    await(await engine.updateFundingIndex(1,100000n)).wait();
+    await(await engine.connect(longTrader).reducePosition(1,usd("2000"))).wait();
+    assert.equal((await engine.fundingLedgers(a,1)).activeRemainderRay,-RAY/2n);
+    assert.equal((await engine.fundingLedgers(a,2)).activeRemainderRay,0n);
+    assert.equal((await engine.fundingLedgers(await shortTrader.getAddress(),1)).activeRemainderRay,0n);
+    await(await engine.updateFundingIndex(1,200000n)).wait();
+    assert.equal(await engine.previewFundingPayment(a,1),-1n);
+    await(await engine.connect(longTrader).settleFunding(1)).wait();
+    assert.equal((await engine.fundingLedgers(a,1)).activeRemainderRay,-RAY/10n);
+  });
+
+  it("FUT-06 archives both signs without payment, netting, forgiveness, or reopening carry",async function(){
+    const a=await longTrader.getAddress(),token=await collateral.getAddress();
+    await(await engine.updateFundingIndex(1,100000n)).wait();
+    const receipt=await(await engine.connect(longTrader).closePosition(1)).wait();
+    const event=receipt.logs.map(l=>{try{return engine.interface.parseLog(l);}catch{return null;}}).find(e=>e?.name==="ClosedFundingRecorded");
+    assert.equal(event.args.account,a);assert.equal(event.args.marketId,1n);assert.equal(event.args.collateralToken,token);
+    let ledger=await engine.fundingLedgers(a,1);
+    assert.equal(ledger.closedDebtRay,RAY/2n);assert.equal(ledger.activeRemainderRay,0n);
+    await(await engine.connect(longTrader).openPosition(1,usd("1000"),usd("5000"),false)).wait();
+    assert.equal(await engine.previewFundingPayment(a,1),0n);
+    await(await engine.updateFundingIndex(1,100000n)).wait();
+    await(await engine.connect(longTrader).closePosition(1)).wait();
+    ledger=await engine.fundingLedgers(a,1);
+    assert.equal(ledger.closedCreditRay,RAY/2n);assert.equal(ledger.closedDebtRay,RAY/2n);
+    assert.equal(ledger.activeRemainderRay,0n);assert.equal(ledger.recognizedNetUnits,0n);
+    const balance=await vault.availableBalance(a,token);
+    await assert.rejects(engine.connect(longTrader).finalizeClosedFunding(1),/ClosedFundingSettlementBlocked/);
+    await assert.rejects(engine.finalizeClosedFunding(1),/ClosedFundingSettlementBlocked/);
+    assert.equal(await vault.availableBalance(a,token),balance);
+    await(await engine.connect(longTrader).openPosition(1,usd("1000"),usd("5000"),true)).wait();
+    assert.equal(await engine.previewFundingPayment(a,1),0n);
+    assert.deepEqual(Array.from(await engine.fundingLedgers(a,1)),Array.from(ledger));
+    assert.equal(await vault.fundingPoolBalance(token),0n);
+  });
+
+  for(const [partial,credit] of [[false,false],[true,false],[false,true]])it(`FUT-06 preserves ${credit?"credit":"debt"} on ${partial?"partial":"full"} liquidation`,async function(){
+    const signer=credit?shortTrader:longTrader,a=await signer.getAddress();
+    if(partial)await(await engine.configurePartialLiquidation(1,2500,0)).wait();
+    await(await engine.updateFundingIndex(1,100000n)).wait();
+    await setPrice(credit?"57500":"42500");
+    await(await engine.connect(third).liquidate(a,1)).wait();
+    const ledger=await engine.fundingLedgers(a,1);
+    assert.equal((await engine.positions(a,1)).open,partial);
+    if(partial)assert.equal(ledger.activeRemainderRay,-RAY/2n);
+    else{
+      assert.equal(ledger.activeRemainderRay,0n);
+      assert.equal(credit?ledger.closedCreditRay:ledger.closedDebtRay,RAY/2n);
+    }
+  });
+
+  it("FUT-06 distinguishes actual liquidation funding from unpaid Vault bad debt",async function(){
+    const a=await longTrader.getAddress(),token=await collateral.getAddress();
+    await(await vault.connect(longTrader).withdraw(token,usd("4000"))).wait();
+    await(await engine.configureFunding(1,RAY)).wait();
+    await(await engine.updateFundingIndex(1,4n*10n**26n+100000n)).wait();
+    const receipt=await(await engine.connect(third).liquidate(a,1)).wait();
+    const events=receipt.logs.map(l=>{try{return engine.interface.parseLog(l);}catch{return null;}});
+    const checkpoint=events.find(e=>e?.name==="FundingCheckpointRecorded");
+    assert.equal(checkpoint.args.recognizedDelta,-usd("2000"));
+    assert.equal(checkpoint.args.fundedPayment,-usd("1000"));
+    assert.equal(checkpoint.args.unpaid,usd("1000"));
+    assert.equal(events.find(e=>e?.name==="FundingSettled").args.payment,-usd("2000"));
+    assert.equal(await vault.fundingPoolBalance(token),usd("1000"));
+    assert.equal(await vault.residualBadDebt(token),usd("1000"));
+    assert.equal((await engine.fundingLedgers(a,1)).closedDebtRay,RAY/2n);
+    assert.equal(await vault.isFullyBacked(token),true);
+  });
+
+  it("FUT-06 rolls back ledger, archive, funding and position after downstream fee failure",async function(){
+    const a=await longTrader.getAddress(),token=await collateral.getAddress();
+    await(await engine.configureTradingFee(1,10000,5000)).wait();
+    await(await engine.updateFundingIndex(1,300001n)).wait();
+    const position=Array.from(await engine.positions(a,1)),balance=await vault.availableBalance(a,token),accounted=await vault.totalAccounted(token);
+    await assert.rejects(async()=>{await(await engine.connect(longTrader).closePosition(1,{gasLimit:3000000n})).wait();});
+    assert.deepEqual(Array.from(await engine.positions(a,1)),position);
+    assert.deepEqual(Array.from(await engine.fundingLedgers(a,1)),[0n,0n,0n,0n]);
+    assert.equal(await engine.positionFundingEntryRay(a,1),0n);
+    assert.equal(await vault.availableBalance(a,token),balance);
+    assert.equal(await vault.totalAccounted(token),accounted);
+    assert.equal(await vault.fundingPoolBalance(token),0n);
+    assert.equal(await vault.insuranceFeeReserve(token),0n);
+  });
+
+  it("FUT-06 preserves the previous fraction when receiver settlement is unfunded",async function(){
+    const a=await shortTrader.getAddress();
+    await(await engine.updateFundingIndex(1,100000n)).wait();
+    await(await engine.connect(shortTrader).settleFunding(1)).wait();
+    await(await engine.updateFundingIndex(1,100000n)).wait();
+    await assert.rejects(engine.connect(shortTrader).settleFunding(1));
+    assert.equal(await engine.positionFundingEntryRay(a,1),100000n);
+    assert.equal((await engine.fundingLedgers(a,1)).activeRemainderRay,RAY/2n);
+  });
+
+  it("FUT-06 handles large unsigned products and rejects signed and multiplication overflow",async function(){
+    const address=await engine.getAddress(),a=await longTrader.getAddress(),size=usd("5000");
+    const encode=ethers.AbiCoder.defaultAbiCoder();
+    const indexSlot=ethers.keccak256(encode.encode(["uint256","uint256"],[1,1]));
+    const set=async(slot,value)=>provider.send("anvil_setStorageAt",[address,slot,ethers.toBeHex(value,32)]);
+    const large=(1n<<255n)/size+1n;
+    await set(indexSlot,large);
+    assert.equal(await engine.previewFundingPayment(a,1),-(size*large/RAY));
+    for(const value of [1n<<255n,(1n<<255n)-1n]){await set(indexSlot,value);await assert.rejects(engine.previewFundingPayment(a,1),/FundingOverflow/);}
+    const entryBase=ethers.keccak256(encode.encode(["address","uint256"],[a,2]));
+    const entrySlot=ethers.keccak256(encode.encode(["uint256","bytes32"],[1,entryBase]));
+    await set(entrySlot,(1n<<256n)-1n);
+    await assert.rejects(engine.previewFundingPayment(a,1),/FundingOverflow/);
+    await assert.rejects(engine.updateFundingIndex(1,1n));
+    assert.deepEqual(Array.from(await engine.fundingLedgers(a,1)),[0n,0n,0n,0n]);
+  });
+
+  it("FUT-06 blocks closure atomically when the archive cannot preserve the claim",async function(){
+    const a=await shortTrader.getAddress(),encode=ethers.AbiCoder.defaultAbiCoder();
+    // fundingLedgers is appended at slot 14; verify the injected fixture via its getter.
+    const outer=ethers.keccak256(encode.encode(["address","uint256"],[a,14]));
+    const slot=BigInt(ethers.keccak256(encode.encode(["uint256","bytes32"],[1,outer])));
+    await provider.send("anvil_setStorageAt",[await engine.getAddress(),ethers.toBeHex(slot+2n,32),ethers.toBeHex((1n<<256n)-1n,32)]);
+    assert.equal((await engine.fundingLedgers(a,1)).closedCreditRay,(1n<<256n)-1n);
+    await(await engine.updateFundingIndex(1,100000n)).wait();
+    await assert.rejects(engine.connect(shortTrader).closePosition(1),
+      error=>error.data===engine.interface.getError("FundingClosureBlocked").selector);
+    assert.equal((await engine.positions(a,1)).open,true);
+    assert.equal((await engine.fundingLedgers(a,1)).activeRemainderRay,0n);
+    assert.equal(await engine.positionFundingEntryRay(a,1),0n);
+  });
+
+  it("FUT-06 rejects recognized-net overflow without advancing the checkpoint",async function(){
+    const a=await shortTrader.getAddress(),encode=ethers.AbiCoder.defaultAbiCoder();
+    const outer=ethers.keccak256(encode.encode(["address","uint256"],[a,14]));
+    const slot=ethers.keccak256(encode.encode(["uint256","bytes32"],[1,outer]));
+    await(await engine.updateFundingIndex(1,200000n)).wait();
+    for(const value of [(1n<<255n)-1n,1n<<255n]){
+      await provider.send("anvil_setStorageAt",[await engine.getAddress(),slot,ethers.toBeHex(value,32)]);
+      const before=Array.from(await engine.fundingLedgers(a,1));
+      await assert.rejects(engine.previewFundingPayment(a,1),/FundingOverflow/);
+      assert.deepEqual(Array.from(await engine.fundingLedgers(a,1)),before);
+      assert.equal(await engine.positionFundingEntryRay(a,1),0n);
+    }
   });
 });
