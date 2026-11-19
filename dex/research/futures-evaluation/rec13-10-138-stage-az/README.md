@@ -80,3 +80,31 @@ integration, upgrade governance, CI and independent review separately.
 Source files retain their SPDX headers. No third-party SDK source or provider
 keys are redistributed here; official Pyth endpoints are invoked only with
 the provider's own documented access requirements.
+
+## Work 78 / REC-13.10.139 Stage BA — research-only extension (2026-11-19)
+
+Five additional Solidity source modules (AW, AV, AU, AT, AR) and one
+`test-auth/LocalFuturesV2RealPythVenueSettlementStageBA.t.sol` integration
+suite extend Stage AZ without changing its existing files. The test traverses
+genuine Pyth Pro BSC97 `eth_call` authentication, local AW oracle-bound venue,
+AV synthetic test-token fill, AU two-issuer authenticated settlement, and AT
+local ERC20 custody accounting. All actions run inside a local read-only fork;
+no real tokens, chain transaction, external venue, or production deployment.
+
+Only on a trusted WSL host with a **freshly captured genuine Stage AZ fixture**
+and authorized Pyth access, run:
+
+```bash
+FOUNDRY_PROFILE=authenticated forge test --root . \
+  --fork-url https://bsc-testnet-rpc.publicnode.com \
+  --match-path 'test-auth/LocalFuturesV2RealPythVenueSettlementStageBA.t.sol' -vv
+```
+
+User-observed isolated Work 78 source package (not a GitHub CI replay):
+**6/6 Stage BA genuine-authentication fork tests PASS** and **459/459
+regular Solidity tests PASS**. The trimmed public PR does not include the
+signed fixture or provider credentials; absent/stale data must fail closed.
+Historical Stage AM signed third-exit tests remain separately **BLOCKED**
+without an authentic `second_exit.hex`. These passes are not a production
+security audit, actual venue/custody proof, Pyth upgrade governance approval,
+or live transaction receipt.
