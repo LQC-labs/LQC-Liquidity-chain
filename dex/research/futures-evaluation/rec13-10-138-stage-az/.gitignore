@@ -1,0 +1,3 @@
+# Real, public-but-ephemeral Pyth EVM updates are local fork-test fixtures.
+# Never accidentally check them into source control.
+test-auth/fixtures/latest_verified_stage_az.json
