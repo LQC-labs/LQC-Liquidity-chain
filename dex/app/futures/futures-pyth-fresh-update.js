@@ -10,6 +10,7 @@ const FEED_ID="0x2f95862b045670cd22bee3114c39763a4a08beeb663b145d283c31d7d1101c4
 const HERMES="https://pyth.dourolabs.app/hermes/v2/updates/price/latest";
 
 let provider,signer,account;
+let payloadRequestId=0;
 const $=id=>document.getElementById(id);
 const setStatus=m=>{$("status").textContent=m;};
 
@@ -31,10 +32,16 @@ async function fetchPayload(){
  const key=$("apiKey").value.trim();
  if(!key) throw new Error("Pyth API Key를 입력해주세요.");
  $("apiKey").value="";
+ const requestId=++payloadRequestId;
+ window.__pythUpdateData=undefined;
+ $("update").disabled=true;
+ try {
  const url=HERMES+"?ids%5B%5D="+encodeURIComponent(FEED_ID);
  const r=await fetch(url,{headers:{accept:"application/json",authorization:"Bearer "+key},cache:"no-store"});
+ if(requestId!==payloadRequestId) return;
  if(!r.ok) throw new Error("Hermes HTTP "+r.status);
  const j=await r.json();
+ if(requestId!==payloadRequestId) return;
  const parsed=j.parsed?.[0]?.price;
  const binary=j.binary?.data;
  if(!parsed||!Array.isArray(binary)||binary.length===0) throw new Error("Hermes payload 형식이 예상과 다릅니다.");
@@ -46,6 +53,9 @@ async function fetchPayload(){
  $("payloadCount").textContent=String(updateData.length);
  $("update").disabled=false;
  setStatus("fresh signed payload 조회 완료. 아직 온체인 업데이트 전.");
+ } catch(error) {
+  if(requestId===payloadRequestId) throw error;
+ }
 }
 
 async function updatePyth(){
