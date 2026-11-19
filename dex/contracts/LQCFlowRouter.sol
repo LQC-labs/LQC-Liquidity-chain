@@ -247,6 +247,9 @@ contract LQCFlowRouter {
         uint256 amountAMin,
         uint256 amountBMin
     ) private view returns (uint256 amountA, uint256 amountB) {
+        // A valid allocation cannot exceed either desired amount. Reject
+        // impossible minima before the empty-pool fast path as well.
+        if (amountADesired < amountAMin || amountBDesired < amountBMin) revert InsufficientAmount();
         (uint256 reserveA, uint256 reserveB) = _getReservesOptional(tokenA, tokenB);
         if (reserveA == 0 && reserveB == 0) return (amountADesired, amountBDesired);
         uint256 amountBOptimal = quote(amountADesired, reserveA, reserveB);
