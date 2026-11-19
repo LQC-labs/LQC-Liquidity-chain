@@ -13,7 +13,34 @@ try{
  for(const f of files){const dest=path.join(out,'source-snapshot',f);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(root+'/'+f,dest,fs.constants.COPYFILE_EXCL);}
  const p=cp.spawnSync(process.execPath,['--require',root+'/offline-guard.cjs',require.resolve('mocha/bin/mocha.js'),'--no-config','--no-package','--timeout','10000','--reporter','json','--reporter-option','output='+out+'/mocha.json',...suites.map(s=>root+'/'+s.file)],{cwd:root,encoding:'utf8',windowsHide:true,timeout:420000,maxBuffer:32*1024*1024,env:{...process.env,NODE_OPTIONS:'',LQC76_OUTPUT_DIR:out,LQC80_OUTPUT_DIR:out,LQC82_OUTPUT_DIR:out,LQC58_OUTPUT_DIR:out,LQC49_REJECTIONS:out+'/rejection-stages.json'}});
  fs.writeFileSync(out+'/stdout.log',p.stdout||'',{flag:'wx'});fs.writeFileSync(out+'/stderr.log',p.stderr||'',{flag:'wx'});save('exit-code.json',{exitCode:p.status,signal:p.signal,error:p.error?.code??null});assert(!p.error&&!p.signal,'TEST_PROCESS_ERROR');
- const report=JSON.parse(fs.readFileSync(out+'/mocha.json'));let aggregation;try{aggregation=require('./report-validation.cjs')(report,p.status,{fullTitles});}catch(e){save('aggregation-error.json',{message:e.message,stats:report.stats});throw e;}
+ const report=JSON.parse(fs.readFileSync(out+'/mocha.json'));
+ let aggregation;
+ try {
+  aggregation=require('./report-validation.cjs')(report,p.status,{fullTitles});
+ } catch(e) {
+  // Preserve fail-closed assertions; reveal WHY a registered test set did
+  // not execute. No expected plan, fixture, permission or test is altered.
+  const expected=new Set(fullTitles);
+  const executed=new Set((report.tests||[]).map(t=>t.fullTitle));
+  const errorLines=String(p.stderr||'').split(/\r?\n/)
+   .filter(line=>/(?:ERR_|Error:|Error \[|Cannot find|SyntaxError|ReferenceError|TypeError)/i.test(line))
+   .slice(-12).map(line=>line
+    .replace(/(authorization:\s*bearer\s+)\S+/gi,'$1[REDACTED]')
+    .replace(/(PYTH_PRO_API_KEY\s*[:=]\s*)\S+/gi,'$1[REDACTED]')
+    .slice(0,500));
+  const diagnostic={
+   message:e.message,processExitCode:p.status,
+   expectedCount:fullTitles.length,executedCount:executed.size,
+   missingTitles:fullTitles.filter(t=>!executed.has(t)),
+   unexpectedTitles:[...executed].filter(t=>!expected.has(t)),
+   mochaFailures:(report.failures||[]).slice(0,12).map(t=>({
+    fullTitle:t.fullTitle,message:String(t.err?.message||'').slice(0,500)
+   })),stderrErrorLines:errorLines,stats:report.stats
+  };
+  save('aggregation-error.json',diagnostic);
+  console.error('SHARED_RECONCILIATION_DIAGNOSTIC',JSON.stringify(diagnostic));
+  throw e;
+ }
  save('summary.json',{aggregation,exitCode:p.status,stats:report.stats,groups:suites.map(s=>({file:s.file,group:s.group,tests:report.tests.filter(t=>s.fullTitles.includes(t.fullTitle)).length,passes:report.passes.filter(t=>s.fullTitles.includes(t.fullTitle)).length,failures:report.failures.filter(t=>s.fullTitles.includes(t.fullTitle)).length})),failures:report.failures});
  console.log(JSON.stringify({status:aggregation.status,counts:aggregation.counts,exitCode:p.status,failures:report.failures.map(t=>({test:t.fullTitle,error:t.err.message}))},null,2));for(const [f,h]of Object.entries(JSON.parse(fs.readFileSync(out+'/implementation-hashes.json'))))assert.equal(sha(fs.readFileSync(root+'/'+f)),h,'SOURCE_CHANGED_DURING_TEST');assert.equal(aggregation.status,'PASS','TESTS_NOT_PASS');
 }catch(e){save('runner-failure.json',{name:e.name,message:e.message,stack:e.stack});console.error(e.stack);process.exitCode=1;}
