@@ -22,19 +22,23 @@ try{
   // not execute. No expected plan, fixture, permission or test is altered.
   const expected=new Set(fullTitles);
   const executed=new Set((report.tests||[]).map(t=>t.fullTitle));
+  // The CI log and downloadable diagnostic artifact are public to reviewers.
+  // Apply one redactor to every externally derived diagnostic string, not
+  // only to stderr (Mocha failure messages may contain request details).
+  const redact=value=>String(value??'')
+   .replace(/(authorization:\s*bearer\s+)\S+/gi,'$1[REDACTED]')
+   .replace(/((?:PYTH_PRO_API_KEY|LQC_PYTH_KEY)\s*[:=]\s*)\S+/gi,'$1[REDACTED]')
+   .replace(/\b(?:ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[A-Z0-9]{16}|sk-[A-Za-z0-9_-]{25,}|pyth_[A-Za-z0-9_-]{25,})\b/g,'[REDACTED]');
   const errorLines=String(p.stderr||'').split(/\r?\n/)
    .filter(line=>/(?:ERR_|Error:|Error \[|Cannot find|SyntaxError|ReferenceError|TypeError)/i.test(line))
-   .slice(-12).map(line=>line
-    .replace(/(authorization:\s*bearer\s+)\S+/gi,'$1[REDACTED]')
-    .replace(/(PYTH_PRO_API_KEY\s*[:=]\s*)\S+/gi,'$1[REDACTED]')
-    .slice(0,500));
+   .slice(-12).map(line=>redact(line).slice(0,500));
   const diagnostic={
-   message:e.message,processExitCode:p.status,
+   message:redact(e.message),processExitCode:p.status,
    expectedCount:fullTitles.length,executedCount:executed.size,
-   missingTitles:fullTitles.filter(t=>!executed.has(t)),
-   unexpectedTitles:[...executed].filter(t=>!expected.has(t)),
+   missingTitles:fullTitles.filter(t=>!executed.has(t)).map(redact),
+   unexpectedTitles:[...executed].filter(t=>!expected.has(t)).map(redact),
    mochaFailures:(report.failures||[]).slice(0,12).map(t=>({
-    fullTitle:t.fullTitle,message:String(t.err?.message||'').slice(0,500)
+    fullTitle:redact(t.fullTitle),message:redact(t.err?.message).slice(0,500)
    })),stderrErrorLines:errorLines,stats:report.stats
   };
   save('aggregation-error.json',diagnostic);
