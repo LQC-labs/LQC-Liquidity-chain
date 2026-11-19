@@ -59,7 +59,7 @@ jobs:
       - name: Verify stored exit history on local Anvil only
         run: node run-tests.cjs
       - name: Compare fixed-Q stored history with existing JS diagnostics on local Anvil only
-        run: node run-fixed-q-tests.cjs
+        run: node run-fixed-q-v2-tests.cjs
       - name: Preserve stored-history research results on success or failure
         if: always()
         uses: actions/upload-artifact@v4

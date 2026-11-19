@@ -1,0 +1,14 @@
+{
+  "schema": "LOCAL_FIXED_Q_TEST_PLAN_2",
+  "basePlanSHA256": "b48ff87db62c880310f2698f1699a8dfd25cd6bea4b98ae378759d68496ac308",
+  "expectedTestCount": 71,
+  "replacedSourcePin": {
+    "file": "../lib/shared-evaluation-origin-reference.mjs",
+    "historicalSHA256": "ba9c601f6cbeb133628ef04722e85be61daa5f7d771a633d737df7952a9f343a",
+    "currentSHA256": "73aaf48f3f75b75e5adb9a36b9c9b6259e10ff6fa352de1af4250db2e74f5471"
+  },
+  "currentCalculatorPin": {
+    "recordSHA256": "ab2b57327f76898cebcde3251b3d2f8ac0028f5a83b4173e0bc15beab2c82c39",
+    "dependencyLockSHA256": "f0bc5df537be3e57d768627b180ef60b65f57349e17c749f5031f1f58a8f224c"
+  }
+}
