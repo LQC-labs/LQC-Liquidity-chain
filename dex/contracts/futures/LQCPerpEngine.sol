@@ -14,7 +14,7 @@ contract LQCPerpEngine {
     uint256 public constant PRICE_SCALE = 1e18;
     uint256 public constant FUNDING_RAY = 1e27;
     uint256 public constant MAX_FUNDING_DELTA_RAY = FUNDING_RAY;
-    uint256 public constant MAX_ORACLE_DELAY = 5 minutes;
+    uint256 public constant MAX_ORACLE_DELAY = 120 seconds;
 
     struct Position {
         uint256 margin;
@@ -147,6 +147,7 @@ contract LQCPerpEngine {
     error PositionNotFound();
     error LeverageTooHigh();
     error InvalidOraclePrice();
+    error UnapprovedRecoveryOracle();
     error StaleOraclePrice();
     error NotLiquidatable();
     error PartialReductionWouldCreateBadDebt();
@@ -240,7 +241,7 @@ contract LQCPerpEngine {
         uint256 cap = stored.sizeUsd * maxAdlReductionBps[marketId] / BPS;
         if (cap == 0 || reduceSizeUsd > cap) revert AdlReductionTooLarge();
 
-        uint256 price = _price(indexToken, oracle);
+        uint256 price = _price(marketId, indexToken, oracle);
         Position memory slice = Position({margin: 0, sizeUsd: reduceSizeUsd, entryPrice: stored.entryPrice, isLong: stored.isLong, open: true});
         int256 slicePnl = _pnl(slice, price);
         if (slicePnl <= 0) revert AdlPositionNotProfitable();
@@ -316,8 +317,9 @@ contract LQCPerpEngine {
         uint256 absDelta = uint256(deltaRay < 0 ? -deltaRay : deltaRay);
         if (absDelta > state.maxAbsDeltaPerUpdateRay) revert FundingDeltaTooLarge();
 
+        if (registry.marketMode(marketId) != LQCFuturesMarketRegistry.MarketMode.ACTIVE) revert MarketInactive();
         (, address indexToken,, address oracle,,,) = registry.markets(marketId);
-        _price(indexToken, oracle);
+        _price(marketId, indexToken, oracle);
 
         int256 previous = state.cumulativeFundingPerUsdRay;
         int256 next = previous + deltaRay;
@@ -351,7 +353,7 @@ contract LQCPerpEngine {
         if (!active || registry.marketMode(marketId) != LQCFuturesMarketRegistry.MarketMode.ACTIVE) revert MarketInactive();
         if (sizeUsd * BPS > margin * uint256(maxLeverageBps)) revert LeverageTooHigh();
 
-        uint256 price = _price(indexToken, oracle);
+        uint256 price = _price(marketId, indexToken, oracle);
         vault.lockCollateral(msg.sender, collateralToken, margin);
         _chargeTradingFee(msg.sender, marketId, collateralToken, sizeUsd);
 
@@ -490,7 +492,7 @@ contract LQCPerpEngine {
         );
         stored.margin = position.margin;
 
-        uint256 price = _price(indexToken, oracle);
+        uint256 price = _price(marketId, indexToken, oracle);
         int256 pnl = _pnl(position, price);
         int256 equity = int256(position.margin) + pnl;
         uint256 maintenance = (position.sizeUsd * uint256(maintenanceMarginBps)) / BPS;
@@ -571,7 +573,7 @@ contract LQCPerpEngine {
         if (!position.open) revert PositionNotFound();
 
         (, address indexToken,, address oracle,,,) = registry.markets(marketId);
-        markPrice = _price(indexToken, oracle);
+        markPrice = _price(marketId, indexToken, oracle);
         pnl = _pnl(position, markPrice);
     }
 
@@ -588,7 +590,7 @@ contract LQCPerpEngine {
         (, address indexToken, address collateralToken, address oracle,,,) = registry.markets(marketId);
 
         _settleFundingCheckpoint(account, marketId, collateralToken, beforePosition);
-        exitPrice = _price(indexToken, oracle);
+        exitPrice = _price(marketId, indexToken, oracle);
 
         releasedMargin = beforePosition.margin * reduceSizeUsd / beforePosition.sizeUsd;
         if (releasedMargin == 0) revert InvalidReduction();
@@ -807,10 +809,15 @@ contract LQCPerpEngine {
             / int256(position.entryPrice);
     }
 
-    function _price(address indexToken, address oracle) private view returns (uint256 price) {
+    function _price(uint256 marketId, address indexToken, address oracle) private view returns (uint256 price) {
+        LQCFuturesMarketRegistry.MarketMode mode = registry.marketMode(marketId);
+        if (mode == LQCFuturesMarketRegistry.MarketMode.HALTED) revert MarketInactive();
+
+        if (!registry.isRecoveryOracleApproved(marketId)) revert UnapprovedRecoveryOracle();
+
         uint256 updatedAt;
         (price, updatedAt) = ILQCFuturesOracle(oracle).getPrice(indexToken);
-        if (price == 0 || updatedAt > block.timestamp) revert InvalidOraclePrice();
+        if (price == 0 || updatedAt == 0 || updatedAt > block.timestamp) revert InvalidOraclePrice();
         if (block.timestamp - updatedAt > MAX_ORACLE_DELAY) revert StaleOraclePrice();
     }
 }

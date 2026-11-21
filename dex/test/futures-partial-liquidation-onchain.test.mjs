@@ -1,3 +1,4 @@
+import { activateFuturesFixture } from "./support/futures-market-recovery.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "./support/anvil-compat.mjs";
@@ -52,6 +53,7 @@ describe("Master 7/5-5 Futures funding-aware partial liquidation",function(){
       100_000,
       500
     )).wait();
+  await activateFuturesFixture(registry, 1, oracle);
     await setPrice("50000");
 
     const traderAddress=await trader.getAddress();
