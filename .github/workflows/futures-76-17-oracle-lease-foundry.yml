@@ -1,0 +1,40 @@
+name: Futures 76-17 Oracle Lease Foundry (focused)
+
+on:
+  pull_request:
+    types: [synchronize, opened, reopened]
+    paths:
+      - ".github/workflows/futures-76-17-oracle-lease-foundry.yml"
+      - "test/LQCRecoveryApprovalRequest76_17_06_05_02.t.sol"
+
+permissions:
+  contents: read
+
+jobs:
+  oracle-lease-boundary:
+    if: github.event.pull_request.number == 460
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout PR source (read-only)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Foundry (no cache)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+
+      - name: Verify Foundry version
+        run: forge --version
+
+      - name: Run only the Oracle lease boundary regression
+        env:
+          FOUNDRY_DISABLE_NIGHTLY_WARNING: "1"
+        run: |
+          forge test --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai \
+            --match-path test/LQCRecoveryApprovalRequest76_17_06_05_02.t.sol \
+            --match-test test_RecoveryAfterInitialOracleLeaseExpiresWithFreshGovernanceApproval -vv
