@@ -10,7 +10,7 @@ const VAULT = "0xb532c65294a7b35ca510a7df025e934fa17c8d7e";
 const DEPLOY_TX = "0x16a112f0cdfa053e9af81eb56ebfb00ee91dd7538b003addf7069028ab41c870";
 const MARKET = 1n;
 const COLLATERAL = "0x7ab1b97d194730e9456c12af7905450a4f8a0c46";
-const MAX_BLOCKS = 2000;
+const MAX_BLOCKS = 4000;
 const CHUNK = 100;
 const iface = new ethers.Interface([
   "event PositionOpened(address indexed account,uint256 indexed marketId,bool isLong,uint256 margin,uint256 sizeUsd,uint256 entryPrice)",
@@ -42,13 +42,28 @@ async function run() {
   if(BigInt(await provider.send("eth_chainId",[]))!==97n) throw Error("wrong chain");
   const receipt = await provider.getTransactionReceipt(DEPLOY_TX);
   if(!receipt || receipt.status!==1 || receipt.contractAddress?.toLowerCase()!==ENGINE) throw Error("deployment receipt mismatch");
-  const start = receipt.blockNumber;
+  const deploymentBlock = receipt.blockNumber;
   const block=await provider.getBlockNumber();
+  // Independently recorded first position success was committed 2026-09-19 17:23 UTC.
+  // Scan only its narrow surrounding UTC window, NOT the full history.
+  async function firstBlockAtOrAfter(timestamp) {
+    let low = deploymentBlock, high = block;
+    while (low < high) {
+      const mid = Math.floor((low + high) / 2);
+      const b = await provider.getBlock(mid);
+      if (!b) throw Error("historical block unavailable");
+      if (b.timestamp < timestamp) low = mid + 1;
+      else high = mid;
+    }
+    return low;
+  }
+  const start = await firstBlockAtOrAfter(Math.floor(Date.parse("2026-09-19T17:00:00Z")/1000));
+  const targetEnd = await firstBlockAtOrAfter(Math.floor(Date.parse("2026-09-19T17:27:00Z")/1000));
   const snapshot=await provider.getBlock(block);
   if(!snapshot?.hash) throw Error("snapshot block unavailable");
-  const end=Math.min(block,start+MAX_BLOCKS-1);
-  Object.assign(result,{deploymentBlock:start,snapshotBlock:block,snapshotHash:snapshot.hash,
-    scannedFrom:start,scannedThrough:end,completeFromDeploymentThroughSnapshot:end===block,
+  const end=Math.min(block,start+MAX_BLOCKS-1,targetEnd);
+  Object.assign(result,{deploymentBlock:deploymentBlock,snapshotBlock:block,snapshotHash:snapshot.hash,
+    scannedFrom:start,scannedThrough:end,completeFromDeploymentThroughSnapshot:false, focusedUtcWindow:"2026-09-19 17:00-17:27 UTC",
     events:[],accounts:[],status:"BLOCKED_PARTIAL_WINDOW"});
   const seen=new Set();
   for(let s=start;s<=end;s+=CHUNK) {
@@ -85,9 +100,8 @@ async function run() {
   }
   result.discoveredAccounts=result.accounts.length;
   result.openPositionsAmongDiscovered=result.accounts.filter(a=>a.position.open).length;
-  result.status=end===block?"READ_ONLY_LOG_RANGE_COMPLETE_NEEDS_EXTERNAL_RECONCILIATION":"READ_ONLY_PARTIAL_WINDOW";
-  result.reason=end===block?"Historical event logs require independent completeness review":
-    "Only first "+MAX_BLOCKS+" deployment blocks scanned; later accounts or position changes may exist.";
+  result.status="READ_ONLY_PARTIAL_WINDOW";
+  result.reason="Only the documented first-position UTC window scanned; earlier or later accounts and position changes may exist.";
 }
 try {await run();} catch(e) {result.status="BLOCKED";result.reason=String(e?.message||e).slice(0,600);}
 writeFileSync("futures-m08-historical-positions.json",JSON.stringify(result,null,2)+"\n");
