@@ -37,6 +37,8 @@ jobs:
       - name: Validate observer syntax
         run: node --check scripts/observe-futures-m08-historical-positions.mjs
       - name: Bounded historical event and current account reads
+        env:
+          BSC_TESTNET_READONLY_RPC: https://bsc-testnet-rpc.publicnode.com
         run: node scripts/observe-futures-m08-historical-positions.mjs
       - name: Preserve read-only report
         if: always()
