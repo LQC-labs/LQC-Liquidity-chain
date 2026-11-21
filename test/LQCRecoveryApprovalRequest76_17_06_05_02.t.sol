@@ -151,6 +151,27 @@ contract LQCRecoveryApprovalRequest7617060502Test {
         _assertCanActivate(_request(START + 60));
     }
 
+    /// @notice An expired initial nomination lease does not by itself revoke
+    /// an unchanged Oracle configuration after REDUCE_ONLY was entered.
+    /// A new final Governance approval still requires a fresh Oracle quote.
+    function test_RecoveryAfterInitialOracleLeaseExpiresWithFreshGovernanceApproval() public {
+        uint256 firstDeadline = registry.recoveryOracleApprovalValidUntil(market);
+        require(firstDeadline == START + 120, "unexpected initial approval deadline");
+
+        vm.warp(START + 121);
+        require(block.timestamp > firstDeadline, "initial approval lease not expired");
+        require(registry.marketMode(market) == Registry.MarketMode.REDUCE_ONLY, "market mode changed");
+
+        Request memory request = _request(START + 180);
+        vm.expectRevert(Registry.InvalidRecoveryPrice.selector);
+        _submit(request);
+        _assertNoApproval(request.epoch);
+
+        primary.setUpdatedAt(block.timestamp);
+        referenceFeed.setUpdatedAt(block.timestamp);
+        _assertCanActivate(request);
+    }
+
     function test_SameOracleRenominationAndRevocationInvalidatePreparedEpoch() public {
         Request memory old = _request(START + 60);
         registry.setMarketActive(market, false);
