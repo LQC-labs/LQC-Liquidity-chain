@@ -1,3 +1,4 @@
+import { activateFuturesFixture } from "./support/futures-market-recovery.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "./support/anvil-compat.mjs";
@@ -44,6 +45,7 @@ describe("LQC Flow Futures MVP", function () {
       ethers.encodeBytes32String("BTC/USDT"), await indexToken.getAddress(), await collateral.getAddress(),
       await oracle.getAddress(), 100_000, 500
     )).wait();
+  await activateFuturesFixture(registry, 1, oracle);
     await setOraclePrice(oracle, await indexToken.getAddress(), usd("50000"));
 
     const traderAddress = await trader.getAddress();

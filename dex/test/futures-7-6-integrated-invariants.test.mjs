@@ -7,8 +7,8 @@ const registry=fs.readFileSync(new URL("../contracts/futures/LQCFuturesMarketReg
 describe("Master 7/6-7 Risk/Governance/Emergency integration invariants",function(){
  it("keeps emergency market modes, Guardian escalation and staged Governance recovery",function(){
   for(const x of["enum MarketMode","setGuardian","setEmergencyMarketMode","applyEmergencyTriggers","setRecoveryApproved"]) assert.ok(registry.includes(x),x);
-  assert.ok(registry.includes("previous == MarketMode.HALTED && newMode == MarketMode.ACTIVE"));
-  assert.ok(registry.includes("previous == MarketMode.REDUCE_ONLY && newMode == MarketMode.ACTIVE && !recoveryApproved[marketId]"));
+  assert.match(registry, /if \(newMode == MarketMode.ACTIVE\) \{\s*if \(previous != MarketMode.ACTIVE\) revert Forbidden\(\)/);
+  assert.ok(registry.includes("marketMode[marketId] != MarketMode.REDUCE_ONLY || !_recoveryApproved[marketId]"));
  });
  it("keeps order, position and aggregate OI risk ceilings on the canonical engine",function(){
   for(const x of["maxOrderNotionalUsd","maxPositionNotionalUsd","maxOpenInterestUsd","openInterestUsd","configureMarketNotionalLimits","configureMarketOpenInterestLimit"]) assert.ok(engine.includes(x),x);

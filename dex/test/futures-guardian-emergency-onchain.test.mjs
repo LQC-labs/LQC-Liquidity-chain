@@ -1,3 +1,4 @@
+import { activateApprovedFuturesMarket, activateFuturesFixture, approveActiveFuturesMarket, enterReduceOnlyWithOracle } from "./support/futures-market-recovery.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "./support/anvil-compat.mjs";
@@ -17,6 +18,7 @@ describe("Master 7/6-2 guardian emergency escalation",function(){
   oracle=await deploy(owner,"MockLQCFuturesOracle","futures/mocks/MockLQCFuturesOracle");
   registry=await deploy(owner,"LQCFuturesMarketRegistry","futures/LQCFuturesMarketRegistry",[await owner.getAddress()]);
   await(await registry.addMarket(ethers.encodeBytes32String("BTC/USDT"),await indexToken.getAddress(),await collateral.getAddress(),await oracle.getAddress(),100_000,500)).wait();
+  await activateFuturesFixture(registry, 1, oracle);
   await(await registry.setGuardian(await guardian.getAddress())).wait();
  });
  it("lets only Governance configure the Guardian",async function(){
@@ -39,9 +41,9 @@ describe("Master 7/6-2 guardian emergency escalation",function(){
  });
  it("keeps Governance recovery authority through staged approval",async function(){
   await(await registry.connect(guardian).setEmergencyMarketMode(1,2)).wait();
-  await(await registry.setMarketMode(1,1)).wait();
-  await(await registry.setRecoveryApproved(1,true)).wait();
-  await(await registry.setMarketMode(1,0)).wait();
+  await enterReduceOnlyWithOracle(registry, 1);
+  await approveActiveFuturesMarket(registry, 1);
+  await activateApprovedFuturesMarket(registry, 1);
   assert.equal(await registry.marketMode(1),0n);
   assert.equal(await registry.recoveryApproved(1),false);
  });

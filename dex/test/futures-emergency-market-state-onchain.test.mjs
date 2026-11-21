@@ -1,3 +1,4 @@
+import { activateFuturesFixture } from "./support/futures-market-recovery.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "./support/anvil-compat.mjs";
@@ -16,10 +17,11 @@ describe("Master 7/6-1 on-chain emergency market state",function(){
   vault=await deploy(owner,"LQCFuturesVault","futures/LQCFuturesVault",[await owner.getAddress()]); engine=await deploy(owner,"LQCPerpEngine","futures/LQCPerpEngine",[await registry.getAddress(),await vault.getAddress()]);
   await(await vault.setEngine(await engine.getAddress())).wait(); await(await vault.setSupportedCollateral(await collateral.getAddress(),true)).wait();
   await(await registry.addMarket(ethers.encodeBytes32String("BTC/USDT"),await indexToken.getAddress(),await collateral.getAddress(),await oracle.getAddress(),100_000,500)).wait();
+  await activateFuturesFixture(registry, 1, oracle);
   await(await oracle.setPrice(await indexToken.getAddress(),usd("50000"),{gasLimit:100_000n})).wait();
   const a=await trader.getAddress(); await(await collateral.mint(a,usd("10000"))).wait(); await(await collateral.connect(trader).approve(await vault.getAddress(),ethers.MaxUint256)).wait(); await(await vault.connect(trader).deposit(await collateral.getAddress(),usd("5000"))).wait();
  });
- it("starts new markets ACTIVE and restricts mode changes to Governance",async function(){
+ it("activates fixtures through staged recovery and restricts mode changes to Governance",async function(){
   assert.equal(await registry.marketMode(1),0n);
   await assert.rejects(registry.connect(trader).setMarketMode(1,1));
  });

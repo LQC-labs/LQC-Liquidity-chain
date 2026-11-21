@@ -1,3 +1,4 @@
+import { activateFuturesFixture } from "./support/futures-market-recovery.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "./support/anvil-compat.mjs";
@@ -62,6 +63,7 @@ describe("Master 7/5-2 Futures funding checkpoint accounting",function(){
       100_000,
       500
     )).wait();
+  await activateFuturesFixture(registry, 1, oracle);
     await setPrice("50000");
 
     await fundAndDeposit(longTrader);
@@ -257,6 +259,7 @@ describe("Master 7/5-2 Futures funding checkpoint accounting",function(){
   it("FUT-06 isolates accounts and markets and settles original size before partial reduction",async function(){
     const a=await longTrader.getAddress();
     await(await registry.addMarket(ethers.encodeBytes32String("BTC2/USDT"),await indexToken.getAddress(),await collateral.getAddress(),await oracle.getAddress(),100000,500)).wait();
+  await activateFuturesFixture(registry, 2, oracle);
     await(await engine.configureFunding(2,MAX_DELTA)).wait();
     await(await engine.connect(longTrader).openPosition(2,usd("1000"),usd("5000"),true)).wait();
     await(await engine.updateFundingIndex(1,100000n)).wait();
