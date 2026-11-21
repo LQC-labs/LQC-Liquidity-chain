@@ -1,0 +1,49 @@
+name: Futures M08 historical BSC testnet observation (read-only)
+
+on:
+  push:
+    branches:
+      - research/futures-m02-m03-isolated
+    paths:
+      - "dex/scripts/observe-futures-m08-testnet.mjs"
+      - ".github/workflows/futures-m08-observe-testnet.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: futures-m08-readonly-one-shot
+  cancel-in-progress: true
+
+jobs:
+  m08-observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - name: Checkout research branch without credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Validate observer syntax
+        run: node --check scripts/observe-futures-m08-testnet.mjs
+      - name: Observe historical testnet contracts without transactions
+        run: node scripts/observe-futures-m08-testnet.mjs
+      - name: Preserve read-only observation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m08-historical-testnet-readonly
+          path: dex/futures-m08-readonly-report.json
+          if-no-files-found: warn
+          retention-days: 14
