@@ -102,13 +102,13 @@ async function run() {
     const [m, mode, oi] = await Promise.all([
       read(DEPLOYMENTS.registry, abi.registry, "markets", [i], bn),
       read(DEPLOYMENTS.registry, abi.registry, "marketMode", [i], bn).catch(() => null),
-      read(DEPLOYMENTS.engine, abi.engine, "openInterestUsd", [i], bn)
+      read(DEPLOYMENTS.engine, abi.engine, "openInterestUsd", [i], bn).catch(() => null)
     ]);
     collateralTokens.add(m[2].toLowerCase());
     output.markets.push({
       marketId: i.toString(), indexToken: m[1], collateralToken: m[2], oracle: m[3],
       active: m[6], mode: mode === null ? "UNAVAILABLE_IN_HISTORICAL_REGISTRY" : str(mode[0]),
-      openInterestUsd: str(oi[0])
+      openInterestUsd: oi === null ? "UNAVAILABLE_IN_HISTORICAL_ENGINE" : str(oi[0])
     });
   }
   output.vaultTokens = [];
