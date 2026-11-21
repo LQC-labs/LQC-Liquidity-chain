@@ -1,0 +1,37 @@
+name: Futures M07 offline preflight verifier
+
+on:
+  push:
+    branches:
+      - research/futures-m02-m03-isolated
+    paths:
+      - "scripts/verify-futures-m07-snapshot.mjs"
+      - "test/futures-m07-snapshot-verifier.test.mjs"
+      - ".github/workflows/futures-m07-offline-verifier.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: futures-m07-offline-only
+  cancel-in-progress: true
+
+jobs:
+  m07-offline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout research branch (read-only)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check script and tests syntax
+        run: |
+          node --check scripts/verify-futures-m07-snapshot.mjs
+          node --check test/futures-m07-snapshot-verifier.test.mjs
+      - name: Execute M07 synthetic offline tests only
+        run: node --test test/futures-m07-snapshot-verifier.test.mjs
