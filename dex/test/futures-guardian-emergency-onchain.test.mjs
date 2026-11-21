@@ -1,4 +1,4 @@
-import { activateFuturesFixture, approveActiveFuturesMarket, enterReduceOnlyWithOracle } from "./support/futures-market-recovery.mjs";
+import { activateApprovedFuturesMarket, activateFuturesFixture, approveActiveFuturesMarket, enterReduceOnlyWithOracle } from "./support/futures-market-recovery.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "./support/anvil-compat.mjs";
@@ -43,7 +43,7 @@ describe("Master 7/6-2 guardian emergency escalation",function(){
   await(await registry.connect(guardian).setEmergencyMarketMode(1,2)).wait();
   await enterReduceOnlyWithOracle(registry, 1);
   await approveActiveFuturesMarket(registry, 1);
-  await(await registry.setMarketMode(1,0)).wait();
+  await activateApprovedFuturesMarket(registry, 1);
   assert.equal(await registry.marketMode(1),0n);
   assert.equal(await registry.recoveryApproved(1),false);
  });

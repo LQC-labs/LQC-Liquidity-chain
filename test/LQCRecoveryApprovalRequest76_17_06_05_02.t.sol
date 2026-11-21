@@ -74,7 +74,7 @@ contract LQCRecoveryApprovalRequest7617060502Test {
         _submit(r);
         require(registry.recoveryApproved(market) && registry.recoveryActivationValidUntil(market) == r.validUntil,
             "bound approval not recorded");
-        registry.setMarketActive(market, true);
+        registry.activateMarket(market, r.epoch);
         require(registry.marketMode(market) == Registry.MarketMode.ACTIVE && !registry.recoveryApproved(market),
             "activation failed to consume approval");
     }
@@ -145,7 +145,7 @@ contract LQCRecoveryApprovalRequest7617060502Test {
         vm.expectRevert(Registry.RecoveryApprovalExpired.selector);
         _submit(old);
         vm.expectRevert(Registry.RecoveryApprovalExpired.selector);
-        registry.setMarketActive(market, true);
+        registry.activateMarket(market, old.epoch);
         require(registry.recoveryActivationValidUntil(market) == old.validUntil &&
             registry.marketMode(market) == Registry.MarketMode.REDUCE_ONLY, "expiry rejection changed state");
         _assertCanActivate(_request(START + 60));

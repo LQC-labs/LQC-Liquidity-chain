@@ -4,6 +4,9 @@ import { ethers } from "ethers";
 
 const registryAbi = new ethers.Interface([
   "function approveRecoveryActivation(uint256 marketId,address expectedOracle,bytes32 expectedCodehash,bytes32 expectedConfigHash,uint256 expectedConfigVersion,uint256 expectedEpoch,uint256 validUntil)",
+  "function activateMarket(uint256 marketId,uint256 expectedEpoch)",
+  "function recoveryApproved(uint256) view returns (bool)",
+  "function recoveryActivationValidUntil(uint256) view returns (uint256)",
   "function setRecoveryApproved(uint256 marketId,bool approved)",
   "function markets(uint256) view returns (bytes32 symbol,address indexToken,address collateralToken,address oracle,uint32 maxLeverageBps,uint32 maintenanceMarginBps,bool active)",
   "function marketMode(uint256) view returns (uint8)",
@@ -71,16 +74,17 @@ export async function readRecoverySnapshot(provider, registryAddress, marketId) 
     return abi.decodeFunctionResult(name, result);
   };
   const read = (name, args = [id]) => call(registry, registryAbi, name, args);
-  const [market, [mode], [oracle], [codehash], [configHash], [version], [epoch], [oracleApproved], [maxAge]] =
+  const [market, [mode], [oracle], [codehash], [configHash], [version], [epoch], [oracleApproved], [maxAge], [activationApproved], [activationValidUntil]] =
     await Promise.all([
       read("markets"), read("marketMode"), read("recoveryOracle"), read("recoveryOracleCodehash"),
       read("recoveryOracleConfigHash"), read("recoveryOracleConfigVersion"), read("recoveryApprovalEpoch"),
       read("isRecoveryOracleApproved"), read("RECOVERY_MAX_ORACLE_AGE", []),
+      read("recoveryApproved"), read("recoveryActivationValidUntil"),
     ]);
   const riskState = {
     chainId: uint(chainId, "chainId"), registry, marketId: id,
     blockNumber: uint(block.number, "block number"), blockHash, blockTimestamp: uint(block.timestamp, "block timestamp"),
-    indexToken: market.indexToken, marketOracle: market.oracle, mode, oracle, codehash, configHash, version, epoch, oracleApproved, maxAge,
+    indexToken: market.indexToken, marketOracle: market.oracle, mode, oracle, codehash, configHash, version, epoch, oracleApproved, maxAge, activationApproved, activationValidUntil,
   };
   if (oracleApproved !== true || mode !== 1n) return riskState;
   const [price, updatedAt] = await call(market.oracle, priceAbi, "getPrice", [market.indexToken]);
@@ -133,6 +137,20 @@ export function prepareRecoveryActivation(request, snapshot, nowSeconds = Math.f
   };
 }
 
+// Keep final activation separate from the call requesting Governance approval.
+export function prepareRecoveryCompletion(request, snapshot, nowSeconds = Math.floor(Date.now() / 1000)) {
+  const output = prepareRecoveryActivation(request, snapshot, nowSeconds);
+  if (snapshot.activationApproved !== true) throw new Error("Registry activation approval is not effective");
+  equal(uint(request.validUntil, "requested expiry"), uint(snapshot.activationValidUntil, "observed activation expiry"),
+    "activation expiry");
+  return {
+    ...output,
+    data: registryAbi.encodeFunctionData("activateMarket", [
+      uint(request.marketId, "marketId"), uint(request.epoch, "expected recovery epoch"),
+    ]),
+  };
+}
+
 export function prepareRecoveryRevocation(request) {
   const { chainId, marketId, registry } = target(request);
   return {
@@ -147,13 +165,18 @@ export function prepareRecoveryRevocation(request) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const [action, requestPath, snapshotPath, ...extra] = process.argv.slice(2);
-    if (!requestPath || extra.length || (action === "activate" ? !snapshotPath : action !== "revoke" || snapshotPath)) {
-      throw new Error("Usage: node prepare-futures-recovery-governance.mjs activate REQUEST.json SNAPSHOT.json | revoke REQUEST.json");
+    const usesSnapshot = action === "activate" || action === "complete";
+    if (!requestPath || extra.length || (usesSnapshot ? !snapshotPath : action !== "revoke" || snapshotPath)) {
+      throw new Error("Usage: node prepare-futures-recovery-governance.mjs (activate|complete) REQUEST.json SNAPSHOT.json | revoke REQUEST.json");
     }
     const request = JSON.parse(readFileSync(requestPath, "utf8"));
-    const output = action === "activate"
-      ? prepareRecoveryActivation(request, JSON.parse(readFileSync(snapshotPath, "utf8")))
-      : prepareRecoveryRevocation(request);
+    let output;
+    if (usesSnapshot) {
+      const snapshot = JSON.parse(readFileSync(snapshotPath, "utf8"));
+      output = action === "complete" ? prepareRecoveryCompletion(request, snapshot) : prepareRecoveryActivation(request, snapshot);
+    } else {
+      output = prepareRecoveryRevocation(request);
+    }
     console.log(JSON.stringify(output, null, 2));
   } catch (error) {
     console.error(`BLOCKED: ${error.message}`);

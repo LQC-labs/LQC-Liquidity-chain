@@ -11,6 +11,7 @@ contract LQCAggregatorOracleAdapter is ILQCFuturesOracle {
     uint8 public constant TARGET_DECIMALS = 18;
     uint8 public constant MAX_FEED_DECIMALS = 36;
     uint256 public constant MAX_HEARTBEAT = 1 days;
+    uint32 private constant MAX_REFERENCE_AGE = 120 seconds;
     uint16 public constant MAX_DEVIATION_BPS = 5_000;
 
     struct FeedConfig {
@@ -116,7 +117,8 @@ contract LQCAggregatorOracleAdapter is ILQCFuturesOracle {
 
         (price, updatedAt) = _readFeed(config.feed, config.heartbeat);
         if (config.referenceFeed != address(0)) {
-            (uint256 referencePrice,) = _readFeed(config.referenceFeed, config.heartbeat);
+            uint32 referenceAge = config.heartbeat < MAX_REFERENCE_AGE ? config.heartbeat : MAX_REFERENCE_AGE;
+            (uint256 referencePrice,) = _readFeed(config.referenceFeed, referenceAge);
             uint256 difference = price > referencePrice ? price - referencePrice : referencePrice - price;
             if (difference > (referencePrice * config.maxDeviationBps) / BPS) revert ExcessivePriceDeviation();
         }

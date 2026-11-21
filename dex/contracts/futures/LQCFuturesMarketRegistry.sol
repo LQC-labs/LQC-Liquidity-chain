@@ -250,14 +250,24 @@ contract LQCFuturesMarketRegistry {
         _setMode(marketId, newMode);
     }
 
+    /// @notice Consumes the current approval only for the recovery epoch explicitly authorized by Governance.
+    function activateMarket(uint256 marketId, uint256 expectedEpoch) external onlyOwner {
+        _requireMarket(marketId);
+        if (marketMode[marketId] != MarketMode.REDUCE_ONLY || !_recoveryApproved[marketId]) revert Forbidden();
+        if (expectedEpoch != recoveryApprovalEpoch[marketId]) revert RecoveryApprovalMismatch();
+        _requireRecoveryOracle(marketId);
+        if (recoveryActivationValidUntil[marketId] == 0 ||
+            recoveryActivationValidUntil[marketId] < block.timestamp) revert RecoveryApprovalExpired();
+
+        _clearRecoveryApproval(marketId);
+        _writeMode(marketId, MarketMode.REDUCE_ONLY, MarketMode.ACTIVE);
+    }
+
     function _setMode(uint256 marketId, MarketMode newMode) private {
         MarketMode previous = marketMode[marketId];
         if (newMode == MarketMode.ACTIVE) {
-            if (previous == MarketMode.HALTED) revert Forbidden();
-            if (previous == MarketMode.REDUCE_ONLY && !_recoveryApproved[marketId]) revert Forbidden();
+            if (previous != MarketMode.ACTIVE) revert Forbidden();
             _requireRecoveryOracle(marketId);
-            if (previous == MarketMode.REDUCE_ONLY && (recoveryActivationValidUntil[marketId] == 0 ||
-                recoveryActivationValidUntil[marketId] < block.timestamp)) revert RecoveryApprovalExpired();
         } else if (newMode == MarketMode.REDUCE_ONLY) {
             if (previous == MarketMode.HALTED) {
                 _requireRecoveryOracle(marketId);
@@ -275,6 +285,10 @@ contract LQCFuturesMarketRegistry {
             _clearRecoveryApproval(marketId);
         }
         if (newMode == MarketMode.HALTED) _clearRecoveryOracle(marketId);
+        _writeMode(marketId, previous, newMode);
+    }
+
+    function _writeMode(uint256 marketId, MarketMode previous, MarketMode newMode) private {
         marketMode[marketId] = newMode;
         markets[marketId].active = newMode != MarketMode.HALTED;
         emit MarketModeChanged(marketId, previous, newMode);

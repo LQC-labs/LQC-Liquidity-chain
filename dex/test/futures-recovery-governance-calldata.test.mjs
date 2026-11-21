@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { ethers } from "ethers";
 import {
-  prepareRecoveryActivation, prepareRecoveryRevocation, readRecoverySnapshot,
+  prepareRecoveryActivation, prepareRecoveryCompletion, prepareRecoveryRevocation, readRecoverySnapshot,
 } from "../scripts/prepare-futures-recovery-governance.mjs";
 
 const registry = "0x" + "11".repeat(20);
@@ -94,6 +94,8 @@ function localReadTransport({ oracleApproved = true, priceReverts = false } = {}
     ["recoveryApprovalEpoch(uint256)", ["uint256"], [27]],
     ["isRecoveryOracleApproved(uint256)", ["bool"], [oracleApproved]],
     ["RECOVERY_MAX_ORACLE_AGE()", ["uint256"], [120]],
+    ["recoveryApproved(uint256)", ["bool"], [true]],
+    ["recoveryActivationValidUntil(uint256)", ["uint256"], [request.validUntil]],
     ["getPrice(address)", ["uint256", "uint256"], [snapshot.price, snapshot.updatedAt]],
   ];
   const calls = [];
@@ -133,13 +135,34 @@ it("collector uses only read-only calls pinned to one canonical block hash", asy
   assert.equal(read.updatedAt, now - 10n);
   assert.equal(prepareRecoveryActivation(request, read, now).observedBlock.hash, blockHash);
   assert.deepEqual([...new Set(provider.calls)].sort(), ["eth_call", "eth_chainId", "eth_getBlockByNumber"]);
-  assert.equal(provider.calls.filter((method) => method === "eth_call").length, 10);
+  assert.equal(provider.calls.filter((method) => method === "eth_call").length, 12);
 });
 
 it("collector blocks ineffective approval and propagates a reverted Oracle quote", async () => {
   const invalid = localReadTransport({ oracleApproved: false });
   const read = await readRecoverySnapshot(invalid, registry, 1);
   assert.throws(() => prepareRecoveryActivation(request, read, now), /not effective/);
-  assert.equal(invalid.calls.filter((method) => method === "eth_call").length, 9);
+  assert.equal(invalid.calls.filter((method) => method === "eth_call").length, 11);
   await assert.rejects(readRecoverySnapshot(localReadTransport({ priceReverts: true }), registry, 1), /Oracle revert/);
+});
+
+
+describe("epoch-bound final activation", () => {
+  const complete = "activateMarket(uint256,uint256)";
+  const completeAbi = new ethers.Interface([`function ${complete}`]);
+  const approved = { ...snapshot, activationApproved: true, activationValidUntil: request.validUntil };
+
+  it("encodes final activation with the signed-off epoch and a matching current approval", () => {
+    const call = prepareRecoveryCompletion(request, approved, now);
+    assert.equal(call.data.slice(0, 10), ethers.id(complete).slice(0, 10));
+    assert.deepEqual(Array.from(completeAbi.decodeFunctionData(complete, call.data)), [1n, 27n]);
+    assert.notEqual(call.data, prepareRecoveryActivation(request, snapshot, now).data);
+  });
+
+  it("blocks old epochs, altered deadlines and missing approvals before preparing calldata", () => {
+    assert.throws(() => prepareRecoveryCompletion(request, { ...approved, epoch: "28" }, now), /recovery epoch/);
+    assert.throws(() => prepareRecoveryCompletion(request, { ...approved, activationValidUntil: now + 31n }, now), /activation expiry/);
+    assert.throws(() => prepareRecoveryCompletion(request, { ...approved, activationApproved: false }, now), /not effective/);
+    assert.throws(() => prepareRecoveryCompletion(request, { ...approved, updatedAt: now - 121n }, now), /No fresh Oracle price/);
+  });
 });

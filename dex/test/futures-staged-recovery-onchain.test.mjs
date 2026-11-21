@@ -1,4 +1,4 @@
-import { activateFuturesFixture, activationRequest, approveActiveFuturesMarket, enterReduceOnlyWithOracle } from "./support/futures-market-recovery.mjs";
+import { activateApprovedFuturesMarket, activateFuturesFixture, activationRequest, approveActiveFuturesMarket, enterReduceOnlyWithOracle } from "./support/futures-market-recovery.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "./support/anvil-compat.mjs";
@@ -18,7 +18,7 @@ describe("Master 7/6-4 staged Governance recovery",function(){
  const minedReject=async(p)=>assert.rejects(async()=>{const tx=await p;await tx.wait();});
  it("forbids HALTED to ACTIVE direct recovery",async()=>{await(await registry.connect(guardian).setEmergencyMarketMode(1,2)).wait();await minedReject(registry.setMarketMode(1,0,{gasLimit:500000n}));});
  it("requires explicit Governance approval before REDUCE_ONLY to ACTIVE",async()=>{await(await registry.connect(guardian).setEmergencyMarketMode(1,2)).wait();await enterReduceOnlyWithOracle(registry, 1);await minedReject(registry.setMarketMode(1,0,{gasLimit:500000n}));});
- it("allows staged recovery and consumes approval",async()=>{await(await registry.connect(guardian).setEmergencyMarketMode(1,2)).wait();await enterReduceOnlyWithOracle(registry, 1);await approveActiveFuturesMarket(registry, 1);await(await registry.setMarketMode(1,0)).wait();assert.equal(await registry.marketMode(1),0n);assert.equal(await registry.recoveryApproved(1),false);});
+ it("allows staged recovery and consumes approval",async()=>{await(await registry.connect(guardian).setEmergencyMarketMode(1,2)).wait();await enterReduceOnlyWithOracle(registry, 1);await approveActiveFuturesMarket(registry, 1);await activateApprovedFuturesMarket(registry, 1);assert.equal(await registry.marketMode(1),0n);assert.equal(await registry.recoveryApproved(1),false);});
  it("keeps recovery approval Governance-only",async()=>{
   await(await registry.connect(guardian).setEmergencyMarketMode(1,2)).wait();
   await enterReduceOnlyWithOracle(registry, 1);

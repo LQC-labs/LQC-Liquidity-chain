@@ -17,6 +17,11 @@ export async function approveActiveFuturesMarket(registry, marketId) {
   await send(registry.approveRecoveryActivation(...await activationRequest(registry, marketId)));
 }
 
+export async function activateApprovedFuturesMarket(registry, marketId) {
+  const epoch = await registry.recoveryApprovalEpoch(marketId);
+  await send(registry.activateMarket(marketId, epoch, { gasLimit: 500_000n }));
+}
+
 export async function enterReduceOnlyWithOracle(registry, marketId) {
   const market = await registry.markets(marketId);
   const codehash = ethers.keccak256(await registry.runner.provider.getCode(market.oracle));
@@ -39,5 +44,5 @@ export async function activateFuturesFixture(registry, marketId, oracle) {
   await send(registry.setOracle(marketId, await wrapper.getAddress()));
   await enterReduceOnlyWithOracle(registry, marketId);
   await approveActiveFuturesMarket(registry, marketId);
-  await send(registry.setMarketMode(marketId, 0, { gasLimit: 500_000n }));
+  await activateApprovedFuturesMarket(registry, marketId);
 }
