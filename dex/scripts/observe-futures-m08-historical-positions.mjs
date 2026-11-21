@@ -10,8 +10,8 @@ const VAULT = "0xb532c65294a7b35ca510a7df025e934fa17c8d7e";
 const DEPLOY_TX = "0x16a112f0cdfa053e9af81eb56ebfb00ee91dd7538b003addf7069028ab41c870";
 const MARKET = 1n;
 const COLLATERAL = "0x7ab1b97d194730e9456c12af7905450a4f8a0c46";
-const MAX_BLOCKS = 100000;
-const CHUNK = 5000;
+const MAX_BLOCKS = 2000;
+const CHUNK = 100;
 const iface = new ethers.Interface([
   "event PositionOpened(address indexed account,uint256 indexed marketId,bool isLong,uint256 margin,uint256 sizeUsd,uint256 entryPrice)",
   "event PositionClosed(address indexed account,uint256 indexed marketId,uint256 exitPrice,int256 pnl)",
@@ -54,7 +54,15 @@ async function run() {
   for(let s=start;s<=end;s+=CHUNK) {
     const e=Math.min(s+CHUNK-1,end);
     for(const [contract,topicSet,ab] of [[ENGINE,topics,iface],[VAULT,vaultTopics,vaultInterface]]) {
-      const logs=await provider.getLogs({address:contract,fromBlock:s,toBlock:e,topics:[topicSet]});
+      let logs;
+      try {
+        logs=await provider.getLogs({address:contract,fromBlock:s,toBlock:e,topics:[topicSet]});
+      } catch (err) {
+        // Public endpoints may reject even small eth_getLogs windows. Never infer zero events.
+        const message=String(err?.shortMessage||err?.message||err);
+        result.logQueryFailure={contract:contract===ENGINE?"Engine":"Vault",fromBlock:s,toBlock:e,error:message.slice(0,300)};
+        throw Error("eth_getLogs rejected the bounded request; event inventory incomplete");
+      }
       for(const log of logs) {
         const parsed=ab.parseLog(log);
         if(!parsed) continue;
