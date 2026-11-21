@@ -1,0 +1,36 @@
+name: Futures M04-M06 isolated migration checks
+
+on:
+  push:
+    branches:
+      - research/futures-m02-m03-isolated
+    paths:
+      - ".github/workflows/futures-m04-m06-isolated.yml"
+      - "test/LQCFuturesMigrationM04M06.t.sol"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: futures-m04-m06-isolated
+  cancel-in-progress: true
+
+jobs:
+  m04-m06:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout isolated research branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Foundry (no cache)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+      - name: Run only M04-M06 research tests
+        run: |
+          forge test --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai \
+            --match-path test/LQCFuturesMigrationM04M06.t.sol -vv
