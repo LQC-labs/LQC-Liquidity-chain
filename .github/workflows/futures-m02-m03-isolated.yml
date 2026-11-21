@@ -1,0 +1,38 @@
+name: Futures M02 M03 isolated migration verification
+
+on:
+  push:
+    branches:
+      - research/futures-m02-m03-isolated
+    paths:
+      - ".github/workflows/futures-m02-m03-isolated.yml"
+      - "test/LQCFuturesMigrationM02M03.t.sol"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: futures-m02-m03-isolated
+  cancel-in-progress: true
+
+jobs:
+  m02-m03:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout isolated research branch
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+
+      - name: Run only M02 M03 isolated tests
+        run: |
+          forge test --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai \
+            --match-path test/LQCFuturesMigrationM02M03.t.sol -vv
