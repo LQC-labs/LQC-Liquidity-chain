@@ -1,3 +1,4 @@
+import { activateFuturesFixture } from "./support/futures-market-recovery.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "./support/anvil-compat.mjs";
@@ -11,6 +12,7 @@ describe("Master 7/6-3 emergency trigger integration",function(){
   indexToken=await deploy(owner,"MockERC20","mocks/MockERC20",["BTC","BTC"]);collateral=await deploy(owner,"MockERC20","mocks/MockERC20",["USDT","USDT"]);oracle=await deploy(owner,"MockLQCFuturesOracle","futures/mocks/MockLQCFuturesOracle");
   registry=await deploy(owner,"LQCFuturesMarketRegistry","futures/LQCFuturesMarketRegistry",[await owner.getAddress()]);
   await(await registry.addMarket(ethers.encodeBytes32String("BTC/USDT"),await indexToken.getAddress(),await collateral.getAddress(),await oracle.getAddress(),100_000,500)).wait();
+  await activateFuturesFixture(registry, 1, oracle);
   await(await registry.setGuardian(await guardian.getAddress())).wait();
  });
  it("moves ACTIVE to REDUCE_ONLY on residual bad debt",async()=>{await(await registry.connect(guardian).applyEmergencyTriggers(1,true,true,true)).wait();assert.equal(await registry.marketMode(1),1n);});

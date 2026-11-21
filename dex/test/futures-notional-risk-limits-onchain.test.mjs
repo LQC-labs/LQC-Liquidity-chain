@@ -1,3 +1,4 @@
+import { activateFuturesFixture } from "./support/futures-market-recovery.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "./support/anvil-compat.mjs";
@@ -10,7 +11,9 @@ describe("Master 7/6-5 on-chain notional risk limits",function(){
   provider=new ethers.BrowserProvider(ganache.provider({logging:{quiet:true},wallet:{totalAccounts:4}}));owner=await provider.getSigner(0);trader=await provider.getSigner(1);
   indexToken=await deploy(owner,"MockERC20","mocks/MockERC20",["BTC","BTC"]);collateral=await deploy(owner,"MockERC20","mocks/MockERC20",["USDT","USDT"]);oracle=await deploy(owner,"MockLQCFuturesOracle","futures/mocks/MockLQCFuturesOracle");
   registry=await deploy(owner,"LQCFuturesMarketRegistry","futures/LQCFuturesMarketRegistry",[await owner.getAddress()]);vault=await deploy(owner,"LQCFuturesVault","futures/LQCFuturesVault",[await owner.getAddress()]);engine=await deploy(owner,"LQCPerpEngine","futures/LQCPerpEngine",[await registry.getAddress(),await vault.getAddress()]);
-  await(await vault.setEngine(await engine.getAddress())).wait();await(await vault.setSupportedCollateral(await collateral.getAddress(),true)).wait();await(await registry.addMarket(ethers.encodeBytes32String("BTC/USDT"),await indexToken.getAddress(),await collateral.getAddress(),await oracle.getAddress(),100_000,500)).wait();await(await oracle.setPrice(await indexToken.getAddress(),usd("50000"),{gasLimit:100000n})).wait();
+  await(await vault.setEngine(await engine.getAddress())).wait();await(await vault.setSupportedCollateral(await collateral.getAddress(),true)).wait();await(await registry.addMarket(ethers.encodeBytes32String("BTC/USDT"),await indexToken.getAddress(),await collateral.getAddress(),await oracle.getAddress(),100_000,500)).wait();
+  await activateFuturesFixture(registry, 1, oracle);
+  await(await oracle.setPrice(await indexToken.getAddress(),usd("50000"),{gasLimit:100000n})).wait();
   const a=await trader.getAddress();await(await collateral.mint(a,usd("10000"))).wait();await(await collateral.connect(trader).approve(await vault.getAddress(),ethers.MaxUint256)).wait();await(await vault.connect(trader).deposit(await collateral.getAddress(),usd("5000"))).wait();
  });
  it("keeps legacy baseline when limits are unset",async()=>{await(await engine.connect(trader).openPosition(1,usd("1000"),usd("5000"),true)).wait();});

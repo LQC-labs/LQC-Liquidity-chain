@@ -23,6 +23,10 @@ contract LQCAggregatorOracleAdapter is ILQCFuturesOracle {
     address public owner;
     address public pendingOwner;
     mapping(address => FeedConfig) public feedConfigs;
+    mapping(address => uint256) public configVersion;
+
+    /// @notice Emitted once for each effective configuration change of this token.
+    event ConfigVersionAdvanced(address indexed indexToken, uint256 indexed version);
 
     event FeedConfigured(address indexed indexToken, address indexed feed, uint32 heartbeat);
     event CircuitBreakerConfigured(address indexed indexToken, address indexed referenceFeed, uint16 maxDeviationBps);
@@ -58,16 +62,17 @@ contract LQCAggregatorOracleAdapter is ILQCFuturesOracle {
         if (heartbeat == 0 || heartbeat > MAX_HEARTBEAT) revert InvalidHeartbeat();
 
         FeedConfig storage config = feedConfigs[indexToken];
-        bool clearCircuitBreaker =
-            config.referenceFeed != address(0) && (config.feed != feed || config.heartbeat != heartbeat);
+        bool changed = config.feed != feed || config.heartbeat != heartbeat;
+        bool shouldClearCircuitBreaker = config.referenceFeed != address(0) && changed;
         config.feed = feed;
         config.heartbeat = heartbeat;
-        if (clearCircuitBreaker) {
+        if (shouldClearCircuitBreaker) {
             config.referenceFeed = address(0);
             config.maxDeviationBps = 0;
             emit CircuitBreakerCleared(indexToken);
         }
         emit FeedConfigured(indexToken, feed, heartbeat);
+        if (changed) _advanceConfigVersion(indexToken);
     }
 
     function setCircuitBreaker(address indexToken, address referenceFeed, uint16 maxDeviationBps)
@@ -78,17 +83,27 @@ contract LQCAggregatorOracleAdapter is ILQCFuturesOracle {
         if (config.feed == address(0)) revert FeedNotConfigured();
         if (referenceFeed == address(0) || referenceFeed == config.feed) revert InvalidAddress();
         if (maxDeviationBps == 0 || maxDeviationBps > MAX_DEVIATION_BPS) revert InvalidDeviation();
+        bool changed = config.referenceFeed != referenceFeed || config.maxDeviationBps != maxDeviationBps;
         config.referenceFeed = referenceFeed;
         config.maxDeviationBps = maxDeviationBps;
         emit CircuitBreakerConfigured(indexToken, referenceFeed, maxDeviationBps);
+        if (changed) _advanceConfigVersion(indexToken);
     }
 
     function clearCircuitBreaker(address indexToken) external onlyOwner {
         FeedConfig storage config = feedConfigs[indexToken];
         if (config.feed == address(0)) revert FeedNotConfigured();
+        bool changed = config.referenceFeed != address(0) || config.maxDeviationBps != 0;
         config.referenceFeed = address(0);
         config.maxDeviationBps = 0;
         emit CircuitBreakerCleared(indexToken);
+        if (changed) _advanceConfigVersion(indexToken);
+    }
+
+    function _advanceConfigVersion(address indexToken) private {
+        uint256 version = configVersion[indexToken] + 1;
+        configVersion[indexToken] = version;
+        emit ConfigVersionAdvanced(indexToken, version);
     }
 
     function feeds(address indexToken) external view returns (address) {

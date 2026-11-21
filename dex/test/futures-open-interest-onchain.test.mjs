@@ -1,3 +1,4 @@
+import { activateFuturesFixture } from "./support/futures-market-recovery.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "./support/anvil-compat.mjs";
@@ -9,7 +10,9 @@ describe("Master 7/6-6 market open-interest accounting",function(){
  beforeEach(async function(){
   provider=new ethers.BrowserProvider(ganache.provider({logging:{quiet:true},wallet:{totalAccounts:5}}));owner=await provider.getSigner(0);a=await provider.getSigner(1);b=await provider.getSigner(2);
   indexToken=await deploy(owner,"MockERC20","mocks/MockERC20",["BTC","BTC"]);collateral=await deploy(owner,"MockERC20","mocks/MockERC20",["USDT","USDT"]);oracle=await deploy(owner,"MockLQCFuturesOracle","futures/mocks/MockLQCFuturesOracle");registry=await deploy(owner,"LQCFuturesMarketRegistry","futures/LQCFuturesMarketRegistry",[await owner.getAddress()]);vault=await deploy(owner,"LQCFuturesVault","futures/LQCFuturesVault",[await owner.getAddress()]);engine=await deploy(owner,"LQCPerpEngine","futures/LQCPerpEngine",[await registry.getAddress(),await vault.getAddress()]);
-  await(await vault.setEngine(await engine.getAddress())).wait();await(await vault.setSupportedCollateral(await collateral.getAddress(),true)).wait();await(await registry.addMarket(ethers.encodeBytes32String("BTC/USDT"),await indexToken.getAddress(),await collateral.getAddress(),await oracle.getAddress(),100_000,500)).wait();await(await oracle.setPrice(await indexToken.getAddress(),usd("50000"),{gasLimit:100000n})).wait();
+  await(await vault.setEngine(await engine.getAddress())).wait();await(await vault.setSupportedCollateral(await collateral.getAddress(),true)).wait();await(await registry.addMarket(ethers.encodeBytes32String("BTC/USDT"),await indexToken.getAddress(),await collateral.getAddress(),await oracle.getAddress(),100_000,500)).wait();
+  await activateFuturesFixture(registry, 1, oracle);
+  await(await oracle.setPrice(await indexToken.getAddress(),usd("50000"),{gasLimit:100000n})).wait();
   for(const s of[a,b]){const x=await s.getAddress();await(await collateral.mint(x,usd("10000"))).wait();await(await collateral.connect(s).approve(await vault.getAddress(),ethers.MaxUint256)).wait();await(await vault.connect(s).deposit(await collateral.getAddress(),usd("5000"))).wait();}
  });
  it("tracks aggregate OI across traders and blocks the configured ceiling",async()=>{await(await engine.configureMarketOpenInterestLimit(1,usd("8000"))).wait();await(await engine.connect(a).openPosition(1,usd("1000"),usd("5000"),true)).wait();assert.equal(await engine.openInterestUsd(1),usd("5000"));await assert.rejects(engine.connect(b).openPosition(1,usd("1000"),usd("4000"),false));});

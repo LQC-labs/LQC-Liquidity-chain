@@ -1,3 +1,4 @@
+import { activateFuturesFixture } from "./support/futures-market-recovery.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import ganache from "./support/anvil-compat.mjs";
@@ -22,6 +23,7 @@ describe("Master 7/5-6 bounded ADL execution",function(){
     await(await vault.setEngine(await engine.getAddress())).wait();
     await(await vault.setSupportedCollateral(await collateral.getAddress(),true)).wait();
     await(await registry.addMarket(ethers.encodeBytes32String("BTC/USDT"),await indexToken.getAddress(),await collateral.getAddress(),await oracle.getAddress(),100_000,500)).wait();
+  await activateFuturesFixture(registry, 1, oracle);
     await(await oracle.setPrice(await indexToken.getAddress(),usd("50000"),{gasLimit:100_000n})).wait();
     for(const s of[trader,other]){const a=await s.getAddress();await(await collateral.mint(a,usd("10000"))).wait();await(await collateral.connect(s).approve(await vault.getAddress(),ethers.MaxUint256)).wait();await(await vault.connect(s).deposit(await collateral.getAddress(),usd("5000"))).wait();}
   });
