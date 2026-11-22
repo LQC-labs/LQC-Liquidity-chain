@@ -1,0 +1,38 @@
+name: Futures M08 HyperSync capability (single-block, no bulk indexing)
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/scripts/probe-futures-m08-hypersync.mjs"
+      - ".github/workflows/futures-m08-hypersync-probe.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m08-hypersync-capability
+  cancel-in-progress: true
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: node --check scripts/probe-futures-m08-hypersync.mjs
+      - name: Probe public indexer height; no keys, no bulk query
+        run: node scripts/probe-futures-m08-hypersync.mjs
+      - name: Save capability verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m08-hypersync-capability
+          path: dex/futures-m08-hypersync-capability.json
+          if-no-files-found: warn
+          retention-days: 14
