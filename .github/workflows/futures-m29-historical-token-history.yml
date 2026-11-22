@@ -1,0 +1,45 @@
+name: Futures M29 historical ERC20 Transfer and Vault reconciliation
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/scripts/collect-futures-m29-full-token-history.mjs"
+      - ".github/workflows/futures-m29-historical-token-history.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m29-token-history
+  cancel-in-progress: true
+jobs:
+  m29-observe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Syntax check
+        run: node --check scripts/collect-futures-m29-full-token-history.mjs
+      - name: Indexed historical scan and read-only independent receipts
+        env:
+          ENVIO_API_TOKEN: ${{ secrets.ENVIO_API_TOKEN }}
+          BSC_TESTNET_READONLY_RPC: https://bsc-testnet-rpc.publicnode.com
+        run: node scripts/collect-futures-m29-full-token-history.mjs
+      - name: Preserve evidence with unresolved gaps
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m29-historical-token-transfer-evidence
+          path: dex/futures-m29-historical-transfers.json
+          if-no-files-found: warn
+          retention-days: 14
