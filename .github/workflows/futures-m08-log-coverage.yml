@@ -1,0 +1,37 @@
+name: Futures M08 offline log coverage validation
+
+on:
+  push:
+    branches:
+      - research/futures-m02-m03-isolated
+    paths:
+      - "scripts/verify-futures-m08-log-coverage.mjs"
+      - "test/futures-m08-log-coverage.test.mjs"
+      - ".github/workflows/futures-m08-log-coverage.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: futures-m08-offline-log-coverage
+  cancel-in-progress: true
+
+jobs:
+  m08-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout research branch read-only
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify syntax
+        run: |
+          node --check scripts/verify-futures-m08-log-coverage.mjs
+          node --check test/futures-m08-log-coverage.test.mjs
+      - name: Run offline synthetic coverage regression only
+        run: node --test test/futures-m08-log-coverage.test.mjs
