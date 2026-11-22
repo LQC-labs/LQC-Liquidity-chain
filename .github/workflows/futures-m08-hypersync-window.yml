@@ -1,0 +1,44 @@
+name: Futures M08 HyperSync bounded historical window
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/scripts/collect-futures-m08-hypersync-window.mjs"
+      - ".github/workflows/futures-m08-hypersync-window.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m08-hypersync-window
+  cancel-in-progress: true
+jobs:
+  bounded-window:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Syntax-check bounded event collector
+        run: node --check scripts/collect-futures-m08-hypersync-window.mjs
+      - name: Collect one historical window, max six pages, read-only
+        env:
+          ENVIO_API_TOKEN: ${{ secrets.ENVIO_API_TOKEN }}
+        run: node scripts/collect-futures-m08-hypersync-window.mjs
+      - name: Preserve evidence, including BLOCKED result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m08-hypersync-bounded-window
+          path: dex/futures-m08-hypersync-window.json
+          if-no-files-found: warn
+          retention-days: 14
