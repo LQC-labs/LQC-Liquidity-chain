@@ -1,0 +1,47 @@
+name: Futures M18 candidate EIP-170 runtime size
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - ".github/workflows/futures-m18-code-size.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m18-size-check
+  cancel-in-progress: true
+jobs:
+  m18-bytecode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+      - name: Compile M18 candidate once and record EIP-170 limit
+        run: |
+          mkdir -p /tmp/m18-eip170
+          forge build --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai --out /tmp/m18-eip170 > /tmp/m18-build.log
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const file="/tmp/m18-eip170/LQCPerpEngineM18FeeRemainderCandidate.sol/LQCPerpEngineM18FeeRemainderCandidate.json";
+            const a=JSON.parse(fs.readFileSync(file,"utf8"));
+            const h=a.deployedBytecode?.object;
+            if(typeof h!=="string"||!/^0x[0-9a-fA-F]*$/.test(h))throw Error("missing deployed bytecode");
+            const bytes=(h.length-2)/2, limit=24576;
+            const result={scope:"M18_RESEARCH_RUNTIME_EIP170",runtimeBytes:bytes,eip170LimitBytes:limit,withinLimit:bytes<=limit,status:bytes<=limit?"SIZE_PASS":"BLOCKED_EIP170",deploymentAuthorized:false};
+            fs.writeFileSync("m18-eip170-size.json",JSON.stringify(result,null,2)+"\\n");
+            console.log(JSON.stringify(result,null,2));
+          '
+      - name: Preserve bytecode size evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m18-eip170-size
+          path: m18-eip170-size.json
+          if-no-files-found: warn
+          retention-days: 14
