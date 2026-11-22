@@ -7,6 +7,8 @@ import {LQCFuturesVault} from "./LQCFuturesVault.sol";
 import {IAggregatorV3} from "./interfaces/IAggregatorV3.sol";
 import {IERC20} from "../interfaces/IERC20.sol";
 
+interface IM26Decimals { function decimals() external view returns(uint8); }
+
 /// @notice M26 read-only two-sided FX and Vault-surplus preview. NOT an executable payout.
 contract LQCFuturesM26TwoSidedFxPreview {
     uint256 private constant USD18 = 1e18;
@@ -18,6 +20,7 @@ contract LQCFuturesM26TwoSidedFxPreview {
     error InvalidConfiguration();
     error InvalidQuote();
     error UnsupportedDecimals();
+    error CollateralHasResidualDebt();
     error ArithmeticOutOfRange();
     error InsufficientUnreservedLiquidity();
 
@@ -76,6 +79,11 @@ contract LQCFuturesM26TwoSidedFxPreview {
     function previewBoundedProfit(
         address token,uint256 profitUsd18,uint8 decimals
     ) external view returns(uint256 tokens,uint256 excessBefore,uint256 excessAfter) {
+        uint8 actualDecimals;
+        try IM26Decimals(token).decimals() returns(uint8 d) { actualDecimals=d; }
+        catch { revert UnsupportedDecimals(); }
+        if (actualDecimals!=decimals) revert UnsupportedDecimals();
+        if (vault.residualBadDebt(token)!=0) revert CollateralHasResidualDebt();
         excessBefore=unreservedVaultSurplus(token);
         tokens=previewProfitTokens(profitUsd18,decimals);
         if(tokens>excessBefore)revert InsufficientUnreservedLiquidity();
