@@ -1,0 +1,30 @@
+name: Futures M26 two-sided FX quote and Vault reserve preview
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/contracts/futures/LQCFuturesM26TwoSidedFxPreview.sol"
+      - "test/LQCFuturesMigrationM26TwoSidedFx.t.sol"
+      - ".github/workflows/futures-m26-fx-bounds.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m26-fx-bounds
+  cancel-in-progress: true
+jobs:
+  m26-fx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+      - name: Focused M26 FX quote direction and reserve-bound payout tests
+        run: |
+          forge test --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai \
+            --match-path test/LQCFuturesMigrationM26TwoSidedFx.t.sol -vv
