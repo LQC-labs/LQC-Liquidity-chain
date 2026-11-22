@@ -39,7 +39,7 @@ test("M12 even complete self-reported manifest does not grant operational approv
 test("M12 refuses historical asset movement, aliases and unsafe old pointer",()=>{
  const m=complete();m.candidate.callsLegacySetEngine=true;
  assert.equal(verifyM12SecurityEvidence(m).status,"FAIL");
- const n=complete();n.candidate.vault=base.candidate.vault="0xb532c65294a7b35ca510a7df025e934fa17c8d7e";
+ const n=complete();n.candidate.vault="0xb532c65294a7b35ca510a7df025e934fa17c8d7e";
  assert.equal(verifyM12SecurityEvidence(n).status,"FAIL");
 });
 test("M12 rejects stale quotes, heartbeat outside contract bounds and expired recovery",()=>{
