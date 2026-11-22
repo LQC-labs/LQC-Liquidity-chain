@@ -1,0 +1,41 @@
+name: Futures M13 cross-gate evidence reconciliation (offline)
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "scripts/reconcile-futures-m13-evidence.mjs"
+      - "test/futures-m13-cross-gate-evidence.test.mjs"
+      - "test/fixtures/futures-m13-unassigned-evidence-bundle.json"
+      - ".github/workflows/futures-m13-cross-gate.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m13-cross-gate
+  cancel-in-progress: true
+jobs:
+  m13-reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: M13 syntax and focused cross-gate tests
+        run: |
+          node --check scripts/reconcile-futures-m13-evidence.mjs
+          node --test test/futures-m13-cross-gate-evidence.test.mjs
+      - name: Check observed unassigned evidence - expected BLOCKED
+        env:
+          M13_VERDICT_FILE: m13-verdict.json
+        run: node scripts/reconcile-futures-m13-evidence.mjs test/fixtures/futures-m13-unassigned-evidence-bundle.json
+      - name: Preserve verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m13-cross-gate-verdict
+          path: m13-verdict.json
+          if-no-files-found: warn
+          retention-days: 14
