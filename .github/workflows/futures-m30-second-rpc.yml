@@ -1,0 +1,42 @@
+name: Futures M30 independent historical RPC coverage
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/scripts/verify-futures-m30-second-provider.mjs"
+      - ".github/workflows/futures-m30-second-rpc.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m30-second-provider
+  cancel-in-progress: true
+jobs:
+  m30-rpc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked JS dependencies
+        run: npm ci --ignore-scripts
+      - name: Syntax validation
+        run: node --check scripts/verify-futures-m30-second-provider.mjs
+      - name: Read-only independent RPC history and known-rights comparison
+        run: node scripts/verify-futures-m30-second-provider.mjs
+      - name: Persist honest PASS or BLOCKED evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m30-independent-rpc-evidence
+          path: dex/futures-m30-second-rpc.json
+          if-no-files-found: warn
+          retention-days: 14
