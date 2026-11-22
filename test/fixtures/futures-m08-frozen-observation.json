@@ -1,0 +1,154 @@
+{
+  "work_id": "76-17-⑥-⑤ / M08",
+  "chainId": 97,
+  "result": "INDEXED_WINDOW_AND_KNOWN_ACCOUNT_PASS__MIGRATION_BLOCKED",
+  "indexed_evidence": {
+    "schema": "lqc-m08-hypersync-bounded-pilot-v1",
+    "chainId": 97,
+    "fromBlock": 131945040,
+    "toBlockExclusive": 144115367,
+    "endpoint": "https://bsc-testnet.hypersync.xyz",
+    "status": "BOUNDED_WINDOW_EVIDENCE_PASS",
+    "coverageComplete": true,
+    "fullHistoricalInventoryComplete": false,
+    "operationalCutoverAuthorized": false,
+    "signingPerformed": false,
+    "transactionOccurred": false,
+    "pages": [
+      {
+        "from": 131945040,
+        "toExclusive": 144115367,
+        "logCount": 5,
+        "completed": true,
+        "truncated": false
+      }
+    ],
+    "events": [
+      {
+        "contract": "Vault",
+        "name": "Deposit",
+        "blockNumber": 131978250,
+        "transactionHash": "0x00a756b77545a0ddc732f424f81c179c7d71119427108a50a1e43fa56be988f1",
+        "logIndex": 7,
+        "account": "0xde05e09db1292aff6ab62164134f1ad384bca6fb",
+        "marketId": null
+      },
+      {
+        "contract": "Vault",
+        "name": "CollateralLocked",
+        "blockNumber": 131980821,
+        "transactionHash": "0x4cb9207fc918ee50b5895ab348d411f25258164d1ae78a0eb2f12b13071373e4",
+        "logIndex": 11,
+        "account": "0xde05e09db1292aff6ab62164134f1ad384bca6fb",
+        "marketId": null
+      },
+      {
+        "contract": "Engine",
+        "name": "PositionOpened",
+        "blockNumber": 131980821,
+        "transactionHash": "0x4cb9207fc918ee50b5895ab348d411f25258164d1ae78a0eb2f12b13071373e4",
+        "logIndex": 12,
+        "account": "0xde05e09db1292aff6ab62164134f1ad384bca6fb",
+        "marketId": "1"
+      },
+      {
+        "contract": "Vault",
+        "name": "CollateralUnlocked",
+        "blockNumber": 131984084,
+        "transactionHash": "0x4a2330fb4ac5938d2db84f360c8f7971a4c7878807a5422715493f7a2b3fee19",
+        "logIndex": 13,
+        "account": "0xde05e09db1292aff6ab62164134f1ad384bca6fb",
+        "marketId": null
+      },
+      {
+        "contract": "Engine",
+        "name": "PositionClosed",
+        "blockNumber": 131984084,
+        "transactionHash": "0x4a2330fb4ac5938d2db84f360c8f7971a4c7878807a5422715493f7a2b3fee19",
+        "logIndex": 14,
+        "account": "0xde05e09db1292aff6ab62164134f1ad384bca6fb",
+        "marketId": "1"
+      }
+    ],
+    "accounts": [
+      "0xde05e09db1292aff6ab62164134f1ad384bca6fb"
+    ],
+    "scannedThroughExclusive": 144115367,
+    "eventsFound": 5,
+    "firstOpenPresent": true,
+    "firstClosePresent": true
+  },
+  "independent_receipt_and_balance_crosscheck": {
+    "schema": "lqc-m08-independent-receipt-reconciliation-v1",
+    "chainId": 97,
+    "snapshotBlock": 144115366,
+    "fromBlock": 131945356,
+    "status": "KNOWN_ACCOUNT_RECEIPTS_AND_BALANCES_PASS",
+    "migrationGate": "BLOCKED",
+    "transactionOccurred": false,
+    "signingPerformed": false,
+    "operationalCutoverAuthorized": false,
+    "checks": [
+      {
+        "name": "Deposit",
+        "block": 131978250,
+        "tx": "0x00a756b77545a0ddc732f424f81c179c7d71119427108a50a1e43fa56be988f1",
+        "logIndex": 7,
+        "receiptVerified": true
+      },
+      {
+        "name": "CollateralLocked",
+        "block": 131980821,
+        "tx": "0x4cb9207fc918ee50b5895ab348d411f25258164d1ae78a0eb2f12b13071373e4",
+        "logIndex": 11,
+        "receiptVerified": true
+      },
+      {
+        "name": "PositionOpened",
+        "block": 131980821,
+        "tx": "0x4cb9207fc918ee50b5895ab348d411f25258164d1ae78a0eb2f12b13071373e4",
+        "logIndex": 12,
+        "receiptVerified": true
+      },
+      {
+        "name": "CollateralUnlocked",
+        "block": 131984084,
+        "tx": "0x4a2330fb4ac5938d2db84f360c8f7971a4c7878807a5422715493f7a2b3fee19",
+        "logIndex": 13,
+        "receiptVerified": true
+      },
+      {
+        "name": "PositionClosed",
+        "block": 131984084,
+        "tx": "0x4a2330fb4ac5938d2db84f360c8f7971a4c7878807a5422715493f7a2b3fee19",
+        "logIndex": 14,
+        "receiptVerified": true
+      }
+    ],
+    "snapshotHash": "0x7a0d76a80ecc8b13d9eb7e2f1c7a5e3f96f16d3233d8d02c3f842c95a07d6208",
+    "deployments": [
+      {
+        "kind": "Engine",
+        "block": 131945356,
+        "contract": "0xe4f1320c8709631776c7e39e0916584935882525"
+      },
+      {
+        "kind": "Vault",
+        "block": 131945040,
+        "contract": "0xb532c65294a7b35ca510a7df025e934fa17c8d7e"
+      }
+    ],
+    "knownAccount": {
+      "account": "0xde05e09db1292aff6ab62164134f1ad384bca6fb",
+      "open": false,
+      "margin": "0",
+      "sizeUsd": "0",
+      "availableBalance": "5000000000000000000000",
+      "lockedBalance": "0"
+    },
+    "vault": {
+      "totalAccounted": "5000000000000000000000",
+      "actualTokenBalance": "5000000000000000000000"
+    }
+  }
+}
