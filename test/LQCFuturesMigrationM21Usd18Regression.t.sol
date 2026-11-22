@@ -560,4 +560,40 @@ contract LQCFuturesM21Usd18RegressionTest {
         require(wrongFee > margin6,
             "M19 6-decimal cash cannot pay naive 18-decimal fees");
     }
+
+    function testFuzz_M22_EighteenDecimalFeeInsuranceReserveConservation(uint32 seedNotional,uint16 seedFee) public {
+        uint256 usd=uint256(seedNotional)%2_400+1;
+        uint256 bps=uint256(seedFee)%300+1;
+        newEngine.configureTradingFee(1,bps,6000);
+        _fund(NEW_USER,newVault,3_000e18);
+        vm.prank(NEW_USER);
+        newEngine.openPosition(1,500e18,usd*1e18,true);
+        uint256 fee=(usd*1e18*bps)/10_000;
+        require(newEngine.openInterestUsd(1)==usd*1e18,"M22 18-dec OI incorrect");
+        require(newVault.availableBalance(NEW_USER,address(token))==2_500e18-fee,
+            "M22 18-dec user fee incorrect");
+        require(newVault.insuranceFeeReserve(address(token))==fee*6000/10_000,
+            "M22 18-dec Insurance incorrect");
+        _assertNewConservation();
+    }
+
+    function testFuzz_M22_EighteenDecimalRepeatedFundingCannotDoubleDebit(uint32 seedNotional) public {
+        uint256 usd=uint256(seedNotional)%2_400+1;
+        newEngine.configureFunding(1,1e25);
+        _fund(NEW_USER,newVault,3_000e18);
+        vm.prank(NEW_USER);
+        newEngine.openPosition(1,500e18,usd*1e18,true);
+        newEngine.updateFundingIndex(1,int256(1e24));
+        vm.prank(NEW_USER);
+        newEngine.settleFunding(1);
+        uint256 accounted=newVault.totalAccounted(address(token));
+        uint256 funded=newVault.fundingPoolBalance(address(token));
+        vm.prank(NEW_USER);
+        newEngine.settleFunding(1);
+        require(newVault.totalAccounted(address(token))==accounted,
+            "M22 18-dec Funding charged twice");
+        require(newVault.fundingPoolBalance(address(token))==funded,
+            "M22 18-dec Funding pool overcredited");
+        _assertNewConservation();
+    }
 }
