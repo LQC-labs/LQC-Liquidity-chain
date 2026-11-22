@@ -1,0 +1,46 @@
+name: Futures M08 first-account lifecycle (read-only)
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/scripts/observe-futures-m08-first-account-lifecycle.mjs"
+      - ".github/workflows/futures-m08-first-account-lifecycle.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m08-first-account-lifecycle
+  cancel-in-progress: true
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - name: Checkout research branch without credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Set up Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install dependencies without scripts
+        run: npm ci --ignore-scripts
+      - name: Check read-only script syntax
+        run: node --check scripts/observe-futures-m08-first-account-lifecycle.mjs
+      - name: Observe bounded account lifecycle, no transactions
+        env:
+          BSC_TESTNET_READONLY_RPC: https://bsc-testnet-rpc.publicnode.com
+        run: node scripts/observe-futures-m08-first-account-lifecycle.mjs
+      - name: Preserve observation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m08-first-account-lifecycle
+          path: dex/futures-m08-first-account-lifecycle.json
+          if-no-files-found: warn
+          retention-days: 14
