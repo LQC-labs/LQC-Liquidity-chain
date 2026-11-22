@@ -76,10 +76,10 @@ export function verifyM12SecurityEvidence(v) {
    }
    if(a(roles.safeAddress)&&a(roles.guardian)&&a(roles.safeAddress)===a(roles.guardian))
      hold("Safe and Guardian shared address; independent emergency role separation not established");
-   if(roles.safeThreshold!==undefined&&(!int(roles.safeThreshold)||roles.safeThreshold===0))
-     throw Error("invalid multisig threshold");
-   if(roles.safeSignerCount!==undefined&&(!int(roles.safeSignerCount)||roles.safeSignerCount===0))
-     throw Error("invalid Safe signer count");
+   if(roles.safeThreshold==null)hold("Safe threshold unassigned");
+   else if(!int(roles.safeThreshold)||roles.safeThreshold===0)throw Error("invalid multisig threshold");
+   if(roles.safeSignerCount==null)hold("Safe signer count unassigned");
+   else if(!int(roles.safeSignerCount)||roles.safeSignerCount===0)throw Error("invalid Safe signer count");
    if(int(roles.safeThreshold)&&int(roles.safeSignerCount)&&roles.safeThreshold>roles.safeSignerCount)
      throw Error("Safe threshold exceeds signer count");
    if(roles.safeSignerProvenanceVerified!==true)hold("Safe signer membership/threshold not independently attested");
