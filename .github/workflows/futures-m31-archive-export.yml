@@ -1,0 +1,23 @@
+name: Futures M31 independent archive export verifier
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "scripts/verify-futures-m31-archive-export.mjs"
+      - "test/futures-m31-archive-export.test.mjs"
+      - ".github/workflows/futures-m31-archive-export.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m31-export
+  cancel-in-progress: true
+jobs:
+  m31-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify M31 independent archive export offline
+        run: node --test test/futures-m31-archive-export.test.mjs
