@@ -106,7 +106,7 @@ contract LQCFuturesM25FxSettlementTest {
         _setPrice(cents);
         uint256 six=fx.lossToTokensCeil(usd*1e18,6);
         uint256 eighteen=fx.lossToTokensCeil(usd*1e18,18);
-        require(eighteen/1e12==six,"M25 precision equivalents diverged");
+        require((eighteen+1e12-1)/1e12==six,"M25 precision equivalents diverged");
     }
 
     function testFuzz_M25_LowerCollateralPriceNeverLowersLossTokenRequirement(uint16 seedUsd,uint8 a,uint8 b) public {
