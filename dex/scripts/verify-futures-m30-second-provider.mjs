@@ -81,19 +81,25 @@ for(const source of SOURCES){
       p.args.amount!==5000n*10n**18n))throw Error("known user Deposit wrong");
    rec.receiptEventsMatched++;
   }
-  const call=async(to,method,args)=>{
-   const data=IFACE.encodeFunctionData(method,args);
-   const result=await rpc(source.url,"eth_call",[{to,data},hex(END)]);
-   return IFACE.decodeFunctionResult(method,result)[0];
-  };
-  const [a,b,c,d]=await Promise.all([
-   call(VAULT,"totalAccounted",[TOKEN]),call(TOKEN,"balanceOf",[VAULT]),
-   call(VAULT,"availableBalance",[USER,TOKEN]),call(VAULT,"lockedBalance",[USER,TOKEN])
-  ]);
-  rec.frozenBalancesMatched=a===b&&b===c&&c===5000n*10n**18n&&d===0n;
-  if(!rec.frozenBalancesMatched)throw Error("frozen Vault/known user balances mismatch");
-  out.knownUserRightsPreserved=true;
   out.verifiedReceiptCount=Math.max(out.verifiedReceiptCount,rec.receiptEventsMatched);
+  // Historical state is often pruned on public full nodes. A missing trie node
+  // must not suppress separately available historical log/receipt evidence.
+  try {
+   const call=async(to,method,args)=>{
+    const data=IFACE.encodeFunctionData(method,args);
+    const result=await rpc(source.url,"eth_call",[{to,data},hex(END)]);
+    return IFACE.decodeFunctionResult(method,result)[0];
+   };
+   const [a,b,c,d]=await Promise.all([
+    call(VAULT,"totalAccounted",[TOKEN]),call(TOKEN,"balanceOf",[VAULT]),
+    call(VAULT,"availableBalance",[USER,TOKEN]),call(VAULT,"lockedBalance",[USER,TOKEN])
+   ]);
+   rec.frozenBalancesMatched=a===b&&b===c&&c===5000n*10n**18n&&d===0n;
+   if(!rec.frozenBalancesMatched) rec.errors.push("frozen account balance mismatch");
+   else out.knownUserRightsPreserved=true;
+  } catch(e){
+   rec.errors.push("HISTORICAL_STATE_UNAVAILABLE: "+String(e?.message||e).slice(0,145));
+  }
   // Confirm independent full history ONLY if all three eth_getLogs ranges succeed.
   const padded=ethers.zeroPadValue(VAULT,32),transfer=IFACE.getEvent("Transfer").topicHash;
   const filters=[
@@ -144,7 +150,7 @@ for(const source of SOURCES){
 }
 out.status=out.completeSecondProviderCoverage ?
  "INDEPENDENT_FULL_RANGE_EVENT_SET_MATCH__ECONOMIC_RIGHTS_BLOCKED":
- out.knownUserRightsPreserved?"KNOWN_RECEIPTS_MATCH__SECOND_FULL_RANGE_BLOCKED":
+ out.verifiedReceiptCount===EXPECTED.length?"INDEPENDENT_KNOWN_RECEIPTS_PASS__FULL_RANGE_BLOCKED":
  "SECOND_PROVIDER_HISTORICAL_EVIDENCE_BLOCKED";
 out.reason=out.completeSecondProviderCoverage?
  "Matching range-limited event sets for selected historical token and Vault are not universal multi-asset/claim ownership proof.":
