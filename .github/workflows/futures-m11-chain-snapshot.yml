@@ -1,0 +1,47 @@
+name: Futures M11 candidate chain snapshot read-only gate
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/scripts/verify-futures-m11-chain-snapshot.mjs"
+      - "dex/test/futures-m11-chain-snapshot.test.mjs"
+      - ".github/workflows/futures-m11-chain-snapshot.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m11-chain-snapshot
+  cancel-in-progress: true
+jobs:
+  read-only-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Check M11 implementation and focused tests
+        run: |
+          node --check scripts/verify-futures-m11-chain-snapshot.mjs
+          node --test test/futures-m11-chain-snapshot.test.mjs
+      - name: Evaluate unassigned candidate without RPC
+        env:
+          M11_VERDICT_FILE: m11-verdict.json
+        run: node scripts/verify-futures-m11-chain-snapshot.mjs ../test/fixtures/futures-m10-undesignated-candidate.json
+      - name: Preserve BLOCKED verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m11-readonly-verdict
+          path: dex/m11-verdict.json
+          if-no-files-found: warn
+          retention-days: 14
