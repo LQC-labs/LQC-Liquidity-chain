@@ -185,7 +185,10 @@ try {
 writeFileSync("futures-m29-historical-transfers.json",JSON.stringify(report,null,2)+"\n");
 console.log(JSON.stringify({status:report.status,coverage:report.indexerRangeComplete,
  pages:report.pageCoverage.length,transfers:report.tokenTransfers.length,
- vaultEvents:report.vaultEvents.length,unknownVaultTopics:report.unknownVaultTopics.length,
+ vaultEvents:report.vaultEvents.map(x=>({name:x.name,tx:x.tx,logIndex:x.logIndex,amount:x.amount})),
+ unknownVaultTopics:report.unknownVaultTopics,
+ unattributedTransfers:report.unattributedTransfers,
+ unmatchedAccountingEvents:report.unmatchedAccountingEvents,
  accountCount:report.accountsFromVaultLogs?.length,
  incoming:report.incomingBaseUnits,outgoing:report.outgoingBaseUnits,
  transferNetMatchesFrozen:report.transferNetMatchesFrozen,accountRightsPreserved:report.accountRightsPreserved,
