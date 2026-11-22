@@ -156,4 +156,74 @@ contract LQCFuturesM21Usd18SixDecimalTest {
         require(vault.residualBadDebt(address(token))==0,"M21 partial liquid incurred unexpected bad debt");
         _assertConserved();
     }
+
+    // M22 property: USD18 notation must preserve USD notionals while cash uses six decimals.
+    function testFuzz_M22_RepresentableOpenFeeConservation(uint96 seedUsd,uint16 seedFeeBps) public {
+        uint256 usd=uint256(seedUsd)%2_500 + 1;
+        uint256 bps=uint256(seedFeeBps)%300 + 1;
+        engine.configureTradingFee(1,bps,6000);
+        uint256 margin=500e6;
+        uint256 notional=usd*1e18;
+        // With 10x risk limit and fixed 500 margin, all selected notional amounts fit.
+        vm.prank(USER);
+        engine.openPosition(1,margin,notional,true);
+        uint256 expectedFee=(usd*1e6*bps)/10_000;
+        require(engine.openInterestUsd(1)==notional,"M22 USD18 OI mismatch");
+        require(vault.lockedBalance(USER,address(token))==margin,"M22 6-dec margin mismatch");
+        require(vault.availableBalance(USER,address(token))==3_000e6-margin-expectedFee,
+            "M22 6-dec charged fee mismatch");
+        require(vault.insuranceFeeReserve(address(token))==expectedFee*6000/10_000,
+            "M22 Insurance fraction mismatch");
+        _assertConserved();
+    }
+
+    function testFuzz_M22_RepresentableUsd18PartialReductionConservation(uint32 seedSize,uint16 seedSlice) public {
+        // In units of the native 6-decimal token, but USD notionals remain canonical 18 decimals.
+        uint256 usd=uint256(seedSize)%1_500 + 501;
+        uint256 part=uint256(seedSlice)%(usd-1)+1;
+        vm.prank(USER);
+        engine.openPosition(1,500e6,usd*1e18,true);
+        vm.prank(USER);
+        engine.reducePosition(1,part*1e18);
+        require(engine.openInterestUsd(1)==(usd-part)*1e18,"M22 reduced OI mismatch");
+        _assertConserved();
+    }
+
+    function testFuzz_M22_FundingOneIndexCheckpointCannotDoubleCharge(uint32 seedUnits) public {
+        uint256 usd=uint256(seedUnits)%2_000+1;
+        engine.configureFunding(1,1e25);
+        vm.prank(USER);
+        engine.openPosition(1,500e6,usd*1e18,true);
+        engine.updateFundingIndex(1,int256(1e24));
+        vm.prank(USER);
+        engine.settleFunding(1);
+        uint256 afterFirst=vault.totalAccounted(address(token));
+        uint256 afterPool=vault.fundingPoolBalance(address(token));
+        vm.prank(USER);
+        engine.settleFunding(1);
+        require(vault.totalAccounted(address(token))==afterFirst,
+            "M22 repeated Funding incorrectly debited");
+        require(vault.fundingPoolBalance(address(token))==afterPool,
+            "M22 repeated Funding incorrectly credited");
+        _assertConserved();
+    }
+
+    function test_M22_UnpricedCollateralDepegIsNotCoveredByUsd18Conversion() public {
+        // Demonstrates a real design gap: no collateral/USD reference feed in M21.
+        // A hypothetical depeg changes off-chain USD value but not token balance or risk checks.
+        vm.prank(USER);
+        engine.openPosition(1,500e6,2_000e18,true);
+        uint256 marginTokens=vault.lockedBalance(USER,address(token));
+        // Reference scenarios: token value of 1.00 USD vs 0.70 USD (no price feed set).
+        uint256 assumedMarginAtParUsd18=marginTokens*1e12;
+        uint256 hypotheticalMarginAt70CentsUsd18=assumedMarginAtParUsd18*70/100;
+        require(hypotheticalMarginAt70CentsUsd18<assumedMarginAtParUsd18,
+            "M22 depeg arithmetic invalid");
+        require(engine.openInterestUsd(1)==2_000e18,
+            "M22 hypothetical depeg changed OI without contract feed");
+        require(registry.marketMode(1)==Registry.MarketMode.ACTIVE,
+            "M22 collateral depeg unexpectedly triggered halt");
+        _assertConserved();
+        // PASS means the missing collateral-price enforcement was characterized, NOT mitigated.
+    }
 }
