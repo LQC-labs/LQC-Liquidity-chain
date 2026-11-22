@@ -1,0 +1,41 @@
+name: Futures M10 predeployment isolation manifest (offline)
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "scripts/verify-futures-m10-manifest.mjs"
+      - "test/futures-m10-manifest.test.mjs"
+      - "test/fixtures/futures-m10-undesignated-candidate.json"
+      - ".github/workflows/futures-m10-manifest.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m10-manifest
+  cancel-in-progress: true
+jobs:
+  offline-m10:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: |
+          node --check scripts/verify-futures-m10-manifest.mjs
+          node --check test/futures-m10-manifest.test.mjs
+      - name: Run isolated negative-gate tests
+        run: node --test test/futures-m10-manifest.test.mjs
+      - name: Evaluate candidate manifest - expected BLOCKED, FAIL is error
+        run: node scripts/verify-futures-m10-manifest.mjs test/fixtures/futures-m10-undesignated-candidate.json > m10-verdict.json
+      - name: Save fail-closed verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m10-offline-verdict
+          path: m10-verdict.json
+          if-no-files-found: warn
+          retention-days: 14
