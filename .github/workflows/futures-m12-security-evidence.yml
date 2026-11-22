@@ -1,0 +1,39 @@
+name: Futures M12 oracle governance security evidence (offline)
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "scripts/verify-futures-m12-security-evidence.mjs"
+      - "test/futures-m12-security-evidence.test.mjs"
+      - "test/fixtures/futures-m12-security-unassigned.json"
+      - ".github/workflows/futures-m12-security-evidence.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m12-security-evidence
+  cancel-in-progress: true
+jobs:
+  m12-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax and scoped tests
+        run: |
+          node --check scripts/verify-futures-m12-security-evidence.mjs
+          node --test test/futures-m12-security-evidence.test.mjs
+      - name: Evaluate deliberately unapproved M12 security evidence
+        run: node scripts/verify-futures-m12-security-evidence.mjs test/fixtures/futures-m12-security-unassigned.json > m12-security-verdict.json
+      - name: Preserve BLOCKED evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m12-security-verdict
+          path: m12-security-verdict.json
+          if-no-files-found: warn
+          retention-days: 14
