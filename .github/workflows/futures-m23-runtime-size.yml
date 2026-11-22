@@ -1,0 +1,52 @@
+name: Futures M23 guard and Engine runtime size
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - ".github/workflows/futures-m23-runtime-size.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m23-runtime-size
+  cancel-in-progress: true
+jobs:
+  m23-size:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+      - name: Compile once and compare both runtime sizes
+        run: |
+          forge build --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai --out /tmp/m23-bytecode > /tmp/m23-build.log
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const files=[
+              ["Engine","LQCPerpEngineM23AdmissionCandidate.sol","LQCPerpEngineM23AdmissionCandidate"],
+              ["CollateralGuard","LQCFuturesM23CollateralDepegGuard.sol","LQCFuturesM23CollateralDepegGuard"]
+            ];
+            const sizes=files.map(([role,source,contract])=>{
+              const x=JSON.parse(fs.readFileSync("/tmp/m23-bytecode/"+source+"/"+contract+".json","utf8"));
+              const h=x.deployedBytecode?.object;
+              if(typeof h!=="string"||!/^0x[0-9a-fA-F]*$/.test(h))throw Error("runtime missing");
+              const bytes=(h.length-2)/2;
+              return {role,runtimeBytes:bytes,eip170LimitBytes:24576,withinLimit:bytes<=24576};
+            });
+            const output={schema:"lqc-m23-runtime-size-v1",sizes,deploymentAuthorized:false};
+            fs.writeFileSync("m23-code-sizes.json",JSON.stringify(output,null,2));
+            console.log(JSON.stringify(output,null,2));
+          '
+      - name: Save size evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m23-runtime-sizes
+          path: m23-code-sizes.json
+          if-no-files-found: warn
+          retention-days: 14
