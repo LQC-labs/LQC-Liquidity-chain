@@ -5,6 +5,7 @@ on:
     paths:
       - "dex/scripts/probe-futures-m08-hypersync.mjs"
       - ".github/workflows/futures-m08-hypersync-probe.yml"
+  workflow_dispatch:
 permissions:
   contents: read
 concurrency:
