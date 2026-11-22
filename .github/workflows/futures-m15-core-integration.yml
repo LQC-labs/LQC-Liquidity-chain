@@ -1,0 +1,29 @@
+name: Futures M15 isolated core integration
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "test/LQCFuturesMigrationM15CoreIntegration.t.sol"
+      - ".github/workflows/futures-m15-core-integration.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m15-isolated-core
+  cancel-in-progress: true
+jobs:
+  m15-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+      - name: Test only isolated M15 market lifecycle
+        run: |
+          forge test --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai \
+            --match-path test/LQCFuturesMigrationM15CoreIntegration.t.sol -vv
