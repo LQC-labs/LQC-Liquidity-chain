@@ -1,0 +1,30 @@
+name: Futures M23 collateral depeg admission integration
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/contracts/futures/LQCPerpEngineM23AdmissionCandidate.sol"
+      - "test/LQCFuturesMigrationM23AdmissionIntegration.t.sol"
+      - ".github/workflows/futures-m23-admission-integration.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m23-admission
+  cancel-in-progress: true
+jobs:
+  m23-admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+      - name: Scope to M23 admission and preserved close/liquidation
+        run: |
+          forge test --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai \
+            --match-path test/LQCFuturesMigrationM23AdmissionIntegration.t.sol -vv
