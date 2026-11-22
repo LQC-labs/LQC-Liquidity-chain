@@ -23,6 +23,7 @@ const vaultIface=new ethers.Interface([
   "event PnLSettled(address indexed account,address indexed token,int256 pnl)",
   "event EngineChanged(address indexed previousEngine,address indexed newEngine)",
   "event OwnershipTransferred(address indexed previousOwner,address indexed newOwner)",
+  "event CollateralSupportChanged(address indexed token,bool supported)",
   "function totalAccounted(address) view returns(uint256)",
   "function availableBalance(address,address) view returns(uint256)",
   "function lockedBalance(address,address) view returns(uint256)"
@@ -102,6 +103,10 @@ try {
      if(!decoded)throw Error("cannot decode");
      const record={tx:log.transactionHash,logIndex:log.logIndex,blockNumber:log.blockNumber,
        name:decoded.name,receiptVerified:false};
+     if(decoded.name==="CollateralSupportChanged") {
+      record.token=lower(decoded.args.token);
+      record.supported=decoded.args.supported;
+     }
      if(["Deposit","Withdrawal","CollateralLocked","CollateralUnlocked","PnLSettled"].includes(decoded.name)){
       record.account=lower(decoded.args.account);
       record.token=lower(decoded.args.token);
