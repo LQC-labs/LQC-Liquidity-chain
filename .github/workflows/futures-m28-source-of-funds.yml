@@ -1,0 +1,23 @@
+name: Futures M28 historical receipt source of funds
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "scripts/reconcile-futures-m28-source-of-funds.mjs"
+      - "test/futures-m28-source-of-funds.test.mjs"
+      - ".github/workflows/futures-m28-source-of-funds.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m28-source-of-funds
+  cancel-in-progress: true
+jobs:
+  m28-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check frozen real M08 and synthetic negative receipt matching
+        run: node --test test/futures-m28-source-of-funds.test.mjs
