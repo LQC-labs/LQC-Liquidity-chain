@@ -37,7 +37,10 @@ async function query(from){
   const timer=setTimeout(()=>controller.abort(),20000);
   try{
     const request={from_block:from,to_block:TO,
-      logs:[{address:[ENGINE,VAULT]}],
+      logs:[
+        {address:[ENGINE],topics:[["PositionOpened","PositionClosed","PositionLiquidated"].map(n=>iface.getEvent(n).topicHash)]},
+        {address:[VAULT],topics:[["Deposit","Withdrawal","CollateralLocked","CollateralUnlocked"].map(n=>iface.getEvent(n).topicHash)]}
+      ],
       field_selection:{log:["address","block_number","transaction_hash","log_index",
         "topic0","topic1","topic2","topic3","data"]}};
     const response=await fetch(BASE+"/query",{method:"POST",signal:controller.signal,
