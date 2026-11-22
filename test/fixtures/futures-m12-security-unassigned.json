@@ -1,0 +1,59 @@
+{
+  "schema": "lqc-futures-m12-security-evidence-v1",
+  "chainId": 97,
+  "candidate": {
+    "registry": "UNASSIGNED",
+    "vault": "UNASSIGNED",
+    "engine": "UNASSIGNED",
+    "oracle": "UNASSIGNED",
+    "feed": "UNASSIGNED",
+    "collateralToken": "UNASSIGNED",
+    "callsLegacySetEngine": false,
+    "copiesLegacyLedger": false,
+    "transfersLegacyCollateral": false
+  },
+  "oracle": {
+    "providerMode": "UNSELECTED",
+    "runtimeCodehash": null,
+    "feedRuntimeCodehash": null,
+    "feedImplementationCodehash": null,
+    "configHash": null,
+    "configVersion": null,
+    "heartbeatSeconds": null,
+    "lastVerifiedPriceAgeSeconds": null,
+    "proxyProvenance": "UNVERIFIED",
+    "priceDecimalsReviewed": false,
+    "referenceCircuitBreakerReviewed": false
+  },
+  "recovery": {
+    "marketId": null,
+    "expectedEpoch": null,
+    "approvalValidUntil": null,
+    "snapshotTimestamp": null,
+    "explicitEpochBoundActivation": false,
+    "legacyActiveEntryPointsBlocked": false,
+    "guardianCannotReactivate": false,
+    "emergencyHaltVerified": false
+  },
+  "authority": {
+    "registryOwner": "UNASSIGNED",
+    "vaultOwner": "UNASSIGNED",
+    "oracleOwner": "UNASSIGNED",
+    "guardian": "UNASSIGNED",
+    "safeAddress": "UNASSIGNED",
+    "safeThreshold": null,
+    "safeSignerCount": null,
+    "safeSignerProvenanceVerified": false,
+    "ownerAcceptanceVerified": false,
+    "guardianEmergencyOnlyVerified": false
+  },
+  "review": {
+    "sourceCommit": null,
+    "independentAuditStatus": "PENDING",
+    "oracleLicenseCleared": false,
+    "epochReplayRegressionPassed": false,
+    "withdrawalRightsPreserved": false,
+    "deploymentApproval": false,
+    "rawEvidenceVerifiedIndependently": false
+  }
+}
