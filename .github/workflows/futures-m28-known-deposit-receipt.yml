@@ -1,0 +1,42 @@
+name: Futures M28 known deposit receipt read-only
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/scripts/observe-futures-m28-known-deposit-receipt.mjs"
+      - ".github/workflows/futures-m28-known-deposit-receipt.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m28-known-deposit
+  cancel-in-progress: true
+jobs:
+  m28-receipt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Read M08 known deposit Transfer and Vault Deposit from one RPC receipt
+        env:
+          BSC_TESTNET_READONLY_RPC: https://bsc-testnet-rpc.publicnode.com
+        run: node scripts/observe-futures-m28-known-deposit-receipt.mjs
+      - name: Preserve read-only observation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m28-deposit-transfer-receipt
+          path: dex/futures-m28-known-deposit-receipt.json
+          if-no-files-found: warn
+          retention-days: 14
