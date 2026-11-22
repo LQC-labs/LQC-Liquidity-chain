@@ -39,7 +39,7 @@ function mocked(m,options={}){
       return options.emptyCode&&to.toLowerCase()===m.candidate.vault.toLowerCase()?"0x":code;},
    call:async({to,data},tag)=>{
       counters.call++;assert.equal(tag,B);
-      const key=Object.keys(m.candidate).find(k=>m.candidate[k]?.toLowerCase()===to.toLowerCase());
+      const key=Object.keys(m.candidate).find(k=>typeof m.candidate[k]==="string"&&m.candidate[k].toLowerCase()===to.toLowerCase());
       const parsed=ABI.parseTransaction({data});
       let value;
       switch(parsed.name){
