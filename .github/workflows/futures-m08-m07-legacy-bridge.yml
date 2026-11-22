@@ -1,0 +1,30 @@
+name: Futures M08 to M07 legacy evidence bridge
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "scripts/review-futures-m08-for-m07.mjs"
+      - "test/futures-m08-m07-legacy-bridge.test.mjs"
+      - ".github/workflows/futures-m08-m07-legacy-bridge.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m08-m07-legacy-bridge
+  cancel-in-progress: true
+jobs:
+  legacy-bridge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Syntax check
+        run: |
+          node --check scripts/review-futures-m08-for-m07.mjs
+          node --check test/futures-m08-m07-legacy-bridge.test.mjs
+      - name: Synthetic legacy M08 M07 fail-closed regression
+        run: node --test test/futures-m08-m07-legacy-bridge.test.mjs
