@@ -37,8 +37,8 @@ contract LQCFuturesM20SixDecimalIntegrationTest {
         feed=new Feed(8,50_000e8);
         oracle.setFeed(INDEX,address(feed),300);
         registry.addMarket("BTC/mUSD6",INDEX,address(token),address(oracle),100_000,500);
-        (address source,uint32 heartbeat,address reference,uint16 deviation)=oracle.feedConfigs(INDEX);
-        bytes32 config=keccak256(abi.encode(INDEX,source,heartbeat,reference,deviation));
+        (address source,uint32 heartbeat,address referenceFeed,uint16 deviation)=oracle.feedConfigs(INDEX);
+        bytes32 config=keccak256(abi.encode(INDEX,source,heartbeat,referenceFeed,deviation));
         uint256 version=oracle.configVersion(INDEX);
         registry.approveAggregatorRecoveryOracle(1,address(oracle),address(oracle).codehash,config,version);
         registry.setMarketMode(1,Registry.MarketMode.REDUCE_ONLY);
