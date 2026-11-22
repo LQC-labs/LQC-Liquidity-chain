@@ -325,10 +325,17 @@ contract LQCFuturesM17BoundaryTest {
         newEngine.openPosition(1, 500e18, 2_000e18, true);
         newFeed.setAnswer(38_000e8);
         uint256 prior = newEngine.openInterestUsd(1);
+        uint256 successfulLiquidations;
         for (uint256 i; i < 4; i++) {
             (uint256 margin, uint256 size,,,bool open) = newEngine.positions(NEW_USER, 1);
             if (!open) break;
+            // At a fixed mock price of 38,000 from entry 50,000, equity = margin - 24% of size.
+            // Liquidation is allowed only while equity <= 5% maintenance margin.
+            int256 equity = int256(margin) - int256(size * 12 / 50);
+            uint256 maintenance = size * 500 / 10_000;
+            if (equity > int256(maintenance)) break;
             newEngine.liquidate(NEW_USER, 1);
+            successfulLiquidations++;
             uint256 next = newEngine.openInterestUsd(1);
             require(next < prior, "M17 liquidation did not reduce OI");
             require(next <= size, "M17 liquidation increased notional");
@@ -337,6 +344,7 @@ contract LQCFuturesM17BoundaryTest {
             _assertNewConservation();
             prior = next;
         }
+        require(successfulLiquidations > 0, "M17 partial-liquidation case not exercised");
         require(oldVault.availableBalance(OLD_USER, address(token)) == 5_000e18,
             "M17 legacy user balance modified");
     }
