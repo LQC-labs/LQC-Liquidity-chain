@@ -1,0 +1,30 @@
+name: Futures M24 collateral depeg valuation preview
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/contracts/futures/LQCFuturesM24CollateralRiskPreview.sol"
+      - "test/LQCFuturesMigrationM24CollateralRiskPreview.t.sol"
+      - ".github/workflows/futures-m24-collateral-risk.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m24-collateral-valuation
+  cancel-in-progress: true
+jobs:
+  m24-risk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+      - name: Focused collateral valuation and liquidation preview
+        run: |
+          forge test --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai \
+            --match-path test/LQCFuturesMigrationM24CollateralRiskPreview.t.sol -vv
