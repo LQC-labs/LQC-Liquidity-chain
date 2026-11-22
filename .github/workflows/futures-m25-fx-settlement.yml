@@ -1,0 +1,30 @@
+name: Futures M25 depeg FX settlement preview
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/contracts/futures/LQCFuturesM25FxSettlementPreview.sol"
+      - "test/LQCFuturesMigrationM25FxSettlement.t.sol"
+      - ".github/workflows/futures-m25-fx-settlement.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m25-fx
+  cancel-in-progress: true
+jobs:
+  m25-fx:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+      - name: Focused M25 FX and reserve conservation simulations
+        run: |
+          forge test --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai \
+            --match-path test/LQCFuturesMigrationM25FxSettlement.t.sol -vv
