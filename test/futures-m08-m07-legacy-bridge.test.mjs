@@ -65,3 +65,18 @@ test("M08 rejects fabricated modern accounting claims",()=>{
   const d=copy();d.indexed_evidence.fullHistoricalInventoryComplete=true;
   assert.equal(reviewLegacyM08Evidence(d).status,"FAIL");
 });
+
+test("actual frozen M08 observation validates known account but blocks M07 cutover",async()=>{
+  const {readFileSync}=await import("node:fs");
+  const {fileURLToPath}=await import("node:url");
+  const filename=fileURLToPath(new URL("./fixtures/futures-m08-frozen-observation.json",import.meta.url));
+  const actual=JSON.parse(readFileSync(filename,"utf8"));
+  const r=reviewLegacyM08Evidence(actual);
+  assert.equal(r.status,"BLOCKED",JSON.stringify(r.failures));
+  assert.equal(r.failures.length,0);
+  assert.equal(r.knownAccountReconciled,true);
+  assert.equal(r.observedEvents,5);
+  assert.equal(r.observedAccounts,1);
+  assert.equal(r.operationalCutoverAuthorized,false);
+  assert.ok(r.blockers.length>0);
+});
