@@ -6,7 +6,7 @@ import {verifyM11Candidate} from "../scripts/verify-futures-m11-chain-snapshot.m
 const base=JSON.parse(readFileSync(new URL("../../test/fixtures/futures-m10-undesignated-candidate.json",import.meta.url),"utf8"));
 const copy=()=>structuredClone(base);
 const names=["registry","vault","engine","oracle","collateralToken"];
-const addr=i=>"0x"+String(i).repeat(40);
+const addr=i=>"0x"+BigInt(i).toString(16).padStart(40,"0");
 const HASH="0x"+"77".repeat(32);
 const B=144115366;
 const ABI=new ethers.Interface([
