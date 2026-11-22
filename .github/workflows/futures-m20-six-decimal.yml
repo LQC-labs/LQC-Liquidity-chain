@@ -1,0 +1,30 @@
+name: Futures M20 six-decimal collateral integration (isolated)
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "test/LQCFuturesMigrationM20SixDecimalIntegration.t.sol"
+      - "test/mocks/M20MockCollateral6.sol"
+      - ".github/workflows/futures-m20-six-decimal.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m20-six-decimal
+  cancel-in-progress: true
+jobs:
+  m20-six-decimal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+      - name: Focused M20 genuine six-decimal mock token lifecycle
+        run: |
+          forge test --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai \
+            --match-path test/LQCFuturesMigrationM20SixDecimalIntegration.t.sol -vv
