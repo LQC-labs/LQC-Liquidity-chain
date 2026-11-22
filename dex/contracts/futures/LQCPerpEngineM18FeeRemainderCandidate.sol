@@ -746,14 +746,20 @@ contract LQCPerpEngineM18FeeRemainderCandidate {
     function _chargeTradingFee(address account, uint256 marketId, address collateralToken, uint256 notionalUsd) private {
         uint256 feeBps = tradingFeeBps[marketId];
         if (feeBps != 0 && notionalUsd > type(uint256).max / feeBps) revert InvalidAmount();
-        uint256 numerator = notionalUsd * feeBps + tradingFeeRemainderBps[account][marketId];
+        uint256 feeProduct = notionalUsd * feeBps;
+        uint256 previousRemainder = tradingFeeRemainderBps[account][marketId];
+        if (feeProduct > type(uint256).max - previousRemainder) revert InvalidAmount();
+        uint256 numerator = feeProduct + previousRemainder;
         uint256 fee = numerator / BPS;
         // Even when the current fee rounds to zero, retain the unpaid fraction.
         tradingFeeRemainderBps[account][marketId] = numerator % BPS;
         if (fee == 0) return;
         uint256 share = insuranceFeeShareBps[marketId];
-        if (fee > type(uint256).max / share && share != 0) revert InvalidAmount();
-        uint256 insuranceNumerator = fee * share + insuranceShareRemainderBps[account][marketId];
+        if (share != 0 && fee > type(uint256).max / share) revert InvalidAmount();
+        uint256 insuranceProduct = fee * share;
+        uint256 previousInsuranceRemainder = insuranceShareRemainderBps[account][marketId];
+        if (insuranceProduct > type(uint256).max - previousInsuranceRemainder) revert InvalidAmount();
+        uint256 insuranceNumerator = insuranceProduct + previousInsuranceRemainder;
         uint256 insuranceAmount = insuranceNumerator / BPS;
         insuranceShareRemainderBps[account][marketId] = insuranceNumerator % BPS;
         vault.collectTradingFee(account, collateralToken, fee, insuranceAmount);
