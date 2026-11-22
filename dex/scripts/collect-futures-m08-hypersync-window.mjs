@@ -6,7 +6,7 @@ import { ethers } from "ethers";
 const BASE="https://bsc-testnet.hypersync.xyz";
 const ENGINE="0xe4f1320c8709631776c7e39e0916584935882525";
 const VAULT="0xb532c65294a7b35ca510a7df025e934fa17c8d7e";
-const FROM=131945356, TO=144115367; // exclusive; frozen M08 reference block 144115366.
+const FROM=131945040, TO=144115367; // inclusive Vault deployment start; exclusive end at frozen M08 snapshot +1.
 const MAX_PAGES=10;
 const OPEN_TX="0x4cb9207fc918ee50b5895ab348d411f25258164d1ae78a0eb2f12b13071373e4";
 const CLOSE_TX="0x4a2330fb4ac5938d2db84f360c8f7971a4c7878807a5422715493f7a2b3fee19";
