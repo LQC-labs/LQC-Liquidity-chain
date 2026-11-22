@@ -149,4 +149,26 @@ contract LQCFuturesM26TwoSidedFxPreviewTest {
             fx.previewBoundedProfit(address(token),amount*1e18,6);
         }
     }
+
+    function test_M26_RejectMismatchedTokenDecimalsInPayoutPreview() public {
+        vm.expectRevert(TwoSided.UnsupportedDecimals.selector);
+        fx.previewBoundedProfit(address(token),100e18,18);
+        vm.expectRevert(TwoSided.UnsupportedDecimals.selector);
+        fx.previewBoundedProfit(address(token18),100e18,6);
+    }
+
+    function test_M26_ResidualBadDebtBlocksPayoutEvenWithPhysicalExcess() public {
+        (uint256 initialPaid,,)=fx.previewBoundedProfit(address(token),100e18,6);
+        require(initialPaid>0,"M26 initial payout precondition failed");
+        // Vault authorizes this isolated test as mock Engine only; never production.
+        vault.coverBadDebt(address(token),10e6,0);
+        require(vault.residualBadDebt(address(token))==10e6,
+            "M26 bad debt not recorded");
+        require(fx.unreservedVaultSurplus(address(token))==200e6,
+            "M26 bad debt should not fabricate new physical assets");
+        vm.expectRevert(TwoSided.CollateralHasResidualDebt.selector);
+        fx.previewBoundedProfit(address(token),100e18,6);
+        require(vault.availableBalance(USER,address(token))==1_000e6,
+            "M26 bad debt payout attempted to debit user");
+    }
 }
