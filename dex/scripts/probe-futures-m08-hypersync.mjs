@@ -36,9 +36,12 @@ try {
       body:JSON.stringify(query)});
     report.queryHttpStatus=res.status;
     if(res.status!==200) throw Error("indexed /query rejected request (HTTP "+res.status+")");
-    if(!Number.isSafeInteger(res.data?.next_block) || res.data.next_block<=FROM)
+    if(!Number.isSafeInteger(res.data?.next_block) || res.data.next_block<=FROM || res.data.next_block>FROM+1)
       throw Error("indexed /query did not provide advancing next_block");
-    const logs=(res.data.data||[]).flatMap(x=>x.logs||[]);
+    const payload=res.data?.data;
+    const logs=Array.isArray(payload) ? payload.flatMap(x=>x?.logs||[]) :
+      (Array.isArray(payload?.logs) ? payload.logs : null);
+    if(!logs) throw Error("indexed /query returned unexpected log response schema");
     report.observedLogCount=logs.length;
     report.knownFirstPositionTransactionPresent=logs.some(l=>
       (l.transaction_hash||"").toLowerCase()===EXPECTED_TX &&
@@ -50,7 +53,7 @@ try {
   }
 } catch(err) {
   report.status="BLOCKED";
-  report.reason=String(err?.message||err).slice(0,350);
+  report.reason=String(err?.message||err).replaceAll(process.env.ENVIO_API_TOKEN||"__NO_TOKEN__", "[REDACTED]").slice(0,350);
 }
 writeFileSync("futures-m08-hypersync-capability.json",JSON.stringify(report,null,2)+"\n");
 console.log(JSON.stringify(report,null,2));
