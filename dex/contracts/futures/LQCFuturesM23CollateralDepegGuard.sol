@@ -39,7 +39,9 @@ contract LQCFuturesM23CollateralDepegGuard {
         (uint256 a,)=_read(primaryFeed);
         (uint256 b,)=_read(referenceFeed);
         uint256 difference=a>b?a-b:b-a;
-        if(difference>type(uint256).max/BPS)revert CollateralPriceUnavailable();
+        if(difference>type(uint256).max/BPS ||
+           b>type(uint256).max/uint256(maxDeviationBps))
+           revert CollateralPriceUnavailable();
         if(difference*BPS>b*uint256(maxDeviationBps))revert CollateralPriceUnavailable();
         if(a<minimumUsd18||b<minimumUsd18)revert CollateralPriceUnavailable();
         // A prudent admission guard values at the lower observed feed.
