@@ -1,0 +1,48 @@
+name: Futures M21 USD18 candidate EIP-170 runtime size
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - ".github/workflows/futures-m21-code-size.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m21-runtime-size
+  cancel-in-progress: true
+jobs:
+  m21-size:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          cache: false
+      - name: Compile once and inspect candidate deployed runtime
+        run: |
+          forge build --root . --contracts dex/contracts \
+            --use 0.8.30 --optimize --optimizer-runs 200 --via-ir \
+            --evm-version shanghai --out /tmp/m21-bytecode > /tmp/m21-build.log
+          node --input-type=module -e '
+            import fs from "node:fs";
+            const p="/tmp/m21-bytecode/LQCPerpEngineM21Usd18Candidate.sol/LQCPerpEngineM21Usd18Candidate.json";
+            const x=JSON.parse(fs.readFileSync(p,"utf8"));
+            const hex=x.deployedBytecode?.object;
+            if(typeof hex!=="string"||!/^0x[0-9a-fA-F]*$/.test(hex))throw Error("missing runtime code");
+            const bytes=(hex.length-2)/2;
+            const out={schema:"lqc-m21-runtime-size-v1",runtimeBytes:bytes,eip170LimitBytes:24576,
+              withinLimit:bytes<=24576,status:bytes<=24576?"SIZE_PASS":"BLOCKED_EIP170",
+              deploymentAuthorized:false};
+            fs.writeFileSync("m21-code-size.json",JSON.stringify(out,null,2));
+            console.log(JSON.stringify(out,null,2));
+          '
+      - name: Preserve code size
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m21-eip170-size
+          path: m21-code-size.json
+          if-no-files-found: warn
+          retention-days: 14
