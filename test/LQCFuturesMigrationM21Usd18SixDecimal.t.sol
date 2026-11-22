@@ -123,4 +123,37 @@ contract LQCFuturesM21Usd18SixDecimalTest {
             "M21 post-loss residual Vault balance incorrect");
         _assertConserved();
     }
+
+    function test_M21_Usd18LiquidationWithSixDecimalInsuranceAndBadDebt() public {
+        engine.configureTradingFee(1,100,6000);
+        engine.configureInsuranceCoverage(1,5000);
+        vm.prank(USER);
+        engine.openPosition(1,500e6,2_000e18,true);
+        feed.setAnswer(25_000e8);
+        engine.liquidate(USER,1);
+        (,,,,bool open)=engine.positions(USER,1);
+        require(!open && engine.openInterestUsd(1)==0,"M21 liquidated USD18 OI still open");
+        require(vault.lockedBalance(USER,address(token))==0,"M21 6-dec collateral stranded");
+        require(vault.totalInsuranceCovered(address(token))==12e6,"M21 wrong insurance coverage");
+        require(vault.residualBadDebt(address(token))==488e6,"M21 wrong 6-dec bad debt");
+        require(vault.treasuryFeeReserve(address(token))==8e6,"M21 treasury touched by liquidation");
+        require(vault.isFullyBacked(address(token)) && !vault.isSolvent(address(token)),
+            "M21 debt solvency status incorrect");
+        _assertConserved();
+    }
+
+    function test_M21_Usd18PartialLiquidationWithSixDecimalCash() public {
+        engine.configurePartialLiquidation(1,5000,0);
+        vm.prank(USER);
+        engine.openPosition(1,500e6,2_000e18,true);
+        feed.setAnswer(38_000e8);
+        engine.liquidate(USER,1);
+        (uint256 margin,uint256 size,,,bool open)=engine.positions(USER,1);
+        require(open && size==1_000e18,"M21 partial liquidation USD18 OI wrong");
+        require(margin==260e6,"M21 partial liquidation 6-dec margin wrong");
+        require(engine.openInterestUsd(1)==1_000e18,"M21 partial OI ledger wrong");
+        require(vault.lockedBalance(USER,address(token))==260e6,"M21 partial lock ledger wrong");
+        require(vault.residualBadDebt(address(token))==0,"M21 partial liquid incurred unexpected bad debt");
+        _assertConserved();
+    }
 }
