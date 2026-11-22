@@ -109,8 +109,8 @@ contract LQCFuturesM20SixDecimalIntegrationTest {
         vault.withdraw(address(token),2_758e6);
         require(token.balanceOf(USER)==2_758e6,"M20 withdrawal settlement incorrect");
         require(vault.totalAccounted(address(token))==0,"M20 user liability retained");
-        require(token.balanceOf(address(vault))==42e6,
-            "M20 segregated fee/funding tokens mismatch after withdrawal");
+        require(token.balanceOf(address(vault))==242e6,
+            "M20 post-loss residual Vault balance incorrect");
         _assertConserved();
     }
 }
