@@ -1,0 +1,52 @@
+{
+  "schema": "lqc-m10-isolation-manifest-v1",
+  "chainId": 97,
+  "historical": {
+    "chainId": 97,
+    "registry": "0xfbd1c5c8dbbdadf3eb834f351366daf55f2d73b0",
+    "vault": "0xb532c65294a7b35ca510a7df025e934fa17c8d7e",
+    "engine": "0xe4f1320c8709631776c7e39e0916584935882525",
+    "oracle": "0xbf6a446c5e17228e70e45645ab47f751bdfc4b41"
+  },
+  "candidate": {
+    "chainId": 97,
+    "registry": "UNASSIGNED",
+    "vault": "UNASSIGNED",
+    "engine": "UNASSIGNED",
+    "oracle": "UNASSIGNED",
+    "collateralToken": "UNASSIGNED",
+    "reusesHistoricalVault": false,
+    "callsHistoricalSetEngine": false,
+    "automaticallyTransfersLegacyAssets": false,
+    "copiesLegacyPositions": false
+  },
+  "wiring": {
+    "vaultEngine": "UNVERIFIED",
+    "engineRegistry": "UNVERIFIED",
+    "engineVault": "UNVERIFIED",
+    "marketOracle": "UNVERIFIED"
+  },
+  "snapshot": {
+    "blockNumber": 144115366,
+    "blockHash": "0x7a0d76a80ecc8b13d9eb7e2f1c7a5e3f96f16d3233d8d02c3f842c95a07d6208",
+    "knownUserAvailableBaseUnits": "5000000000000000000000",
+    "userRightsDisposition": "PRESERVE_IN_HISTORICAL_VAULT"
+  },
+  "source": {
+    "registryRuntimeCodehash": null,
+    "vaultRuntimeCodehash": null,
+    "engineRuntimeCodehash": null,
+    "oracleRuntimeCodehash": null
+  },
+  "gates": {
+    "oracleFeedProvenanceVerified": false,
+    "oraclePriceFreshnessVerified": false,
+    "oracleConfigHashVerified": false,
+    "recoveryEpochBound": false,
+    "ownerAndGuardianReviewed": false,
+    "multisigApprovalDocumented": false,
+    "independentSecurityReview": false,
+    "testOnlyDeploymentApproval": false,
+    "independentAccountInventoryAttestation": false
+  }
+}
