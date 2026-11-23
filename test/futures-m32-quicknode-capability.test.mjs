@@ -1,18 +1,18 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import {ANCHOR,probeM32,validateEndpoint} from "../dex/scripts/probe-futures-m32-quicknode-archive.mjs";
+import {ANCHOR,DEPOSIT_TOPIC,probeM32,validateEndpoint} from "../dex/scripts/probe-futures-m32-quicknode-archive.mjs";
 
 const ep="https://synthetic-testnet.bsc.quiknode.pro/TEST_KEY_DO_NOT_SEND";
 const pad=a=>"0x"+a.slice(2).padStart(64,"0");
 const hex=n=>"0x"+BigInt(n).toString(16);
 function receipt(){
- return {status:"0x1",blockNumber:hex(ANCHOR.depositBlock),logs:[
+ return {status:"0x1",blockNumber:hex(ANCHOR.depositBlock),blockHash:ANCHOR.depositBlockHash,logs:[
   {logIndex:"0x6",address:ANCHOR.token,topics:[
    "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
    pad(ANCHOR.user),pad(ANCHOR.vault)],
    data:pad("0x"+BigInt(ANCHOR.expectedAmount).toString(16))},
   {logIndex:"0x7",address:ANCHOR.vault,
-   topics:["0x"+"dd".repeat(32),pad(ANCHOR.user),pad(ANCHOR.token)],
+   topics:[DEPOSIT_TOPIC,pad(ANCHOR.user),pad(ANCHOR.token)],
    data:pad("0x"+BigInt(ANCHOR.expectedAmount).toString(16))}
  ]};
 }
@@ -22,7 +22,10 @@ function fake(override={}){
   eth_chainId:"0x61",
   eth_getBlockByNumber:{hash:ANCHOR.snapshotHash},
   eth_getTransactionReceipt:receipt(),
-  eth_getLogs:[{transactionHash:ANCHOR.knownTx,logIndex:"0x7",address:ANCHOR.vault}],
+  eth_getLogs:[{transactionHash:ANCHOR.knownTx,logIndex:"0x7",address:ANCHOR.vault,
+   blockHash:ANCHOR.depositBlockHash,blockNumber:hex(ANCHOR.depositBlock),
+   topics:[DEPOSIT_TOPIC,pad(ANCHOR.user),pad(ANCHOR.token)],
+   data:pad("0x"+BigInt(ANCHOR.expectedAmount).toString(16))}],
   eth_call:pad("0x"+BigInt(ANCHOR.expectedAmount).toString(16)),...override
  };
  return {count,request:async(method,params)=>{count.n++;return responses[method];}};
@@ -76,4 +79,33 @@ test("M32 missing historical trie or wrong balance remains BLOCKED",async()=>{
  };
  const p=await probeM32(ep,error);
  assert.equal(p.status,"BLOCKED");assert.ok(!JSON.stringify(p).includes("SENSITIVE_AUTH_VALUE"));
+});
+
+
+test("M33 reject fake Deposit topic0 even if indexed account token and amount match",async()=>{
+ const fakeReceipt=receipt();
+ fakeReceipt.logs[1].topics[0]="0x"+"ab".repeat(32);
+ const f=fake({eth_getTransactionReceipt:fakeReceipt});
+ const r=await probeM32(ep,f.request);
+ assert.equal(r.status,"BLOCKED");
+ assert.equal(f.count.n,3);
+ assert.equal(r.knownReceiptMatches,false);
+});
+test("M33 reject receipt from a different historical block hash",async()=>{
+ const altered={...receipt(),blockHash:"0x"+"12".repeat(32)};
+ const f=fake({eth_getTransactionReceipt:altered});
+ const r=await probeM32(ep,f.request);
+ assert.equal(r.status,"BLOCKED");
+ assert.equal(f.count.n,3);
+});
+test("M33 reject mismatched one-block Vault log even after valid known receipt",async()=>{
+ const bad=fake().request;
+ const item={transactionHash:ANCHOR.knownTx,logIndex:"0x7",
+  address:ANCHOR.vault,blockHash:ANCHOR.depositBlockHash,blockNumber:hex(ANCHOR.depositBlock),
+  topics:["0x"+"12".repeat(32),pad(ANCHOR.user),pad(ANCHOR.token)],
+  data:pad("0x"+BigInt(ANCHOR.expectedAmount).toString(16))};
+ const f=fake({eth_getLogs:[item]});
+ const r=await probeM32(ep,f.request);
+ assert.equal(r.status,"BLOCKED");assert.equal(f.count.n,4);
+ assert.equal(r.oneBlockLogsAvailable,false);
 });
