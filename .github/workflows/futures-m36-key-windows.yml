@@ -1,0 +1,46 @@
+name: Futures M36 key historical event windows (bounded)
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/scripts/verify-futures-m36-key-event-windows.mjs"
+      - "dex/test/futures-m36-key-event-windows.test.mjs"
+      - ".github/workflows/futures-m36-key-windows.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m36-key-windows
+  cancel-in-progress: true
+jobs:
+  m36-compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked deps
+        run: npm ci --ignore-scripts
+      - name: Focused offline adversarial comparison tests
+        run: node --test test/futures-m36-key-event-windows.test.mjs
+      - name: Bounded read-only independent historical event checks
+        env:
+          M32_QUICKNODE_BSC_TESTNET_RPC_URL: ${{ secrets.M32_QUICKNODE_BSC_TESTNET_RPC_URL }}
+          ENVIO_API_TOKEN: ${{ secrets.ENVIO_API_TOKEN }}
+        run: node scripts/verify-futures-m36-key-event-windows.mjs
+      - name: Persist redacted evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m36-key-history
+          path: dex/futures-m36-window-results.json
+          if-no-files-found: warn
+          retention-days: 14
