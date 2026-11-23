@@ -1,0 +1,46 @@
+name: Futures M32 QuickNode archive capability gate
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/scripts/probe-futures-m32-quicknode-archive.mjs"
+      - "test/futures-m32-quicknode-capability.test.mjs"
+      - ".github/workflows/futures-m32-quicknode-gate.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: futures-m32-quicknode-capability
+  cancel-in-progress: true
+jobs:
+  m32-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Verify security and mock-history fixtures
+        run: node --test ../test/futures-m32-quicknode-capability.test.mjs
+      - name: One bounded, read-only capability probe if a dedicated secret exists
+        env:
+          M32_QUICKNODE_BSC_TESTNET_RPC_URL: ${{ secrets.M32_QUICKNODE_BSC_TESTNET_RPC_URL }}
+        run: node scripts/probe-futures-m32-quicknode-archive.mjs
+      - name: Save blocked or scoped success report without endpoint credentials
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m32-quicknode-capability
+          path: dex/futures-m32-quicknode-probe.json
+          if-no-files-found: warn
+          retention-days: 14
