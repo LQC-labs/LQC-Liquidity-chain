@@ -1,6 +1,7 @@
 // 76-17-⑥-⑤ / M32 — minimal independent QuickNode BSC Testnet archive capability gate.
 // Strictly read-only. NEVER prints RPC endpoint or secret-bearing error messages.
 import {writeFileSync} from "node:fs";
+import {ethers} from "ethers";
 import {pathToFileURL} from "node:url";
 
 export const ANCHOR=Object.freeze({
@@ -9,6 +10,7 @@ export const ANCHOR=Object.freeze({
  snapshotHash:"0x7a0d76a80ecc8b13d9eb7e2f1c7a5e3f96f16d3233d8d02c3f842c95a07d6208",
  knownTx:"0x00a756b77545a0ddc732f424f81c179c7d71119427108a50a1e43fa56be988f1",
  depositBlock:131978250,
+ depositBlockHash:"0x01b0845e57355ca1ec63f7948bf738cd91b654c0a8c7c1e179ba5e3fdc26aaf5",
  token:"0x7ab1b97d194730e9456c12af7905450a4f8a0c46",
  vault:"0xb532c65294a7b35ca510a7df025e934fa17c8d7e",
  user:"0xde05e09db1292aff6ab62164134f1ad384bca6fb",
@@ -45,8 +47,10 @@ function base(){
 }
 const check=(out,name,passed)=>{out.checks.push({name,status:passed?"PASS":"BLOCKED"});if(passed)out.confirmed.push(name);else out.blocked.push(name);return passed;};
 const bn=x=>BigInt(x);
+const DEPOSIT_TOPIC=ethers.id("Deposit(address,address,uint256)");
 function confirmKnownReceipt(r){
- if(!r||bn(r.status)!==1n||bn(r.blockNumber)!==BigInt(ANCHOR.depositBlock)||!Array.isArray(r.logs))
+ if(!r||bn(r.status)!==1n||bn(r.blockNumber)!==BigInt(ANCHOR.depositBlock)||
+   lower(r.blockHash)!==ANCHOR.depositBlockHash||!Array.isArray(r.logs))
   return false;
  const transferTopic="0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
  // ERC20 Transfer(address,address,uint256): indexed from/to, 32-byte amount.
@@ -58,7 +62,8 @@ function confirmKnownReceipt(r){
     !isHex(transfer.data,32)||bn(transfer.data)!==bn(ANCHOR.expectedAmount))return false;
  // Deposit(account indexed,token indexed,uint amount) has both indexed accounts and data amount.
  // Check data/address pair based on M28 known evidence; leave cryptographic event topic validation to M31.
- if(!Array.isArray(deposit.topics)||deposit.topics.length<3||
+ if(!Array.isArray(deposit.topics)||deposit.topics.length!==3||
+    lower(deposit.topics[0])!==DEPOSIT_TOPIC||
     lower(deposit.topics[1])!=="0x"+ANCHOR.user.slice(2).padStart(64,"0")||
     lower(deposit.topics[2])!=="0x"+ANCHOR.token.slice(2).padStart(64,"0")||
     !isHex(deposit.data,32)||bn(deposit.data)!==bn(ANCHOR.expectedAmount))return false;
@@ -86,7 +91,14 @@ export async function probeM32(endpoint,request){
    fromBlock:hex(ANCHOR.depositBlock),toBlock:hex(ANCHOR.depositBlock)}]);
   out.oneBlockLogsAvailable=Array.isArray(logs)&&logs.some(l=>
     lower(l.transactionHash)===ANCHOR.knownTx&&bn(l.logIndex)===7n&&
-    lower(l.address)===ANCHOR.vault);
+    bn(l.blockNumber)===BigInt(ANCHOR.depositBlock)&&
+    lower(l.blockHash)===ANCHOR.depositBlockHash&&
+    lower(l.address)===ANCHOR.vault&&
+    Array.isArray(l.topics)&&l.topics.length===3&&
+    lower(l.topics[0])===DEPOSIT_TOPIC&&
+    lower(l.topics[1])==="0x"+ANCHOR.user.slice(2).padStart(64,"0")&&
+    lower(l.topics[2])==="0x"+ANCHOR.token.slice(2).padStart(64,"0")&&
+    isHex(l.data,32)&&bn(l.data)===bn(ANCHOR.expectedAmount));
   if(!check(out,"ONE_BLOCK_VAULT_LOGS",out.oneBlockLogsAvailable)){
    out.reason="One-block historical Vault logs not available";return out;
   }
