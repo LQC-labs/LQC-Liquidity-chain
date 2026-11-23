@@ -1,0 +1,46 @@
+name: Futures M35 QuickNode HyperSync small-window crosscheck
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/scripts/verify-futures-m35-quicknode-hypersync-window.mjs"
+      - "test/futures-m35-small-window.test.mjs"
+      - ".github/workflows/futures-m35-small-window.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m35-small-window
+  cancel-in-progress: true
+jobs:
+  m35-compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Verify 3-block source-comparison invariants
+        run: node --test ../test/futures-m35-small-window.test.mjs
+      - name: One bounded and credential-redacted independent query
+        env:
+          M32_QUICKNODE_BSC_TESTNET_RPC_URL: ${{ secrets.M32_QUICKNODE_BSC_TESTNET_RPC_URL }}
+          ENVIO_API_TOKEN: ${{ secrets.ENVIO_API_TOKEN }}
+        run: node scripts/verify-futures-m35-quicknode-hypersync-window.mjs
+      - name: Preserve non-sensitive evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m35-three-block-archive-compare
+          path: dex/futures-m35-small-window.json
+          if-no-files-found: warn
+          retention-days: 14
