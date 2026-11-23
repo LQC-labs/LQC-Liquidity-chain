@@ -47,7 +47,7 @@ function base(){
 }
 const check=(out,name,passed)=>{out.checks.push({name,status:passed?"PASS":"BLOCKED"});if(passed)out.confirmed.push(name);else out.blocked.push(name);return passed;};
 const bn=x=>BigInt(x);
-const DEPOSIT_TOPIC=ethers.id("Deposit(address,address,uint256)");
+export const DEPOSIT_TOPIC=ethers.id("Deposit(address,address,uint256)");
 function confirmKnownReceipt(r){
  if(!r||bn(r.status)!==1n||bn(r.blockNumber)!==BigInt(ANCHOR.depositBlock)||
    lower(r.blockHash)!==ANCHOR.depositBlockHash||!Array.isArray(r.logs))
