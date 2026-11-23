@@ -1,0 +1,46 @@
+name: Futures M37 single 10000-block independent archive pilot
+on:
+  push:
+    branches: [research/futures-m02-m03-isolated]
+    paths:
+      - "dex/scripts/verify-futures-m37-10k-window.mjs"
+      - "dex/test/futures-m37-10k-window.test.mjs"
+      - ".github/workflows/futures-m37-10k-pilot.yml"
+permissions:
+  contents: read
+concurrency:
+  group: futures-m37-10k-pilot
+  cancel-in-progress: true
+jobs:
+  m37-pilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: dex
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dex/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Nine focused M37 source-conservation tests
+        run: node --test test/futures-m37-10k-window.test.mjs
+      - name: Read-only one-window comparison (four requests maximum)
+        env:
+          M32_QUICKNODE_BSC_TESTNET_RPC_URL: ${{ secrets.M32_QUICKNODE_BSC_TESTNET_RPC_URL }}
+          ENVIO_API_TOKEN: ${{ secrets.ENVIO_API_TOKEN }}
+        run: node scripts/verify-futures-m37-10k-window.mjs
+      - name: Preserve bounded evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: futures-m37-bounded-10k-window
+          path: dex/futures-m37-pilot.json
+          if-no-files-found: warn
+          retention-days: 14
