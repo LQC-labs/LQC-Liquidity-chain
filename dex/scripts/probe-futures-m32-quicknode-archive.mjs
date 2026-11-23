@@ -24,7 +24,7 @@ export function validateEndpoint(endpoint){
  try{
   const url=new URL(endpoint);
   if(url.protocol!=="https:"||url.username||url.password||url.port||
-     url.search||url.hash||!/(^|\\.)quiknode\\.pro$/i.test(url.hostname))return {
+     url.search||url.hash||!/(^|\.)quiknode\.pro$/i.test(url.hostname))return {
       ok:false,reason:"Endpoint must use approved QuickNode HTTPS hostname without query credentials"};
   if(url.pathname==="/"||url.pathname.length<2)return {
    ok:false,reason:"A dedicated credential-bearing QuickNode endpoint path is required"};
