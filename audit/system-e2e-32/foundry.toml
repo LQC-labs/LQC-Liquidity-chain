@@ -1,0 +1,9 @@
+[profile.default]
+solc_version = "0.8.30"
+optimizer = true
+optimizer_runs = 200
+via_ir = true
+evm_version = "shanghai"
+offline = true
+additional_compiler_profiles = [{ name = "engine_size", optimizer_runs = 1 }]
+compilation_restrictions = [{ paths = "src/futures/LQCPerpEngine.sol", optimizer_runs = 1 }]
